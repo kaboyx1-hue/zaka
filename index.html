@@ -808,6 +808,9 @@ function vaoApp(){
   $('shCamon').value=SHOP.camon||CAMON_MAC_DINH; veBG();
   $('cUrl').value=CFG.url||URL_DRIVE||'';
   veChips(); chonTT(get('ttchon','CHUA')); timSP(); veGio(); banner(); veDon(); veKH(); veOut(); dem(); veHinhThucTT();
+  // Keo toan bo du lieu tu Sheet ve ngay sau dang nhap — dam bao du lieu luon moi nhat
+  // du la browser moi hay may moi, khong can lam gi them
+  setTimeout(function(){ dongBo(false); },800);
 }
 function luuShop(){
   SHOP={ten:$('shTen').value.trim()||'KHÁNH HOÀNG - ZAKA STORE',
