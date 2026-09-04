@@ -368,7 +368,6 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
   <div class="card"><input id="fdon" placeholder="Tìm mã đơn, khách, số điện thoại…" oninput="veDon()">
     <div class="intoolbar" style="margin-top:9px">
       <button class="btn-nho" onclick="chonHetInLS(1)">Chọn tất cả để in</button>
-      <button class="btn-nho" onclick="chonHetInLS(0)">Bỏ chọn</button>
       <select id="moiTrangLS"><option value="4">4 phiếu / tờ A4 (khổ 10×15cm)</option>
         <option value="2">2 phiếu / tờ A4</option>
         <option value="1">1 phiếu / tờ A4</option></select>
@@ -377,7 +376,7 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
     </div>
     <div class="intoolbar" style="margin-top:9px">
       <button class="btn-nho" onclick="chonHetDon(1)">Chọn tất cả đơn hôm nay</button>
-      <button class="btn-nho" onclick="chonHetDon(0)">Bỏ chọn</button>
+      <button class="btn-nho" onclick="chonHetInLS(0);chonHetDon(0)">Bỏ chọn</button>
       <button class="btn-nho" id="btnHuyLo" onclick="huyLo()" style="background:#3a1a1a;color:var(--bad)">Huỷ 0 đơn đã chọn</button>
     </div>
     <div class="sm" style="margin-top:6px">Chọn để in — bất kỳ đơn nào. Chọn để huỷ — chỉ đơn <b>trong ngày hôm nay</b>, đơn cũ phải báo chủ.</div>
@@ -1055,7 +1054,7 @@ async function taiDon(){
     var i=DON.map(function(d){return d.ma}).indexOf(ma);
     if(i>=0){ maBiHuyTuXa.push(ma); DON.splice(i,1) }
   });
-  DON.sort(function(a,b){return String(b.iso+b.ma).localeCompare(String(a.iso+a.ma))});
+  DON.sort(function(a,b){return String(b.iso+' '+b.ngay+b.ma).localeCompare(String(a.iso+' '+a.ngay+a.ma))});
   LOI_DONGBO=null;   // TRUOC khi ve lai — de dem() thay dung trang thai da het loi
   set('don',DON); veDon(); vePG(); veOut(); dem();   // luon luu va ve lai — khong dung dieu kien nua vi neu them=0 nhung DON vua bi reset thi van can cap nhat man hinh
   if(maBiHuyTuXa.length){
