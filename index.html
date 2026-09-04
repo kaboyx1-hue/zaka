@@ -561,6 +561,33 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
 
 <script src="seed_nv.js"></script>
 <script>
+/* ══════════════════════════════════════════════════════════
+   TU KIEM TRA BAN CU BI CACHE — khong phu thuoc header server
+   ══════════════════════════════════════════════════════════
+   The Cache-Control trong <head> chi la "loi de nghi", nhieu trinh
+   duyet/CDN (ke ca GitHub Pages) van tu quyet dinh giu ban cache rieng,
+   khong bao dam an toan. Co so THAT SU: ngay khi trang vua chay, tu
+   hoi lai chinh file nay bang fetch({cache:'no-store'}) — kieu fetch
+   nay theo dung chuan luon phai bo qua moi cache, khong con phu thuoc
+   "may rui" nua. Neu ban That tren server co APP_VER khac ban dang
+   chay, tu dieu huong lai chinh no voi 1 tham so ngau nhien de chac
+   chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
+   Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
+   do khong doc duoc ban moi (mat mang...). */
+var APP_VER='20260904c';
+(function(){
+  try{
+    if(sessionStorage.getItem('zaka_da_kt_ver')) return;
+    fetch(location.pathname, {cache:'no-store'}).then(function(r){return r.text()}).then(function(html){
+      var m=html.match(/var APP_VER=['"]([^'"]+)['"]/);
+      if(m && m[1] && m[1]!==APP_VER){
+        sessionStorage.setItem('zaka_da_kt_ver','1');
+        location.replace(location.pathname+'?_v='+Date.now());
+      }
+    }).catch(function(){});
+  }catch(e){}
+})();
+
 var KENH=['Lẻ','Sỉ','Breeder','Thú y','Shopee','TikTok Shop'];
 var NHOM=['CÁT VỆ SINH','THỨC ĂN','THÚ NHỎ','PHỤ KIỆN','CHĂM SÓC','KHÁC'];
 var HAN=90; // ngay hieu luc gia rieng
