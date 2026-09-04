@@ -656,7 +656,14 @@ function bao(el,t,cl){$(el).innerHTML='<div class="msg '+(cl||'ok')+'">'+t+'</di
  // khác (ví dụ vừa bấm "Đồng bộ ngay" ngay trên thẻ đơn ở tab Phiếu giao hàng) thì
  // không thấy gì cả. Hiện thêm ở pgMsg nếu đang có, để luôn thấy kết quả tại chỗ.
  if(el==='outMsg'&&$('pgMsg')) $('pgMsg').innerHTML='<div class="msg '+(cl||'ok')+'">'+t+'</div>';
- if(cl!=='er')setTimeout(function(){if($(el))$(el).innerHTML='';if(el==='outMsg'&&$('pgMsg'))$('pgMsg').innerHTML=''},6000)}
+ // Cùng lý do: dongBo()/kiemGia() luôn báo kết quả vào cfgMsg (tab Cài đặt), nhưng
+ // nút "Đồng bộ đơn" nằm ở tab Lịch sử — bấm xong không thấy gì vì thông báo hiện
+ // ở tab khác đang ẩn. Hiện thêm ở listMsg (tab Lịch sử) để bấm ở đâu thấy ở đó.
+ if(el==='cfgMsg'&&$('listMsg')) $('listMsg').innerHTML='<div class="msg '+(cl||'ok')+'">'+t+'</div>';
+ if(cl!=='er')setTimeout(function(){if($(el))$(el).innerHTML='';
+   if(el==='outMsg'&&$('pgMsg'))$('pgMsg').innerHTML='';
+   if(el==='cfgMsg'&&$('listMsg'))$('listMsg').innerHTML='';
+ },6000)}
 function get(k,d){try{var v=localStorage.getItem(K+k);return v?JSON.parse(v):d}catch(e){return d}}
 function set(k,v){try{localStorage.setItem(K+k,JSON.stringify(v))}catch(e){}}
 
