@@ -707,7 +707,10 @@ function set(k,v){try{localStorage.setItem(K+k,JSON.stringify(v))}catch(e){}}
   // Dam bao URL va ma may luon co gia tri truoc khi hoi Sheet
   if(!CFG.url) { CFG.url=URL_DRIVE; set('cfg',CFG); }
   if(!CFG.ma)  { CFG.ma='NV01';     set('cfg',CFG); }
-  // Luc nao cung keo lai danh sach NV tu Sheet de co the them NV moi tu dong
+  // Hien "Dang tai..." ngay, roi keo NV tu Sheet ve moi ve lai
+  (function(){
+    var s=$('sMayChon'); if(s) s.innerHTML='<option>Đang tải...</option>';
+  })();
   (async function(){
     try{
       var j=await hoi('nv=1');
@@ -715,7 +718,7 @@ function set(k,v){try{localStorage.setItem(K+k,JSON.stringify(v))}catch(e){}}
         set('nvds',j.ds.map(function(x){return {ten:x.ten,key:x.key,ma:x.ma}}));
         VER.nv=j.ver||''; set('ver',VER);
       }
-    }catch(e){}
+    }catch(e){ console.error('Loi keo NV:',e); }
     veChonMay();
   })();
   setTimeout(function(){ var m=$('sMay'); if(m) m.textContent='· máy '+(CFG.ma||MA_MAY) },50);
