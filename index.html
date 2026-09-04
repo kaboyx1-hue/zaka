@@ -234,23 +234,17 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
 <div id="quaHanBar" style="display:none;background:#4a1414;color:#ffb4b4;padding:10px 14px;font-size:13px;text-align:center"></div>
 
 <div id="setup">
-  <h1>ZAKA — Đăng nhập</h1><p>Chọn tên và mã máy của bạn rồi nhập mã.</p>
+  <h1>ZAKA — Đăng nhập</h1><p>Chọn mã máy rồi nhập mã cá nhân.</p>
   <div id="sErr"></div>
-  <label>Nhân viên</label><select id="sTen"></select>
   <div class="mt"><label>Mã máy</label>
-    <select id="sMayChon">
-      <option value="NV01">NV01 — Văn</option>
-      <option value="NV02">NV02 — Hằng</option>
-      <option value="NV03">NV03 — Ngọc</option>
-    </select></div>
+    <select id="sMayChon"></select></div>
   <div class="mt"><label>Mã đăng nhập</label>
     <input id="sKey" type="password" inputmode="numeric" autocomplete="off" placeholder="••••"
       onkeydown="if(event.key==='Enter')dangNhap()"></div>
   <button class="btn-main mt" onclick="dangNhap()">Vào làm việc</button>
   <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line)">
     <button class="btn-main" onclick="moDangKy()" style="background:var(--c2);color:var(--acc)">Đăng ký nhân viên mới</button>
-    <div class="sm" style="margin-top:8px;opacity:.65">Người mới phải đăng ký ở đây và chờ chủ duyệt.
-    Gõ bừa vào ô đăng nhập không vào được.</div>
+    <div class="sm" style="margin-top:8px;opacity:.65">Người mới phải đăng ký ở đây và chờ chủ duyệt.</div>
   </div>
 </div>
 
@@ -710,29 +704,24 @@ function set(k,v){try{localStorage.setItem(K+k,JSON.stringify(v))}catch(e){}}
   setTimeout(function(){ if(CFG.ma) dongBo(false) },1500);
   setInterval(function(){ if(CFG.ma&&navigator.onLine) dongBo(false) },60000);
   window.addEventListener('focus',function(){ if(CFG.ma&&navigator.onLine) dongBo(false) });
-  veChonNV();
-  // Neu chua co NV trong localStorage nhung da co URL — tu dong keo danh sach NV tu Sheet
-  // de nguoi dung khong phai dang ky lai tu dau tren browser moi
-  if(!dsNV().length){
-    (async function(){
-      try{
-        // Tam dung NV01 de hoi danh sach NV — chi can may hop le, khong anh huong gi
-        var maTam=CFG.ma||'NV01';
-        if(!CFG.ma){ CFG.ma=maTam; CFG.url=CFG.url||URL_DRIVE; set('cfg',CFG); }
-        var j=await hoi('nv=1');
-        if(j.ok&&j.ds&&j.ds.length){
-          set('nvds',j.ds.map(function(x){return {ten:x.ten,key:x.key,ma:x.ma}}));
-          VER.nv=j.ver||''; set('ver',VER); veChonNV();
-        }
-      }catch(e){}
-    })();
-  }
+  // Dam bao URL va ma may luon co gia tri truoc khi hoi Sheet
+  if(!CFG.url) { CFG.url=URL_DRIVE; set('cfg',CFG); }
+  if(!CFG.ma)  { CFG.ma='NV01';     set('cfg',CFG); }
+  // Luc nao cung keo lai danh sach NV tu Sheet de co the them NV moi tu dong
+  (async function(){
+    try{
+      var j=await hoi('nv=1');
+      if(j.ok&&j.ds&&j.ds.length){
+        set('nvds',j.ds.map(function(x){return {ten:x.ten,key:x.key,ma:x.ma}}));
+        VER.nv=j.ver||''; set('ver',VER);
+      }
+    }catch(e){}
+    veChonMay();
+  })();
   setTimeout(function(){ var m=$('sMay'); if(m) m.textContent='· máy '+(CFG.ma||MA_MAY) },50);
-  CFG.url=CFG.url||URL_DRIVE; set('cfg',CFG);  // dam bao URL luon co gia tri
-  var hopLe=dsNV().some(function(x){return x.ten===CFG.ten&&CFG.ma});
-  if(hopLe) vaoApp();
-  else { if(CFG.ten){CFG.ten='';set('cfg',CFG)}
-         $('setup').classList.remove('hide'); }
+  // Auto-login neu da co session cu hop le
+  if(CFG.ten&&CFG.ma) vaoApp();
+  else $('setup').classList.remove('hide');
 })();
 
 function dsNV(){
@@ -745,15 +734,35 @@ function veChonNV(){
   s.innerHTML=d.length? d.map(function(x,i){return '<option value="'+i+'">'+esc(x.ten)+'</option>'}).join('')
                       : '<option value="-1">(chưa có ai — bấm Đăng ký bên dưới)</option>';
 }
+function veChonMay(){
+  var s=$('sMayChon'); if(!s) return;
+  var nv=get('nvds',null)||[];
+  // Lay danh sach ma may tu danh sach NV tren Sheet, them NV moi tu dong
+  var mayList=[];
+  nv.forEach(function(x){ if(x.ma&&mayList.indexOf(x.ma)<0) mayList.push(x.ma); });
+  if(!mayList.length) mayList=['NV01','NV02','NV03']; // fallback neu chua co
+  mayList.sort();
+  s.innerHTML=mayList.map(function(m){
+    var nv_ten=(nv.find?nv.find(function(x){return x.ma===m}):null);
+    var ten=nv_ten?(' — '+nv_ten.ten):'';
+    return '<option value="'+m+'">'+m+ten+'</option>';
+  }).join('');
+  // Khoi phuc lua chon cu neu co
+  if(CFG.ma&&mayList.indexOf(CFG.ma)>=0) s.value=CFG.ma;
+}
 function dangNhap(){
-  var d=dsNV(), i=parseInt($('sTen').value);
-  if(!d.length){bao('sErr','Chưa có tài khoản nào. Bấm <b>Đăng ký nhân viên mới</b> bên dưới.','er');return}
-  var x=d[i]; if(!x){bao('sErr','Chưa chọn tên','er');return}
-  if($('sKey').value.trim()!==String(x.key)){
-    bao('sErr','Mã không đúng. Thử lại.','er'); $('sKey').value=''; $('sKey').focus(); return}
-  // Lay ma may tu o chon — khong con phu thuoc vao file cung
-  var mayChon=($('sMayChon')&&$('sMayChon').value)||'NV01';
-  CFG.ten=x.ten; CFG.ma=mayChon; CFG.url=CFG.url||URL_DRIVE; set('cfg',CFG);
+  var may=($('sMayChon')&&$('sMayChon').value)||'NV01';
+  var key=$('sKey').value.trim();
+  if(!key){bao('sErr','Chưa nhập mã đăng nhập.','er');return}
+  // Tim nhan vien theo ma may + key
+  var nv=get('nvds',null)||[];
+  var x=nv.find?nv.find(function(v){return v.ma===may&&String(v.key)===key}):null;
+  if(!x){
+    // Thu tim theo key thoi (truong hop 1 may 1 nguoi)
+    x=nv.find?nv.find(function(v){return String(v.key)===key}):null;
+  }
+  if(!x){bao('sErr','Mã không đúng hoặc chưa được duyệt. Thử lại.','er');$('sKey').value='';$('sKey').focus();return}
+  CFG.ten=x.ten; CFG.ma=may; CFG.url=CFG.url||URL_DRIVE; set('cfg',CFG);
   $('sKey').value=''; $('sErr').innerHTML=''; $('setup').classList.add('hide'); vaoApp();
 }
 
