@@ -234,9 +234,15 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
 <div id="quaHanBar" style="display:none;background:#4a1414;color:#ffb4b4;padding:10px 14px;font-size:13px;text-align:center"></div>
 
 <div id="setup">
-  <h1>ZAKA — Đăng nhập</h1><p>Chọn tên của bạn rồi nhập mã. <span id="sMay" style="opacity:.6"></span></p>
+  <h1>ZAKA — Đăng nhập</h1><p>Chọn tên và mã máy của bạn rồi nhập mã.</p>
   <div id="sErr"></div>
   <label>Nhân viên</label><select id="sTen"></select>
+  <div class="mt"><label>Mã máy</label>
+    <select id="sMayChon">
+      <option value="NV01">NV01 — Văn</option>
+      <option value="NV02">NV02 — Hằng</option>
+      <option value="NV03">NV03 — Ngọc</option>
+    </select></div>
   <div class="mt"><label>Mã đăng nhập</label>
     <input id="sKey" type="password" inputmode="numeric" autocomplete="off" placeholder="••••"
       onkeydown="if(event.key==='Enter')dangNhap()"></div>
@@ -719,11 +725,10 @@ function set(k,v){try{localStorage.setItem(K+k,JSON.stringify(v))}catch(e){}}
     })();
   }
   setTimeout(function(){ var m=$('sMay'); if(m) m.textContent='· máy '+(CFG.ma||MA_MAY) },50);
-  CFG.ma=(typeof MA_MAY!=='undefined'?MA_MAY:'NV01');   // file quy định, không lấy từ bộ nhớ cũ
-  set('cfg',CFG);
-  var hopLe=dsNV().some(function(x){return x.ten===CFG.ten});
+  CFG.url=CFG.url||URL_DRIVE; set('cfg',CFG);  // dam bao URL luon co gia tri
+  var hopLe=dsNV().some(function(x){return x.ten===CFG.ten&&CFG.ma});
   if(hopLe) vaoApp();
-  else { if(CFG.ten){CFG.ten='';set('cfg',CFG)}   // mã máy KHÔNG bao giờ bị xoá
+  else { if(CFG.ten){CFG.ten='';set('cfg',CFG)}
          $('setup').classList.remove('hide'); }
 })();
 
@@ -743,7 +748,9 @@ function dangNhap(){
   var x=d[i]; if(!x){bao('sErr','Chưa chọn tên','er');return}
   if($('sKey').value.trim()!==String(x.key)){
     bao('sErr','Mã không đúng. Thử lại.','er'); $('sKey').value=''; $('sKey').focus(); return}
-  CFG.ten=x.ten; set('cfg',CFG);
+  // Lay ma may tu o chon — khong con phu thuoc vao file cung
+  var mayChon=($('sMayChon')&&$('sMayChon').value)||'NV01';
+  CFG.ten=x.ten; CFG.ma=mayChon; CFG.url=CFG.url||URL_DRIVE; set('cfg',CFG);
   $('sKey').value=''; $('sErr').innerHTML=''; $('setup').classList.add('hide'); vaoApp();
 }
 
