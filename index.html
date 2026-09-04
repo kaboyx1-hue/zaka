@@ -705,6 +705,19 @@ function set(k,v){try{localStorage.setItem(K+k,JSON.stringify(v))}catch(e){}}
   setInterval(function(){ if(CFG.ma&&navigator.onLine) dongBo(false) },60000);
   window.addEventListener('focus',function(){ if(CFG.ma&&navigator.onLine) dongBo(false) });
   veChonNV();
+  // Neu chua co NV trong localStorage nhung da co URL — tu dong keo danh sach NV tu Sheet
+  // de nguoi dung khong phai dang ky lai tu dau tren browser moi
+  if(!dsNV().length && (CFG.url||URL_DRIVE)){
+    (async function(){
+      try{
+        var j=await hoi('nv=1');
+        if(j.ok&&j.ds&&j.ds.length){
+          set('nvds',j.ds.map(function(x){return {ten:x.ten,key:x.key,ma:x.ma}}));
+          VER.nv=j.ver||''; set('ver',VER); veChonNV();
+        }
+      }catch(e){}
+    })();
+  }
   setTimeout(function(){ var m=$('sMay'); if(m) m.textContent='· máy '+(CFG.ma||MA_MAY) },50);
   CFG.ma=(typeof MA_MAY!=='undefined'?MA_MAY:'NV01');   // file quy định, không lấy từ bộ nhớ cũ
   set('cfg',CFG);
