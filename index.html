@@ -574,7 +574,7 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260904c';
+var APP_VER='20260904d';
 (function(){
   try{
     if(sessionStorage.getItem('zaka_da_kt_ver')) return;
@@ -1120,6 +1120,19 @@ async function taiDon(){
     if(!cu){ DON.push(d); them++ }
     else if((d.sualan||0)>(cu.sualan||0)){ DON[DON.indexOf(cu)]=d; capnhat++ }
     else {
+      /* NGÀY GIỜ và NGÀY ISO luôn lấy lại theo Sheet — Sheet là bản đúng.
+         Hai trường này CHỈ được ghi đúng một lần lúc tạo đơn (capMa/luuDon),
+         không hàm sửa đơn nào trên máy nhân viên đụng tới, nên lấy theo Sheet
+         không bao giờ đè mất thao tác của nhân viên.
+         VÌ SAO PHẢI THÊM: trước đây nhánh này giữ nguyên bản đang có trong máy.
+         Nên một ô "Ngày ISO" từng bị Google Sheets tự đổi thành kiểu ngày thật
+         (đọc ra bị lùi 1 ngày) sẽ NẰM LẠI VĨNH VIỄN trong bộ nhớ máy đó — kể cả
+         sau khi Sheet đã được vá đúng — vì đơn không có bản sửa mới nên không rơi
+         vào nhánh thay thế phía trên. Hậu quả: đơn bị xếp lùi về ngày hôm trước,
+         "biến mất" khỏi đầu danh sách Lịch sử, nhìn như máy không đồng bộ. Máy mới
+         hoặc tab ẩn danh không dính vì không có bản cũ nào để giữ. */
+      if(d.iso && cu.iso!==d.iso){ cu.iso=d.iso; capnhat++ }
+      if(d.ngay && cu.ngay!==d.ngay){ cu.ngay=d.ngay; capnhat++ }
       // Máy khác vừa thu tiền hoặc in phiếu → theo cho kịp
       if((d.inLan||0)>(cu.inLan||0)){ cu.inLan=d.inLan; cu.inLuc=d.inLuc; capnhat++ }
       if(!cu.ttChuaDay && String(d.tt||'CHUA')!==String(cu.tt||'CHUA')){
