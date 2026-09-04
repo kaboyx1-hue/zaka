@@ -573,6 +573,7 @@ var NHAP=[], NHAP_DANG=0;   // nhiều đơn nháp cùng lúc — mỗi phần t
    tận cuối file, phía sau một đoạn code khác lỡ ném lỗi thì CHIPHI không kịp gán. */
 var ED=null;   // {ma, dong[], ship, giam, sdt, ten, kenh}
 var LOI_DONGBO=null;   // {luc, msg} — lan dong bo gan nhat that bai, de KHONG con am tham nuot loi nua
+var SO_LAN_THU_LAI_DB=0;   // dem so lan tu thu lai dong bo nen sau khi loi, tranh thu lai vo han
 var THU_GON={};   // {ma_don: true} — đơn nào đang thu gọn chi tiết trong tab Phiếu giao hàng
 var SHIP_CHINH=get('shipchinh',[]);   // danh sách shipper CHÍNH THỨC do chủ phát
 var TK_CHINH=get('tkchinh',[]);       // danh sách tài khoản nhận CK do chủ phát
@@ -987,14 +988,26 @@ async function dongBo(im){
     if(im) bao('cfgMsg', doi.length
       ? 'Đã cập nhật: '+doi.join(' · ')+'.'
       : 'Mọi thứ đang là bản mới nhất.','ok');
-    if(!coLoiDb) LOI_DONGBO=null;
+    if(coLoiDb){ thuLaiDongBoSauLoi() } else { SO_LAN_THU_LAI_DB=0; LOI_DONGBO=null }
   }catch(e){
     LOI_DONGBO={luc:Date.now(),msg:e.message||String(e)};
     console.error('Loi dong bo (im='+im+'):',e);
     dem();
     if(im) bao('cfgMsg','Chưa hỏi được máy chủ: '+esc(e.message)+
       '<br><span class="sm">Vẫn bán bình thường bằng dữ liệu đang có.</span>','wa');
+    thuLaiDongBoSauLoi();
   } finally{ DANGDB=false }
+}
+/* Tu thu dong bo lai NHANH sau khi that bai, thay vi phai doi du 60 giay
+   (Apps Script hay bi "khoi dong nguoi" cham vai giay ngay lan goi dau tien
+   sau khi mo app — day la nguyen nhan pho bien nhat khien man hinh nhin
+   nhu "ket" o du lieu cu). Thu toi da 3 lan, cach nhau 6 giay, roi thoi —
+   khong thu vo han de tranh spam Sheet neu that su mat mang lau dai (khi
+   do da co canh bao MAT MANG + retry tu dong luc co mang lai roi). */
+function thuLaiDongBoSauLoi(){
+  if(SO_LAN_THU_LAI_DB>=3) return;
+  SO_LAN_THU_LAI_DB++;
+  setTimeout(function(){ if(CFG.ma&&navigator.onLine) dongBo(false) },6000);
 }
 
 async function hoi(tham){
