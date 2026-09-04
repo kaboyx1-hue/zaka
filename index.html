@@ -713,9 +713,12 @@ function set(k,v){try{localStorage.setItem(K+k,JSON.stringify(v))}catch(e){}}
   veChonNV();
   // Neu chua co NV trong localStorage nhung da co URL — tu dong keo danh sach NV tu Sheet
   // de nguoi dung khong phai dang ky lai tu dau tren browser moi
-  if(!dsNV().length && (CFG.url||URL_DRIVE)){
+  if(!dsNV().length){
     (async function(){
       try{
+        // Tam dung NV01 de hoi danh sach NV — chi can may hop le, khong anh huong gi
+        var maTam=CFG.ma||'NV01';
+        if(!CFG.ma){ CFG.ma=maTam; CFG.url=CFG.url||URL_DRIVE; set('cfg',CFG); }
         var j=await hoi('nv=1');
         if(j.ok&&j.ds&&j.ds.length){
           set('nvds',j.ds.map(function(x){return {ten:x.ten,key:x.key,ma:x.ma}}));
