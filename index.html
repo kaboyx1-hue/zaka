@@ -661,6 +661,7 @@ function bao(el,t,cl){$(el).innerHTML='<div class="msg '+(cl||'ok')+'">'+t+'</di
 function get(k,d){try{var v=localStorage.getItem(K+k);return v?JSON.parse(v):d}catch(e){return d}}
 function set(k,v){try{localStorage.setItem(K+k,JSON.stringify(v))}catch(e){}}
 
+var VER=get('ver',{bg:'',nv:'',kh:'',gr:'',kt:'',don:'',ship:'',tk:''}), DANGDB=false;
 (function(){
   napSangToi();
   CFG=get('cfg',CFG); DON=get('don',[]);
@@ -913,7 +914,6 @@ function dayLaiTatCa(){
 /* ══════════════════════════════════════════════════════════
    ĐỘNG CƠ ĐỒNG BỘ — một câu hỏi ngắn, chỉ tải thứ đã đổi
    ══════════════════════════════════════════════════════════ */
-var VER=get('ver',{bg:'',nv:'',kh:'',gr:'',kt:'',don:'',ship:'',tk:''}), DANGDB=false;
 
 async function taiShip(){
   var j=await hoi('ship=1&ver='+encodeURIComponent(VER.ship||''));
