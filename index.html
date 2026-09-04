@@ -970,10 +970,19 @@ async function dongBo(im){
     if(v.ship!==VER.ship){ if(await taiShip()) doi.push('danh sách shipper') }
     if(v.tk!==VER.tk){ if(await taiTaiKhoan()) doi.push('danh sách tài khoản') }
     var coLoiDb=false;
-    if(v.don!==VER.don){ if(await taiDon()) VER.don=v.don||''; else coLoiDb=true; }
+    if(v.don!==VER.don){ if(await taiDon()){ VER.don=v.don||''; doi.push('đơn hàng mới') } else coLoiDb=true; }
     set('ver',VER);
 
     await dayKhach(); await dayGiaRieng(); await dayIn(); await dayTT(); await dayChiPhi(false);
+
+    // Luon ve lai danh sach don + phieu giao hang o cuoi moi lan dong bo, KHONG
+    // dieu kien theo "co gi moi khong" nua. Ly do: da tung gap tinh huong DON
+    // trong bo nho da du (vi du duoc mot lan dong bo nen truoc do lam day), nhung
+    // man hinh dang mo tab Lich su/Phieu giao hang lai khong duoc ve lai lan nao
+    // sau do vi lan dong bo ke tiep thay ver da khop nen bo qua taiDon() — DON
+    // dung nhung man hinh cu, nhin giong nhu "dong bo khong hoat dong". Ve lai
+    // vo dieu kien o day dam bao man hinh khong bao gio lech voi du lieu that.
+    veDon(); vePG();
 
     if(im) bao('cfgMsg', doi.length
       ? 'Đã cập nhật: '+doi.join(' · ')+'.'
