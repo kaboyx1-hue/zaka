@@ -704,6 +704,19 @@ var VER=get('ver',{bg:'',nv:'',kh:'',gr:'',kt:'',don:'',ship:'',tk:''}), DANGDB=
   setTimeout(function(){ if(CFG.ma) dongBo(false) },1500);
   setInterval(function(){ if(CFG.ma&&navigator.onLine) dongBo(false) },60000);
   window.addEventListener('focus',function(){ if(CFG.ma&&navigator.onLine) dongBo(false) });
+  // Mo lai tab / mo lai app tren dien thoai sau khi bi thu nho — trinh duyet co the
+  // khong bao 'focus' trong truong hop nay (dac biet mobile), chi bao visibilitychange.
+  // Neu khong bat, may co the "dung" khong nhan don moi cho toi khi ai do cham vao man hinh.
+  document.addEventListener('visibilitychange',function(){
+    if(document.visibilityState==='visible'&&CFG.ma&&navigator.onLine) dongBo(false);
+  });
+  // Luoi an toan: cu moi 3 phut, ep lay lai toan bo don TRUC TIEP tu Sheet, khong
+  // qua so sanh phien ban (v.don). Neu vi ly do nao do phia server khong doi ver.don
+  // dung (vd don duoc go thang vao Sheet thay vi qua app), may van tu bat kip trong
+  // toi da 3 phut thay vi "kẹt" mai cho den khi co ai mo Console goi tay taiDon().
+  setInterval(function(){
+    if(CFG.ma&&navigator.onLine&&!DANGDB) taiDon();
+  },180000);
   // Dam bao URL va ma may luon co gia tri truoc khi hoi Sheet
   if(!CFG.url) { CFG.url=URL_DRIVE; set('cfg',CFG); }
   if(!CFG.ma)  { CFG.ma='NV01';     set('cfg',CFG); }
