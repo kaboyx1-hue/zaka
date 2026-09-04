@@ -664,9 +664,9 @@ function set(k,v){try{localStorage.setItem(K+k,JSON.stringify(v))}catch(e){}}
 (function(){
   napSangToi();
   CFG=get('cfg',CFG); DON=get('don',[]);
-  // Neu DON trong ma VER.don co gia tri — nghia la may moi cai dat hoac doi thu muc,
-  // localStorage co the bi lech. Reset VER.don de buoc dong bo lai tu dau.
-  if(!DON.length && VER.don) { VER.don=''; set('ver',VER); }
+  // Reset VER.don moi lan mo app — buoc hoi Sheet xem co don moi khong.
+  // Chi ton them 1 request tt=1 nho luc khoi dong, doi lai khong bao gio bi ket phien ban.
+  VER.don=''; set('ver',VER);
   // --- nap du lieu goc, tu cap nhat khi toi doi seed ---
   var v=get('seedv',0), cu=get('kh',null);
   KH={};
