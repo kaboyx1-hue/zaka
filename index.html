@@ -553,7 +553,8 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
 <dialog id="dlgThem">
   <h2 style="margin-top:0">Thêm sản phẩm mới</h2>
   <div class="sm" style="margin-bottom:12px">Bán được ngay. Quản lý sẽ hoàn thiện thông tin sản phẩm sau.</div>
-  <label>Tên sản phẩm</label><input id="nTen">
+  <label>Tên sản phẩm</label><input id="nTen" oninput="goiYTrung()">
+  <div id="nGoiY"></div>
   <div class="row mt">
     <div><label>Nhóm</label><select id="nNhom"></select></div>
     <div><label>Đơn vị tính</label><input id="nDvt" placeholder="Túi / Gói / Bao"></div>
@@ -581,7 +582,7 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260905h';
+var APP_VER='20260905i';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1927,7 +1928,47 @@ function veGio(){
 
 /* ── THÊM SẢN PHẨM MỚI ── */
 function moThem(){ $('nTen').value=$('q').value; $('nGia').value=''; $('nDvt').value='';
-  $('nErr').innerHTML=''; $('dlgThem').showModal() }
+  $('nErr').innerHTML=''; $('dlgThem').showModal(); goiYTrung() }
+/* Điểm giống nhau giữa 2 tên — theo tỉ lệ từ khoá trùng (Jaccard trên tuKhoa_).
+   Nới lỏng hơn timTrungTen() (vốn đòi khớp TUYỆT ĐỐI sau khi chuẩn hoá) vì chỗ
+   này chỉ dùng để GỢI Ý, không tự làm gì cả — nhân viên phải tự bấm "Dùng cái
+   này" mới đổi hành vi, nên gợi ý rộng hơn không có rủi ro, chỉ giúp đỡ sót. */
+function diemGiong_(a,b){
+  var ta=tuKhoa_(a), tb=tuKhoa_(b);
+  if(!ta||!tb) return 0;
+  var A=ta.split(' '), B=tb.split(' '), setB={};
+  B.forEach(function(w){setB[w]=1});
+  var chung=A.filter(function(w){return setB[w]}).length;
+  var hop=A.length+B.length-chung;
+  return hop?chung/hop:0;
+}
+/* Gõ tên trong ô "Thêm sản phẩm mới" — nếu có sản phẩm ĐÃ TỒN TẠI (kể cả trong
+   bảng giá chính thức, không chỉ hàng nhân viên tự thêm) nghe gần giống, gợi ý
+   ngay để nhân viên tự chọn dùng lại thay vì tạo thêm 1 mã mới — chặn đúng lúc
+   TẠO ra thay vì để chủ phải dọn sau. Không chặn, không bắt buộc — vẫn bấm
+   "Thêm và bán" bình thường được nếu đúng là sản phẩm khác. */
+function goiYTrung(){
+  var box=$('nGoiY'); if(!box) return;
+  var t=($('nTen').value||'').trim();
+  if(t.length<4){ box.innerHTML=''; return }
+  var ds=SP.map(function(p){return {p:p, diem:diemGiong_(t,p.ten)}})
+    .filter(function(x){return x.diem>=0.4 && kd(x.p.ten)!==kd(t)})
+    .sort(function(a,b){return b.diem-a.diem})
+    .slice(0,4);
+  if(!ds.length){ box.innerHTML=''; return }
+  box.innerHTML='<div class="sm" style="margin:6px 0 4px;color:var(--warn)">Có phải anh/chị đang tìm sản phẩm đã có sẵn dưới đây?</div>'+
+    ds.map(function(x){
+      return '<div style="display:flex;justify-content:space-between;align-items:center;gap:6px;'+
+        'padding:6px 4px;border-bottom:1px solid var(--vien)">'+
+        '<span class="sm">'+esc(x.p.ten)+' <span style="opacity:.6">('+esc(x.p.sku)+')</span></span>'+
+        '<button class="mini" type="button" onclick=\'dungSPCoSan("'+x.p.sku+'")\'>Dùng cái này</button></div>';
+    }).join('');
+}
+function dungSPCoSan(sku){
+  var p=SP.filter(function(x){return x.sku===sku})[0]; if(!p) return;
+  $('dlgThem').close(); $('q').value=p.ten; timSP();
+  bao('newMsg','Đã chọn dùng lại <b>'+esc(p.ten)+'</b> (mã '+esc(p.sku)+') — không tạo sản phẩm mới.','wa');
+}
 async function luuMoi(){
   var t=$('nTen').value.trim(), g=so($('nGia').value), dv=$('nDvt').value.trim()||'Cái';
   if(!t||!g){bao('nErr','Cần đủ tên và giá bán','er');return}
