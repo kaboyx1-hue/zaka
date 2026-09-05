@@ -581,7 +581,17 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260905g';
+var APP_VER='20260905h';
+/* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
+   ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
+(function(){
+  try{
+    var b=document.createElement('div'); b.id='verBadge'; b.textContent='v'+APP_VER;
+    b.style.cssText='position:fixed;left:6px;bottom:4px;font-size:11px;color:#888;'+
+      'opacity:.65;z-index:99999;pointer-events:none;font-family:monospace;user-select:none';
+    document.body.appendChild(b);
+  }catch(e){}
+})();
 (function(){
   try{
     if(sessionStorage.getItem('zaka_da_kt_ver')) return;
@@ -677,6 +687,18 @@ function dinhDangTien(el){
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){
  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function kd(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase()}
+/* So khớp tên "lỏng" — bỏ dấu, bỏ dấu câu, bỏ vài từ nối, sắp xếp lại từ trước khi
+   so — để "Cát tắm thơm hamster 1kg (mix mùi)" và "Cát tấm thơm CHO hamster 1kg
+   (mix mùi)" (thừa chữ "cho") vẫn nhận ra là cùng 1 sản phẩm khi tìm trùng tên
+   trước lúc tạo sản phẩm mới. Cùng công thức với bên máy quản lý (quanly.html). */
+var TU_NOI_BO_QUA_={cho:1,cua:1,va:1,la:1};
+function tuKhoa_(ten){
+  var s=kd(ten).replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
+  if(!s) return '';
+  var tu=s.split(' ').filter(function(t){return t && !TU_NOI_BO_QUA_[t]});
+  tu.sort();
+  return tu.join(' ');
+}
 function isoDp(d){ return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2) }
 function today(){return isoDp(new Date())}
 function addD(d,n){var x=new Date(d);x.setDate(x.getDate()+n);return isoDp(x)}
@@ -1238,9 +1260,9 @@ async function taiSPCD(ver){
    tạo. Dùng trước khi cho tạo mã mới, để một sản phẩm chỉ có ĐÚNG MỘT mã
    dùng chung cho mọi máy, thay vì mỗi máy tự tạo mã riêng cho cùng 1 món. */
 function timTrungTen(ten){
-  var ch=kd(ten).replace(/\s+/g,' ').trim();
+  var ch=tuKhoa_(ten);
   if(!ch) return null;
-  return SP.filter(function(p){return kd(p.ten).replace(/\s+/g,' ').trim()===ch})[0]||null;
+  return SP.filter(function(p){return tuKhoa_(p.ten)===ch})[0]||null;
 }
 
 async function taiDon(){
