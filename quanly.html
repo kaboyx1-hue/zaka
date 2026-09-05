@@ -307,6 +307,22 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
   </div>
 </dialog>
 
+<dialog id="dlgGopSP" style="max-width:520px">
+  <h2 style="margin-top:0">Gộp <span id="gopTenPhu"></span> vào sản phẩm khác</h2>
+  <div class="sm" style="margin-bottom:10px">
+    Dùng khi 2 sản phẩm thực ra là MỘT món nhưng tên gõ khác nhau (thừa/thiếu chữ, sai chính tả…)
+    nên hệ thống không tự phát hiện được ở mục "Sản phẩm nghi trùng tên". Gõ tên để tìm mã CHÍNH,
+    chọn xong giá vốn/lợi nhuận của cả 2 mã sẽ tính chung theo mã chính — <b>không sửa đơn cũ trên Sheet</b>.
+  </div>
+  <label>Tìm sản phẩm để làm mã chính</label>
+  <input id="gopQ" placeholder="Gõ tên sản phẩm…" oninput="veGopKQ()">
+  <div id="gopKQ" style="margin-top:10px;max-height:280px;overflow:auto"></div>
+  <div id="gopErr"></div>
+  <div class="row mt">
+    <button class="btn2" onclick="document.getElementById('dlgGopSP').close()">Đóng</button>
+  </div>
+</dialog>
+
 <script src="seed_ql.js"></script>
 <script>
 /* ══════════════════════════════════════════════════════════
@@ -319,7 +335,7 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260905c';
+var APP_VER='20260905d';
 (function(){
   try{
     if(sessionStorage.getItem('zaka_ql_da_kt_ver')) return;
@@ -478,14 +494,56 @@ function gopSanPham(ds, btn){
   if(!chinh){ alert('Chưa chọn mã chính.'); return }
   var khac=ds.filter(function(k){return k!==chinh});
   if(!khac.length) return;
+  thucHienGop(khac, chinh);
+}
+/* Lõi gộp dùng chung — cho cả 2 lối vào:
+   1) mục "Sản phẩm nghi trùng tên" (tự phát hiện, tên phải khớp y hệt sau khi bỏ dấu)
+   2) nút "Gộp vào…" ở bảng giá (chọn tay, dùng khi tên gõ khác nhau — thừa/thiếu chữ,
+      sai chính tả — nên không tự phát hiện được). */
+function thucHienGop(khac, chinh){
   if(!confirm('Gộp '+khac.length+' mã vào mã chính '+chinh+'?\n\n'+khac.join('\n')+
     '\n\nCác đơn cũ dùng mã này vẫn giữ nguyên trên Google Sheet — chỉ đổi cách TÍNH và HIỂN THỊ báo cáo.'))
-    return;
+    return false;
   khac.forEach(function(k){ ALIAS[k]=chinh });
   set('alias',ALIAS);
   tinhLaiToanBoSO();
   veCB(); veSo(); veBC(); veGia();
   bao('inMsg','Đã gộp '+khac.length+' mã vào <b>'+esc(chinh)+'</b>. Doanh thu/lợi nhuận đã tính lại theo nhóm gộp.','ok');
+  return true;
+}
+var GOP_PHU=null;
+function moGopSP(skuPhu){
+  if(!GIA[skuPhu]){alert('Không tìm thấy sản phẩm.');return}
+  GOP_PHU=skuPhu;
+  $('gopTenPhu').textContent='"'+GIA[skuPhu].ten+'" ('+skuPhu+')';
+  $('gopQ').value=GIA[skuPhu].ten||'';
+  $('gopErr').innerHTML='';
+  document.getElementById('dlgGopSP').showModal();
+  veGopKQ();
+  setTimeout(function(){ $('gopQ').focus(); $('gopQ').select() },50);
+}
+function veGopKQ(){
+  var q=kd(($('gopQ').value||'').trim());
+  var ds=Object.keys(GIA).filter(function(k){
+    if(k===GOP_PHU) return false;             // không tự gộp vào chính nó
+    if(skuChinh(k)===GOP_PHU) return false;   // mã này (hoặc chuỗi mã) đã trỏ VỀ mã phụ đang gộp — tránh vòng lặp
+    if(!q) return true;
+    return kd(GIA[k].ten+' '+(GIA[k].brand||'')+' '+k).indexOf(q)>=0;
+  }).sort(function(a,b){return GIA[a].ten.localeCompare(GIA[b].ten)}).slice(0,30);
+  if(!ds.length){ $('gopKQ').innerHTML='<div class="empty">Không thấy sản phẩm nào khớp.</div>'; return }
+  $('gopKQ').innerHTML=ds.map(function(k){
+    var p=GIA[k];
+    return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;'+
+      'padding:8px 4px;border-bottom:1px solid var(--vien)">'+
+      '<div class="sm"><b>'+esc(p.ten)+'</b><br>'+esc(k)+' — giá bán '+tien(p.gb||0)+
+      (p.von?', vốn '+tien(p.von):', <span style="color:var(--warn)">chưa có vốn</span>')+'</div>'+
+      '<button class="mini" style="flex-shrink:0" onclick="xacNhanGopThuCong(\''+k+'\')">Chọn làm mã chính</button></div>';
+  }).join('');
+}
+function xacNhanGopThuCong(skuChinhMoi){
+  if(!GOP_PHU||!GIA[GOP_PHU]||!GIA[skuChinhMoi]){ $('gopErr').innerHTML='<div class="msg er">Dữ liệu không hợp lệ, mở lại.</div>'; return }
+  var ok=thucHienGop([GOP_PHU], skuChinhMoi);
+  if(ok){ document.getElementById('dlgGopSP').close(); GOP_PHU=null }
 }
 /* Tính lại vốn/lãi/thiếu-vốn cho TOÀN BỘ sổ cái sau khi gộp sản phẩm — cùng
    công thức với napDon(), chỉ khác là chạy lại trên dữ liệu ĐANG CÓ thay vì
@@ -578,6 +636,14 @@ function nowStr(){var d=new Date();
   ' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)}
 
 var QCFG={url:'',key:''};
+/* Dữ liệu đã tải sẵn ngay lúc mở khoá (moKhoa) — dùng lại ở khoiDongQL() thay vì
+   gọi lại lần 2, vì mỗi lần gọi endpoint quản lý là Apps Script đọc TOÀN BỘ sheet
+   đơn hàng + vốn + chi phí... một lần. Trước đây moKhoa() gọi để kiểm tra mật khẩu
+   rồi VỨT kết quả đi, xong khoiDongQL() gọi lại y hệt lần nữa để lấy dữ liệu thật —
+   tốn gấp đôi thời gian chờ cho cùng một lần đăng nhập. Không đụng gì tới việc xác
+   minh mật khẩu (vẫn hỏi Google Sheet mỗi lần mở khoá, vẫn dùng để khoá máy mất/cũ
+   khi đổi mật khẩu) — chỉ bỏ bớt round-trip THỨ HAI bị lặp lại vô ích. */
+var MOKHOA_PRELOAD = null;
 function luuQCfg(){ QCFG={url:$('qUrl').value.trim(),key:$('qKey').value.trim()}; set('qcfg',QCFG) }
 /* Hỏi một câu ngắn: có gì đổi không. Không đọc cả Sheet mỗi phút.
    Đây là chỗ quyết định phần mềm sống được vài năm hay chết sau vài tháng
@@ -606,6 +672,24 @@ async function hoiNhanh(){
   }
 }
 
+function apDungKeoVe(j, luc){
+  if(j.von&&j.von.length) napVonTuSheet(j.von, j.vonVer);
+  if(j.suavon) napSuaVonTuSheet(j.suavon, j.svVer);
+  if(j.ship) SHIP=j.ship; set('ship',SHIP);
+  if(j.tk) TK=j.tk; set('tk',TK);
+  if(j.chiPhi) CHIPHI_QL=j.chiPhi; set('chiphiql',CHIPHI_QL);
+  NVS=j.nvs||[]; set('nvs',NVS);
+  KTRUONG=j.khaiTruong||''; set('ktruong',KTRUONG);
+  VERQL={don:j.donVer||'',von:j.vonVer||'',sv:j.svVer||'',nv:VERQL.nv,kt:VERQL.kt,ship:j.shipVer||'',tk:j.tkVer||'',cp:j.cpVer||''};
+  set('verql',VERQL);
+  MADK=j.maDK||''; MAYGUI=j.mayGuiCuoi||{}; set('maygui',MAYGUI);
+  napDon(j.don||[],'Drive');
+  var soHuy=(j.don||[]).filter(function(d){return d.huy}).length;
+  $('keoInfo').innerHTML='Kéo lúc '+(luc||nowStr())+' — nhận <b>'+(j.don||[]).length+'</b> đơn'+
+    (soHuy?', trong đó <b style="color:var(--bad)">'+soHuy+' đơn đã huỷ</b>':'')+
+    ' · <b>'+NVS.length+'</b> tài khoản nhân viên.';
+  veNV(); veKhaiTruong(); veMayGui(); veShipperQL();
+}
 async function keoDon(im){
   luuQCfg();
   if(!QCFG.url||!QCFG.key){ if(im)bao('inMsg','Cần dán link và mật khẩu quản lý','er'); return }
@@ -614,22 +698,7 @@ async function keoDon(im){
     var r=await fetch(QCFG.url+'?key='+encodeURIComponent(QCFG.key));
     var j=await r.json();
     if(!j.ok) throw new Error(j.loi||'Sai mật khẩu hoặc link');
-    if(j.von&&j.von.length) napVonTuSheet(j.von, j.vonVer);
-    if(j.suavon) napSuaVonTuSheet(j.suavon, j.svVer);
-    if(j.ship) SHIP=j.ship; set('ship',SHIP);
-    if(j.tk) TK=j.tk; set('tk',TK);
-    if(j.chiPhi) CHIPHI_QL=j.chiPhi; set('chiphiql',CHIPHI_QL);
-    NVS=j.nvs||[]; set('nvs',NVS);
-    KTRUONG=j.khaiTruong||''; set('ktruong',KTRUONG);
-    VERQL={don:j.donVer||'',von:j.vonVer||'',sv:j.svVer||'',nv:VERQL.nv,kt:VERQL.kt,ship:j.shipVer||'',tk:j.tkVer||'',cp:j.cpVer||''};
-    set('verql',VERQL);
-    MADK=j.maDK||''; MAYGUI=j.mayGuiCuoi||{}; set('maygui',MAYGUI);
-    napDon(j.don||[],'Drive');
-    var soHuy=(j.don||[]).filter(function(d){return d.huy}).length;
-    $('keoInfo').innerHTML='Kéo lúc '+nowStr()+' — nhận <b>'+(j.don||[]).length+'</b> đơn'+
-      (soHuy?', trong đó <b style="color:var(--bad)">'+soHuy+' đơn đã huỷ</b>':'')+
-      ' · <b>'+NVS.length+'</b> tài khoản nhân viên.';
-    veNV(); veKhaiTruong(); veMayGui(); veShipperQL();
+    apDungKeoVe(j);
   }catch(e){
     $('keoInfo').innerHTML='<span style="color:var(--bad)">Không kéo được: '+esc(e.message)+
       '. Kiểm tra link, mật khẩu, hoặc mạng.</span>';
@@ -642,7 +711,11 @@ async function keoDon(im){
 function khoiDongQL(){
   QCFG=get('qcfg',{url:typeof URL_DRIVE!=='undefined'?URL_DRIVE:'',key:''});
   setTimeout(function(){ $('qUrl').value=QCFG.url||''; $('qKey').value=QCFG.key||'';
-    if(QCFG.url&&QCFG.key) keoDon(0); },200);
+    if(MOKHOA_PRELOAD && MOKHOA_PRELOAD.ok){
+      // Vừa xác minh mật khẩu xong, dữ liệu đã có sẵn trong tay — dùng luôn, khỏi kéo lại.
+      var preload=MOKHOA_PRELOAD; MOKHOA_PRELOAD=null;
+      apDungKeoVe(preload);
+    } else if(QCFG.url&&QCFG.key) keoDon(0); },200);
   /* ĐỒNG BỘ NHANH — 20 giây/lần, NHƯNG chỉ khi tab đang thực sự mở.
      Vì sao phải chặn theo tab: bản Apps Script miễn phí chỉ cho chạy khoảng 90
      phút mỗi ngày cho TOÀN hệ thống. Nếu để tab quản lý mở ẩn hoặc khoá máy qua
@@ -1671,7 +1744,8 @@ function veGia(){
         '<td class="r"'+(xau?' style="color:var(--bad)"':'')+'>'+b+'</td>'+
         '<td class="r">'+(p.ngung
           ?'<button class="mini" onclick="banLai(\''+p.sku+'\')">Bán lại</button>'
-          :'<button class="mini" style="color:var(--bad)" onclick="xoaSP(\''+p.sku+'\')">Xoá</button>')+'</td></tr>'
+          :'<button class="mini" style="color:var(--bad)" onclick="xoaSP(\''+p.sku+'\')">Xoá</button>')+
+        '<br><button class="mini" style="margin-top:4px" onclick="moGopSP(\''+p.sku+'\')">Gộp vào…</button></td></tr>'
     }).join('')+'</table>'+
     (ds.length>GLIM
       ? '<div style="text-align:center;padding:12px 0;display:flex;gap:8px;justify-content:center">'+
@@ -2484,6 +2558,7 @@ async function moKhoa(){
         if(j&&j.ok){
           set('mkql',v);
           var c=get('qcfg',{url:url,key:''}); c.url=url; c.key=v; set('qcfg',c);
+          MOKHOA_PRELOAD=j;   // đã có sẵn dữ liệu từ lần xác minh này — khỏi kéo lại lần 2
           vaoQL(); return;
         }
       }catch(e){}
