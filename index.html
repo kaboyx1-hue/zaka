@@ -581,7 +581,7 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260905f';
+var APP_VER='20260905g';
 (function(){
   try{
     if(sessionStorage.getItem('zaka_da_kt_ver')) return;
@@ -711,7 +711,7 @@ function bao(el,t,cl){$(el).innerHTML='<div class="msg '+(cl||'ok')+'">'+t+'</di
 function get(k,d){try{var v=localStorage.getItem(K+k);return v?JSON.parse(v):d}catch(e){return d}}
 function set(k,v){try{localStorage.setItem(K+k,JSON.stringify(v))}catch(e){}}
 
-var VER=get('ver',{bg:'',nv:'',kh:'',gr:'',kt:'',don:'',ship:'',tk:''}), DANGDB=false;
+var VER=get('ver',{bg:'',nv:'',kh:'',gr:'',kt:'',don:'',ship:'',tk:'',spcd:''}), DANGDB=false;
 (function(){
   napSangToi();
   CFG=get('cfg',CFG); DON=get('don',[]);
@@ -734,6 +734,7 @@ var VER=get('ver',{bg:'',nv:'',kh:'',gr:'',kt:'',don:'',ship:'',tk:''}), DANGDB=
   if(tai&&tai.length) SP=tai;
   var moi=get('spmoi',[]);               // san pham nhan vien tu them -> giu lai
   if(moi.length) SP=moi.concat(SP);
+  napSPCD();  // gop them "san pham cho duyet" cua CAC MAY KHAC (xem taiSPCD ben duoi)
   SEQ=get('seq',1);
   KENH.forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=k;$('kenh').appendChild(o)});
   NHOM.forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=k;$('nNhom').appendChild(o)});
@@ -1107,6 +1108,7 @@ async function dongBo(im){
     if(v.gr!==VER.gr){ if(await taiGR(v.gr)) doi.push('giá riêng khách') }
     if(v.ship!==VER.ship){ if(await taiShip()) doi.push('danh sách shipper') }
     if(v.tk!==VER.tk){ if(await taiTaiKhoan()) doi.push('danh sách tài khoản') }
+    if(v.spcd!==VER.spcd){ if(await taiSPCD(v.spcd)) doi.push('sản phẩm mới của máy khác') }
     var coLoiDb=false;
     if(v.don!==VER.don){ if(await taiDon()){ VER.don=v.don||''; doi.push('đơn hàng mới') } else coLoiDb=true; }
     set('ver',VER);
@@ -1196,6 +1198,49 @@ async function taiGR(ver){
       KH[sdt].gia[sku]={gia:Number(g.gia)||0,luc:String(g.luc||''),het:String(g.het||''),dongBo:true};
   });
   set('kh',KH); VER.gr=ver||j.ver||''; return true;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   SẢN PHẨM MỚI DÙNG CHUNG GIỮA CÁC MÁY NHÂN VIÊN — thêm 05/09/2026
+   ══════════════════════════════════════════════════════════════════
+   TRƯỚC ĐÂY: bấm "+" thêm sản phẩm mới lúc bán hàng luôn sinh MỘT MÃ MỚI
+   (MOI-<máy>-<giờ>), chỉ máy đó biết cho tới khi nằm trong đơn đã đẩy đi.
+   Máy khác bán CÙNG sản phẩm đó (chưa kịp chủ duyệt vào bảng giá chính
+   thức) sẽ không thấy, tự tạo thêm MỘT MÃ KHÁC cho đúng sản phẩm — kết
+   quả là 1 sản phẩm bị tách thành 2-3 mã SKU khác nhau, doanh thu/lợi
+   nhuận báo cáo bị chia vụn, khó gộp lại.
+   NAY: mỗi khi có máy tạo sản phẩm mới, gửi ngay lên trang riêng
+   SAN_PHAM_CHO_DUYET (không đụng bảng giá chính) để MỌI máy nhân viên
+   khác thấy trong lần đồng bộ kế tiếp (~20-30 giây) — và bấm "+" ở máy
+   khác giờ sẽ TÌM THẤY sản phẩm đã có (khớp đúng tên) và DÙNG LẠI ĐÚNG
+   MÃ đó, thay vì tạo mã mới. Xem gopSPCD() bên dưới thực hiện việc gộp
+   vào danh sách tìm kiếm SP; xem luuMoi() thực hiện việc tìm-trước-khi-tạo.
+   ══════════════════════════════════════════════════════════════════ */
+function napSPCD(){
+  var cd=get('spcd',[]);
+  if(!cd.length) return;
+  var coRoi={}; SP.forEach(function(p){coRoi[p.sku]=1});
+  var them=cd.filter(function(x){return !coRoi[x.sku]})
+    .map(function(x){return {sku:x.sku,nhom:x.nhom||'KHÁC',brand:x.brand||'',ten:x.ten,
+      dvt:x.dvt,gb:Number(x.gb)||0,qd_dv:'',qd_sl:0,qd_gb:0,moi:true,choDuyet:true}});
+  if(them.length) SP=SP.concat(them);
+}
+async function taiSPCD(ver){
+  var j=await hoi('spcd=1&ver='+encodeURIComponent(VER.spcd||''));
+  if(!j.ok||!j.moi) return false;
+  set('spcd', j.ds||[]);
+  VER.spcd=ver||j.ver||'';
+  napSPCD(); timSP();
+  return true;
+}
+/* Tìm sản phẩm CÙNG TÊN (không phân biệt hoa/thường, dấu, khoảng trắng
+   thừa) đã có sẵn trong SP — kể cả sản phẩm "chờ duyệt" do máy khác vừa
+   tạo. Dùng trước khi cho tạo mã mới, để một sản phẩm chỉ có ĐÚNG MỘT mã
+   dùng chung cho mọi máy, thay vì mỗi máy tự tạo mã riêng cho cùng 1 món. */
+function timTrungTen(ten){
+  var ch=kd(ten).replace(/\s+/g,' ').trim();
+  if(!ch) return null;
+  return SP.filter(function(p){return kd(p.ten).replace(/\s+/g,' ').trim()===ch})[0]||null;
 }
 
 async function taiDon(){
@@ -1861,19 +1906,45 @@ function veGio(){
 /* ── THÊM SẢN PHẨM MỚI ── */
 function moThem(){ $('nTen').value=$('q').value; $('nGia').value=''; $('nDvt').value='';
   $('nErr').innerHTML=''; $('dlgThem').showModal() }
-function luuMoi(){
+async function luuMoi(){
   var t=$('nTen').value.trim(), g=so($('nGia').value), dv=$('nDvt').value.trim()||'Cái';
   if(!t||!g){bao('nErr','Cần đủ tên và giá bán','er');return}
+
+  // TÌM TRƯỚC KHI TẠO — nếu đã có sản phẩm TRÙNG TÊN (kể cả do máy khác vừa
+  // tạo, đã về qua kênh "chờ duyệt"), dùng lại đúng mã đó, KHÔNG tạo mã mới.
+  // Đây là chỗ chặn gốc của lỗi "1 sản phẩm bị tách thành 2-3 mã SKU khác nhau".
+  var trung=timTrungTen(t);
+  if(trung){
+    $('dlgThem').close(); $('q').value=t; timSP();
+    bao('newMsg','<b>'+esc(t)+'</b> đã có sẵn trong danh sách (mã '+esc(trung.sku)+
+      (trung.choDuyet?', do máy khác vừa tạo':'')+') — đã dùng lại, <b>không tạo mã mới</b> để tránh trùng sản phẩm.','wa');
+    return;
+  }
+
   var d0=new Date();
   var sku='MOI-'+CFG.ma+'-'+String(d0.getFullYear()).slice(2)+
     ('0'+(d0.getMonth()+1)).slice(-2)+('0'+d0.getDate()).slice(-2)+'-'+
     ('0'+d0.getHours()).slice(-2)+('0'+d0.getMinutes()).slice(-2)+('0'+d0.getSeconds()).slice(-2);
-  var m={sku:sku,nhom:$('nNhom').value,brand:'',ten:t,dvt:dv,gb:g,moi:true,tao:today(),nguoiTao:CFG.ten};
+  var nhom=$('nNhom').value;
+  var m={sku:sku,nhom:nhom,brand:'',ten:t,dvt:dv,gb:g,moi:true,tao:today(),nguoiTao:CFG.ten};
   SP.unshift(m); var ds=get('spmoi',[]); ds.unshift(m); set('spmoi',ds);
   $('dlgThem').close(); $('q').value=t; timSP();
-  bao('newMsg','Đã thêm <b>'+esc(t)+'</b> (mã tạm '+sku+'). Bán được ngay. '+
-    'Quản lý <b>chỉ thấy được sau khi</b> món này nằm trong một đơn đã lưu và đẩy đi — '+
-    'chưa lên đơn thì chỉ mình máy này biết.','wa');
+  bao('newMsg','Đã thêm <b>'+esc(t)+'</b> (mã tạm '+sku+'). Bán được ngay.','wa');
+
+  // Báo ngay cho các máy nhân viên KHÁC biết — không đợi tới lúc đơn được đẩy
+  // đi mới lộ ra, để họ tìm thấy và dùng lại đúng mã này ở lần đồng bộ kế tiếp.
+  var url=CFG.url||URL_DRIVE;
+  if(url && CFG.ma){
+    try{
+      var kq=await guiGoi(url,{may:CFG.ma,nv:CFG.ten,hanhdong:'spmoi',
+        sp:{sku:sku,ten:t,nhom:nhom,brand:'',dvt:dv,gb:g}});
+      if(!(kq.doc && kq.j && kq.j.ok)){
+        bao('newMsg','Đã thêm <b>'+esc(t)+'</b> ở máy này, nhưng <b>chưa báo được cho máy khác</b> — '+
+          'nếu nhân viên khác bán trùng sản phẩm này trước khi đơn của anh/chị được đẩy đi, '+
+          'có thể họ sẽ tạo một mã khác. Không sao, chủ gộp lại sau được.','wa');
+      }
+    }catch(e){ /* im lặng — sản phẩm vẫn dùng được bình thường ở máy này */ }
+  }
 }
 
 /* ── LƯU ĐƠN ── */

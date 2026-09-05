@@ -319,7 +319,7 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260905b';
+var APP_VER='20260905c';
 (function(){
   try{
     if(sessionStorage.getItem('zaka_ql_da_kt_ver')) return;
@@ -333,7 +333,7 @@ var APP_VER='20260905b';
   }catch(e){}
 })();
 
-var SO=[], GIA={}, K='dql_', BGV={ver:'',luc:'',so:0};
+var SO=[], GIA={}, ALIAS={}, K='dql_', BGV={ver:'',luc:'',so:0};
 var NVS=[], KTRUONG='', MADK='', MAYGUI={}, VONVER='';
 var KY='thangnay';   // kỳ báo cáo đang xem
 var THU_GON_BC={};   // {kenh:true/nv:true/brand:true} — thu gọn từng bảng phân tích trong Báo cáo
@@ -417,6 +417,95 @@ function tien(n){return (Math.round(n)||0).toLocaleString('vi-VN')+' đ'}
    dễ sót. Giờ chỉ sửa đúng MỘT nơi. `von` truyền vào là tổng giá vốn đã tính sẵn
    ở từng chỗ gọi (không tính lại ở đây, vì cách tính von khác nhau tuỳ tình huống). */
 function tinhLaiDon(d, von){ return d.tienHang - von - (d.phiChanh||0) }
+
+/* ══════════════════════════════════════════════════════════════════
+   GỘP SẢN PHẨM TRÙNG TÊN, SAI MÃ SKU — thêm 05/09/2026
+   ══════════════════════════════════════════════════════════════════
+   Nguyên nhân: nhân viên tự thêm "sản phẩm mới" tại quầy khi chưa có
+   trong bảng giá gốc — mỗi máy tự sinh mã riêng (MOI-<máy>-<giờ>), nên
+   cùng một sản phẩm thật có thể bị tách thành 2-3 mã SKU khác nhau
+   (đã có công cụ chặn TỪ ĐẦU cho việc này ở máy nhân viên, xem
+   taiSPCD()/luuMoi() bên index.html — đây là công cụ dọn những trường
+   hợp ĐÃ LỠ bị tách trước khi có bản vá đó).
+
+   NGUYÊN TẮC AN TOÀN: KHÔNG bao giờ sửa/xoá mã SKU trong dữ liệu ĐƠN
+   HÀNG gốc trên Google Sheet — lịch sử ghi nhận lúc bán giữ nguyên y hệt.
+   "Gộp" ở đây chỉ là một ÁNH XẠ (mã phụ → mã chính) sống ở phía máy quản
+   lý, dùng để TÍNH và HIỂN THỊ báo cáo/giá vốn gộp chung — có thể tháo gỡ
+   bất cứ lúc nào (xoá ALIAS[mã]) mà không mất hay đổi bất kỳ dữ liệu gốc
+   nào. Đây là lý do chọn cách này thay vì sửa thẳng mã SKU trong lịch sử
+   đơn — sửa lịch sử là vùng cấm theo nguyên tắc an toàn của hệ thống.
+   ══════════════════════════════════════════════════════════════════ */
+function skuChinh(sku){
+  var s=sku, dem=0;
+  while(ALIAS[s] && dem<10){ s=ALIAS[s]; dem++ }   // dem chặn vòng lặp nếu lỡ gộp vòng tròn
+  return s;
+}
+function nhomTrungTen(){
+  var theoTen={};
+  Object.keys(GIA).forEach(function(k){
+    if(ALIAS[k]) return; // mã đã là "mã phụ" của mã khác rồi, không tính là mã gốc riêng nữa
+    var ten=kd(GIA[k].ten||'').replace(/\s+/g,' ').trim();
+    if(!ten) return;
+    theoTen[ten]=theoTen[ten]||[]; theoTen[ten].push(k);
+  });
+  return Object.keys(theoTen).map(function(t){return theoTen[t]}).filter(function(a){return a.length>1});
+}
+function veTrungTen(){
+  var nhom=nhomTrungTen();
+  if(!nhom.length) return '';
+  return '<div class="card"><h2>Sản phẩm nghi trùng tên — '+nhom.length+' nhóm</h2>'+
+    '<div class="sm" style="margin-bottom:8px">Cùng tên sản phẩm nhưng đang nằm ở nhiều mã SKU khác nhau — '+
+    'thường do nhân viên tự thêm sản phẩm mới ở nhiều máy trước khi kịp gộp. Gộp lại để doanh thu/lợi '+
+    'nhuận không bị chia vụn theo báo cáo. <b>Đơn hàng cũ trên Google Sheet giữ nguyên</b> — chỉ gộp ở '+
+    'phía tính toán/hiển thị, không sửa lịch sử.</div>'+
+    nhom.map(function(ds,gi){
+      return '<div class="tt-nhom" style="margin-bottom:10px;padding:9px;background:var(--c2);border-radius:8px">'+
+        '<div class="sm" style="margin-bottom:6px"><b>'+esc(GIA[ds[0]].ten)+'</b></div>'+
+        ds.map(function(k,i){
+          return '<label style="display:flex;gap:7px;align-items:center;margin-bottom:4px">'+
+            '<input type="radio" name="tt_'+gi+'" value="'+esc(k)+'" '+(i===0?'checked':'')+'>'+
+            '<span class="sm">'+esc(k)+' — giá bán '+tien(GIA[k].gb||0)+
+            (GIA[k].von?', vốn '+tien(GIA[k].von):', <span style="color:var(--warn)">chưa có vốn</span>')+'</span></label>'
+        }).join('')+
+        '<button class="mini mt" onclick=\'gopSanPham('+JSON.stringify(ds)+',this)\'>Gộp nhóm này — theo mã chính đã chọn ở trên</button>'+
+      '</div>';
+    }).join('')+'</div>';
+}
+function gopSanPham(ds, btn){
+  var box=btn.closest('.tt-nhom');
+  var chinh=''; box.querySelectorAll('input[type=radio]').forEach(function(r){ if(r.checked) chinh=r.value });
+  if(!chinh){ alert('Chưa chọn mã chính.'); return }
+  var khac=ds.filter(function(k){return k!==chinh});
+  if(!khac.length) return;
+  if(!confirm('Gộp '+khac.length+' mã vào mã chính '+chinh+'?\n\n'+khac.join('\n')+
+    '\n\nCác đơn cũ dùng mã này vẫn giữ nguyên trên Google Sheet — chỉ đổi cách TÍNH và HIỂN THỊ báo cáo.'))
+    return;
+  khac.forEach(function(k){ ALIAS[k]=chinh });
+  set('alias',ALIAS);
+  tinhLaiToanBoSO();
+  veCB(); veSo(); veBC(); veGia();
+  bao('inMsg','Đã gộp '+khac.length+' mã vào <b>'+esc(chinh)+'</b>. Doanh thu/lợi nhuận đã tính lại theo nhóm gộp.','ok');
+}
+/* Tính lại vốn/lãi/thiếu-vốn cho TOÀN BỘ sổ cái sau khi gộp sản phẩm — cùng
+   công thức với napDon(), chỉ khác là chạy lại trên dữ liệu ĐANG CÓ thay vì
+   dữ liệu vừa kéo về. Đơn nào chủ đã tự sửa giá vốn tay (d.suaVon) thì GIỮ
+   NGUYÊN, không tính đè lên quyết định thủ công đó. */
+function tinhLaiToanBoSO(){
+  SO.forEach(function(d){
+    if(d.huy){ d.thieuVon=false; return }
+    if(d.suaVon) return;
+    var von=0, coThieu=false;
+    (d.dong||[]).forEach(function(x){
+      var pSku=skuChinh(x.sku), p=GIA[pSku];
+      var v=p?((x.hs>1)?(p.qd_von||(p.von||0)*x.hs):(p.von||0)):0;
+      if(!p||!p.von) coThieu=true;
+      x.von=v; x.tongVon=v*x.sl; x.lai=(x.thanhTien||x.gia*x.sl)-v*x.sl; von+=v*x.sl;
+    });
+    d.von=von; d.lai=tinhLaiDon(d,von); d.thieuVon=coThieu;
+  });
+  set('so',SO);
+}
 /* ═══ THUẾ — tính riêng từng dòng hàng theo đúng thuế suất VAT của sản phẩm đó,
    rồi cộng dồn thành số của cả đơn. Sản phẩm CHƯA gán thuế suất (p.vat rỗng) =
    coi như không có hoá đơn đầu vào, KHÔNG trừ VAT gì cho dòng đó (giữ nguyên
@@ -424,7 +513,7 @@ function tinhLaiDon(d, von){ return d.tienHang - von - (d.phiChanh||0) }
    vào (đơn giản hoá đã thống nhất với chủ — không tách riêng 2 mức khác nhau).
    Đây là số ƯỚC TÍNH tham khảo nội bộ, không phải số khai thuế chính thức. */
 function tinhThueDong(x){
-  var p=GIA[x.sku];
+  var p=GIA[skuChinh(x.sku)];
   var vat = (p && p.vat!==null && p.vat!==undefined && p.vat!=='') ? Number(p.vat) : null;
   var banRa = x.thanhTien || (x.gia*x.sl) || 0;
   var von = x.tongVon || 0;
@@ -569,7 +658,7 @@ function khoiDongQL(){
   window.addEventListener('focus',function(){
     if(QCFG.url&&QCFG.key&&navigator.onLine) hoiNhanh();
   });
-  SO=get('so',[]); GIA=get('gia',null);
+  SO=get('so',[]); GIA=get('gia',null); ALIAS=get('alias',{});
   BGV=get('bgv',{ver:'',luc:'',so:0});
   var seedV=(typeof BGV_SEED!=='undefined')?BGV_SEED:'';
   if(!GIA){ GIA={}; BANGGIA.forEach(function(p){GIA[p.sku]=JSON.parse(JSON.stringify(p))});
@@ -689,14 +778,19 @@ function napDon(ds,nguon,ct){
     var von=0,coThieu=false;
     // Mã lạ chỉ được tự tạo ở ĐÂY — lúc đơn mới về. Không tạo lúc vẽ bảng,
     // nếu không thì sản phẩm chủ vừa xoá sẽ mọc lại ngay.
+    // LUÔN đi qua skuChinh() trước — nếu mã này đã được GỘP vào một mã khác
+    // (xem "Gộp sản phẩm trùng tên" ở tab Cảnh báo), giá vốn/lợi nhuận phải
+    // tính theo mã CHÍNH, không tạo thêm một dòng catalog riêng cho mã cũ.
     (d.dong||[]).forEach(function(x){
-      if(!GIA[x.sku]) GIA[x.sku]={sku:x.sku,ten:x.ten,brand:x.brand||'',nhom:'KHÁC',
+      var pSku=skuChinh(x.sku);
+      if(!GIA[pSku]) GIA[pSku]={sku:pSku,ten:x.ten,brand:x.brand||'',nhom:'KHÁC',
         dvt:x.dv,gb:x.gia,von:null,qd_dv:'',qd_sl:0,qd_gb:0,qd_von:0,moi:true};
     });
     (d.dong||[]).forEach(function(x){
-      var p=GIA[x.sku];
+      var pSku=skuChinh(x.sku);
+      var p=GIA[pSku];
       var v=p?((x.hs>1)?(p.qd_von||(p.von||0)*x.hs):(p.von||0)):0;
-      if(!p||!p.von){coThieu=true;thieu[x.sku]=(thieu[x.sku]||0)+1}
+      if(!p||!p.von){coThieu=true;thieu[pSku]=(thieu[pSku]||0)+1}
       x.von=v;x.tongVon=v*x.sl;x.lai=(x.thanhTien||x.gia*x.sl)-v*x.sl;von+=v*x.sl;
     });
     d.tienHang=(d.dong||[]).reduce(function(a,x){return a+(x.thanhTien||x.gia*x.sl)},0);
@@ -1938,20 +2032,23 @@ function cbGiao(){
 }
 function veCB(){
   var gia=cbGiao();
+  var tt=veTrungTen();
   var q=SO.filter(function(d){return d.thieuVon});
-  if(!q.length){$('cb').innerHTML=gia+
+  if(!q.length){$('cb').innerHTML=gia+tt+
     '<div class="card"><div class="empty">Không có đơn nào thiếu giá vốn. Sổ sách đang sạch.</div></div>';nhanCB();return}
   var qua=q.filter(function(d){return soNgay(d.iso)>HAN_NGAY});
   var cho=q.filter(function(d){return soNgay(d.iso)<=HAN_NGAY});
   var dtQua=qua.reduce(function(a,d){return a+d.tienHang},0);
   var dtCho=cho.reduce(function(a,d){return a+d.tienHang},0);
-  // gom theo SKU
+  // gom theo SKU CHÍNH — mã đã bị gộp (xem gopSanPham) dồn chung 1 dòng với mã chính,
+  // để không hiện "1 sản phẩm — 2 dòng chờ điền vốn" như trước khi có công cụ gộp.
   var sku={};
   q.forEach(function(d){ d.dong.forEach(function(x){
-    var p=GIA[x.sku]; if(p&&p.von)return;
-    sku[x.sku]=sku[x.sku]||{ten:x.ten,don:0,dt:0,ngay:0};
-    sku[x.sku].don++; sku[x.sku].dt+=x.thanhTien;
-    sku[x.sku].ngay=Math.max(sku[x.sku].ngay,soNgay(d.iso));
+    var pSku=skuChinh(x.sku);
+    var p=GIA[pSku]; if(p&&p.von)return;
+    sku[pSku]=sku[pSku]||{ten:x.ten,don:0,dt:0,ngay:0};
+    sku[pSku].don++; sku[pSku].dt+=x.thanhTien;
+    sku[pSku].ngay=Math.max(sku[pSku].ngay,soNgay(d.iso));
   })});
   var h='<div class="card"><div class="kpi">'+
     '<div><small>Đơn quá '+HAN_NGAY+' ngày</small><b style="color:'+(qua.length?'var(--bad)':'var(--ok)')+'">'+qua.length+'</b></div>'+
@@ -1987,7 +2084,7 @@ function veCB(){
         '<td>'+esc(d.khach)+'</td><td class="r">'+tien(d.tienHang)+'</td>'+
         '<td class="r" style="color:'+(o?'var(--bad)':'var(--warn)')+';font-weight:700">'+n+' ngày'+(o?' QUÁ HẠN':'')+'</td></tr>'
     }).join('')+'</table></div>';
-  $('cb').innerHTML=gia+h; nhanCB();
+  $('cb').innerHTML=gia+tt+h; nhanCB();
 }
 function vonNhanh(sku,v){
   if(!GIA[sku]) return;
