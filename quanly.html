@@ -335,7 +335,7 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260905f';
+var APP_VER='20260905h';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -533,13 +533,19 @@ function gopSanPham(ds, btn){
       sai chính tả — nên không tự phát hiện được). */
 function thucHienGop(khac, chinh){
   if(!confirm('Gộp '+khac.length+' mã vào mã chính '+chinh+'?\n\n'+khac.join('\n')+
-    '\n\nCác đơn cũ dùng mã này vẫn giữ nguyên trên Google Sheet — chỉ đổi cách TÍNH và HIỂN THỊ báo cáo.'))
+    '\n\nCác đơn cũ dùng mã này vẫn giữ nguyên trên Google Sheet — chỉ đổi cách TÍNH và HIỂN THỊ báo cáo.\n\n'+
+    'Mã bị gộp sẽ chuyển sang "Hàng ngừng bán" (không xoá, chỉ ẩn khỏi danh sách chính và ngừng bán '+
+    'thêm dưới mã này) để đỡ rối — không phải tự tay bấm Xoá/Ngừng riêng nữa.'))
     return false;
-  khac.forEach(function(k){ ALIAS[k]=chinh });
-  set('alias',ALIAS);
+  khac.forEach(function(k){
+    ALIAS[k]=chinh;
+    if(GIA[k]){ GIA[k].ngung=true; GIA[k].gopVao=chinh } // ẩn khỏi ds chính + ngừng phát bán dưới mã cũ, KHÔNG xoá dữ liệu
+  });
+  set('alias',ALIAS); set('gia',GIA);
   tinhLaiToanBoSO();
-  veCB(); veSo(); veBC(); veGia();
-  bao('inMsg','Đã gộp '+khac.length+' mã vào <b>'+esc(chinh)+'</b>. Doanh thu/lợi nhuận đã tính lại theo nhóm gộp.','ok');
+  veCB(); veSo(); veBC(); veGia(); vePhat();
+  bao('inMsg','Đã gộp '+khac.length+' mã vào <b>'+esc(chinh)+'</b> và chuyển mã cũ sang "Hàng ngừng bán". '+
+    'Doanh thu/lợi nhuận đã tính lại theo nhóm gộp. Nhớ bấm <b>Phát bảng giá</b> để 3 máy nhân viên hết thấy mã cũ.','ok');
   return true;
 }
 var GOP_PHU=null;
@@ -779,6 +785,20 @@ function khoiDongQL(){
     if(QCFG.url&&QCFG.key&&navigator.onLine) hoiNhanh();
   });
   SO=get('so',[]); GIA=get('gia',null); ALIAS=get('alias',{});
+  // VÁ DỮ LIỆU CŨ: những cặp đã bấm "Gộp" TRƯỚC KHI có bản này chỉ mới ghi vào
+  // ALIAS, chưa từng được đánh dấu ngung/gopVao trên GIA (vì lúc đó tính năng tự ẩn
+  // chưa tồn tại) — nên mã dư vẫn hiện trong bảng "đang bán" như chưa gộp. Quét lại
+  // 1 lần lúc khởi động để đưa các mã đã có trong ALIAS về đúng trạng thái mới,
+  // không đụng gì tới mã CHƯA từng gộp.
+  if(GIA){
+    var vaXong=false;
+    Object.keys(ALIAS).forEach(function(k){
+      if(GIA[k] && !GIA[k].gopVao){
+        GIA[k].gopVao=skuChinh(k); GIA[k].ngung=true; vaXong=true;
+      }
+    });
+    if(vaXong) set('gia',GIA);
+  }
   BGV=get('bgv',{ver:'',luc:'',so:0});
   var seedV=(typeof BGV_SEED!=='undefined')?BGV_SEED:'';
   if(!GIA){ GIA={}; BANGGIA.forEach(function(p){GIA[p.sku]=JSON.parse(JSON.stringify(p))});
@@ -1775,7 +1795,8 @@ function veGia(){
     ds.slice(0,GLIM).map(function(p){
       var b=(p.gb&&p.von)?((p.gb-p.von)/p.gb*100).toFixed(1)+'%':'—';
       var xau=(p.gb&&p.von&&p.von>=p.gb);
-      return '<tr><td>'+esc(p.sku)+(p.moi?'<br><span class="tag w">nhân viên thêm</span>':'')+'</td>'+
+      return '<tr><td>'+esc(p.sku)+(p.moi?'<br><span class="tag w">nhân viên thêm</span>':'')+
+        (p.gopVao?'<br><span class="tag w" style="color:var(--warn)">đã gộp → '+esc(p.gopVao)+'</span>':'')+'</td>'+
         '<td><input class="ten" style="padding:5px" value="'+esc(p.ten)+'" onchange="setF(\''+p.sku+'\',\'ten\',this.value)">'+
         (p.brand?'<div class="sm" style="color:var(--pur)">'+esc(p.brand)+'</div>':'')+
         (p.soat?'<div class="sm" style="color:var(--warn)">⚠ giá sỉ cũ sai — đã tắt, cần điền lại</div>':'')+'</td>'+
@@ -1828,8 +1849,19 @@ function donNgung(){
     'Bảng giá còn <b>'+Object.keys(GIA).length.toLocaleString('vi-VN')+' mặt hàng</b>.'+
     '<br><span class="sm">Đơn đã bán không đổi. Đang lưu bản gọn lên Sheet để điện thoại khớp theo.</span>','ok');
 }
-function banLai(sku){ if(!GIA[sku])return; GIA[sku].ngung=false; set('gia',GIA); giaLai();
-  bao('giaMsg','Đã cho bán lại <b>'+esc(GIA[sku].ten)+'</b>. Nhớ bấm <b>Phát bảng giá</b> để ba máy nhận.','ok') }
+function banLai(sku){
+  if(!GIA[sku]) return;
+  if(GIA[sku].gopVao){
+    if(!confirm('"'+GIA[sku].ten+'" đang GỘP CHUNG với mã '+GIA[sku].gopVao+'.\n\n'+
+      'Bán lại dưới mã này nghĩa là tách nó ra làm sản phẩm RIÊNG trở lại (không còn dùng chung giá vốn/báo cáo với mã kia nữa).\n\n'+
+      'Tiếp tục?')) return;
+    delete ALIAS[sku]; set('alias',ALIAS);
+    delete GIA[sku].gopVao;
+    tinhLaiToanBoSO(); veCB(); veSo(); veBC();
+  }
+  GIA[sku].ngung=false; set('gia',GIA); giaLai();
+  bao('giaMsg','Đã cho bán lại <b>'+esc(GIA[sku].ten)+'</b>. Nhớ bấm <b>Phát bảng giá</b> để ba máy nhận.','ok');
+}
 
 /* ══════════ PHÁT BẢNG GIÁ CHO MÁY NHÂN VIÊN ══════════ */
 /* Chỉ 10 trường này rời khỏi máy chủ. Không có von, không có qd_von. */
