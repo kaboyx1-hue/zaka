@@ -447,8 +447,15 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
     <label>Link Apps Script <span style="opacity:.6">(để trống thì chỉ tải file về máy)</span></label>
     <input id="cUrl" placeholder="https://script.google.com/macros/s/.../exec">
     <button class="btn-main mt" onclick="luuUrl()">Lưu link</button>
+    <button class="btn-nho mt" onclick="dungLinkChuan()" style="background:var(--warn);color:#2a1a00;font-weight:600">Dùng link chuẩn</button>
     <div class="sm">Có link thì bấm Xuất là file <b>vừa tải về máy, vừa bay thẳng lên Drive của chủ</b>.
     Không có link thì chỉ tải về, anh tự gửi.</div></div>
+
+  <div class="card"><h2>Chẩn đoán máy này</h2>
+    <div class="sm">Khi máy nào đó không nhận được đơn hoặc thiếu đơn, bấm nút này rồi
+    chụp màn hình gửi cho người hỗ trợ — đỡ phải đoán.</div>
+    <button class="btn-main mt" onclick="chanDoan()">Xem tình trạng máy này</button>
+    <div id="cdOut" class="mt"></div></div>
 </section>
 </main>
 
@@ -574,7 +581,7 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260904d';
+var APP_VER='20260905d';
 (function(){
   try{
     if(sessionStorage.getItem('zaka_da_kt_ver')) return;
@@ -746,7 +753,19 @@ var VER=get('ver',{bg:'',nv:'',kh:'',gr:'',kt:'',don:'',ship:'',tk:''}), DANGDB=
   }
   HUY=get('huy',[]); SHOP=get('shop',SHOP);
   setTimeout(function(){ if(CFG.ma) dongBo(false) },1500);
-  setInterval(function(){ if(CFG.ma&&navigator.onLine) dongBo(false) },60000);
+  /* NHỊP ĐỒNG BỘ 30 GIÂY, CHỈ KHI TAB ĐANG MỞ (trước đây: 60 giây, chạy cả khi
+     tab ẩn). Hai thay đổi này bù trừ nhau về hạn ngạch:
+     — Nhanh gấp đôi lúc đang thực sự làm việc → bớt cảm giác "web đứng im".
+     — Tab ẩn / máy khoá qua đêm thì NGƯNG hỏi hẳn. Trước đây một tab bỏ quên
+       vẫn hỏi suốt 24 giờ, ăn hết hạn ngạch Apps Script (bản miễn phí chỉ ~90
+       phút chạy/ngày cho TOÀN hệ thống, hết là cả nhà cùng đứng máy).
+     Tính ra: 3 máy nhân viên mở 12 tiếng/ngày ≈ 4.300 lượt hỏi, cộng máy quản
+     lý ≈ 2.200 lượt — vẫn nằm trong hạn ngạch, còn dư chỗ thở.
+     Ngoài ra vẫn giữ: quay lại tab là đồng bộ NGAY (hai listener bên dưới),
+     nên phần lớn thời gian nhân viên thấy dữ liệu mới tức thì chứ không đợi. */
+  setInterval(function(){
+    if(CFG.ma&&navigator.onLine&&!document.hidden) dongBo(false);
+  },30000);
   window.addEventListener('focus',function(){ if(CFG.ma&&navigator.onLine) dongBo(false) });
   // Mo lai tab / mo lai app tren dien thoai sau khi bi thu nho — trinh duyet co the
   // khong bao 'focus' trong truong hop nay (dac biet mobile), chi bao visibilitychange.
@@ -759,11 +778,28 @@ var VER=get('ver',{bg:'',nv:'',kh:'',gr:'',kt:'',don:'',ship:'',tk:''}), DANGDB=
   // dung (vd don duoc go thang vao Sheet thay vi qua app), may van tu bat kip trong
   // toi da 3 phut thay vi "kẹt" mai cho den khi co ai mo Console goi tay taiDon().
   setInterval(function(){
-    if(CFG.ma&&navigator.onLine&&!DANGDB) taiDon();
+    // Thêm điều kiện tab đang mở + không đang sửa đơn: lưới an toàn này kéo lại
+    // TOÀN BỘ đơn nên nặng hơn nhịp thường, không việc gì phải chạy khi không ai nhìn.
+    if(CFG.ma&&navigator.onLine&&!DANGDB&&!document.hidden&&!dangSuaDon()) taiDon();
   },180000);
   // Dam bao URL va ma may luon co gia tri truoc khi hoi Sheet
   if(!CFG.url) { CFG.url=URL_DRIVE; set('cfg',CFG); }
   if(!CFG.ma)  { CFG.ma='NV01';     set('cfg',CFG); }
+  /* TỰ SỬA LINK CŨ CÒN KẸT TRONG MÁY.
+     Trước đây link chỉ được gán khi máy CHƯA có link nào. Nghĩa là một máy đã
+     lỡ lưu link của bản triển khai CŨ thì giữ mãi link đó, kể cả khi file đã
+     được cập nhật link mới — trong khi tab ẩn danh (không có gì lưu) lại dùng
+     đúng link chuẩn trong file. Đó chính là nghịch lý "ẩn danh thì thấy đơn,
+     trình duyệt thường thì không", và là lý do máy đó không nhận thêm đơn mới.
+     Từ nay link chuẩn trong file luôn thắng; link cũ được cất lại phòng khi
+     cần xem lại, và có báo cho người dùng biết. */
+  if(typeof URL_DRIVE!=='undefined' && URL_DRIVE && CFG.url && CFG.url!==URL_DRIVE){
+    CFG.urlCu=CFG.url; CFG.url=URL_DRIVE; set('cfg',CFG);
+    setTimeout(function(){
+      bao('newMsg','Máy này đang dùng <b>link Sheet cũ</b> nên không nhận được đơn mới. '+
+        'Đã tự chuyển về link chuẩn — đơn sẽ về đủ trong giây lát.','wa');
+    },600);
+  }
   // Hien "Dang tai..." ngay, roi keo NV tu Sheet ve moi ve lai
   (function(){
     var s=$('sMayChon'); if(s) s.innerHTML='<option>Đang tải...</option>';
@@ -879,6 +915,42 @@ function luuShop(){
 function camOnMacDinh(){ $('shCamon').value=CAMON_MAC_DINH; luuShop() }
 function luuUrl(){ CFG.url=$('cUrl').value.trim(); set('cfg',CFG); veOut();
   bao('cfgMsg',CFG.url?'Đã lưu link. Từ giờ bấm Xuất là gửi thẳng lên Drive.':'Đã bỏ link. Chỉ tải file về máy.','ok') }
+/* Ép máy này quay về đúng link chuẩn ghi trong file (seed_nv.js). */
+function dungLinkChuan(){
+  if(typeof URL_DRIVE==='undefined'||!URL_DRIVE){ bao('cfgMsg','File này không kèm link chuẩn.','er'); return }
+  CFG.urlCu=CFG.url||''; CFG.url=URL_DRIVE; set('cfg',CFG);
+  if($('cUrl')) $('cUrl').value=CFG.url;
+  VER.don=''; set('ver',VER);          // buộc kéo lại toàn bộ đơn từ đầu
+  bao('cfgMsg','Đã chuyển về link chuẩn. Đang kéo lại toàn bộ đơn…','ok');
+  dongBo(true);
+}
+
+/* Bảng chẩn đoán — mọi thứ cần biết để tìm ra vì sao một máy bị thiếu đơn,
+   gói gọn trong một lần bấm, không cần mở công cụ lập trình viên. */
+function chanDoan(){
+  var chuan=(typeof URL_DRIVE!=='undefined')?URL_DRIVE:'';
+  var dungChuan=(CFG.url===chuan);
+  var homNay=DON.filter(function(d){return d.iso===today()}).length;
+  var hong=DON.filter(function(d){return !d||!d.ma||!Array.isArray(d.dong)}).length;
+  var loi=LOI_DONGBO?('<b style="color:var(--bad)">'+esc(LOI_DONGBO.msg)+'</b>'):'không có';
+  function d(nhan,gt){ return '<div style="display:flex;gap:8px;padding:3px 0;border-bottom:1px solid var(--line)">'+
+    '<div style="min-width:180px;color:var(--tx2)">'+nhan+'</div><div style="flex:1">'+gt+'</div></div>' }
+  $('cdOut').innerHTML='<div class="card" style="font-size:13px">'+
+    d('Nhân viên / mã máy', esc(CFG.ten||'(chưa đăng nhập)')+' · '+esc(CFG.ma||'?'))+
+    d('Phiên bản phần mềm', esc(typeof APP_VER!=='undefined'?APP_VER:'?'))+
+    d('Link đang dùng', dungChuan
+        ? '<b style="color:var(--ok)">ĐÚNG link chuẩn</b>'
+        : '<b style="color:var(--bad)">SAI — đang dùng link khác với link trong file</b>'+
+          '<br><span class="sm">'+esc(String(CFG.url||'(trống)').slice(-45))+'</span>'+
+          '<br><button class="btn-nho mt" onclick="dungLinkChuan()">Sửa ngay</button>')+
+    d('Tổng đơn trong máy', DON.length+' đơn · hôm nay: '+homNay)+
+    d('Đơn bị hỏng dữ liệu', hong?('<b style="color:var(--bad)">'+hong+'</b>'):'0')+
+    d('Đơn chờ gửi lên Sheet', chuaDay().length)+
+    d('Dấu mốc bản đơn', esc(VER.don||'(trống)'))+
+    d('Lỗi đồng bộ gần nhất', loi)+
+    '</div>';
+}
+
 var DANGDAY=false;
 function chuaDay(){ return DON.filter(function(d){return !d.day||d.suaSauDay}) }
 
@@ -906,7 +978,10 @@ async function dayLen(im,lanHai){
   DANGDAY=true;
   try{
     var kq=await guiGoi(url,{may:CFG.ma,nv:CFG.ten,hanhdong:'gui',don:ds.map(function(d){
-      return {ma:d.ma,ngay:d.ngay,iso:d.iso,kenh:d.kenh,sdt:d.sdt,khach:d.khach,dc:d.dc||'',
+      // ngayDayDu: bản đầy đủ "dd/mm/yyyy HH:MM:SS" dựng lại lúc kéo đơn về
+      // (xem giải thích ở taiDon). Đơn tự tạo trên máy không có trường này nên
+      // dùng d.ngay như cũ — không đổi gì với đơn mới.
+      return {ma:d.ma,ngay:d.ngayDayDu||d.ngay,iso:d.iso,kenh:d.kenh,sdt:d.sdt,khach:d.khach,dc:d.dc||'',
         ship:d.ship,giam:d.giam,phiChanh:d.phiChanh||0,nguoiGiao:d.nguoiGiao||'',tong:d.tong,sualan:d.sualan||0,gc:d.ghichu||'',
         tt:d.tt||'CHUA',ttHt:d.ttHt||'',tkNhan:d.tkNhan||'',daTra:d.daTra||0,inLan:d.inLan||0,inLuc:d.inLuc||'',
         tgGiao:tgGiaoCua(d),daGiao:d.daGiao||null,dot:d.dot||null,
@@ -1099,6 +1174,22 @@ async function taiGR(ver){
 
 async function taiDon(){
   var j=await hoi('don=1');
+  /* CHỐT AN TOÀN — máy chủ phải trả về ĐÚNG một danh sách đơn, không thì coi
+     như thất bại. Nghe thừa nhưng đây chính là lỗ hổng đã gây ra hai sự cố
+     nặng nhất từ trước tới nay: máy chủ trả về nhầm thứ khác (danh sách nhân
+     viên) mà vẫn kèm ok:true, thế là bên dưới chạy "(j.don||[])" — duyệt qua
+     một mảng rỗng, không thêm đơn nào, rồi vẫn báo THÀNH CÔNG. Máy nhân viên
+     liền đánh dấu "đã đồng bộ tới bản mới nhất" và từ đó không bao giờ nhận
+     thêm đơn nào nữa, cũng không lấy lại được đơn đang thiếu — nhìn y như
+     "kẹt đơn, mất đơn", mà không có một dòng lỗi nào để lần ra.
+     Chuyện này xảy ra khi máy đang trỏ vào một bản triển khai Apps Script CŨ
+     (link cũ còn lưu trong máy). Từ nay: sai hình dạng thì báo lỗi thật, KHÔNG
+     đánh dấu đã đồng bộ, để lần sau còn thử lại và người dùng còn thấy cảnh báo. */
+  if(j.ok && !Array.isArray(j.don)){
+    LOI_DONGBO={luc:Date.now(),msg:'Máy chủ trả về dữ liệu không phải danh sách đơn — '+
+      'nhiều khả năng máy này đang trỏ vào link Sheet cũ. Vào Cài đặt bấm "Dùng link chuẩn".'};
+    return false;
+  }
   if(!j.ok){
     LOI_DONGBO={luc:Date.now(),msg:'Sheet từ chối yêu cầu lấy đơn: '+(j.loi||'không rõ lý do')};
     return false;
@@ -1115,6 +1206,21 @@ async function taiDon(){
     }
     // iso cung can cat bot neu co gio UTC
     if(d.iso && d.iso.length>10) d.iso=d.iso.slice(0,10);
+    /* GIỮ LẠI NGÀY GIỜ ĐẦY ĐỦ — nếu không, mỗi lần sửa đơn là cột "Ngày giờ"
+       trên Sheet bị bào mòn thành trơ mỗi "10:47".
+       Vì sao: ngay phía trên, đơn kéo từ Sheet về bị cắt gọn còn "HH:MM" cho
+       gọn màn hình. Đến lúc nhân viên sửa đơn đó, dayLen() gửi lên đúng cái
+       chuỗi đã cắt ("10:47"), Apps Script xoá dòng cũ rồi ghi lại dòng mới ở
+       cuối Sheet — thế là ngày tháng gốc mất sạch, chỉ còn giờ. Đã thấy đúng
+       hiện tượng này ở đơn NV02-260904-013 trên Sheet.
+       Cách giữ: dựng lại chuỗi đầy đủ từ NGÀY (lấy ở cột Ngày ISO — cột này
+       đáng tin, đã vá isoAn_ phía máy chủ) ghép với GIỜ (lấy ở Ngày giờ — phần
+       giờ luôn đúng kể cả khi phần ngày bị Sheets hiểu sai tháng/ngày).
+       dayLen() sẽ gửi chuỗi này thay vì chuỗi đã cắt. */
+    if(d.iso && /^\d{4}-\d{2}-\d{2}$/.test(d.iso) && /^\d{2}:\d{2}$/.test(String(d.ngay||''))){
+      var _p=d.iso.split('-');
+      d.ngayDayDu=_p[2]+'/'+_p[1]+'/'+_p[0]+' '+d.ngay+':00';
+    }
     d.ghichu=d.gc||''; d.day=true; d.suaSauDay=false; d.tuSheet=true;
     d.lichSu=cu?cu.lichSu:doiLS(d.ls);
     if(!cu){ DON.push(d); them++ }
@@ -1133,6 +1239,10 @@ async function taiDon(){
          hoặc tab ẩn danh không dính vì không có bản cũ nào để giữ. */
       if(d.iso && cu.iso!==d.iso){ cu.iso=d.iso; capnhat++ }
       if(d.ngay && cu.ngay!==d.ngay){ cu.ngay=d.ngay; capnhat++ }
+      // Bản ngày giờ đầy đủ cũng phải theo sang bản đang giữ trong máy — nếu
+      // không, lúc nhân viên sửa đơn này máy vẫn gửi lên chuỗi cụt "10:47" và
+      // cột Ngày giờ trên Sheet lại mất ngày tháng một lần nữa.
+      if(d.ngayDayDu && cu.ngayDayDu!==d.ngayDayDu) cu.ngayDayDu=d.ngayDayDu;
       // Máy khác vừa thu tiền hoặc in phiếu → theo cho kịp
       if((d.inLan||0)>(cu.inLan||0)){ cu.inLan=d.inLan; cu.inLuc=d.inLuc; capnhat++ }
       if(!cu.ttChuaDay && String(d.tt||'CHUA')!==String(cu.tt||'CHUA')){
@@ -1920,7 +2030,11 @@ function thuGonTatCa(loai,v){
   });
   if(loai==='pg') vePG(); else veDon();
 }
-function vePG(){
+function vePG(epVe){
+  /* epVe=true: buộc vẽ dù đang sửa — CHỈ dùng lúc mở form sửa từ tab Phiếu giao
+     hàng, vì chính lần vẽ đó mới tạo ra ô chứa form. Mọi lời gọi nền khác đều bị
+     chặn khi đang sửa đơn (xem giải thích dài ở veDon). */
+  if(!epVe && dangSuaDon()){ CHO_VE_LAI=true; return }
   veLocTT();
   veShipperList();
   var q=kd(($('fpg')&&$('fpg').value||'').trim());
@@ -2026,7 +2140,7 @@ function suaTaiCho(ma,tuPG){
   ED={ma:ma,ship:d.ship||0,giam:d.giam||0,phiChanh:d.phiChanh||0,sdt:d.sdt,ten:d.khach,kenh:d.kenh,dc:d.dc||'',gc:d.ghichu||'',
       dong:d.dong.map(function(x){return {sku:x.sku,ten:x.ten,brand:x.brand,dv:x.dv,hs:x.hs,sl:x.sl,gia:x.gia,goc:x.gia}})};
   ED.tuPG=!!tuPG;
-  if(tuPG){vePG()} veEdit();
+  if(tuPG){vePG(true)} veEdit();
 }
 function edLai(){ try{if(document.activeElement&&document.activeElement.blur)document.activeElement.blur()}catch(e){}
   setTimeout(veEdit,0) }
@@ -2077,8 +2191,9 @@ function edThem(sku){
   edLai();
 }
 function edHuy(){ var ma=ED.ma, pg=ED.tuPG; ED=null;
-  if(pg){vePG();return}
-  var b=$('ct_'+ma); if(b){b.classList.add('hide');b.innerHTML=''} }
+  if(pg){vePG();veLaiNeuDangNo();return}
+  var b=$('ct_'+ma); if(b){b.classList.add('hide');b.innerHTML=''}
+  veLaiNeuDangNo(); }
 function edLuu(){
   var d=DON.filter(function(x){return x.ma===ED.ma})[0]; if(!d){ED=null;return}
   var hang=0,ts=0; ED.dong.forEach(function(x){hang+=x.gia*x.sl;ts+=x.sl});
@@ -2118,7 +2233,7 @@ function edLuu(){
         k.gia[x.sku]={gia:x.gia,luc:today(),het:addD(today(),HAN),canDay:true} });
     set('kh',KH) }
   set('don',DON); var ma=ED.ma, pg=ED.tuPG; ED=null;
-  veDon(); vePG(); veOut(); veKH(); dem(); dayLen(false);
+  CHO_VE_LAI=false; veDon(); vePG(); veOut(); veKH(); dem(); dayLen(false);
   if(pg) bao('pgMsg','Đã cập nhật đơn <b>'+esc(ma)+'</b> — Lịch sử cũng đã đổi theo.','ok');
   bao('listMsg','Đã cập nhật đơn <b>'+esc(ma)+'</b> — '+td.length+' thay đổi được ghi lại'+
       (d.guiLai?'. Sẽ gửi lại ở lần xuất tới.':''),'ok');
@@ -2160,7 +2275,30 @@ function tab(t){['new','pg','list','kh','out','cfg','cp'].forEach(function(x){
   // toi chu ky 60s. Chay ngam (khong lam phien), chi ve lai neu THAT SU co gi moi.
   if((t==='pg'||t==='list')&&CFG.ma&&navigator.onLine) dongBo(false);
 }
+/* ══════════════════════════════════════════════════════════════════
+   KHOÁ MÀN HÌNH KHI NHÂN VIÊN ĐANG SỬA ĐƠN
+   ══════════════════════════════════════════════════════════════════
+   LỖI ĐÃ XẢY RA THẬT (04-05/09/2026): nhân viên đang sửa đơn thì đúng lúc
+   đồng bộ nền chạy (mỗi 60 giây, và mỗi lần quay lại tab). Đồng bộ xong gọi
+   veDon()/vePG(), hai hàm này vẽ lại TOÀN BỘ danh sách — tức là đập bỏ luôn ô
+   <div id="ct_MÃ ĐƠN"> đang chứa form sửa. Hậu quả nhìn từ phía nhân viên:
+   form sửa biến mất giữa chừng, mọi thứ vừa gõ mất sạch, VÀ tệ hơn là biến ED
+   vẫn còn treo trong bộ nhớ nên chiTiet() chặn không cho mở lại đơn đó nữa —
+   đơn nằm trơ trong danh sách, bấm không ăn, y như "mất đơn".
+   CÁCH VÁ: đang sửa thì KHÔNG vẽ lại danh sách, chỉ ghi nhớ là "còn nợ một
+   lần vẽ"; sửa xong (Lưu hoặc Huỷ) mới vẽ lại. Van an toàn: nếu đơn đang sửa
+   đã biến mất khỏi DON (chủ huỷ từ xa) thì thả ED ra, tránh treo màn hình. */
+var CHO_VE_LAI=false;
+function dangSuaDon(){
+  if(!ED) return false;
+  if(!DON.some(function(x){return x.ma===ED.ma})){ ED=null; return false }
+  return true;
+}
+function veLaiNeuDangNo(){
+  if(CHO_VE_LAI && !dangSuaDon()){ CHO_VE_LAI=false; veDon(); vePG(); }
+}
 function veDon(){
+  if(dangSuaDon()){ CHO_VE_LAI=true; return }
   var q=kd(($('fdon')&&$('fdon').value||'').trim());
   var ds=DON.filter(function(d){return !q||kd(d.ma+' '+d.khach+' '+d.sdt).indexOf(q)>=0});
   if(!ds.length){$('dsDon').innerHTML='<div class="card"><div class="empty">Chưa có đơn nào</div></div>';return}
