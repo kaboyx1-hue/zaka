@@ -3,38 +3,47 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ZAKA — Quản lý</title>
 <style>
-:root{--bg:#0f1720;--card:#18222e;--c2:#1e2a38;--line:#2b3a4a;--tx:#e8eef4;--tx2:#8fa3b8;
---acc:#4da3ff;--ok:#3ecf8e;--warn:#ffb020;--bad:#ff6b6b;--pur:#b39ddb}
-body.sang{--bg:#f4f6f9;--card:#ffffff;--c2:#eef2f6;--line:#d8e0e8;--tx:#182430;--tx2:#5c6b7a;--acc:#2b7de0;--ok:#1f9d63;--warn:#b8720a;--bad:#d63333;--pur:#7c5cc4}
+/* ══ Bảng màu — lấy cảm hứng phong cách mềm mại/bo tròn/pastel, vẫn giữ
+   nguyên 2 chế độ sáng/tối sẵn có (body.sang), chỉ đổi TÔNG MÀU + BO GÓC,
+   không đụng gì tới cấu trúc/id/class mà JS đang dùng. ══ */
+:root{--bg:#141c2b;--bg2:#1b2438;--card:#1c2740;--c2:#232f4a;--line:#324061;--tx:#eef1fb;--tx2:#9aa8c7;
+--acc:#7c9cff;--acc2:#a78bfa;--ok:#4fd8a4;--warn:#ffbe55;--bad:#ff8080;--pur:#c7b6fb;
+--okBg:#123a30;--badBg:#3a1c22;--warnBg:#3a2d10;--purBg:#2a2450;--shadow:0 10px 30px -12px rgba(0,0,0,.45)}
+body.sang{--bg:#eef3fb;--bg2:#eaf6f1;--card:#ffffff;--c2:#f3f6fc;--line:#e2e8f5;--tx:#212c42;--tx2:#7c88a3;
+--acc:#6d93ff;--acc2:#9c7bfa;--ok:#2fb787;--warn:#e08a2b;--bad:#e3615c;--pur:#8f6fe0;
+--okBg:#e4f7ef;--badBg:#fdeceb;--warnBg:#fdf1e0;--purBg:#f0ebfd;--shadow:0 12px 28px -14px rgba(70,90,150,.28)}
 *{box-sizing:border-box}
-body{margin:0;font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--tx)}
+body{margin:0;font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);background-attachment:fixed;color:var(--tx)}
 .hide{display:none!important}
-button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:10px 14px}
-input,select{font:inherit;width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--c2);color:var(--tx)}
+button{font:inherit;cursor:pointer;border:0;border-radius:14px;padding:10px 14px;transition:transform .08s,filter .12s}
+button:active{transform:scale(.98)}
+input,select{font:inherit;width:100%;padding:11px 12px;border-radius:14px;border:1px solid var(--line);background:var(--c2);color:var(--tx)}
+input:focus,select:focus{outline:none;border-color:var(--acc)}
 label{display:block;font-size:12.5px;color:var(--tx2);margin:0 0 6px}
 .row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1;min-width:150px}.mt{margin-top:12px}
-header{background:var(--card);border-bottom:1px solid var(--line);padding:12px 16px}
+header{background:var(--card);border-bottom:1px solid var(--line);padding:14px 16px;box-shadow:var(--shadow)}
 header b{font-size:17px}header div{font-size:12.5px;color:var(--tx2);margin-top:2px}
 nav{display:flex;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:19;overflow-x:auto}
-nav button{flex:1;background:none;color:var(--tx2);border-radius:0;padding:12px 10px;font-size:14px;white-space:nowrap;border-bottom:2px solid transparent}
+nav button{flex:1;background:none;color:var(--tx2);border-radius:0;padding:12px 10px;font-size:14px;white-space:nowrap;border-bottom:3px solid transparent}
 nav button.on{color:var(--acc);border-bottom-color:var(--acc);font-weight:600}
 main{padding:15px;max-width:1060px;margin:0 auto;padding-bottom:60px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow)}
 h2{font-size:15px;margin:0 0 11px}
-.btn{background:var(--acc);color:#03121f;font-weight:600}
+.btn{background:linear-gradient(135deg,var(--acc) 0%,var(--acc2) 100%);color:#fff;font-weight:600;box-shadow:0 8px 20px -8px var(--acc)}
 .btn2{background:var(--c2);color:var(--tx2)}
-.drop{border:2px dashed var(--line);border-radius:12px;padding:30px 16px;text-align:center;color:var(--tx2);cursor:pointer}
+.drop{border:2px dashed var(--line);border-radius:16px;padding:30px 16px;text-align:center;color:var(--tx2);cursor:pointer}
 .drop:hover,.drop.on{border-color:var(--acc);background:var(--c2);color:var(--acc)}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{padding:8px 6px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
 th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
 .kpi{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.kpi div{background:var(--c2);border-radius:12px;padding:13px}
+.kpi div{background:var(--c2);border-radius:16px;padding:13px}
 .kpi small{color:var(--tx2);font-size:11.5px;display:block;margin-bottom:3px}.kpi b{font-size:18px}
 /* Bảng giá dùng hết bề ngang màn hình */
 #pg-gia{max-width:none;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);padding:0 16px}
 #dsGia table{table-layout:auto}
-#dsGia thead th,#dsGia tr:first-child th{position:sticky;top:0;z-index:5;background:#16202b}
+#dsGia thead th,#dsGia tr:first-child th{position:sticky;top:0;z-index:5;background:var(--card)}
 #dsGia td:nth-child(2){min-width:min(46vw,560px)}
 #dsGia input.ten{width:100%}
 .qd{display:flex;flex-direction:column;gap:3px;min-width:210px}
@@ -43,13 +52,13 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right;
 .qd .tot{color:var(--ok)}.qd .xau{color:var(--bad);font-weight:600}
 .qd input.so{width:58px;padding:4px;text-align:center}
 .qd input.gia{width:104px;padding:5px;text-align:right}
-tr.canhbao td{background:#2a1414}
+tr.canhbao td{background:var(--badBg)}
 
 /* ĐIỆN THOẠI */
 @media(max-width:760px){
   main{padding:10px;padding-bottom:90px}
   #pg-gia{margin:0;padding:0}
-  .card{padding:11px;border-radius:12px}
+  .card{padding:11px;border-radius:16px}
   nav button{font-size:13px;padding:10px 6px}
   table{font-size:12px}th,td{padding:6px 4px}
   .kpi{grid-template-columns:repeat(2,1fr)}
@@ -62,35 +71,58 @@ tr.canhbao td{background:#2a1414}
   dialog{max-width:96vw;padding:14px}
 }
 .kpiclick{cursor:pointer;border:1px solid transparent;transition:border-color .12s,background .12s}
-.kpiclick:hover{border-color:var(--acc);background:#1b2836}
+.kpiclick:hover{border-color:var(--acc);background:var(--c2)}
 .kpi .mui{color:var(--acc);font-size:12px}
 .kpihint{font-size:10.5px;color:var(--acc);margin-top:3px}
 .locbar{display:flex;align-items:center;justify-content:space-between;gap:10px;
-  background:#1b2836;border:1px solid var(--acc);border-radius:11px;padding:9px 12px;margin-bottom:10px;font-size:13px}
+  background:var(--c2);border:1px solid var(--acc);border-radius:14px;padding:9px 12px;margin-bottom:10px;font-size:13px}
 @media(min-width:700px){.kpi{grid-template-columns:repeat(4,1fr)}}
-.msg{padding:11px;border-radius:10px;margin-bottom:11px;font-size:13.5px;line-height:1.5}
-.msg.ok{background:#123527;color:var(--ok)}.msg.er{background:#3a1a1a;color:var(--bad)}
-.msg.wa{background:#3a2d10;color:var(--warn)}
+.msg{padding:12px 13px;border-radius:14px;margin-bottom:11px;font-size:13.5px;line-height:1.5}
+.msg.ok{background:var(--okBg);color:var(--ok)}.msg.er{background:var(--badBg);color:var(--bad)}
+.msg.wa{background:var(--warnBg);color:var(--warn)}
 .empty{text-align:center;color:var(--tx2);padding:24px;font-size:14px}
 .sm{font-size:12px;color:var(--tx2);margin-top:6px;line-height:1.5}
-.tag{font-size:10.5px;padding:2px 7px;border-radius:6px;background:var(--c2);color:var(--tx2)}
-.tag.w{background:#3a2d10;color:var(--warn)}.tag.p{background:#2a2440;color:var(--pur)}
-.tag.g{background:#123527;color:var(--ok)}
-dialog{border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--tx);padding:18px;max-width:460px;width:92%}
-dialog::backdrop{background:rgba(0,0,0,.6)}
-.mini{padding:5px 10px;font-size:12px;background:var(--c2);color:var(--acc)}
+.tag{font-size:10.5px;padding:2px 7px;border-radius:8px;background:var(--c2);color:var(--tx2)}
+.tag.w{background:var(--warnBg);color:var(--warn)}.tag.p{background:var(--purBg);color:var(--pur)}
+.tag.g{background:var(--okBg);color:var(--ok)}
+dialog{border:1px solid var(--line);border-radius:20px;background:var(--card);color:var(--tx);padding:18px;max-width:460px;width:92%;box-shadow:var(--shadow)}
+dialog::backdrop{background:rgba(20,25,40,.55)}
+.mini{padding:5px 10px;font-size:12px;border-radius:10px;background:var(--c2);color:var(--acc)}
+
+/* Màn hình mở khoá — logo bo tròn kiểu gradient + thẻ mềm mại + hàng chân mèo trang trí,
+   thuần trang trí (không id/class nào JS đang dùng bị đổi: #khErr, #khKey, moKhoa() y hệt cũ) */
+#khoa{max-width:380px;margin:9vh auto;padding:20px;text-align:center}
+#khoa .logoMark{width:76px;height:76px;margin:0 auto 14px;border-radius:22px;
+  background:linear-gradient(135deg,var(--acc) 0%,var(--acc2) 100%);
+  display:flex;align-items:center;justify-content:center;font-size:34px;box-shadow:0 14px 30px -10px var(--acc)}
+#khoa h1{font-size:21px;margin:0 0 2px}
+#khoa .sub{color:var(--tx2);margin:0 0 22px;font-size:13px}
+#khoa .khCard{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:var(--shadow);text-align:left}
+#khoa .khCard label{margin-top:2px}
+#khoa .pawRow{display:flex;justify-content:center;gap:10px;margin-top:26px}
+#khoa .pawRow span{width:40px;height:52px;border-radius:16px 16px 20px 20px;display:flex;align-items:flex-end;
+  justify-content:center;font-size:17px;padding-bottom:6px;opacity:.85}
 </style></head><body>
-<div id="khoa" style="max-width:400px;margin:12vh auto;padding:24px">
-  <h1 style="font-size:22px;margin:0 0 4px">ZAKA — Máy quản lý</h1>
-  <p style="color:var(--tx2);margin:0 0 20px;font-size:14px">Máy này chứa giá vốn và toàn bộ sổ cái.</p>
-  <div id="khErr"></div>
-  <label class="sm">Mật khẩu máy quản lý</label>
-  <input id="khKey" type="password" autocomplete="off" style="width:100%"
-    onkeydown="if(event.key==='Enter')moKhoa()">
-  <button class="btn mt" style="width:100%" onclick="moKhoa()">Mở</button>
-  <div class="sm" style="margin-top:14px;opacity:.65">Dùng <b>mật khẩu quản lý</b> — cùng mật khẩu
-  đặt trong Apps Script. Máy sẽ hỏi thẳng Google Sheet để xác minh, nên xoá trình duyệt
-  cũng không ai tự đặt mật khẩu mới được.</div>
+<div id="khoa">
+  <div class="logoMark">🐾</div>
+  <h1>ZAKA — Máy quản lý</h1>
+  <p class="sub">Máy này chứa giá vốn và toàn bộ sổ cái</p>
+  <div class="khCard">
+    <div id="khErr"></div>
+    <label class="sm">Mật khẩu máy quản lý</label>
+    <input id="khKey" type="password" autocomplete="off" style="width:100%"
+      onkeydown="if(event.key==='Enter')moKhoa()">
+    <button class="btn mt" style="width:100%" onclick="moKhoa()">Mở</button>
+    <div class="sm" style="margin-top:14px;opacity:.75">Dùng <b>mật khẩu quản lý</b> — cùng mật khẩu
+    đặt trong Apps Script. Máy sẽ hỏi thẳng Google Sheet để xác minh, nên xoá trình duyệt
+    cũng không ai tự đặt mật khẩu mới được.</div>
+  </div>
+  <div class="pawRow">
+    <span style="background:linear-gradient(160deg,#ffb37a,#f0895a)">🐾</span>
+    <span style="background:linear-gradient(160deg,#b9c2d0,#8f99ab)">🐾</span>
+    <span style="background:linear-gradient(160deg,#ffd08a,#f0a94a)">🐾</span>
+    <span style="background:linear-gradient(160deg,#c9b8ff,#a78bfa)">🐾</span>
+  </div>
 </div>
 <div id="thanApp" class="hide">
 
@@ -139,7 +171,7 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
       </select>
       <input id="locLaiTu" inputmode="numeric" placeholder="Lãi từ… (đ)" style="max-width:140px" oninput="dinhDangTien(this)" onchange="veSo()">
       <button class="btn-nho" id="btnBoLocLaiSo" onclick="document.getElementById('locLaiTu').value='';veSo()" style="display:none">Bỏ lọc lãi</button>
-      <button class="btn-nho" onclick="kiemTraTrungMa()" style="background:#3a1a1a;color:var(--bad)" title="Quét toàn bộ sổ cái tìm mã đơn xuất hiện nhiều hơn 1 lần">Kiểm tra đơn trùng mã</button>
+      <button class="btn-nho" onclick="kiemTraTrungMa()" style="background:var(--badBg);color:var(--bad)" title="Quét toàn bộ sổ cái tìm mã đơn xuất hiện nhiều hơn 1 lần">Kiểm tra đơn trùng mã</button>
     </div>
     <div class="row mt">
       <button class="btn2" id="btnHuyLo2" onclick="huyLoQL()" style="color:var(--bad)">Huỷ 0 đơn đã chọn</button>
@@ -222,7 +254,7 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
     </div>
     <button class="btn-nho mt" onclick="themShipper()">Thêm vào danh sách</button>
     <div id="dsShipperQL" style="margin-top:10px"></div>
-    <button class="btn mt" onclick="luuShipperLenSheet()" style="background:var(--acc);color:#03121f;font-weight:600">Lưu danh sách lên Sheet</button>
+    <button class="btn mt" onclick="luuShipperLenSheet()" style="color:#fff;font-weight:600">Lưu danh sách lên Sheet</button>
   </div>
 
   <div class="card"><h2>Tài khoản nhận chuyển khoản</h2>
@@ -235,7 +267,7 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
     </div>
     <button class="btn-nho mt" onclick="themTaiKhoan()">Thêm vào danh sách</button>
     <div id="dsTaiKhoanQL" style="margin-top:10px"></div>
-    <button class="btn mt" onclick="luuTaiKhoanLenSheet()" style="background:var(--acc);color:#03121f;font-weight:600">Lưu danh sách lên Sheet</button>
+    <button class="btn mt" onclick="luuTaiKhoanLenSheet()" style="color:#fff;font-weight:600">Lưu danh sách lên Sheet</button>
   </div>
 
   <div class="card"><h2>Nhật ký nhân viên <a href="#" class="lnk" style="font-size:13px;font-weight:400" id="lnkNhatKy" onclick="THU_GON_NK=!THU_GON_NK;veNhatKy();return false"></a></h2>
@@ -335,7 +367,7 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260905i';
+var APP_VER='20260905j';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1381,7 +1413,7 @@ function veSo(){
       return '<tr onclick="ctDon(\''+d.ma+'\')" style="cursor:pointer'+(d.huy?';opacity:.55':'')+'">'+
         '<td onclick="event.stopPropagation()">'+(d.huy?'':'<input type="checkbox" class="ckso" value="'+d.ma+'" onchange="demHuyQL()" style="width:17px;height:17px;accent-color:var(--bad)">')+'</td>'+
         '<td'+(d.huy?' style="text-decoration:line-through"':'')+'>'+esc(d.ma)+
-        (d.huy?' <span class="tag" style="background:#3a1a1a;color:var(--bad)">ĐÃ HUỶ</span>':'')+
+        (d.huy?' <span class="tag" style="background:var(--badBg);color:var(--bad)">ĐÃ HUỶ</span>':'')+
         (d.thieuVon?' <span class="tag w">chờ vốn</span>':'')+
         (d.huy?'':(function(){var t=d.tt||'CHUA';
           if(t==='DA') return ' <span class="tag" style="background:#16241c;color:var(--ok)">đã thu</span>';
@@ -1389,7 +1421,7 @@ function veSo(){
           return ' <span class="tag w">chưa thu '+tien(d.tong)+'</span>'})())+
         (d.huy?'':(function(){var t=tgGiaoCua(d);
           if(t==='MOT_PHAN') return ' <span class="tag w">giao dở '+tongDaGiao(d)+'/'+tongDat(d)+'</span>';
-          if(t==='CHUA') return ' <span class="tag" style="background:#3a1a1a;color:var(--bad)">chưa giao</span>';
+          if(t==='CHUA') return ' <span class="tag" style="background:var(--badBg);color:var(--bad)">chưa giao</span>';
           return ''})())+
         (d.huy||d.thieuVon||daGhiNhan(d)?'':' <span class="tag p">chưa ghi nhận</span>')+
         (d.sualan?' <span class="tag p">NV sửa '+d.sualan+'×</span>':'')+
@@ -2490,7 +2522,7 @@ function veNV(){
   $('dsNV').innerHTML='<div style="overflow-x:auto"><table><tr><th>Tên</th><th>Mã đăng nhập</th><th>Trạng thái</th><th>Đăng ký</th><th></th></tr>'+
     NVS.map(function(x){
       var cho=x.trangthai==='CHO DUYET', ngung=x.trangthai==='NGUNG';
-      return '<tr'+(cho?' style="background:#3a2d10"':'')+'><td><b>'+esc(x.ten)+'</b>'+
+      return '<tr'+(cho?' style="background:var(--warnBg)"':'')+'><td><b>'+esc(x.ten)+'</b>'+
         (cho?'<div class="tag w">CHỜ DUYỆT</div>':'')+'</td>'+
         '<td>'+esc(x.key||'')+'</td>'+
         '<td>'+(ngung?'<span style="color:var(--bad)">Đã ngưng</span>':
