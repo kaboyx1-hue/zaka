@@ -581,7 +581,7 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260905d';
+var APP_VER='20260905e';
 (function(){
   try{
     if(sessionStorage.getItem('zaka_da_kt_ver')) return;
@@ -1013,6 +1013,32 @@ async function dayLen(im,lanHai){
         DANGDAY=false;
         return dayLen(im, true);
       }
+    }
+    if(kq.doc && kq.j && kq.j.vaCham && kq.j.vaCham.length){
+      // ĐƠN CŨ (sualan>0) vừa bị người/máy KHÁC sửa xong trước — KHÔNG được
+      // cấp mã mới (sẽ sinh đơn ảo trùng lặp, xem ghi chú ở nhánh dungMa bên
+      // dưới). Cách đúng: bỏ hẳn bản sửa dở của máy này, ép tải lại bản thật
+      // từ Sheet ngay (sualan=-1 để chắc chắn thắng mọi so sánh sualan ở
+      // taiDon()), và báo rõ cho người dùng biết để họ kiểm tra/sửa lại.
+      var dsVC=[];
+      kq.j.vaCham.forEach(function(x){
+        var d=getDon(x.ma); if(!d) return;
+        d.sualan=-1; d.day=true; d.suaSauDay=false;
+        if(ED&&ED.ma===x.ma){ ED=null; CHO_VE_LAI=false }
+        dsVC.push(x.ma);
+      });
+      set('don',DON); veDon(); vePG(); dem();
+      if(dsVC.length) bao('outMsg','<b>'+dsVC.length+' đơn vừa bị người khác sửa cùng lúc</b> nên Sheet KHÔNG lưu bản sửa vừa rồi — '+
+        'đã tự tải lại bản mới nhất: <b>'+dsVC.map(esc).join(', ')+'</b>.<br>'+
+        '<span class="sm">Vui lòng mở lại đơn kiểm tra, sửa lại nếu ý sửa của anh/chị vẫn còn cần thiết.</span>','er');
+      taiDon().then(function(){ veDon(); vePG(); dem() });
+      // Dừng ở đây: gói đã bị Sheet từ chối (ok:false) và phần va chạm đã được
+      // xử lý xong ở trên rồi — KHÔNG để đoạn "ok===false" bên dưới ghi đè mất
+      // thông báo rõ ràng vừa hiện bằng thông báo chung chung "gửi rồi nhưng
+      // không đọc được câu trả lời". Các đơn khác còn lại trong ds (nếu có,
+      // chưa từng đụng va chạm) vẫn còn nguyên trong hàng đợi, sẽ tự gửi lại
+      // ở lượt đồng bộ kế tiếp — an toàn, không mất gì.
+      return;
     }
     if(kq.doc && kq.j && kq.j.ok===false){
       // SHEET TỪ CHỐI — tuyệt đối không đánh dấu là đã đẩy
@@ -2034,7 +2060,7 @@ function vePG(epVe){
   /* epVe=true: buộc vẽ dù đang sửa — CHỈ dùng lúc mở form sửa từ tab Phiếu giao
      hàng, vì chính lần vẽ đó mới tạo ra ô chứa form. Mọi lời gọi nền khác đều bị
      chặn khi đang sửa đơn (xem giải thích dài ở veDon). */
-  if(!epVe && dangSuaDon()){ CHO_VE_LAI=true; return }
+  if(!epVe && dangGoTrongFormSua()){ CHO_VE_LAI=true; return }
   veLocTT();
   veShipperList();
   var q=kd(($('fpg')&&$('fpg').value||'').trim());
@@ -2133,6 +2159,7 @@ function vePG(epVe){
    }
   }).join('');
   demIn();
+  veLaiFormSua(true);
 }
 function suaTaiCho(ma,tuPG){
   var d=DON.filter(function(x){return x.ma===ma})[0]; if(!d)return;
@@ -2144,8 +2171,17 @@ function suaTaiCho(ma,tuPG){
 }
 function edLai(){ try{if(document.activeElement&&document.activeElement.blur)document.activeElement.blur()}catch(e){}
   setTimeout(veEdit,0) }
+/* Tìm ĐÚNG ô chứa form sửa. Phải làm vậy vì tab Lịch sử và tab Phiếu giao hàng
+   cùng đặt tên ô là "ct_<mã đơn>" — trùng nhau. Hàm tìm theo tên của trình duyệt
+   luôn trả về ô ĐẦU TIÊN trong trang, nên form có thể bị vẽ nhầm sang tab kia rồi
+   bị xoá ngay sau đó khi tab kia vẽ lại. Ở đây tìm trong đúng danh sách đang mở. */
+function oFormSua(){
+  var goc = (ED && ED.tuPG) ? $('dsPG') : $('dsDon');
+  if(goc){ var b=goc.querySelector('#ct_'+ED.ma); if(b) return b }
+  return $('ct_'+ED.ma);
+}
 function veEdit(){
-  var box=$('ct_'+ED.ma); if(!box)return;
+  var box=oFormSua(); if(!box)return;
   var t=0; ED.dong.forEach(function(x){t+=x.gia*x.sl});
   box.innerHTML='<div class="edt"><h3>Đang sửa đơn '+esc(ED.ma)+'</h3>'+
     ED.dong.map(function(x,i){
@@ -2294,11 +2330,34 @@ function dangSuaDon(){
   if(!DON.some(function(x){return x.ma===ED.ma})){ ED=null; return false }
   return true;
 }
+/* CHỈ hoãn vẽ lại khi con trỏ ĐANG NẰM TRONG ô nhập của form sửa — tức nhân
+   viên đang thực sự gõ dở. Bấm nút, chuyển tab, hay để form mở đó rồi đi làm
+   việc khác thì vẫn vẽ lại bình thường.
+   LỖI ĐÃ MẮC: bản trước chặn vẽ lại suốt thời gian còn mở form sửa. Chỉ cần
+   nhân viên mở form rồi bỏ đó (không Lưu, không Huỷ) là danh sách ĐỨNG IM
+   vĩnh viễn — bấm "Đồng bộ đơn" cũng không ăn thua, phải F5 mới thấy đơn mới
+   (F5 xoá biến ED trong bộ nhớ). Sửa quá tay còn hại hơn lỗi gốc. */
+function dangGoTrongFormSua(){
+  if(!ED) return false;
+  var el=document.activeElement; if(!el) return false;
+  var t=(el.tagName||'').toLowerCase();
+  if(t!=='input'&&t!=='textarea'&&t!=='select') return false;
+  var box=$('ct_'+ED.ma);
+  return !!(box && box.contains(el));
+}
+/* Vẽ lại form sửa sau khi danh sách vừa được dựng lại — nhờ vậy form không bao
+   giờ bị mất, mà danh sách vẫn cập nhật đơn mới bình thường. Mọi thứ nhân viên
+   đã gõ đều nằm sẵn trong biến ED nên dựng lại là đủ, không mất gì. */
+function veLaiFormSua(tuPG){
+  if(!dangSuaDon()) return;
+  if(!!ED.tuPG!==!!tuPG) return;
+  try{ veEdit() }catch(e){}
+}
 function veLaiNeuDangNo(){
   if(CHO_VE_LAI && !dangSuaDon()){ CHO_VE_LAI=false; veDon(); vePG(); }
 }
 function veDon(){
-  if(dangSuaDon()){ CHO_VE_LAI=true; return }
+  if(dangGoTrongFormSua()){ CHO_VE_LAI=true; return }
   var q=kd(($('fdon')&&$('fdon').value||'').trim());
   var ds=DON.filter(function(d){return !q||kd(d.ma+' '+d.khach+' '+d.sdt).indexOf(q)>=0});
   if(!ds.length){$('dsDon').innerHTML='<div class="card"><div class="empty">Chưa có đơn nào</div></div>';return}
@@ -2334,6 +2393,7 @@ function veDon(){
       '<div id="ct_'+d.ma+'" class="hide"></div>'+
     '</div>'}).join('')+'</div>';
   demHuy(); demInLS();
+  veLaiFormSua(false);
 }
 function dsChonHuy(){ return [].slice.call(document.querySelectorAll('.ckdon:checked')).map(function(c){return c.value}) }
 function demHuy(){ var b=$('btnHuyLo'); if(b) b.textContent='Huỷ '+dsChonHuy().length+' đơn đã chọn' }
