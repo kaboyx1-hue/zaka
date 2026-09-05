@@ -335,7 +335,7 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260905e';
+var APP_VER='20260905f';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -467,6 +467,13 @@ function skuChinh(sku){
   while(ALIAS[s] && dem<10){ s=ALIAS[s]; dem++ }   // dem chặn vòng lặp nếu lỡ gộp vòng tròn
   return s;
 }
+/* CHỈ xét trùng tên trong phạm vi sản phẩm NHÂN VIÊN TỰ TẠO (mã MOI-*, hoặc từ
+   kênh "chờ duyệt" — đều mang cờ p.moi=true) — đúng theo yêu cầu của chủ: không
+   muốn bị làm phiền bởi các cặp trùng tên nằm sẵn trong 853 mặt hàng cũ (chủ tự lo
+   liệu riêng nếu cần, không phải việc phần mềm phải nhắc). Một nhóm vẫn được tính
+   là "còn liên quan" chừng nào ÍT NHẤT MỘT mã trong nhóm còn cờ moi=true (chưa được
+   chủ điền giá vốn/tay để "chuyển chính thức") — vì lúc chủ vừa điền vốn cho 1 mã,
+   cờ moi của MÃ ĐÓ tự tắt (xem setF/setN), nhưng mã còn lại vẫn cần được gộp vào. */
 function nhomTrungTen(){
   var theoTen={};
   Object.keys(GIA).forEach(function(k){
@@ -475,16 +482,18 @@ function nhomTrungTen(){
     if(!ten) return;
     theoTen[ten]=theoTen[ten]||[]; theoTen[ten].push(k);
   });
-  return Object.keys(theoTen).map(function(t){return theoTen[t]}).filter(function(a){return a.length>1});
+  return Object.keys(theoTen).map(function(t){return theoTen[t]})
+    .filter(function(a){ return a.length>1 && a.some(function(k){return GIA[k]&&GIA[k].moi}); });
 }
 function veTrungTen(){
   var nhom=nhomTrungTen();
   if(!nhom.length) return '';
-  return '<div class="card"><h2>Sản phẩm nghi trùng tên — '+nhom.length+' nhóm</h2>'+
-    '<div class="sm" style="margin-bottom:8px">Tên gần giống nhau (kể cả gõ thừa/thiếu 1 chữ) nhưng đang nằm '+
-    'ở nhiều mã SKU khác nhau — thường do nhân viên tự thêm sản phẩm mới ở nhiều máy trước khi kịp gộp. '+
-    'Gộp lại để doanh thu/lợi nhuận không bị chia vụn theo báo cáo. <b>Đơn hàng cũ trên Google Sheet giữ '+
-    'nguyên</b> — chỉ gộp ở phía tính toán/hiển thị, không sửa lịch sử. '+
+  return '<div class="card"><h2>Sản phẩm NHÂN VIÊN TỰ TẠO nghi trùng tên — '+nhom.length+' nhóm</h2>'+
+    '<div class="sm" style="margin-bottom:8px">Chỉ xét sản phẩm nhân viên tự thêm khi tạo đơn (mã <code>MOI-*</code> '+
+    'hoặc từ mục "chờ duyệt") — <b>không đụng tới các mặt hàng cũ có sẵn trong bảng giá</b>. Tên gần giống nhau '+
+    '(kể cả gõ thừa/thiếu 1 chữ) nhưng đang nằm ở nhiều mã SKU khác nhau, thường do nhiều máy cùng tự thêm 1 '+
+    'sản phẩm mới trước khi kịp gộp. Gộp lại để doanh thu/lợi nhuận không bị chia vụn theo báo cáo. '+
+    '<b>Đơn hàng cũ trên Google Sheet giữ nguyên</b> — chỉ gộp ở phía tính toán/hiển thị, không sửa lịch sử. '+
     '<b style="color:var(--warn)">Đây chỉ là GỢI Ý — vì so tên có nới lỏng nên có thể bắt nhầm 2 sản phẩm '+
     'thật sự khác nhau (tên gần giống nhưng không phải cùng 1 món). Đọc kỹ tên + nhóm hàng trước khi bấm gộp, '+
     'nhóm nào đánh dấu ⚠ bên dưới thì càng phải xem kỹ.</b></div>'+
