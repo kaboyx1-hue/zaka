@@ -335,7 +335,7 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260905h';
+var APP_VER='20260905i';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -758,7 +758,20 @@ async function keoDon(im){
   }
 }
 (function(){
-  $('khKey').focus();
+  // TỰ ĐĂNG NHẬP LẠI bằng mật khẩu đã dùng thành công trên CHÍNH MÁY NÀY —
+  // KHÔNG bớt bước xác minh với Google Sheet (vẫn gọi y hệt moKhoa(), vẫn phải
+  // đúng mật khẩu quản lý mới vào được), chỉ bớt việc phải gõ lại/bấm lại mỗi
+  // lần bấm F5. Mật khẩu này vốn dĩ ĐÃ được lưu sẵn trên máy này từ trước (dùng
+  // cho tính năng "mất mạng vẫn mở được" có sẵn) nên không phát sinh rủi ro bảo
+  // mật mới — ai đã có quyền mở trình duyệt/máy này thì vốn đã mở được rồi.
+  var mkCu=get('mkql',null);
+  if(mkCu){
+    $('khKey').value=mkCu;
+    bao('khErr','Đang tự đăng nhập lại bằng mật khẩu đã lưu trên máy này…','wa');
+    moKhoa();
+  } else {
+    $('khKey').focus();
+  }
 })();
 
 function khoiDongQL(){
