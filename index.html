@@ -429,7 +429,7 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
     <button class="btn-main mt" onclick="doiNguoi()" style="background:var(--c2);color:var(--tx)">Đổi người dùng máy này</button>
     <div class="sm">Tên và mã máy do chủ đặt sẵn, không sửa được tại đây.</div></div>
   <div class="card"><h2>Thông tin in trên phiếu giao hàng</h2>
-    <label>Tên cửa hàng / người gửi</label><input id="shTen" placeholder="VD: Khánh Hoàng — CITYCAT">
+    <label>Tên cửa hàng / người gửi</label><input id="shTen" placeholder="VD: ZAKA STORE">
     <div class="mt"><label>Điện thoại người gửi</label><input id="shDt" placeholder="VD: 0828 378 011"></div>
     <div class="mt"><label>Địa chỉ gửi (in nhỏ ở đầu phiếu)</label><input id="shDc" placeholder="Để trống cũng được"></div>
     <div class="mt"><label>Lời cảm ơn in ở cuối phiếu</label>
@@ -582,7 +582,7 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260905i';
+var APP_VER='20260906a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -920,7 +920,7 @@ function vaoApp(){
   $('app').classList.remove('hide');
   $('hTen').textContent=CFG.ten; $('hMa').textContent=CFG.ma;
   $('cAi').innerHTML='<b style="font-size:16px">'+esc(CFG.ten)+'</b> · mã máy <b>'+esc(CFG.ma)+'</b>';
-  $('shTen').value=SHOP.ten||'KHÁNH HOÀNG - ZAKA STORE';
+  $('shTen').value=SHOP.ten||'ZAKA STORE';
   $('shDt').value=SHOP.dt||'082-837-8011'; $('shDc').value=SHOP.dc||'';
   $('shCamon').value=SHOP.camon||CAMON_MAC_DINH; veBG();
   $('cUrl').value=CFG.url||URL_DRIVE||'';
@@ -930,7 +930,7 @@ function vaoApp(){
   setTimeout(function(){ dongBo(false); },800);
 }
 function luuShop(){
-  SHOP={ten:$('shTen').value.trim()||'KHÁNH HOÀNG - ZAKA STORE',
+  SHOP={ten:$('shTen').value.trim()||'ZAKA STORE',
         dt:$('shDt').value.trim()||'082-837-8011',
         dc:$('shDc').value.trim(),
         camon:$('shCamon').value.trim()||CAMON_MAC_DINH};
@@ -1528,7 +1528,7 @@ function phieuKetCaHTML(){
   var tongTien=K.ds.reduce(function(a,d){return a+d.tong},0);
   var conThu=K.ds.reduce(function(a,d){return a+conThuDon(d)},0);
   return '<div class="phieu" style="font-size:11pt;padding:14mm">'+
-    '<div class="ph-top"><div><div class="ph-shop">'+esc(SHOP.ten||'KHÁNH HOÀNG - ZAKA STORE')+'</div>'+
+    '<div class="ph-top"><div><div class="ph-shop">'+esc(SHOP.ten||'ZAKA STORE')+'</div>'+
       '<div class="ph-lh">LIÊN HỆ: '+esc(SHOP.dt||'082-837-8011')+'</div></div>'+
       '<div style="text-align:right"><div class="pg-nhan">PHIẾU KẾT CA</div><div>'+esc(nowStr())+'</div></div></div>'+
     '<div class="sm" style="margin:8px 0 14px">Nhân viên: <b>'+esc(CFG.ten)+'</b> ('+esc(CFG.ma)+
@@ -2940,7 +2940,7 @@ function phieuHTML(d,cu){
   cu=cu||{pt:8.4};
   var gonDV=(d.dong||[]).length>12;
   var mon=d.dong.reduce(function(a,x){return a+x.sl},0);
-  var sTen=SHOP.ten||'KHÁNH HOÀNG - ZAKA STORE',
+  var sTen=SHOP.ten||'ZAKA STORE',
       sDt =SHOP.dt ||'082-837-8011',
       sDc =SHOP.dc ||'';
   return '<div class="phieu" data-ma="'+esc(d.ma)+'" style="font-size:'+cu.pt.toFixed(2)+'pt">'+
@@ -3177,7 +3177,7 @@ function phieuGuiHTML(d,cu){
   cu=cu||{pt:11};
   var dot=IN_DOT?(d.dot||[]).filter(function(o){return o.n===IN_DOT})[0]:null;
   var L=loaiHangChinh(d,dot);
-  var sTen=SHOP.ten||'KHÁNH HOÀNG - ZAKA STORE', sDt=SHOP.dt||'082-837-8011';
+  var sTen=SHOP.ten||'ZAKA STORE', sDt=SHOP.dt||'082-837-8011';
   return '<div class="phieu pgui" data-ma="'+esc(d.ma)+'" style="font-size:'+cu.pt.toFixed(2)+'pt">'+
     '<div class="ph-top"><div><div class="ph-shop">'+esc(sTen)+'</div>'+
       '<div class="ph-lh">LIÊN HỆ: '+esc(sDt)+'</div></div>'+

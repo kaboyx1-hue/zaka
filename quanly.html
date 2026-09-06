@@ -8,10 +8,12 @@
    không đụng gì tới cấu trúc/id/class mà JS đang dùng. ══ */
 :root{--bg:#141c2b;--bg2:#1b2438;--card:#1c2740;--c2:#232f4a;--line:#324061;--tx:#eef1fb;--tx2:#9aa8c7;
 --acc:#7c9cff;--acc2:#a78bfa;--ok:#4fd8a4;--warn:#ffbe55;--bad:#ff8080;--pur:#c7b6fb;
---okBg:#123a30;--badBg:#3a1c22;--warnBg:#3a2d10;--purBg:#2a2450;--shadow:0 10px 30px -12px rgba(0,0,0,.45)}
-body.sang{--bg:#eef3fb;--bg2:#eaf6f1;--card:#ffffff;--c2:#f3f6fc;--line:#e2e8f5;--tx:#212c42;--tx2:#7c88a3;
---acc:#6d93ff;--acc2:#9c7bfa;--ok:#2fb787;--warn:#e08a2b;--bad:#e3615c;--pur:#8f6fe0;
---okBg:#e4f7ef;--badBg:#fdeceb;--warnBg:#fdf1e0;--purBg:#f0ebfd;--shadow:0 12px 28px -14px rgba(70,90,150,.28)}
+--okBg:#123a30;--badBg:#3a1c22;--warnBg:#3a2d10;--purBg:#2a2450;--shadow:0 10px 30px -12px rgba(0,0,0,.45);--btnGlow:0 6px 16px -6px rgba(124,156,255,.55)}
+/* Chế độ sáng — hạ độ sáng/độ bão hoà nền và giảm đổ bóng phát sáng quanh nút để
+   đỡ chói mắt (theo phản hồi thực tế), vẫn giữ tinh thần bo tròn/mềm mại. */
+body.sang{--bg:#eef1f6;--bg2:#eef1f6;--card:#fbfcfe;--c2:#f2f4f9;--line:#e3e7ef;--tx:#2b3448;--tx2:#7c869c;
+--acc:#6a86d9;--acc2:#8f7bce;--ok:#2fa677;--warn:#c97c1f;--bad:#d15a56;--pur:#7d68b8;
+--okBg:#e6f3ec;--badBg:#fbecea;--warnBg:#faf0e2;--purBg:#eee9f9;--shadow:0 6px 16px -10px rgba(60,70,100,.14);--btnGlow:0 4px 12px -6px rgba(106,134,217,.35)}
 *{box-sizing:border-box}
 body{margin:0;font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
   background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);background-attachment:fixed;color:var(--tx)}
@@ -30,7 +32,7 @@ nav button.on{color:var(--acc);border-bottom-color:var(--acc);font-weight:600}
 main{padding:15px;max-width:1060px;margin:0 auto;padding-bottom:60px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow)}
 h2{font-size:15px;margin:0 0 11px}
-.btn{background:linear-gradient(135deg,var(--acc) 0%,var(--acc2) 100%);color:#fff;font-weight:600;box-shadow:0 8px 20px -8px var(--acc)}
+.btn{background:linear-gradient(135deg,var(--acc) 0%,var(--acc2) 100%);color:#fff;font-weight:600;box-shadow:var(--btnGlow)}
 .btn2{background:var(--c2);color:var(--tx2)}
 .drop{border:2px dashed var(--line);border-radius:16px;padding:30px 16px;text-align:center;color:var(--tx2);cursor:pointer}
 .drop:hover,.drop.on{border-color:var(--acc);background:var(--c2);color:var(--acc)}
@@ -94,7 +96,7 @@ dialog::backdrop{background:rgba(20,25,40,.55)}
 #khoa{max-width:380px;margin:9vh auto;padding:20px;text-align:center}
 #khoa .logoMark{width:76px;height:76px;margin:0 auto 14px;border-radius:22px;
   background:linear-gradient(135deg,var(--acc) 0%,var(--acc2) 100%);
-  display:flex;align-items:center;justify-content:center;font-size:34px;box-shadow:0 14px 30px -10px var(--acc)}
+  display:flex;align-items:center;justify-content:center;font-size:34px;box-shadow:var(--btnGlow)}
 #khoa h1{font-size:21px;margin:0 0 2px}
 #khoa .sub{color:var(--tx2);margin:0 0 22px;font-size:13px}
 #khoa .khCard{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:var(--shadow);text-align:left}
@@ -367,7 +369,7 @@ dialog::backdrop{background:rgba(20,25,40,.55)}
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260905j';
+var APP_VER='20260906c';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -565,19 +567,25 @@ function gopSanPham(ds, btn){
       sai chính tả — nên không tự phát hiện được). */
 function thucHienGop(khac, chinh){
   if(!confirm('Gộp '+khac.length+' mã vào mã chính '+chinh+'?\n\n'+khac.join('\n')+
-    '\n\nCác đơn cũ dùng mã này vẫn giữ nguyên trên Google Sheet — chỉ đổi cách TÍNH và HIỂN THỊ báo cáo.\n\n'+
-    'Mã bị gộp sẽ chuyển sang "Hàng ngừng bán" (không xoá, chỉ ẩn khỏi danh sách chính và ngừng bán '+
-    'thêm dưới mã này) để đỡ rối — không phải tự tay bấm Xoá/Ngừng riêng nữa.'))
+    '\n\nCác đơn cũ dùng mã này vẫn giữ nguyên trên Google Sheet — CHỈ gộp chung cách TÍNH GIÁ VỐN và '+
+    'HIỂN THỊ báo cáo (lãi/lỗ), KHÔNG đụng gì tới giá bán — mã này vẫn bán bình thường cho nhân viên với '+
+    'đúng giá bán riêng của nó (giá có thể khác mã chính, tuỳ khách/kênh).\n\n'+
+    'Mã bị gộp chỉ ẩn khỏi danh sách "đang bán" ở MÁY QUẢN LÝ cho đỡ rối mắt (xem lại trong mục '+
+    '"Hàng ngừng bán") — không xoá dữ liệu, không ảnh hưởng gì tới nhân viên.'))
     return false;
   khac.forEach(function(k){
     ALIAS[k]=chinh;
-    if(GIA[k]){ GIA[k].ngung=true; GIA[k].gopVao=chinh } // ẩn khỏi ds chính + ngừng phát bán dưới mã cũ, KHÔNG xoá dữ liệu
+    // ngung=true chỉ để ẨN KHỎI DANH SÁCH "ĐANG BÁN" của máy quản lý cho đỡ rối —
+    // goiGia() đã có ngoại lệ riêng cho mã có gopVao nên vẫn phát bán bình thường
+    // cho nhân viên với đúng giá bán của chính nó, không bị gộp giá bán vào mã chính.
+    if(GIA[k]){ GIA[k].ngung=true; GIA[k].gopVao=chinh }
   });
   set('alias',ALIAS); set('gia',GIA);
   tinhLaiToanBoSO();
   veCB(); veSo(); veBC(); veGia(); vePhat();
-  bao('inMsg','Đã gộp '+khac.length+' mã vào <b>'+esc(chinh)+'</b> và chuyển mã cũ sang "Hàng ngừng bán". '+
-    'Doanh thu/lợi nhuận đã tính lại theo nhóm gộp. Nhớ bấm <b>Phát bảng giá</b> để 3 máy nhân viên hết thấy mã cũ.','ok');
+  bao('inMsg','Đã gộp '+khac.length+' mã vào <b>'+esc(chinh)+'</b> — chỉ dùng chung giá vốn/báo cáo. '+
+    'Mã cũ vẫn bán bình thường với giá bán riêng (đã ẩn khỏi danh sách "đang bán" ở máy quản lý cho đỡ rối, '+
+    'xem lại ở "Hàng ngừng bán"). Doanh thu/lợi nhuận đã tính lại theo nhóm gộp.','ok');
   return true;
 }
 var GOP_PHU=null;
@@ -912,6 +920,16 @@ function idx(h,names){for(var i=0;i<names.length;i++){var j=h.indexOf(names[i]);
 
 var LANNAP={moi:[],capnhat:[],trung:[],cuHon:[],thieu:[]};
 var LOCMA=null, LOCTEN='';
+/* Danh sách mã đơn đứng sau mỗi ô số ở tab Báo cáo (KPI) — bấm vào ô số nào thì
+   nhảy sang Số cái, lọc đúng đúng nhóm mã đơn của ô đó. Tính lại mỗi lần veBC()
+   chạy nên luôn khớp đúng bộ lọc kỳ/kênh hiện tại, không lệch số. */
+var BC_NHOM={};
+function xemBCNhom(loai,ten){
+  var ma=BC_NHOM[loai]||[];
+  if(!ma.length) return;
+  LOCMA=ma.slice(); LOCTEN=ten;
+  $('fso').value=''; tab('so'); window.scrollTo({top:0,behavior:'smooth'});
+}
 /* Chỉ chạm tới trạng thái vận hành. Không đụng giá, không đụng giá vốn,
    không đụng lãi — mấy thứ đó chỉ đổi khi nhân viên thật sự sửa đơn. */
 function dongBoTrangThai(cu,d){
@@ -1155,6 +1173,9 @@ function veBC(){
   var noDs=trong.filter(function(d){return conThuDon(d)>0});
   var noTien=noDs.reduce(function(a,d){return a+conThuDon(d)},0);
   var daThu=trong.filter(function(d){return !d.huy}).reduce(function(a,d){return a+(d.tong-conThuDon(d))},0);
+  // Danh sách mã đơn đứng sau từng ô KPI bên dưới — bấm vào ô nào thì nhảy sang
+  // Số cái (hoặc Cảnh báo) lọc đúng nhóm đó, không cần tự đi lọc tay lại.
+  BC_NHOM={ghiNhan:ok.map(function(d){return d.ma}),choGN:choGN.map(function(d){return d.ma}),huy:huy.map(function(d){return d.ma})};
   var h='<div class="card"><div class="chips" style="margin:-4px 0 12px">'+
     KYS_CHUNG.map(function(k){return '<button class="chip'+(KY===k[0]?' on':'')+'" onclick="datKy(\''+k[0]+'\')">'+k[1]+'</button>'}).join('')+
     '</div>'+
@@ -1169,7 +1190,8 @@ function veBC(){
     '<div><small>Giá vốn</small><b>'+tien(von)+'</b></div>'+
     '<div><small>Lãi gộp</small><b style="color:var(--ok)">'+tien(lai)+'</b></div>'+
     '<div><small>Biên lãi</small><b>'+(hang?(lai/hang*100).toFixed(1):0)+'%</b></div></div>'+
-    '<div class="kpi mt"><div><small>Số đơn ghi nhận</small><b>'+ok.length+'</b></div>'+
+    '<div class="kpi mt"><div'+(ok.length?' class="kpiclick" onclick="xemBCNhom(\'ghiNhan\',\'đơn đã ghi nhận doanh thu\')"':'')+'>'+
+      '<small>Số đơn ghi nhận'+(ok.length?' <span class="mui">↗</span>':'')+'</small><b>'+ok.length+'</b></div>'+
     '<div><small>Tiền ship thu</small><b>'+tien(ship)+'</b></div>'+
     '<div><small>Tiền chành xe (shop chịu)</small><b style="color:var(--bad)">'+tien(phiChanh)+'</b></div>'+
     '<div'+(chiPhiTrongKy.length?' class="kpiclick" onclick="toggleChiPhiBC()"':'')+'>'+
@@ -1177,7 +1199,10 @@ function veBC(){
       '<b style="color:var(--bad)">'+tien(tongChiPhi)+'</b>'+
       (chiPhiTrongKy.length?'<div class="sm">'+chiPhiTrongKy.length+' khoản</div>':'')+'</div>'+
     '<div><small>Giảm giá</small><b>'+tien(giam)+'</b></div>'+
-    '<div><small>Đơn CHỜ giá vốn</small><b style="color:'+(cho.length?'var(--warn)':'var(--ok)')+'">'+cho.length+'</b></div></div>'+
+    '<div'+(cho.length?' class="kpiclick" onclick="tab(\'cb\')"':'')+'><small>Đơn CHỜ giá vốn'+
+      (cho.length?' <span class="mui">↗</span>':'')+'</small>'+
+      '<b style="color:'+(cho.length?'var(--warn)':'var(--ok)')+'">'+cho.length+'</b>'+
+      (cho.length?'<div class="kpihint">Sang tab Cảnh báo — điền vốn theo sản phẩm</div>':'')+'</div></div>'+
     '<div class="kpi mt">'+
     '<div><small>Đã thu về</small><b style="color:var(--ok)">'+tien(daThu)+'</b></div>'+
     '<div'+(noDs.length?' class="kpiclick" onclick="xemNo()"':'')+'><small>CÒN PHẢI THU'+
@@ -1185,12 +1210,15 @@ function veBC(){
       '<b style="color:'+(noTien?'var(--warn)':'var(--ok)')+'">'+tien(noTien)+'</b>'+
       '<div class="sm">'+noDs.length+' đơn'+(doDs.length?' · trong đó '+doDs.length+' đơn giao dở ('+tien(doTien)+')':'')+'</div></div></div>'+
     '<div class="kpi mt">'+
-    '<div><small>DOANH THU CHỜ — chưa đủ điều kiện</small><b style="color:'+(gnCho?'var(--warn)':'var(--ok)')+'">'+tien(gnCho)+'</b>'+
+    '<div'+(choGN.length?' class="kpiclick" onclick="xemBCNhom(\'choGN\',\'đơn đủ giá vốn nhưng chưa đủ điều kiện ghi nhận\')"':'')+'>'+
+      '<small>DOANH THU CHỜ — chưa đủ điều kiện'+(choGN.length?' <span class="mui">↗</span>':'')+'</small>'+
+      '<b style="color:'+(gnCho?'var(--warn)':'var(--ok)')+'">'+tien(gnCho)+'</b>'+
       '<div class="sm">'+choGN.length+' đơn</div></div>'+
     '<div><small>Điều kiện ghi nhận đang đặt</small><b style="font-size:15px">'+
       (GHINHAN==='giao_thu'?'Giao đủ + thu đủ':'Chỉ cần giao đủ')+'</b>'+
       '<div class="sm">Đổi ở tab Vận hành</div></div></div>'+
-    (huy.length?'<div class="kpi mt"><div><small>ĐƠN HUỶ — không tính doanh thu</small>'+
+    (huy.length?'<div class="kpi mt"><div class="kpiclick" onclick="xemBCNhom(\'huy\',\'đơn đã huỷ\')">'+
+      '<small>ĐƠN HUỶ — không tính doanh thu <span class="mui">↗</span></small>'+
       '<b style="color:var(--bad)">'+tien(huytien)+'</b><div class="sm">'+huy.length+' đơn</div></div></div>':'');
   if(choGN.length)h+='<div class="msg wa mt"><b>'+choGN.length+' đơn đã đủ giá vốn nhưng CHƯA được ghi nhận</b> — '+
     'doanh thu '+tien(gnCho)+' chưa nằm trong con số trên. '+
@@ -1841,7 +1869,8 @@ function veGia(){
       var b=(p.gb&&p.von)?((p.gb-p.von)/p.gb*100).toFixed(1)+'%':'—';
       var xau=(p.gb&&p.von&&p.von>=p.gb);
       return '<tr><td>'+esc(p.sku)+(p.moi?'<br><span class="tag w">nhân viên thêm</span>':'')+
-        (p.gopVao?'<br><span class="tag w" style="color:var(--warn)">đã gộp → '+esc(p.gopVao)+'</span>':'')+'</td>'+
+        (p.gopVao?'<br><span class="tag w" style="color:var(--warn)" title="Chỉ gộp chung giá vốn/báo cáo — giá bán vẫn tính riêng, vẫn bán bình thường cho nhân viên">'+
+          'đã gộp giá vốn → '+esc(p.gopVao)+'</span>':'')+'</td>'+
         '<td><input class="ten" style="padding:5px" value="'+esc(p.ten)+'" onchange="setF(\''+p.sku+'\',\'ten\',this.value)">'+
         (p.brand?'<div class="sm" style="color:var(--pur)">'+esc(p.brand)+'</div>':'')+
         (p.soat?'<div class="sm" style="color:var(--warn)">⚠ giá sỉ cũ sai — đã tắt, cần điền lại</div>':'')+'</td>'+
@@ -1911,7 +1940,11 @@ function banLai(sku){
 /* ══════════ PHÁT BẢNG GIÁ CHO MÁY NHÂN VIÊN ══════════ */
 /* Chỉ 10 trường này rời khỏi máy chủ. Không có von, không có qd_von. */
 function goiGia(){
-  return Object.keys(GIA).filter(function(k){return !GIA[k].ngung}).map(function(k){
+  // Mã đã GỘP (gopVao) vẫn phải phát cho nhân viên như bình thường — gộp chỉ
+  // gộp CÁCH TÍNH GIÁ VỐN/báo cáo (dùng chung skuChinh), KHÔNG được đụng tới giá
+  // bán, vì giá bán của mỗi mã có thể khác nhau tuỳ khách/kênh. Chỉ mã ngừng bán
+  // THẬT (hết hàng, ngừng sản xuất — ngung=true và KHÔNG có gopVao) mới bị ẩn.
+  return Object.keys(GIA).filter(function(k){return !GIA[k].ngung || GIA[k].gopVao}).map(function(k){
     var p=GIA[k];
     return {sku:p.sku, nhom:p.nhom||'KHÁC', brand:p.brand||'', ten:p.ten||'', dvt:p.dvt||'',
             gb:p.gb||0, qd_dv:p.qd_dv||'', qd_sl:p.qd_sl||0, qd_gb:p.qd_gb||0, ngung:''};
