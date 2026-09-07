@@ -582,7 +582,7 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260906a';
+var APP_VER='20260907a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -2195,6 +2195,12 @@ function vePG(epVe){
      hàng, vì chính lần vẽ đó mới tạo ra ô chứa form. Mọi lời gọi nền khác đều bị
      chặn khi đang sửa đơn (xem giải thích dài ở veDon). */
   if(!epVe && dangGoTrongFormSua()){ CHO_VE_LAI=true; return }
+  /* Nhớ lại các ô "chọn để in" đang tích TRƯỚC khi vẽ lại toàn bộ danh sách —
+     vePG() bị dongBo() gọi vô điều kiện mỗi 30 giây (xem giải thích ở dongBo),
+     nên nếu không nhớ lại, nhân viên đang tích nhiều đơn để in hàng loạt sẽ bị
+     mất trắng lựa chọn giữa chừng mà không hay biết, tưởng máy lỗi và phải in
+     từng đơn một. */
+  var dangChonIn=dsChonIn();
   veLocTT();
   veShipperList();
   var q=kd(($('fpg')&&$('fpg').value||'').trim());
@@ -2292,6 +2298,12 @@ function vePG(epVe){
       '<br>Các đơn khác vẫn hiện bình thường. Báo lại đúng dòng chữ này cho người làm phần mềm.</div></div>';
    }
   }).join('');
+  // Tích lại đúng các đơn đã chọn trước khi vẽ lại (xem ghi chú ở đầu hàm).
+  if(dangChonIn.length){
+    [].slice.call(document.querySelectorAll('.ckin')).forEach(function(c){
+      if(dangChonIn.indexOf(c.value)>=0) c.checked=true;
+    });
+  }
   demIn();
   veLaiFormSua(true);
 }
@@ -2492,6 +2504,10 @@ function veLaiNeuDangNo(){
 }
 function veDon(){
   if(dangGoTrongFormSua()){ CHO_VE_LAI=true; return }
+  // Nhớ lại 2 nhóm ô đang tích (chọn để in / chọn để huỷ) TRƯỚC khi vẽ lại toàn bộ
+  // danh sách — veDon() cũng bị dongBo() gọi vô điều kiện mỗi 30 giây, cùng lý do
+  // và cách khắc phục như ở vePG() (xem ghi chú bên đó).
+  var dangChonInLS=dsChonInLS(), dangChonHuy=dsChonHuy();
   var q=kd(($('fdon')&&$('fdon').value||'').trim());
   var ds=DON.filter(function(d){return !q||kd(d.ma+' '+d.khach+' '+d.sdt).indexOf(q)>=0});
   if(!ds.length){$('dsDon').innerHTML='<div class="card"><div class="empty">Chưa có đơn nào</div></div>';return}
@@ -2526,6 +2542,15 @@ function veDon(){
       )+
       '<div id="ct_'+d.ma+'" class="hide"></div>'+
     '</div>'}).join('')+'</div>';
+  // Tích lại đúng các đơn đã chọn trước khi vẽ lại (xem ghi chú ở đầu hàm).
+  if(dangChonInLS.length||dangChonHuy.length){
+    [].slice.call(document.querySelectorAll('.ckinls')).forEach(function(c){
+      if(dangChonInLS.indexOf(c.value)>=0) c.checked=true;
+    });
+    [].slice.call(document.querySelectorAll('.ckdon')).forEach(function(c){
+      if(dangChonHuy.indexOf(c.value)>=0) c.checked=true;
+    });
+  }
   demHuy(); demInLS();
   veLaiFormSua(false);
 }
