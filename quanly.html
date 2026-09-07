@@ -369,7 +369,7 @@ dialog::backdrop{background:rgba(20,25,40,.55)}
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260906c';
+var APP_VER='20260907a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -798,20 +798,12 @@ async function keoDon(im){
   }
 }
 (function(){
-  // TỰ ĐĂNG NHẬP LẠI bằng mật khẩu đã dùng thành công trên CHÍNH MÁY NÀY —
-  // KHÔNG bớt bước xác minh với Google Sheet (vẫn gọi y hệt moKhoa(), vẫn phải
-  // đúng mật khẩu quản lý mới vào được), chỉ bớt việc phải gõ lại/bấm lại mỗi
-  // lần bấm F5. Mật khẩu này vốn dĩ ĐÃ được lưu sẵn trên máy này từ trước (dùng
-  // cho tính năng "mất mạng vẫn mở được" có sẵn) nên không phát sinh rủi ro bảo
-  // mật mới — ai đã có quyền mở trình duyệt/máy này thì vốn đã mở được rồi.
-  var mkCu=get('mkql',null);
-  if(mkCu){
-    $('khKey').value=mkCu;
-    bao('khErr','Đang tự đăng nhập lại bằng mật khẩu đã lưu trên máy này…','wa');
-    moKhoa();
-  } else {
-    $('khKey').focus();
-  }
+  // ĐÃ BỎ tự động điền/tự đăng nhập lại mật khẩu (từng thêm trước đây) theo đúng
+  // yêu cầu của chủ: tự điền sẵn mật khẩu quản lý mỗi lần mở máy/F5 là rủi ro bảo
+  // mật thật — bất kỳ ai ngồi vào máy này (hoặc mở lại tab đã treo) đều vào thẳng
+  // được khu vực quản lý (giá vốn + toàn bộ sổ cái) mà KHÔNG cần biết mật khẩu.
+  // Luôn bắt gõ lại mật khẩu mỗi lần — chỉ để trống ô và focus vào như bản gốc.
+  $('khKey').focus();
 })();
 
 function khoiDongQL(){
