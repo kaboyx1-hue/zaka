@@ -171,6 +171,8 @@ h2{font-size:15px;margin:0 0 10px}
 .qty input{width:52px;text-align:center;padding:6px}
 .pr{margin-left:auto;text-align:right}.pr input{width:104px;text-align:right;padding:6px;font-size:13px}
 .tt{font-weight:600;color:var(--ok);font-size:13.5px;margin-top:3px}
+.mtag{font-size:.82em;font-weight:800;padding:1px 6px;border-radius:6px;border:1px solid;
+  letter-spacing:.02em;margin-right:1px}
 .tag{font-size:10.5px;padding:2px 7px;border-radius:6px;display:inline-block;margin-top:5px}
 .tag.kh{background:#2a2440;color:var(--pur)}
 .tag.qd{background:#123527;color:var(--ok)}
@@ -602,7 +604,7 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260907b';
+var APP_VER='20260907c';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -708,6 +710,33 @@ function dinhDangTien(el){
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){
  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function kd(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase()}
+/* ══ TÔ MÀU MÃ ĐƠN THEO MÁY LÊN ĐƠN ══
+   Mã đơn dạng "NV01-260907-005" — phần đuôi (ngày-số) chạy tương tự nhau giữa
+   các máy nên rất dễ nhìn nhầm đơn của máy này với máy khác khi liếc nhanh một
+   danh sách dài. Giải pháp: tô màu riêng cho từng mã máy (NV01/NV02/…), màu suy
+   ra từ CHÍNH chuỗi mã máy (không cần chủ khai báo trước, không lưu thêm dữ liệu
+   nào) nên tự nhận màu ngay cả khi có máy mới thêm sau này. Đây CHỈ là thay đổi
+   hiển thị trên MÀN HÌNH — không đụng gì tới mã đơn thật, không áp dụng cho bản
+   in giấy (bản in giữ nguyên trắng đen tuyệt đối để không tốn mực màu). */
+var MAU_MAY_BANG=['#2dd4bf','#f472b6','#818cf8','#fb923c','#38bdf8','#a3e635','#fb7185','#facc15'];
+function mauMay(may){
+  var s=String(may||''), h=0;
+  for(var i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0;
+  return MAU_MAY_BANG[h%MAU_MAY_BANG.length];
+}
+/* Tách "NV01" ra khỏi "NV01-260907-005" — lấy mọi ký tự TRƯỚC 2 cụm cuối
+   (ngày 6 số, số thứ tự) để không giả định tên máy chỉ có dạng "NVxx". */
+function mayCuaDon(ma){
+  var m=/^(.*)-(\d{6})-(\d+)$/.exec(String(ma||''));
+  return m?m[1]:'';
+}
+function maHTML(ma){
+  var may=mayCuaDon(ma);
+  if(!may) return esc(ma);
+  var mau=mauMay(may), phanSau=String(ma).slice(may.length);
+  return '<span class="mtag" style="background:'+mau+'26;color:'+mau+';border-color:'+mau+'66">'+esc(may)+'</span>'+
+    '<span style="opacity:.7">'+esc(phanSau)+'</span>';
+}
 /* So khớp tên "lỏng" — bỏ dấu, bỏ dấu câu, bỏ vài từ nối, sắp xếp lại từ trước khi
    so — để "Cát tắm thơm hamster 1kg (mix mùi)" và "Cát tấm thơm CHO hamster 1kg
    (mix mùi)" (thừa chữ "cho") vẫn nhận ra là cùng 1 sản phẩm khi tìm trùng tên
@@ -2268,7 +2297,7 @@ function vePG(epVe){
         ?'<span class="tagin da">ĐÃ IN'+(d.inLan>1?' '+d.inLan+' LẦN':'')+' · '+esc(d.inLuc||'')+'</span>'+
          '<button class="btn-nho" onclick="boIn(\''+d.ma+'\')">Bỏ đánh dấu</button>'
         :'<span class="tagin chua">CHƯA IN</span>')+'</div>'+
-      '<div class="ma">'+esc(d.ma)+' · '+esc(d.ngay)+'</div>'+
+      '<div class="ma">'+maHTML(d.ma)+' · '+esc(d.ngay)+'</div>'+
       '<div class="kh">'+esc(d.khach||'KHÁCH LẺ')+'</div>'+
       '<div class="sdt">'+esc(d.sdt)+'</div>'+
       (d.dc?'<div class="dc">'+esc(d.dc)+'</div>':'<div class="dc" style="color:var(--warn)">⚠ Chưa có địa chỉ</div>')+
@@ -2546,7 +2575,7 @@ function veDon(){
       (homNay?'<div class="pgsel"><input type="checkbox" class="ckdon" value="'+d.ma+'" onchange="demHuy()"><span class="sm">chọn để huỷ</span></div>':'')+
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px">'+
         '<div onclick="chiTiet(\''+d.ma+'\');" style="cursor:pointer;flex:1">'+
-          '<div class="ma">'+esc(d.ma)+_gui+
+          '<div class="ma">'+maHTML(d.ma)+_gui+
             (d.sualan?' <span class="tag kh">sửa '+d.sualan+' lần</span>':'')+
             ' '+nhanTT(d)+
             ' <button class="btn-nho" style="padding:2px 8px;font-size:11px" onclick="event.stopPropagation();moSuaTT(\''+d.ma+'\')">Sửa TT</button>'+
@@ -3280,7 +3309,7 @@ function moKienHang(mas,moiTrang,soDot){
         'thì bỏ trống ô này rồi bấm In phiếu giao hàng thường ở trên, không cần In phiếu gửi nhà xe.</div>'
       : '';
     return '<div style="display:flex;gap:10px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--line)">'+
-      '<div style="flex:1"><b>'+esc(d.ma)+'</b><div class="sm">'+esc(d.khach||'KHÁCH LẺ')+' · '+mon+' món</div>'+canhBao+'</div>'+
+      '<div style="flex:1">'+maHTML(d.ma)+'<div class="sm">'+esc(d.khach||'KHÁCH LẺ')+' · '+mon+' món</div>'+canhBao+'</div>'+
       '<input type="number" min="0" placeholder="số kiện" style="width:90px" '+
         'value="'+(d.soKien||'')+'" data-ma="'+esc(d.ma)+'" class="oKien"></div>';
   }).join('');
