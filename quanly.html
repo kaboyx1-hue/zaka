@@ -244,6 +244,19 @@ dialog::backdrop{background:rgba(20,25,40,.55)}
     Đổi công tắc này là báo cáo mọi kỳ tính lại ngay, không đụng gì tới giá vốn.</div>
     <div id="oGhiNhan" style="margin-top:9px"></div></div>
 
+  <div class="card"><h2>Dọn hồ sơ khách lẻ bị gộp nhầm</h2>
+    <div class="sm">Bản cũ (trước 08/09/2026) từng gán tạm một số điện thoại giả
+    cho MỌI khách lẻ đến mua trực tiếp mà không để lại SĐT — khiến phần mềm
+    hiểu nhầm họ là <b>cùng một người</b>. Đã sửa để từ nay không gộp nhầm nữa.</div>
+    <div class="sm" style="margin-top:6px">Bấm nút dưới để xoá riêng <b>hồ sơ giả gộp chung</b>
+    đó khỏi Danh bạ khách (Sheet KHACH_HANG) — <b>không đụng gì tới đơn hàng cũ</b>
+    (DON_HANG): tên khách, SĐT, tiền, ngày ghi trên từng đơn giữ nguyên 100%,
+    chỉ là hồ sơ tổng hợp giả (đang trộn tên/địa chỉ/giá riêng của nhiều người
+    khác nhau) sẽ không còn hiện ra như một khách quen nữa.</div>
+    <button class="btn2 mt" style="color:var(--bad)" onclick="xoaHoSoKhachGop()">Xoá hồ sơ khách lẻ bị gộp nhầm (SĐT giả 9999999999)</button>
+    <div id="xkgMsg" class="mt"></div>
+  </div>
+
   <div class="card"><h2>Ba máy nhân viên</h2><div id="dsMay"></div></div>
 
   <div class="card"><h2>Danh sách shipper</h2>
@@ -369,7 +382,7 @@ dialog::backdrop{background:rgba(20,25,40,.55)}
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260907a';
+var APP_VER='20260907b';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -2154,8 +2167,27 @@ function setN(sku,f,v){GIA[sku][f]=n2(v)||null;
 function xoaSP(sku){
   var p=GIA[sku]; if(!p)return;
   var dung=SO.filter(function(d){return d.dong.some(function(x){return x.sku===sku})}).length;
+  // Mã này đã từng gộp/trỏ sang mã khác chưa? skuChinh() đi theo ALIAS — nếu đã
+  // gộp thì dù xoá hẳn GIA[sku], các đơn cũ vẫn tra được giá vốn qua đúng mã chính
+  // (ALIAS không phụ thuộc GIA[sku] còn tồn tại hay không). Ngược lại, nếu CHƯA
+  // gộp mà xoá thẳng, đơn cũ dùng mã này (đặc biệt đơn đang CHỜ GIÁ VỐN) sẽ mất
+  // vĩnh viễn khả năng tra/điền giá vốn — không còn cách nào sửa lại được nữa.
+  var daGop=skuChinh(sku)!==sku;
+  if(dung>0 && !daGop){
+    alert('Chưa thể xoá "'+p.ten+'" ('+sku+').\n\n'+
+      dung+' đơn cũ đang dùng mã này, và mã này CHƯA được gộp vào mã nào khác. '+
+      'Xoá thẳng bây giờ sẽ làm mất vĩnh viễn khả năng tra/điền giá vốn cho các đơn đó '+
+      '(nhất là đơn đang chờ giá vốn).\n\n'+
+      'Hãy GỘP mã này vào đúng sản phẩm đang dùng thay thế (ví dụ sản phẩm đã có sẵn '+
+      'quy đổi tương tự) trước — gộp xong, đơn cũ vẫn tra được giá vốn qua mã chính, '+
+      'lúc đó xoá mã này mới an toàn.\n\nBấm OK để mở màn hình gộp ngay.');
+    moGopSP(sku);
+    return;
+  }
   if(!confirm('Xoá "'+p.ten+'" khỏi bảng giá?\n\n'+
-    (dung?dung+' đơn đã bán món này. Các đơn đó GIỮ NGUYÊN giá và lãi — không bị ảnh hưởng.\n\n':'')+
+    (dung?dung+' đơn đã bán món này'+
+      (daGop?' (đã gộp giá vốn sang mã '+esc(skuChinh(sku))+' — đơn cũ vẫn tra được giá vốn qua đó sau khi xoá)':'')+
+      '. Các đơn đó GIỮ NGUYÊN giá và lãi — không bị ảnh hưởng.\n\n':'')+
     'Nhân viên sẽ không tìm thấy món này nữa.'))return;
   delete GIA[sku]; set('gia',GIA); giaLai(); vePhat(); dayVon(false); phatGia(true);
   bao('giaMsg','Đã xoá <b>'+esc(p.ten)+'</b> khỏi bảng giá — đang lưu lên Sheet (BANG_GIA_QL) để máy quản lý kia '+
@@ -2588,6 +2620,23 @@ async function doiMaDangKy(){
   }catch(e){ bao('vhMsg','Không đổi được: '+esc(e.message),'er') }
 }
 
+async function xoaHoSoKhachGop(){
+  if(!QCFG.url||!QCFG.key){bao('xkgMsg','Cần link và mật khẩu quản lý ở tab Nạp đơn.','er');return}
+  if(!confirm('Xoá hồ sơ khách lẻ bị gộp nhầm (SĐT giả 9999999999) khỏi Danh bạ?\n\n'+
+    'CHỈ xoá 1 dòng hồ sơ tổng hợp giả trong Sheet KHACH_HANG.\n'+
+    'KHÔNG đụng, KHÔNG đổi bất kỳ đơn hàng nào trong DON_HANG — đơn cũ giữ nguyên 100%.\n\n'+
+    'Đồng ý xoá?')) return;
+  try{
+    var r=await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'xoakhachgop',sdt:['9999999999']})});
+    var j=JSON.parse(await r.text());
+    if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
+    bao('xkgMsg', (j.xoa&&j.xoa.length)
+      ? 'Đã xoá hồ sơ giả <b>'+esc(j.xoa.join(', '))+'</b> khỏi Danh bạ trên Sheet.<br>'+
+        '<span class="sm">Đơn hàng cũ không hề bị đụng tới. Máy nhân viên sẽ tự dọn bản lưu tạm của hồ sơ này ở lần mở app kế tiếp (từ bản 20260908g).</span>'
+      : 'Không thấy hồ sơ nào khớp SĐT giả 9999999999 trong Danh bạ — có thể đã được dọn từ trước, hoặc cửa hàng này chưa từng gặp lỗi gộp khách lẻ.', 'ok');
+  }catch(e){ bao('xkgMsg','Không xoá được: '+esc(e.message),'er') }
+}
 function veMayGui(){
   MAYGUI=get('maygui',MAYGUI)||{};
   var mays=['NV01','NV02','NV03'];
