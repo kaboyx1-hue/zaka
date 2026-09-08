@@ -46,6 +46,10 @@ th,td{padding:8px 6px;text-align:left;border-bottom:1px solid var(--line);vertic
 th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
 .kpi{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 .kpi div{background:var(--c2);border-radius:16px;padding:13px;border-left:3px solid var(--acc)}
+.kpi div.k-brand{border-left-color:var(--brand)}
+.kpi div.k-ok{border-left-color:var(--ok)}
+.kpi div.k-info{border-left-color:var(--info)}
+.kpi div.k-pur{border-left-color:var(--pur)}
 .kpi small{color:var(--tx2);font-size:11.5px;display:block;margin-bottom:3px}.kpi b{font-size:18px}
 /* Bảng giá dùng hết bề ngang màn hình */
 #pg-gia{max-width:none;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);padding:0 16px}
@@ -186,11 +190,13 @@ dialog::backdrop{background:rgba(20,25,40,.55)}
       <button class="btn-nho" onclick="chonHetSo(1)">Chọn tất cả đang hiện</button>
       <button class="btn-nho" onclick="chonHetSo(0)">Bỏ chọn</button>
       <button class="btn" onclick="xuatSoCai()">Xuất sổ cái ra CSV</button>
-      <button class="btn2" onclick="saoLuu()">Sao lưu toàn bộ</button>
-      <button class="btn2" onclick="document.getElementById('fbk').click()">Khôi phục từ bản sao lưu</button>
+      <button class="btn2" onclick="saoLuu()" title="Tải xuống 1 file .json chứa toàn bộ sổ cái + giá vốn hiện có trên máy này — để dự phòng">Sao lưu toàn bộ</button>
+      <button class="btn2" onclick="document.getElementById('fbk').click()" title="Nạp lại dữ liệu từ 1 file .json đã sao lưu trước đó — ghi đè dữ liệu đang có trên máy này">Khôi phục từ bản sao lưu</button>
       <input type="file" id="fbk" accept=".json" class="hide" onchange="khoiPhuc(this.files[0])">
     </div>
-    <div class="sm">Bấm vào dòng đơn để xem chi tiết, sửa giá vốn hoặc xoá.
+    <div class="sm"><b>Sao lưu</b> = lưu một bản chụp dữ liệu hiện tại ra file, để dành. <b>Khôi phục</b> = nạp
+    ngược một file đã sao lưu trước đó vào lại máy này (dùng khi đổi máy hoặc gặp sự cố, dữ liệu hiện có sẽ
+    bị ghi đè bằng dữ liệu trong file). Bấm vào dòng đơn để xem chi tiết, sửa giá vốn hoặc xoá.
     <b>Nên xuất sổ cái mỗi tuần</b> — dữ liệu chỉ nằm trong trình duyệt máy này.</div>
   </div>
   <div id="so"></div>
@@ -308,9 +314,13 @@ dialog::backdrop{background:rgba(20,25,40,.55)}
   <div class="card" id="theKhaiTruong"></div>
 
   <div class="card"><h2>Sao lưu</h2><div id="tinhSaoLuu" class="sm"></div>
+    <div class="sm" style="margin-bottom:6px"><b>Sao lưu</b> — lưu lại (tải file .json về máy) toàn bộ dữ
+    liệu hiện có, để dành phòng khi mất máy/hỏng máy. <b>Khôi phục</b> — nạp ngược một file đã sao lưu
+    trước đó vào máy này (dữ liệu hiện có sẽ bị thay bằng dữ liệu trong file, dùng khi đổi máy mới hoặc
+    khắc phục sự cố).</div>
     <div class="row mt">
-      <button class="btn" onclick="saoLuu()">Sao lưu ngay</button>
-      <button class="btn2" onclick="document.getElementById('fbk2').click()">Khôi phục</button>
+      <button class="btn" onclick="saoLuu()" title="Tải xuống 1 file .json chứa toàn bộ sổ cái + giá vốn hiện có trên máy này">Sao lưu ngay</button>
+      <button class="btn2" onclick="document.getElementById('fbk2').click()" title="Chọn 1 file .json đã sao lưu trước đó để nạp lại vào máy này">Khôi phục từ file đã sao lưu</button>
       <input type="file" id="fbk2" accept=".json" class="hide" onchange="khoiPhuc(this.files[0])">
     </div>
     <div class="sm">Đơn hàng luôn có bản trên Google Sheet. <b>Giá vốn thì chỉ nằm ở máy này</b>
@@ -398,7 +408,7 @@ dialog::backdrop{background:rgba(20,25,40,.55)}
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260908c';
+var APP_VER='20260908d';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -491,14 +501,6 @@ function veGhiNhan(){
     '<b>mọi đơn</b>, không riêng đơn giao nhiều đợt — nên đơn COD chưa nhận tiền cũng bị đẩy sang '+
     '<i>Doanh thu chờ</i>. Tiền không mất đi đâu, chỉ chuyển ô.</div>';
 }
-function nhanGiaoQL(d){
-  var t=tgGiaoCua(d);
-  if(t==='CHUA') return '<span class="tg" style="color:var(--bad)">CHƯA GIAO</span>';
-  if(t==='MOT_PHAN') return '<span class="tg" style="color:var(--warn)">GIAO DỞ '+
-    tongDaGiao(d)+'/'+tongDat(d)+'</span>';
-  return '';
-}
-function nowStr(){var d=new Date();return ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear()+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)}
 function $(i){return document.getElementById(i)}
 function tien(n){return (Math.round(n)||0).toLocaleString('vi-VN')+' đ'}
 /* Công thức tính lãi DÙNG CHUNG cho mọi nơi trong file — trước đây lặp lại 5 lần
@@ -1377,9 +1379,21 @@ function veNvXemLS(){
   var sel=$('nvXemLS'); if(!sel) return;
   var cu=sel.value, dem={};
   SO.forEach(function(d){ var k=khoaNV(d); dem[k]=(dem[k]||0)+1 });
+  // Nhân viên mới duyệt xong nhưng CHƯA lên đơn nào thì không có mặt trong Sổ cái,
+  // nên không có khoá khoaNV() nào cho họ — trước đây dropdown vì vậy "quên" luôn
+  // người mới thêm. Bù thêm ở đây: mọi tài khoản đang HOẠT ĐỘNG trong "Tài khoản
+  // nhân viên" mà chưa có đơn nào thì vẫn liệt kê, ghi rõ "chưa có đơn" — chọn vào
+  // vẫn chạy đúng xemLichSuNV(), chỉ là trả về danh sách rỗng (đúng thực tế).
+  (NVS||[]).forEach(function(x){
+    if(x.trangthai!=='HOAT DONG') return; // bỏ qua CHỜ DUYỆT / NGƯNG — chưa/không còn lên đơn được
+    var ten=String(x.ten||'').trim(); if(!ten) return;
+    var daCoDon=Object.keys(dem).some(function(k){return k===ten||k.indexOf(ten+' · ')===0});
+    if(!daCoDon) dem[ten]=0;
+  });
   var ds=Object.keys(dem).sort(function(a,b){return dem[b]-dem[a]});
   sel.innerHTML = ds.length
-    ? ds.map(function(k){return '<option value="'+esc(k).replace(/"/g,'&quot;')+'">'+esc(k)+' — '+dem[k]+' đơn</option>'}).join('')
+    ? ds.map(function(k){return '<option value="'+esc(k).replace(/"/g,'&quot;')+'">'+esc(k)+
+        (dem[k]?' — '+dem[k]+' đơn':' — chưa có đơn')+'</option>'}).join('')
     : '<option value="">(chưa có đơn nào trong Sổ cái)</option>';
   if(ds.indexOf(cu)>=0) sel.value=cu;
 }
@@ -1445,6 +1459,24 @@ function veKenhLocSo(){
     Object.keys(kenhCo).sort().map(function(k){return '<option value="'+esc(k)+'">'+esc(k)+' ('+kenhCo[k]+')</option>'}).join('');
   if([].slice.call(e.options).some(function(o){return o.value===giu})) e.value=giu;
 }
+// Thanh chỉ số tổng quan — hiện phía trên bảng chi tiết mỗi khi Sổ cái đang bị lọc
+// theo nhóm (xemLichSuNV/xemTheoTK/xemNo/xemNhom...), để nhìn được BỨC TRANH TOÀN
+// CẢNH của nhóm đang xem trước khi lướt từng dòng bên dưới. `ds` truyền vào PHẢI
+// là danh sách đã lọc xong (đúng đúng những dòng sắp hiện trong bảng).
+function tomTatLoc(ds){
+  var huy=ds.filter(function(d){return d.huy});
+  var song=ds.filter(function(d){return !d.huy});
+  var dt=song.reduce(function(a,d){return a+(d.tienHang||0)},0);
+  var lai=song.reduce(function(a,d){return a+(d.lai||0)},0);
+  var conThu=song.reduce(function(a,d){return a+conThuDon(d)},0);
+  return '<div class="kpi mt" style="margin-bottom:11px">'+
+    '<div class="k-brand"><small>Tổng đơn</small><b>'+ds.length+'</b>'+
+    (huy.length?'<div class="sm">'+huy.length+' đơn đã huỷ</div>':'')+'</div>'+
+    '<div class="k-ok"><small>Doanh thu (chưa huỷ)</small><b>'+tien(dt)+'</b></div>'+
+    '<div class="k-info"><small>Lãi gộp</small><b>'+tien(lai)+'</b></div>'+
+    '<div class="k-pur"><small>Còn phải thu</small><b style="color:'+(conThu?'var(--warn)':'var(--ok)')+'">'+tien(conThu)+'</b></div>'+
+    '</div>';
+}
 function veSo(){
   var q=kd(($('fso').value||'').trim());
   var ds=SO.filter(function(d){return !q||kd(d.ma+' '+d.khach+' '+d.nv+' '+(d.dc||'')).indexOf(q)>=0});
@@ -1486,7 +1518,8 @@ function veSo(){
     bar='<div class="locbar"><div>Đang xem <b>'+LOCMA.length+'</b> '+esc(LOCTEN)+
       (ds.length<LOCMA.length?' <span class="sm">('+(LOCMA.length-ds.length)+' đơn không nằm trong sổ cái)</span>':'')+
       (LOC_TOANBO_KY?' <span class="tag w">không theo kỳ đang chọn ở trên</span>':'')+
-      '</div><button class="mini" onclick="boLoc()">Bỏ lọc, xem tất cả</button></div>';
+      '</div><button class="mini" onclick="boLoc()">Bỏ lọc, xem tất cả</button></div>'+
+      tomTatLoc(ds);
   }
   if(!ds.length){$('so').innerHTML=kyBar+bar+'<div class="card"><div class="empty">'+
     (LOCMA?'Không đơn nào trong nhóm này nằm trong sổ cái':(SO.length?'Không có đơn nào khớp bộ lọc đang chọn.':'Sổ cái trống'))+'</div></div>';return}
