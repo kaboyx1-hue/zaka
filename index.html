@@ -392,6 +392,7 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
 <section id="pg-list" class="hide">
   <div id="listMsg"></div>
   <div class="card"><input id="fdon" placeholder="Tìm mã đơn, khách, số điện thoại…" oninput="veDon()">
+    <select id="locNV" onchange="veDon()" style="margin-top:8px"></select>
     <div class="intoolbar" style="margin-top:9px">
       <button class="btn-nho" onclick="chonHetInLS(1)">Chọn tất cả để in</button>
       <select id="moiTrangLS"><option value="4">4 phiếu / tờ A4 (khổ 10×15cm)</option>
@@ -604,7 +605,7 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260907c';
+var APP_VER='20260908b';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -618,7 +619,19 @@ var APP_VER='20260907c';
 (function(){
   try{
     if(sessionStorage.getItem('zaka_da_kt_ver')) return;
-    fetch(location.pathname, {cache:'no-store'}).then(function(r){return r.text()}).then(function(html){
+    /* LỖ HỔNG ĐÃ PHÁT HIỆN (08/09/2026): fetch(location.pathname,{cache:'no-store'})
+       chỉ bảo đảm TRÌNH DUYỆT không dùng cache riêng của nó — nhưng nếu trang web
+       này đi qua CDN của nơi host (kể cả GitHub Pages) và CDN đang giữ một bản HTML
+       cũ cho đúng URL đó, thì request "no-store" vẫn được CDN trả lại CHÍNH bản cũ
+       ấy, y hệt bản đang chạy trên máy. So sánh APP_VER lúc đó ra "giống nhau" dù
+       server THẬT đã có bản mới từ lâu — máy nhân viên kẹt vĩnh viễn ở bản cũ mà cơ
+       chế tự kiểm tra này không hề phát hiện ra, tự tin báo "đã mới nhất".
+       CÁCH VÁ: thêm 1 tham số ngẫu nhiên vào URL đi kiểm tra (không phải URL đang
+       chạy) — CDN thấy URL khác (có ?_kt=...) sẽ coi là request mới, không có gì để
+       trả từ cache, buộc phải hỏi lại server gốc. Tham số ngẫu nhiên đổi mỗi lần nên
+       không tự tạo ra một bản cache "cũ" mới cho chính nó ở lần sau. */
+    var urlKiemTra=location.pathname+'?_kt='+Date.now()+Math.random().toString(36).slice(2);
+    fetch(urlKiemTra, {cache:'no-store'}).then(function(r){return r.text()}).then(function(html){
       var m=html.match(/var APP_VER=['"]([^'"]+)['"]/);
       if(m && m[1] && m[1]!==APP_VER){
         sessionStorage.setItem('zaka_da_kt_ver','1');
@@ -2551,15 +2564,47 @@ function veLaiFormSua(tuPG){
 function veLaiNeuDangNo(){
   if(CHO_VE_LAI && !dangSuaDon()){ CHO_VE_LAI=false; veDon(); vePG(); }
 }
+/* Danh sách lọc "theo nhân viên" ở tab Lịch sử — vì đơn của cả 3 máy NV01/NV02/
+   NV03 đều đồng bộ về hiện chung 1 danh sách (đúng lý do trước đây phải tô màu
+   mã máy cho dễ phân biệt), nên cần thêm cách LỌC HẲN theo đúng 1 nhân viên khi
+   cần tra cứu/đối chiếu, không chỉ trông cậy vào màu. Lấy tên nhân viên trực
+   tiếp từ d.nv (tên người tạo đơn, lưu sẵn trên mỗi đơn từ lúc lên đơn) — không
+   cần thêm dữ liệu mới, không đụng gì tới mã máy/mã đơn. */
+function veLocNV(){
+  var e=$('locNV'); if(!e) return;
+  var dem={};
+  DON.forEach(function(d){ var t=d.nv||'(không rõ)'; dem[t]=(dem[t]||0)+1 });
+  var ten=Object.keys(dem).sort(function(a,b){return a.localeCompare(b,'vi')});
+  var giu=e.value;
+  e.innerHTML='<option value="">Tất cả nhân viên</option>'+
+    ten.map(function(t){return '<option value="'+esc(t)+'">'+esc(t)+' ('+dem[t]+')</option>'}).join('');
+  if([].slice.call(e.options).some(function(o){return o.value===giu})) e.value=giu;
+}
 function veDon(){
   if(dangGoTrongFormSua()){ CHO_VE_LAI=true; return }
   // Nhớ lại 2 nhóm ô đang tích (chọn để in / chọn để huỷ) TRƯỚC khi vẽ lại toàn bộ
   // danh sách — veDon() cũng bị dongBo() gọi vô điều kiện mỗi 30 giây, cùng lý do
   // và cách khắc phục như ở vePG() (xem ghi chú bên đó).
   var dangChonInLS=dsChonInLS(), dangChonHuy=dsChonHuy();
+  veLocNV();
   var q=kd(($('fdon')&&$('fdon').value||'').trim());
-  var ds=DON.filter(function(d){return !q||kd(d.ma+' '+d.khach+' '+d.sdt).indexOf(q)>=0});
-  if(!ds.length){$('dsDon').innerHTML='<div class="card"><div class="empty">Chưa có đơn nào</div></div>';return}
+  var nv=($('locNV')&&$('locNV').value)||'';
+  var ds=DON.filter(function(d){
+    if(nv && (d.nv||'(không rõ)')!==nv) return false;
+    return !q||kd(d.ma+' '+d.khach+' '+d.sdt).indexOf(q)>=0;
+  });
+  if(!ds.length){
+    var lyDo=[];
+    if(nv) lyDo.push('nhân viên "'+esc(nv)+'"');
+    if(q) lyDo.push('từ khoá "'+esc(q)+'"');
+    $('dsDon').innerHTML='<div class="card"><div class="empty">'+
+      (lyDo.length
+        ? 'Không có đơn nào khớp '+lyDo.join(' + ')+'.'+
+          (nv?' <a href="#" class="lnk" onclick="document.getElementById(\'locNV\').value=\'\';veDon();return false">bỏ lọc nhân viên</a>':'')
+        : 'Chưa có đơn nào')+
+      '</div></div>';
+    return;
+  }
   $('dsDon').innerHTML='<div class="intoolbar" style="margin-bottom:9px">'+
     '<button id="btnDongBo" class="btn-nho" onclick="dongBoNgay()" style="background:var(--acc);color:#03121f;font-weight:600">⟳ Đồng bộ đơn</button>'+
     '<button class="btn-nho" onclick="thuGonTatCa(\'ls\',true)" style="background:var(--pur);color:#fff">▾ Thu gọn tất cả</button>'+
