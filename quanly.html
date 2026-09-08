@@ -231,6 +231,16 @@ dialog::backdrop{background:rgba(20,25,40,.55)}
 
 <section id="pg-vh" class="hide">
   <div id="vhMsg"></div>
+  <div class="card"><h2>Xem lịch sử đơn theo từng nhân viên</h2>
+    <div class="sm">Xem TOÀN BỘ đơn một nhân viên từng lên — <b>y hệt như chính người đó mở tab Lịch sử
+    trên máy của mình</b> (gồm cả đơn huỷ, đơn chưa ghi nhận doanh thu), <b>không giới hạn</b> trong khoảng
+    thời gian đang chọn ở tab Báo cáo.</div>
+    <div class="row mt">
+      <select id="nvXemLS" style="flex:2"></select>
+      <button class="btn" onclick="xemLichSuNV()">Xem toàn bộ đơn của người này</button>
+    </div>
+  </div>
+
   <div class="card"><h2>Tài khoản nhân viên</h2><div id="dsNV"></div>
     <div class="row mt">
       <button class="btn2" onclick="doiMaDangKy()">Đổi mã đăng ký cửa hàng</button>
@@ -382,7 +392,7 @@ dialog::backdrop{background:rgba(20,25,40,.55)}
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260907b';
+var APP_VER='20260908b';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -925,6 +935,10 @@ function idx(h,names){for(var i=0;i<names.length;i++){var j=h.indexOf(names[i]);
 
 var LANNAP={moi:[],capnhat:[],trung:[],cuHon:[],thieu:[]};
 var LOCMA=null, LOCTEN='';
+// true CHỈ khi đang xem "toàn bộ lịch sử 1 nhân viên" (xemLichSuNV) — lúc đó Sổ
+// cái phải BỎ QUA bộ lọc theo kỳ đang chọn, để đúng nghĩa "toàn bộ", không phụ
+// thuộc khoảng ngày/tháng/quý chủ đang xem ở tab Báo cáo.
+var LOC_TOANBO_KY=false;
 /* Danh sách mã đơn đứng sau mỗi ô số ở tab Báo cáo (KPI) — bấm vào ô số nào thì
    nhảy sang Số cái, lọc đúng đúng nhóm mã đơn của ô đó. Tính lại mỗi lần veBC()
    chạy nên luôn khớp đúng bộ lọc kỳ/kênh hiện tại, không lệch số. */
@@ -1084,7 +1098,7 @@ async function nap(files){
 function tab(t){['in','bc','so','gia','cb','vh'].forEach(function(x){
   $('pg-'+x).classList.toggle('hide',x!==t);$('tb-'+x).classList.toggle('on',x===t)});
   if(t==='bc')veBC(); if(t==='so')veSo(); if(t==='gia'){veGia();vePhat()} if(t==='cb')veCB();
-  if(t==='vh'){veNV();veMayGui();veNhatKy();veKhaiTruong();nhacSaoLuu()}
+  if(t==='vh'){veNV();veMayGui();veNhatKy();veKhaiTruong();nhacSaoLuu();veNvXemLS()}
 }
 function trongKy(d){
   var iso=String(d.iso||''); if(!iso) return true;
@@ -1304,7 +1318,7 @@ function xemNhom(loai){
   }
   $('fso').value=''; tab('so'); window.scrollTo({top:0,behavior:'smooth'});
 }
-function boLoc(){ LOCMA=null; LOCTEN=''; veSo() }
+function boLoc(){ LOCMA=null; LOCTEN=''; LOC_TOANBO_KY=false; veSo() }
 /* Công cụ chẩn đoán — quét TOÀN BỘ sổ cái tìm mã đơn xuất hiện nhiều hơn 1 lần.
    Không sửa gì cả, chỉ hiện rõ để so sánh — dùng khi có báo cáo "đơn bị trùng"
    để biết chính xác 2 bản ghi khác nhau ở đâu (thời gian, số lần sửa, nội dung),
@@ -1338,12 +1352,39 @@ function xemNo(){
   var ds=SO.filter(trongKy).filter(function(d){return ct(d)>0})
     .sort(function(a,b){return ct(b)-ct(a)});
   LOCMA=ds.map(function(d){return d.ma}); LOCTEN='đơn còn phải thu — '+tien(ds.reduce(function(a,d){return a+ct(d)},0));
+  LOC_TOANBO_KY=false;
   $('fso').value=''; tab('so'); window.scrollTo({top:0,behavior:'smooth'});
 }
 function xemTheoTK(ten){
   var ds=SO.filter(trongKy).filter(function(d){return d.tt==='DA'&&d.tkNhan===ten})
     .sort(function(a,b){return (b.tong||0)-(a.tong||0)});
   LOCMA=ds.map(function(d){return d.ma}); LOCTEN='đơn nhận qua "'+ten+'" — '+tien(ds.reduce(function(a,d){return a+(d.tong||0)},0));
+  LOC_TOANBO_KY=false;
+  $('fso').value=''; tab('so'); window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// Khoá định danh 1 "nhân viên" trong Sổ cái: ghép tên + mã máy, giống hệt cách
+// bảng "Theo nhân viên" ở tab Báo cáo đang ghép (xem veBC()) — để không lẫn
+// hai người trùng tên ở hai máy khác nhau.
+function khoaNV(d){ return (d.nv||'(không rõ)')+(d.may?' · '+d.may:'') }
+function veNvXemLS(){
+  var sel=$('nvXemLS'); if(!sel) return;
+  var cu=sel.value, dem={};
+  SO.forEach(function(d){ var k=khoaNV(d); dem[k]=(dem[k]||0)+1 });
+  var ds=Object.keys(dem).sort(function(a,b){return dem[b]-dem[a]});
+  sel.innerHTML = ds.length
+    ? ds.map(function(k){return '<option value="'+esc(k).replace(/"/g,'&quot;')+'">'+esc(k)+' — '+dem[k]+' đơn</option>'}).join('')
+    : '<option value="">(chưa có đơn nào trong Sổ cái)</option>';
+  if(ds.indexOf(cu)>=0) sel.value=cu;
+}
+function xemLichSuNV(){
+  var kn=$('nvXemLS') && $('nvXemLS').value; if(!kn) return;
+  var ds=SO.filter(function(d){return khoaNV(d)===kn})
+    .sort(function(a,b){return String(b.iso+' '+b.ngay+b.ma).localeCompare(String(a.iso+' '+a.ngay+a.ma))});
+  LOCMA=ds.map(function(d){return d.ma});
+  LOCTEN='TOÀN BỘ đơn của '+kn+' — không giới hạn kỳ, kể cả đơn huỷ/chưa ghi nhận ('+ds.length+' đơn, '+
+    tien(ds.reduce(function(a,d){return a+(d.tong||0)},0))+')';
+  LOC_TOANBO_KY=true; // xem đúng nghĩa "toàn bộ" — bỏ qua kỳ báo cáo đang chọn
   $('fso').value=''; tab('so'); window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -1403,7 +1444,9 @@ function veSo(){
   var ds=SO.filter(function(d){return !q||kd(d.ma+' '+d.khach+' '+d.nv+' '+(d.dc||'')).indexOf(q)>=0});
   // Lọc theo kỳ (ngày/tháng/quý/khoảng tuỳ chỉnh) — DÙNG CHUNG với tab Báo cáo, chọn
   // kỳ ở tab nào cũng áp dụng cho cả hai — trước đây veSo() bỏ qua KY, không lọc gì.
-  ds=ds.filter(trongKy);
+  // Trừ khi đang xem "TOÀN BỘ lịch sử 1 nhân viên" (xemLichSuNV) — lúc đó phải
+  // đúng nghĩa "toàn bộ", không bị cắt bớt theo kỳ đang chọn ở tab Báo cáo.
+  if(!LOC_TOANBO_KY) ds=ds.filter(trongKy);
   // Lọc theo kênh
   var kenhLoc=($('locKenhSo')&&$('locKenhSo').value)||'';
   if(kenhLoc) ds=ds.filter(function(d){return d.kenh===kenhLoc});
@@ -1436,6 +1479,7 @@ function veSo(){
     ds=ds.filter(function(d){return LOCMA.indexOf(d.ma)>=0});
     bar='<div class="locbar"><div>Đang xem <b>'+LOCMA.length+'</b> '+esc(LOCTEN)+
       (ds.length<LOCMA.length?' <span class="sm">('+(LOCMA.length-ds.length)+' đơn không nằm trong sổ cái)</span>':'')+
+      (LOC_TOANBO_KY?' <span class="tag w">không theo kỳ đang chọn ở trên</span>':'')+
       '</div><button class="mini" onclick="boLoc()">Bỏ lọc, xem tất cả</button></div>';
   }
   if(!ds.length){$('so').innerHTML=kyBar+bar+'<div class="card"><div class="empty">'+
