@@ -3,17 +3,22 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ZAKA — Quản lý</title>
 <style>
-/* ══ Bảng màu — lấy cảm hứng phong cách mềm mại/bo tròn/pastel, vẫn giữ
-   nguyên 2 chế độ sáng/tối sẵn có (body.sang), chỉ đổi TÔNG MÀU + BO GÓC,
-   không đụng gì tới cấu trúc/id/class mà JS đang dùng. ══ */
-:root{--bg:#141c2b;--bg2:#1b2438;--card:#1c2740;--c2:#232f4a;--line:#324061;--tx:#eef1fb;--tx2:#9aa8c7;
---acc:#7c9cff;--acc2:#a78bfa;--ok:#4fd8a4;--warn:#ffbe55;--bad:#ff8080;--pur:#c7b6fb;
---okBg:#123a30;--badBg:#3a1c22;--warnBg:#3a2d10;--purBg:#2a2450;--shadow:0 10px 30px -12px rgba(0,0,0,.45);--btnGlow:0 6px 16px -6px rgba(124,156,255,.55)}
-/* Chế độ sáng — hạ độ sáng/độ bão hoà nền và giảm đổ bóng phát sáng quanh nút để
-   đỡ chói mắt (theo phản hồi thực tế), vẫn giữ tinh thần bo tròn/mềm mại. */
-body.sang{--bg:#eef1f6;--bg2:#eef1f6;--card:#fbfcfe;--c2:#f2f4f9;--line:#e3e7ef;--tx:#2b3448;--tx2:#7c869c;
---acc:#6a86d9;--acc2:#8f7bce;--ok:#2fa677;--warn:#c97c1f;--bad:#d15a56;--pur:#7d68b8;
---okBg:#e6f3ec;--badBg:#fbecea;--warnBg:#faf0e2;--purBg:#eee9f9;--shadow:0 6px 16px -10px rgba(60,70,100,.14);--btnGlow:0 4px 12px -6px rgba(106,134,217,.35)}
+/* ══ Bảng màu — chốt theo bản duyệt 2026-09-08: tối = "Xanh rêu" (mặc định :root),
+   sáng = "Mùn cưa" (body.sang). Thêm 2 biến mới --brand/--brandTx (màu thương hiệu
+   đậm hơn, dùng riêng cho thanh header) và --info/--infoBg (thêm sắc xanh dương còn
+   thiếu trong 4 màu trạng thái, để có phân cấp màu rõ hơn kiểu Sapo/KiotViet). Vẫn
+   giữ nguyên 2 chế độ sáng/tối sẵn có (body.sang), không đụng gì tới cấu trúc/id/class
+   mà JS đang dùng. ══ */
+:root{--bg:#0F1713;--bg2:#141F19;--card:#182420;--c2:#1F2F28;--line:#2C4239;--tx:#E4EFE8;--tx2:#93AC9E;
+--acc:#5FC896;--acc2:#7FAEDD;--brand:#1F5B44;--brandTx:#EAF8EF;
+--ok:#57D49B;--warn:#E7B75C;--bad:#E68B72;--pur:#A6A6EA;--info:#6FA9DE;
+--okBg:#16301F;--badBg:#2E1E19;--warnBg:#2E2618;--purBg:#1F2140;--infoBg:#152C3C;--shadow:0 10px 28px -14px rgba(0,0,0,.55);--btnGlow:0 6px 18px -8px rgba(95,200,150,.4)}
+/* Chế độ sáng — bảng "Mùn cưa": tinh thần ấm/mộc, nhạt hơn một bậc so với bản đầu
+   để dịu mắt khi dùng lâu, cùng bộ brand/info như bản tối. */
+body.sang{--bg:#F8F4EA;--bg2:#F2EBD9;--card:#FFFDF8;--c2:#F3EAD6;--line:#E7DAB9;--tx:#4A3B28;--tx2:#8D7C5C;
+--acc:#BE8A55;--acc2:#C98098;--brand:#9C6636;--brandTx:#FFF8EC;
+--ok:#4C8F58;--warn:#C2790F;--bad:#BC5A3C;--pur:#8A62A8;--info:#3E76A6;
+--okBg:#E5F0E2;--badBg:#F6E2DA;--warnBg:#F7EAD0;--purBg:#EEE4F3;--infoBg:#E3EDF5;--shadow:0 10px 26px -16px rgba(120,90,40,.20);--btnGlow:0 6px 16px -8px rgba(190,138,85,.38)}
 *{box-sizing:border-box}
 body{margin:0;font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
   background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);background-attachment:fixed;color:var(--tx)}
@@ -24,11 +29,11 @@ input,select{font:inherit;width:100%;padding:11px 12px;border-radius:14px;border
 input:focus,select:focus{outline:none;border-color:var(--acc)}
 label{display:block;font-size:12.5px;color:var(--tx2);margin:0 0 6px}
 .row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1;min-width:150px}.mt{margin-top:12px}
-header{background:var(--card);border-bottom:1px solid var(--line);padding:14px 16px;box-shadow:var(--shadow)}
-header b{font-size:17px}header div{font-size:12.5px;color:var(--tx2);margin-top:2px}
+header{background:var(--brand);color:var(--brandTx);border-bottom:1px solid var(--line);padding:14px 16px;box-shadow:var(--shadow)}
+header b{font-size:17px}header div{font-size:12.5px;color:var(--brandTx);opacity:.78;margin-top:2px}
 nav{display:flex;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:19;overflow-x:auto}
 nav button{flex:1;background:none;color:var(--tx2);border-radius:0;padding:12px 10px;font-size:14px;white-space:nowrap;border-bottom:3px solid transparent}
-nav button.on{color:var(--acc);border-bottom-color:var(--acc);font-weight:600}
+nav button.on{color:var(--acc);background:color-mix(in srgb, var(--acc) 14%, transparent);border-bottom-color:var(--acc);font-weight:600}
 main{padding:15px;max-width:1060px;margin:0 auto;padding-bottom:60px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow)}
 h2{font-size:15px;margin:0 0 11px}
@@ -40,7 +45,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{padding:8px 6px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
 th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
 .kpi{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.kpi div{background:var(--c2);border-radius:16px;padding:13px}
+.kpi div{background:var(--c2);border-radius:16px;padding:13px;border-left:3px solid var(--acc)}
 .kpi small{color:var(--tx2);font-size:11.5px;display:block;margin-bottom:3px}.kpi b{font-size:18px}
 /* Bảng giá dùng hết bề ngang màn hình */
 #pg-gia{max-width:none;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);padding:0 16px}
@@ -87,6 +92,7 @@ tr.canhbao td{background:var(--badBg)}
 .tag{font-size:10.5px;padding:2px 7px;border-radius:8px;background:var(--c2);color:var(--tx2)}
 .tag.w{background:var(--warnBg);color:var(--warn)}.tag.p{background:var(--purBg);color:var(--pur)}
 .tag.g{background:var(--okBg);color:var(--ok)}
+.tag.i{background:var(--infoBg);color:var(--info)}
 dialog{border:1px solid var(--line);border-radius:20px;background:var(--card);color:var(--tx);padding:18px;max-width:460px;width:92%;box-shadow:var(--shadow)}
 dialog::backdrop{background:rgba(20,25,40,.55)}
 .mini{padding:5px 10px;font-size:12px;border-radius:10px;background:var(--c2);color:var(--acc)}
@@ -392,7 +398,7 @@ dialog::backdrop{background:rgba(20,25,40,.55)}
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260908b';
+var APP_VER='20260908c';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
