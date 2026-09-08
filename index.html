@@ -58,6 +58,12 @@ header .who b{display:block;font-size:15px}header .who{font-size:12px;color:var(
 
 /* ══ BẢN IN — TRẮNG ĐEN TUYỆT ĐỐI ══ */
 @page{size:A4;margin:0}
+/* Khổ giấy A5 riêng (in ngày 08/09/2026 theo yêu cầu chủ: máy nào nạp sẵn giấy
+   A5 thì in 2 đơn/tờ khổ A5 thay vì phải dùng A4) — dùng "named page" (page:)
+   để CHỈ đúng những tờ .trangA5 đổi sang khổ A5, các tờ A4 khác trong cùng lần
+   in (ví dụ đơn quá dài phải tách in riêng) không bị ảnh hưởng. Chrome hỗ trợ
+   thuộc tính page từ lâu, đúng trình duyệt app đang hướng dẫn dùng để in. */
+@page a5Zaka{size:A5;margin:0}
 #inKhung{display:none}
 @media print{
   html,body{background:#fff!important;margin:0!important;padding:0!important}
@@ -69,6 +75,10 @@ header .who b{display:block;font-size:15px}header .who{font-size:12px;color:var(
 .intrang{width:210mm;height:297mm;box-sizing:border-box;display:grid;
     page-break-after:always;break-after:page;overflow:hidden}
 .intrang:last-child{page-break-after:auto;break-after:auto}
+/* Tờ khổ A5 — đè lại kích thước + gán khổ giấy in thật (page: a5Zaka) so với
+   .intrang mặc định (A4). Grid layout (mấy hàng/cột) vẫn dùng chung .n1/.n2 ở
+   dưới vì tỉ lệ khung mỗi ô không đổi, chỉ đổi kích thước tờ giấy tổng. */
+.trangA5{width:148mm;height:210mm;page:a5Zaka}
 .n1{grid-template-columns:1fr;grid-template-rows:1fr}
 .n2{grid-template-columns:1fr;grid-template-rows:1fr 1fr}
 .n4{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}
@@ -374,7 +384,8 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
         Chỉ hiện đơn chưa in</label>
       <select id="moiTrang"><option value="4">4 phiếu / tờ A4 (khổ 10×15cm)</option>
         <option value="2">2 phiếu / tờ A4</option>
-        <option value="1">1 phiếu / tờ A4</option></select>
+        <option value="1">1 phiếu / tờ A4</option>
+        <option value="A5">2 phiếu / tờ A5 (giấy A5 riêng)</option></select>
       <button class="btn" id="btnInNhieu" onclick="inDaChon()" style="background:var(--acc);color:#03121f;font-weight:600;padding:8px 15px;font-size:13px">In 0 phiếu đã chọn</button>
       <button class="btn" onclick="inGuiDaChon()" style="background:#2a2140;color:var(--pur);font-weight:600;padding:8px 15px;font-size:13px">In phiếu gửi nhà xe</button>
     </div>
@@ -397,7 +408,8 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
       <button class="btn-nho" onclick="chonHetInLS(1)">Chọn tất cả để in</button>
       <select id="moiTrangLS"><option value="4">4 phiếu / tờ A4 (khổ 10×15cm)</option>
         <option value="2">2 phiếu / tờ A4</option>
-        <option value="1">1 phiếu / tờ A4</option></select>
+        <option value="1">1 phiếu / tờ A4</option>
+        <option value="A5">2 phiếu / tờ A5 (giấy A5 riêng)</option></select>
       <button class="btn" id="btnInNhieuLS" onclick="inPhieu(dsChonInLS(),$('moiTrangLS').value)" style="background:var(--acc);color:#03121f;font-weight:600;padding:8px 15px;font-size:13px">In 0 phiếu đã chọn</button>
       <button class="btn" onclick="moKienHang(dsChonInLS(),$('moiTrangLS').value)" style="background:#2a2140;color:var(--pur);font-weight:600;padding:8px 15px;font-size:13px">In phiếu gửi nhà xe</button>
     </div>
@@ -605,7 +617,7 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260908b';
+var APP_VER='20260908c';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -3041,7 +3053,18 @@ function veOut(){
 }
 /* ══════════ BẢN IN PHIẾU GIAO HÀNG — TRẮNG ĐEN ══════════ */
 function pTien(v){ return (Math.round(v)||0).toLocaleString('vi-VN') }
-function cuChu(n){ return n===1?14 : n===2?11 : 8.4 }
+/* kho='A4' (mặc định) hoặc 'A5'. Cỡ chữ chỉ là điểm KHỞI ĐẦU để đo — nenVua()
+   ngay dưới sẽ tự đo thật và thu nhỏ tiếp nếu còn tràn, nên chọn hơi dư không
+   sao, không cần tính millimet chính xác tuyệt đối. Ước theo diện tích mỗi ô:
+   - A5 2 đơn/tờ (mỗi ô ~148×105mm) diện tích gần bằng ô A4 4 đơn/tờ (~105×148mm)
+     → dùng chung điểm khởi đầu 8.4.
+   - A5 1 đơn/tờ (trường hợp đơn quá dài phải tách in riêng, xem inChung()) —
+     diện tích cả tờ A5 (~148×210mm) gần bằng đúng 1 ô của A4 2 đơn/tờ
+     (~210×148.5mm) → dùng chung điểm khởi đầu 11. */
+function cuChu(n,kho){
+  if(kho==='A5') return n===1?11:8.4;
+  return n===1?14 : n===2?11 : 8.4;
+}
 var CU_TOI_THIEU=4.6;   // nhỏ hơn nữa thì shipper không đọc nổi
 
 /* ĐO THẬT rồi mới thu nhỏ.
@@ -3380,20 +3403,23 @@ function inGuiDaChon(){
 }
 
 /* Xếp một loạt đơn vào các trang khổ n, đo từng phiếu, đơn nào ép hết cỡ
-   vẫn tràn thì đẩy sang danh sách "quá khổ" để in riêng một tờ. */
-function xepTrang(ds,n,veHTML){
+   vẫn tràn thì đẩy sang danh sách "quá khổ" để in riêng một tờ.
+   kho: 'A4' (mặc định) hoặc 'A5' — chỉ đổi kích thước tờ giấy (class .trangA5),
+   không đổi cách chia ô (vẫn dùng chung .n1/.n2/.n4 theo n như cũ). */
+function xepTrang(ds,n,veHTML,kho){
+  kho=kho==='A5'?'A5':'A4';
   var K=$('inKhung'), out='', i=0;
   while(i<ds.length){
     var lo=ds.slice(i,i+n); i+=n;
     var o='';
-    for(var k=0;k<n;k++) o += lo[k]?veHTML(lo[k],{pt:cuChu(n)}):'<div></div>';
-    out+='<div class="intrang n'+n+'">'+o+'</div>';
+    for(var k=0;k<n;k++) o += lo[k]?veHTML(lo[k],{pt:cuChu(n,kho)}):'<div></div>';
+    out+='<div class="intrang'+(kho==='A5'?' trangA5':'')+' n'+n+'">'+o+'</div>';
   }
   K.innerHTML=out;
   K.classList.add('dothu');
   var qua=[], ps=K.querySelectorAll('.phieu');
   for(var j=0;j<ps.length;j++){
-    if(nenVua(ps[j], cuChu(n))===0){
+    if(nenVua(ps[j], cuChu(n,kho))===0){
       var ma=ps[j].getAttribute('data-ma');
       var d=ds.filter(function(x){return x.ma===ma})[0];
       if(d) qua.push(d);
@@ -3403,16 +3429,23 @@ function xepTrang(ds,n,veHTML){
   return {html:K.innerHTML, qua:qua};
 }
 
+/* moiTrang là giá trị của các ô chọn #moiTrang/#moiTrangLS: '4'/'2'/'1' như cũ
+   (khổ A4, n phiếu/tờ), hoặc 'A5' (khổ giấy A5, 2 phiếu/tờ — thêm 08/09/2026). */
+function phanTichMoiTrang(moiTrang){
+  if(String(moiTrang)==='A5') return {kho:'A5', n:2};
+  return {kho:'A4', n:parseInt(moiTrang)||1};
+}
 function inChung(ds,moiTrang,veHTML,nhan){
-  var n=parseInt(moiTrang)||1;
-  var r=xepTrang(ds,n,veHTML);
+  var cf=phanTichMoiTrang(moiTrang), n=cf.n, kho=cf.kho;
+  var r=xepTrang(ds,n,veHTML,kho);
   if(r.qua.length && n>1){
-    // Bỏ mấy đơn quá khổ ra, xếp lại phần còn lại, rồi in riêng từng đơn quá khổ một tờ
+    // Bỏ mấy đơn quá khổ ra, xếp lại phần còn lại, rồi in riêng từng đơn quá khổ
+    // một tờ — GIỮ NGUYÊN đúng khổ giấy (A4 hay A5) đã chọn, không lẫn giấy.
     var conLai=ds.filter(function(d){return r.qua.indexOf(d)<0});
-    var a=conLai.length?xepTrang(conLai,n,veHTML):{html:''};
-    var b=xepTrang(r.qua,1,veHTML);
+    var a=conLai.length?xepTrang(conLai,n,veHTML,kho):{html:''};
+    var b=xepTrang(r.qua,1,veHTML,kho);
     $('inKhung').innerHTML=a.html+b.html;
-    bao('pgMsg','<b>'+r.qua.length+' '+nhan+' nhiều hàng quá</b> — đã tách ra in riêng mỗi đơn một tờ A4 '+
+    bao('pgMsg','<b>'+r.qua.length+' '+nhan+' nhiều hàng quá</b> — đã tách ra in riêng mỗi đơn một tờ '+kho+' '+
       'để không cắt mất dòng nào.','wa');
   }
   setTimeout(function(){ window.print(); vePG(); veDon() },90);
