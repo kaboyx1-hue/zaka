@@ -57,13 +57,17 @@ header .who b{display:block;font-size:15px}header .who{font-size:12px;color:var(
 .intoolbar select{width:auto;min-width:150px}
 
 /* ══ BẢN IN — TRẮNG ĐEN TUYỆT ĐỐI ══ */
-@page{size:A4;margin:0}
+@page{size:A4 portrait;margin:0}
 /* Khổ giấy A5 riêng (in ngày 08/09/2026 theo yêu cầu chủ: máy nào nạp sẵn giấy
    A5 thì in 2 đơn/tờ khổ A5 thay vì phải dùng A4) — dùng "named page" (page:)
    để CHỈ đúng những tờ .trangA5 đổi sang khổ A5, các tờ A4 khác trong cùng lần
    in (ví dụ đơn quá dài phải tách in riêng) không bị ảnh hưởng. Chrome hỗ trợ
-   thuộc tính page từ lâu, đúng trình duyệt app đang hướng dẫn dùng để in. */
-@page a5Zaka{size:A5;margin:0}
+   thuộc tính page từ lâu, đúng trình duyệt app đang hướng dẫn dùng để in.
+   LỖI ĐÃ GẶP (08/09/2026): chỉ ghi "size:A5" không kèm hướng giấy — một số máy
+   in/driver tự suy ra hướng NGANG (landscape) thay vì dọc (portrait) như A4,
+   khiến bản in A5 bị dàn hàng ngang trong khi A4 vẫn dọc bình thường. Phải ghi
+   RÕ "portrait" để ép đúng hướng dọc, không phụ thuộc suy đoán của máy in. */
+@page a5Zaka{size:A5 portrait;margin:0}
 #inKhung{display:none}
 @media print{
   html,body{background:#fff!important;margin:0!important;padding:0!important}
@@ -533,6 +537,20 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
   <button class="btn mt" onclick="luuSuaTT()" style="background:var(--acc);color:#03121f;font-weight:600">Lưu thay đổi</button>
 </dialog>
 
+<!-- Đánh dấu ĐÃ THU nhanh (nút ở thẻ đơn) — trước đây dùng prompt() của trình
+     duyệt liệt kê 4 gợi ý bằng chữ, giờ đổi thành dropdown thật chỉ 2 lựa chọn
+     theo đúng yêu cầu chủ: Tiền mặt hoặc Chuyển khoản. */ -->
+<dialog id="dlgThuTien">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+    <h2 style="margin:0" id="ttNhanhTen">Đánh dấu đã thu</h2>
+    <button onclick="document.getElementById('dlgThuTien').close()" style="background:var(--c2);color:var(--tx2);padding:6px 12px">Đóng</button>
+  </div>
+  <div class="mt"><label>Đã thu bằng hình thức nào?</label>
+    <select id="ttNhanhHt"><option>Tiền mặt</option><option>Chuyển khoản</option></select>
+  </div>
+  <button class="btn mt" onclick="xacNhanThuTienNhanh()" style="background:var(--acc);color:#03121f;font-weight:600">Xác nhận đã thu</button>
+</dialog>
+
 <dialog id="dlgGD">
   <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
     <h2 style="margin:0" id="gdTen"></h2>
@@ -617,7 +635,7 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260908c';
+var APP_VER='20260908f';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -2087,8 +2105,17 @@ async function luuMoi(){
 /* ── LƯU ĐƠN ── */
 function luu(){
   if(!GIO.length)return;
-  var sdt=$('sdt').value.replace(/\D/g,'')||'9999999999';
-  var ten=$('khten').value.trim()||(KH[sdt]?KH[sdt].ten:'KHÁCH LẺ');
+  /* LỖI ĐÃ GẶP (08/09/2026): trước đây khi khách không để lại số điện thoại,
+     code tự gán một số giả CỐ ĐỊNH "9999999999" cho MỌI đơn kiểu này — nghĩa là
+     tất cả khách lẻ không có SĐT, dù là những người hoàn toàn khác nhau, đều bị
+     dồn chung vào MỘT hồ sơ khách hàng duy nhất trong danh bạ (KH['9999999999']).
+     Hậu quả: lịch sử/giá riêng/tình trạng thanh toán của những người không liên
+     quan bị trộn lẫn vào nhau, nhìn như "phần mềm hiểu nhầm là cùng một người".
+     CÁCH VÁ: để trống sdt='' thật sự khi khách không cho số — KHÔNG gán số giả,
+     và (xem đoạn dưới) KHÔNG tạo/cập nhật hồ sơ khách chung cho các đơn này —
+     mỗi đơn khách lẻ không SĐT đứng độc lập, không bị gộp với nhau. */
+  var sdt=$('sdt').value.replace(/\D/g,'');
+  var ten=$('khten').value.trim()||(sdt&&KH[sdt]?KH[sdt].ten:'KHÁCH LẺ');
   var kenh=$('kenh').value, ship=so($('ship').value), giam=so($('giam').value), phiChanh=so($('phiChanh').value);
   var dc=$('dc').value.trim();
   var hang=0,ts=0; GIO.forEach(function(g){hang+=g.gia*g.sl;ts+=g.sl});
@@ -2138,14 +2165,20 @@ function luu(){
     ma:ma,ngay:nowStr(),iso:today(),kenh:kenh,sdt:sdt,khach:ten,nv:CFG.ten,may:CFG.ma,
     sl:ts,tienHang:hang,ship:ship,giam:giam,phiChanh:phiChanh,tong:hang+ship-giam,dc:dc,ghichu:$('ghichu').value.trim(),
     dong:dong,xuat:false,sualan:0,lichSu:[]});
-  var khMoi=!KH[sdt];
-  if(khMoi) KH[sdt]={sdt:sdt,ten:ten,kenh:kenh,dc:dc,gia:{}};
-  var k=KH[sdt]; k.ten=ten||k.ten; k.kenh=kenh; if(dc)k.dc=dc; k.gia=k.gia||{}; k.canDay=true;
-  GIO.forEach(function(g){
-    if(g.hs>1) return;
-    if(g.gia!==g.goc || (k.gia[g.sku]&&k.gia[g.sku].het>=today()))
-      k.gia[g.sku]={gia:g.gia,luc:today(),het:addD(today(),HAN),canDay:true};
-  });
+  // Không có SĐT → khách lẻ vãng lai, KHÔNG tạo/gộp vào hồ sơ danh bạ khách nào
+  // cả (xem giải thích ở đầu hàm luu()). Có SĐT thật thì vẫn lưu vào danh bạ +
+  // giá riêng như trước, không đổi gì.
+  var khMoi=false;
+  if(sdt){
+    khMoi=!KH[sdt];
+    if(khMoi) KH[sdt]={sdt:sdt,ten:ten,kenh:kenh,dc:dc,gia:{}};
+    var k=KH[sdt]; k.ten=ten||k.ten; k.kenh=kenh; if(dc)k.dc=dc; k.gia=k.gia||{}; k.canDay=true;
+    GIO.forEach(function(g){
+      if(g.hs>1) return;
+      if(g.gia!==g.goc || (k.gia[g.sku]&&k.gia[g.sku].het>=today()))
+        k.gia[g.sku]={gia:g.gia,luc:today(),het:addD(today(),HAN),canDay:true};
+    });
+  }
   set('kh',KH); set('don',DON);
   GIO=[]; $('ship').value=0; $('giam').value=0; $('phiChanh').value=0; $('ghichu').value=''; $('dc').value='';
   luuGio(); veTabNhap();
@@ -3259,23 +3292,38 @@ function danhDauIn(mas){
     d.inLan=(d.inLan||0)+1; d.inLuc=nowStr(); d.inChuaDay=true; });
   set('don',DON); dem(); dayIn();
 }
-/* Shipper giao xong về, thu tiền rồi → bấm ở đây. */
+/* Shipper giao xong về, thu tiền rồi → bấm ở đây.
+   TRƯỚC ĐÂY: dùng prompt() của trình duyệt, gõ tay hình thức thu (chỉ gợi ý 4
+   chữ trong câu hỏi, không phải lựa chọn thật). Theo yêu cầu chủ (08/09/2026):
+   đổi thành dropdown thật, chỉ còn đúng 2 lựa chọn Tiền mặt / Chuyển khoản. */
 function doiTT(ma){
   var d=getDon(ma); if(!d)return;
   var t=d.tt||'CHUA';
-  var moi = t==='DA' ? 'CHUA' : 'DA';
-  if(moi==='DA'){
-    var ht=prompt('Đơn '+ma+' — '+(d.khach||'')+'\nCòn phải thu: '+tien(conThuDon(d))+
-      '\n\nĐã thu bằng hình thức nào?\n(Tiền mặt / Chuyển khoản / Quẹt thẻ / Ví)','Tiền mặt');
-    if(ht===null)return;
-    d.tt='DA'; d.ttHt=String(ht).trim()||'Tiền mặt'; d.daTra=d.tong;
-  } else {
+  if(t==='DA'){
     if(!confirm('Bỏ đánh dấu đã thanh toán cho đơn '+ma+'?\n\nĐơn quay về trạng thái CHƯA THU.'))return;
     d.tt='CHUA'; d.ttHt=''; d.daTra=0;
+    d.ttChuaDay=true; set('don',DON);
+    vePG(); veDon(); dayTT();
+    bao('pgMsg','Đơn <b>'+esc(ma)+'</b> → <b style="color:var(--warn)">CHƯA THU</b>','ok');
+    return;
   }
+  // moi==='DA' — mở dropdown chọn hình thức thay vì hỏi bằng prompt() như cũ.
+  MA_DANG_THU_NHANH=ma;
+  $('ttNhanhTen').textContent='Đơn '+ma+' — '+(d.khach||'')+' · còn phải thu '+tien(conThuDon(d));
+  $('ttNhanhHt').value='Tiền mặt';
+  $('dlgThuTien').showModal();
+}
+var MA_DANG_THU_NHANH=null;
+function xacNhanThuTienNhanh(){
+  var ma=MA_DANG_THU_NHANH; if(!ma) return;
+  var d=getDon(ma);
+  $('dlgThuTien').close();
+  MA_DANG_THU_NHANH=null;
+  if(!d) return;
+  d.tt='DA'; d.ttHt=$('ttNhanhHt').value||'Tiền mặt'; d.daTra=d.tong;
   d.ttChuaDay=true; set('don',DON);
   vePG(); veDon(); dayTT();
-  bao('pgMsg','Đơn <b>'+esc(ma)+'</b> → '+(d.tt==='DA'?'<b style="color:var(--ok)">ĐÃ THANH TOÁN</b>':'<b style="color:var(--warn)">CHƯA THU</b>'),'ok');
+  bao('pgMsg','Đơn <b>'+esc(ma)+'</b> → <b style="color:var(--ok)">ĐÃ THANH TOÁN</b> ('+esc(d.ttHt)+')','ok');
 }
 async function dayTT(){
   var ds=DON.filter(function(d){return d.ttChuaDay});
