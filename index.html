@@ -12,30 +12,61 @@
 <meta http-equiv="Expires" content="0">
 <title>ZAKA — Bán hàng</title>
 <style>
-:root{--bg:#0f1720;--card:#18222e;--c2:#1e2a38;--line:#2b3a4a;--tx:#e8eef4;--tx2:#8fa3b8;
---acc:#4da3ff;--ok:#3ecf8e;--warn:#ffb020;--bad:#ff6b6b;--pur:#b39ddb}
-/* Chế độ sáng — cùng tên biến, đổi giá trị, không đụng gì tới CSS bên dưới vì
-   toàn bộ file đã dùng var(--...) nhất quán từ đầu. Màu ngữ nghĩa (ok/warn/bad)
-   chỉnh đậm hơn bản tối, vì trên nền trắng màu nhạt sẽ khó đọc hơn hẳn. */
-body.sang{--bg:#f4f6f9;--card:#ffffff;--c2:#eef2f6;--line:#d8e0e8;--tx:#182430;--tx2:#5c6b7a;
---acc:#2b7de0;--ok:#1f9d63;--warn:#b8720a;--bad:#d63333;--pur:#7c5cc4}
+/* ══ BẢNG MÀU — ĐỒNG BỘ 09/09/2026 ══
+   Dùng CHUNG một bộ với máy quản lý (quanly.html): tối = "Xanh rêu", sáng =
+   "Mùn cưa". Trước đây máy nhân viên đi bộ xanh dương riêng nên hai app nhìn
+   như hai phần mềm khác nhau. Tên biến giữ y nguyên, chỉ đổi giá trị, nên
+   KHÔNG có dòng CSS nào bên dưới phải sửa theo.
+   Thêm mấy biến còn thiếu để khớp đủ với máy quản lý:
+     --bg2            nền chuyển sắc ở đáy trang
+     --acc2           màu phụ, dùng cho nút chuyển sắc
+     --brand/--brandTx thanh header đậm màu thương hiệu
+     --info           sắc xanh dương cho trạng thái, trước đây thiếu hẳn
+     --okBg…--infoBg  nền nhạt của 5 màu trạng thái. Trước đây file này gõ
+                      cứng #3a2d10 / #16241c / #2a2140 — chỉ hợp nền tối,
+                      sang chế độ sáng là chữ tối trên nền tối, không đọc nổi.
+     --shadow/--btnGlow đổ bóng thống nhất
+     --vien           file này (và cả quanly.html) đã lỡ dùng var(--vien) ở
+                      vài chỗ mà chưa bao giờ khai báo, nên viền đó không hề
+                      hiện ra. Nay trỏ về --line cho đúng ý ban đầu. ══ */
+:root{--bg:#0F1713;--bg2:#141F19;--card:#182420;--c2:#1F2F28;--line:#2C4239;--tx:#E4EFE8;--tx2:#93AC9E;
+--acc:#5FC896;--acc2:#7FAEDD;--brand:#1F5B44;--brandTx:#EAF8EF;
+--ok:#57D49B;--warn:#E7B75C;--bad:#E68B72;--pur:#A6A6EA;--info:#6FA9DE;
+--okBg:#16301F;--badBg:#2E1E19;--warnBg:#2E2618;--purBg:#1F2140;--infoBg:#152C3C;
+--vien:#2C4239;--shadow:0 10px 28px -14px rgba(0,0,0,.55);--btnGlow:0 6px 18px -8px rgba(95,200,150,.4)}
+body.sang{--bg:#F8F4EA;--bg2:#F2EBD9;--card:#FFFDF8;--c2:#F3EAD6;--line:#E7DAB9;--tx:#4A3B28;--tx2:#8D7C5C;
+--acc:#BE8A55;--acc2:#C98098;--brand:#9C6636;--brandTx:#FFF8EC;
+--ok:#4C8F58;--warn:#C2790F;--bad:#BC5A3C;--pur:#8A62A8;--info:#3E76A6;
+--okBg:#E5F0E2;--badBg:#F6E2DA;--warnBg:#F7EAD0;--purBg:#EEE4F3;--infoBg:#E3EDF5;
+--vien:#E7DAB9;--shadow:0 10px 26px -16px rgba(120,90,40,.20);--btnGlow:0 6px 16px -8px rgba(190,138,85,.38)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--tx)}
+/* SỬA 09/09/2026: chặn cử chỉ vuốt-lùi-trang (edge-swipe-back) của trình duyệt.
+   Sidebar mới có nút nằm sát mép trái màn hình (bố cục dọc ≥761px) — một cú
+   chạm hơi kéo ngang trên nút đó có thể bị Chrome hiểu là "vuốt để quay lại
+   trang trước", khiến cả trang tải lại và app bị đưa về tab mặc định (trông
+   như "văng về trang chủ"). overscroll-behavior-x:none tắt hẳn cử chỉ này. */
+html{overscroll-behavior-x:none}
+body{margin:0;font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);background-attachment:fixed;
+  color:var(--tx);overscroll-behavior-x:none}
 .hide{display:none!important}
-button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:11px 15px}
-input,select{font:inherit;width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);background:var(--c2);color:var(--tx)}
-input:focus,select:focus{outline:2px solid var(--acc);border-color:transparent}
+button{font:inherit;cursor:pointer;border:0;border-radius:14px;padding:11px 15px;transition:transform .08s,filter .12s}
+button:active{transform:scale(.98)}
+input,select{font:inherit;width:100%;padding:11px 12px;border-radius:14px;border:1px solid var(--line);background:var(--c2);color:var(--tx)}
+input:focus,select:focus{outline:none;border-color:var(--acc)}
 label{display:block;font-size:12.5px;color:var(--tx2);margin:0 0 6px}
 .row{display:flex;gap:10px}.row>*{flex:1;min-width:0}.mt{margin-top:12px}
-.demo{background:#3a2d10;color:var(--warn);padding:7px 14px;font-size:12px;text-align:center}
+.demo{background:var(--warnBg);color:var(--warn);padding:7px 14px;font-size:12px;text-align:center}
 #setup{max-width:400px;margin:7vh auto;padding:22px}
 #setup h1{font-size:21px;margin:0 0 4px}#setup p{color:var(--tx2);margin:0 0 20px;font-size:14px}
-.btn-main{width:100%;background:var(--acc);color:#03121f;font-weight:600}
-header{position:sticky;top:0;z-index:20;background:var(--card);border-bottom:1px solid var(--line);
-padding:9px 13px;display:flex;align-items:center;justify-content:space-between;gap:8px}
-header .who b{display:block;font-size:15px}header .who{font-size:12px;color:var(--tx2)}
+.btn-main{width:100%;background:linear-gradient(135deg,var(--acc) 0%,var(--acc2) 100%);color:#fff;
+  font-weight:600;box-shadow:var(--btnGlow)}
+header{position:sticky;top:0;z-index:20;background:var(--brand);color:var(--brandTx);
+border-bottom:1px solid var(--line);box-shadow:var(--shadow);
+padding:11px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+header .who b{display:block;font-size:15px}header .who{font-size:12px;color:var(--brandTx);opacity:.78}
 .pill{font-size:11px;padding:3px 9px;border-radius:999px;background:var(--c2);color:var(--acc)}
-.pill.w{background:#3a2d10;color:var(--bad)}
+.pill.w{background:var(--badBg);color:var(--bad)}
 .btn-nho{background:var(--c2);color:var(--tx2);padding:5px 10px;font-size:11.5px;border-radius:8px}
 #setup select{width:100%}
 .pgsel{display:flex;align-items:center;gap:8px;margin-bottom:8px}
@@ -43,16 +74,16 @@ header .who b{display:block;font-size:15px}header .who{font-size:12px;color:var(
 .ttchon{display:flex;gap:7px;flex-wrap:wrap}
 .ttb{background:var(--c2);color:var(--tx2);padding:9px 13px;font-size:13px;border-radius:10px;
   border:1px solid transparent;flex:1;white-space:nowrap}
-.ttb.on{background:#16241c;color:var(--ok);border-color:var(--ok);font-weight:600}
-.ttb.on[data-tt="CHUA"]{background:#3a2d10;color:var(--warn);border-color:var(--warn)}
-.ttb.on[data-tt="COC"]{background:#2a2140;color:var(--pur);border-color:var(--pur)}
+.ttb.on{background:var(--okBg);color:var(--ok);border-color:var(--ok);font-weight:600}
+.ttb.on[data-tt="CHUA"]{background:var(--warnBg);color:var(--warn);border-color:var(--warn)}
+.ttb.on[data-tt="COC"]{background:var(--purBg);color:var(--pur);border-color:var(--pur)}
 .ttag{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;letter-spacing:.3px}
-.ttag.chua{background:#3a2d10;color:var(--warn)}
-.ttag.da{background:#16241c;color:var(--ok)}
-.ttag.coc{background:#2a2140;color:var(--pur)}
+.ttag.chua{background:var(--warnBg);color:var(--warn)}
+.ttag.da{background:var(--okBg);color:var(--ok)}
+.ttag.coc{background:var(--purBg);color:var(--pur)}
 .tagin{font-size:11px;font-weight:700;letter-spacing:.5px;padding:3px 9px;border-radius:999px}
-.tagin.chua{background:#3a2d10;color:var(--warn)}
-.tagin.da{background:#16241c;color:var(--ok);font-weight:600;letter-spacing:0}
+.tagin.chua{background:var(--warnBg);color:var(--warn)}
+.tagin.da{background:var(--okBg);color:var(--ok);font-weight:600;letter-spacing:0}
 .intoolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .intoolbar select{width:auto;min-width:150px}
 
@@ -139,7 +170,7 @@ nav{display:flex;background:var(--card);border-bottom:1px solid var(--line);posi
 nav button{flex:1;background:none;color:var(--tx2);border-radius:0;padding:11px 8px;font-size:14px;white-space:nowrap;border-bottom:2px solid transparent}
 nav button.on{color:var(--acc);border-bottom-color:var(--acc);font-weight:600}
 main{padding:13px;padding-bottom:120px;max-width:900px;margin:0 auto}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow)}
 h2{font-size:15px;margin:0 0 10px}
 .srow{display:flex;gap:8px}.srow input{flex:1}
 .plus{background:var(--ok);color:#04241a;font-weight:700;font-size:20px;line-height:1;padding:0 16px;flex:none}
@@ -189,8 +220,8 @@ h2{font-size:15px;margin:0 0 10px}
   letter-spacing:.02em;margin-right:1px}
 .tag{font-size:10.5px;padding:2px 7px;border-radius:6px;display:inline-block;margin-top:5px}
 .tag.kh{background:#2a2440;color:var(--pur)}
-.tag.qd{background:#123527;color:var(--ok)}
-.tag.moi{background:#3a2d10;color:var(--warn)}
+.tag.qd{background:var(--okBg);color:var(--ok)}
+.tag.moi{background:var(--warnBg);color:var(--warn)}
 .total{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);padding:10px 13px;z-index:30}
 .total .in{max-width:900px;margin:0 auto;display:flex;align-items:center;gap:9px}
 .total .sum{flex:1;min-width:0}.total .sum small{color:var(--tx2);font-size:11.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -251,15 +282,15 @@ h2{font-size:15px;margin:0 0 10px}
 .hd{background:var(--c2);border-radius:10px;padding:10px 12px;margin-bottom:8px}
 .hd .h1{display:flex;justify-content:space-between;gap:10px;font-size:13.5px}
 .hd .h1 b{color:var(--acc)}
-.don{background:var(--c2);border-radius:10px;padding:11px;margin-bottom:8px}
+.don{background:var(--c2);border-radius:16px;padding:12px;margin-bottom:8px}
 .don .ma{font-weight:600;color:var(--acc);font-size:14px}
 .don .dt{font-size:12px;color:var(--tx2);margin-top:2px}
-.msg{padding:11px;border-radius:10px;margin-bottom:11px;font-size:13.5px;line-height:1.5}
-.msg.ok{background:#123527;color:var(--ok)}.msg.er{background:#3a1a1a;color:var(--bad)}
-.msg.wa{background:#3a2d10;color:var(--warn)}
+.msg{padding:11px 13px;border-radius:16px;margin-bottom:11px;font-size:13.5px;line-height:1.5}
+.msg.ok{background:var(--okBg);color:var(--ok)}.msg.er{background:var(--badBg);color:var(--bad)}
+.msg.wa{background:var(--warnBg);color:var(--warn)}
 .empty{text-align:center;color:var(--tx2);padding:24px 12px;font-size:14px}
 .sm{font-size:12px;color:var(--tx2);margin-top:6px;line-height:1.5}
-dialog{border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--tx);padding:18px;max-width:420px;width:92%}
+dialog{border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);background:var(--card);color:var(--tx);padding:18px;max-width:420px;width:92%}
 dialog::backdrop{background:rgba(0,0,0,.6)}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{padding:8px 6px;text-align:left;border-bottom:1px solid var(--line)}
@@ -272,13 +303,14 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
    đụng tới --bg/--acc...). Ở điện thoại (≤760px, phần lớn nhân viên dùng máy này)
    quay lại đúng thanh ngang cũ để không phá thao tác một tay. ══ */
 .app-shell{display:flex;min-height:100vh}
-.side{width:200px;flex:none;background:var(--card);border-right:1px solid var(--line);
+.side{width:200px;flex:none;background:var(--card);border-right:1px solid var(--line);box-shadow:var(--shadow);
   display:flex;flex-direction:column;padding:12px 8px;position:sticky;top:0;
   align-self:flex-start;height:100vh;overflow-y:auto}
 .side-brand{display:flex;align-items:center;gap:9px;padding:4px 8px 14px;margin-bottom:6px;
   border-bottom:1px solid var(--line)}
-.side-brand .mark{width:28px;height:28px;border-radius:8px;flex:none;background:var(--acc);
-  display:flex;align-items:center;justify-content:center;color:#03121f;font-weight:700;font-size:13px}
+.side-brand .mark{width:28px;height:28px;border-radius:9px;flex:none;
+  background:linear-gradient(135deg,var(--acc) 0%,var(--acc2) 100%);
+  display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px}
 .side-brand .nm{font-weight:700;font-size:14px;line-height:1.25}
 .side-brand .sub{font-size:10.5px;color:var(--tx2)}
 .side nav{display:flex;flex-direction:column;gap:2px;background:none;border:0;position:static;overflow:visible}
@@ -352,9 +384,9 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
 <div class="main-col">
 <header>
   <div class="who"><b id="hTen"></b><span id="hMa" class="pill"></span></div>
-  <span id="hBG" class="pill" style="background:#16241c;color:var(--ok)"></span>
+  <span id="hBG" class="pill" style="background:var(--okBg);color:var(--ok)"></span>
   <span id="hDay" class="pill"></span>
-  <button class="btn-nho" onclick="ketCa()" style="background:#16241c;color:var(--ok)">Kết ca</button>
+  <button class="btn-nho" onclick="ketCa()" style="background:var(--okBg);color:var(--ok)">Kết ca</button>
   <button class="btn-nho" onclick="doiNguoi()">Đổi người</button>
   <button class="btn-nho" id="btnSangToi" onclick="doiSangToi()" title="Đổi chế độ sáng/tối" style="padding:6px 10px">☀</button>
 </header>
@@ -393,7 +425,7 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
   </div>
 
   <div class="card"><div id="timBar"><h2>Chọn sản phẩm
-    <button class="btn-nho" onclick="huyToanBoDon()" style="background:#3a1a1a;color:var(--bad);float:right;padding:4px 10px;font-size:12px">Huỷ toàn bộ đơn</button></h2>
+    <button class="btn-nho" onclick="huyToanBoDon()" style="background:var(--badBg);color:var(--bad);float:right;padding:4px 10px;font-size:12px">Huỷ toàn bộ đơn</button></h2>
     <div class="sm" id="tongMonTim" style="margin:2px 0 6px"></div>
     <div class="srow">
       <input id="q" placeholder="Gõ tên, thương hiệu hoặc mã…" autocomplete="off">
@@ -422,7 +454,7 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
     <div class="intoolbar">
       <button class="btn-nho" onclick="thuGonTatCa('pg',true)" style="background:var(--pur);color:#fff">▾ Thu gọn tất cả</button>
       <button class="btn-nho" onclick="thuGonTatCa('pg',false)">▸ Mở rộng tất cả</button>
-      <button class="btn-nho" id="btnChuaIn" onclick="chonChuaIn()" style="background:#3a2d10;color:var(--warn)">Chọn đơn chưa in</button>
+      <button class="btn-nho" id="btnChuaIn" onclick="chonChuaIn()" style="background:var(--warnBg);color:var(--warn)">Chọn đơn chưa in</button>
       <button class="btn-nho" onclick="chonHetIn(1)">Chọn tất cả</button>
       <button class="btn-nho" onclick="chonHetIn(0)">Bỏ chọn</button>
       <label class="sm" style="display:flex;align-items:center;gap:6px;cursor:pointer">
@@ -433,7 +465,7 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
         <option value="1">1 phiếu / tờ A4</option>
         <option value="A5">2 phiếu / tờ A5 (giấy A5 riêng)</option></select>
       <button class="btn" id="btnInNhieu" onclick="inDaChon()" style="background:var(--acc);color:#03121f;font-weight:600;padding:8px 15px;font-size:13px">In 0 phiếu đã chọn</button>
-      <button class="btn" onclick="inGuiDaChon()" style="background:#2a2140;color:var(--pur);font-weight:600;padding:8px 15px;font-size:13px">In phiếu gửi nhà xe</button>
+      <button class="btn" onclick="inGuiDaChon()" style="background:var(--purBg);color:var(--pur);font-weight:600;padding:8px 15px;font-size:13px">In phiếu gửi nhà xe</button>
     </div>
     <div class="sm" style="margin-top:8px" id="tongThu"></div>
     <div class="sm" style="margin-top:7px">Bản in trắng đen, khổ 10×15cm đúng chuẩn tem giao hàng.
@@ -457,12 +489,12 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
         <option value="1">1 phiếu / tờ A4</option>
         <option value="A5">2 phiếu / tờ A5 (giấy A5 riêng)</option></select>
       <button class="btn" id="btnInNhieuLS" onclick="inPhieu(dsChonInLS(),$('moiTrangLS').value)" style="background:var(--acc);color:#03121f;font-weight:600;padding:8px 15px;font-size:13px">In 0 phiếu đã chọn</button>
-      <button class="btn" onclick="moKienHang(dsChonInLS(),$('moiTrangLS').value)" style="background:#2a2140;color:var(--pur);font-weight:600;padding:8px 15px;font-size:13px">In phiếu gửi nhà xe</button>
+      <button class="btn" onclick="moKienHang(dsChonInLS(),$('moiTrangLS').value)" style="background:var(--purBg);color:var(--pur);font-weight:600;padding:8px 15px;font-size:13px">In phiếu gửi nhà xe</button>
     </div>
     <div class="intoolbar" style="margin-top:9px">
       <button class="btn-nho" onclick="chonHetDon(1)">Chọn tất cả đơn hôm nay</button>
       <button class="btn-nho" onclick="chonHetInLS(0);chonHetDon(0)">Bỏ chọn</button>
-      <button class="btn-nho" id="btnHuyLo" onclick="huyLo()" style="background:#3a1a1a;color:var(--bad)">Huỷ 0 đơn đã chọn</button>
+      <button class="btn-nho" id="btnHuyLo" onclick="huyLo()" style="background:var(--badBg);color:var(--bad)">Huỷ 0 đơn đã chọn</button>
     </div>
     <div class="sm" style="margin-top:6px">Chọn để in — bất kỳ đơn nào. Chọn để huỷ — chỉ đơn <b>trong ngày hôm nay</b>, đơn cũ phải báo chủ.</div>
   </div>
@@ -666,6 +698,41 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
 
 <script src="seed_nv.js"></script>
 <script>
+/* ═══════════════════════════════════════════════════════════════════════
+   PHAO CỨU SINH CHO 4 BIẾN NẰM Ở seed_nv.js — thêm 09/09/2026
+   ═══════════════════════════════════════════════════════════════════════
+   File index.html này KHÔNG tự chạy được một mình. Bốn biến dưới đây do
+   file seed_nv.js đi kèm khai báo (mỗi máy một bản, khác nhau ở MA_MAY):
+     URL_DRIVE  link Apps Script để gửi/nhận đơn
+     MA_MAY     mã máy, dùng làm tiền tố kho lưu riêng của máy này
+     KH0        danh bạ khách gốc
+     NHANVIEN   danh sách người được đăng nhập
+   TAI NẠN ĐÃ CHỰC CHỜ: chỗ nạp danh bạ gọi thẳng KH0.forEach(...) mà không
+   phòng hờ. Nếu ai đó chép index.html sang máy mới mà QUÊN chép seed_nv.js
+   (hoặc chép nhầm bản seed thiếu KH0), dòng đó ném lỗi ngay giữa đoạn khởi
+   động, cả đoạn khởi động chết theo — màn hình trắng, không một dòng báo
+   lỗi nào cho người dùng, nhìn y như "máy hỏng". URL_DRIVE cũng bị dùng
+   trần ở gần hai chục chỗ với cùng rủi ro đó.
+   Từ nay: thiếu biến nào thì lấy giá trị rỗng an toàn, app vẫn chạy, và
+   báo thẳng ra màn hình là file cài đặt bị thiếu (xem cảnh báo ở dưới)
+   thay vì chết câm.                                                       */
+if(typeof URL_DRIVE==='undefined') var URL_DRIVE='';
+if(typeof MA_MAY==='undefined')    var MA_MAY='';
+if(typeof KH0==='undefined')       var KH0=[];
+if(typeof NHANVIEN==='undefined')  var NHANVIEN=[];
+var THIEU_SEED=[];
+if(!URL_DRIVE) THIEU_SEED.push('URL_DRIVE (link nhận đơn)');
+if(!MA_MAY)    THIEU_SEED.push('MA_MAY (mã máy)');
+if(THIEU_SEED.length) setTimeout(function(){
+  var d=document.createElement('div');
+  d.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:9999;padding:12px 14px;'+
+    'background:#7f1d1d;color:#fff;font:13px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif';
+  d.innerHTML='<b>Máy này thiếu file cài đặt <code>seed_nv.js</code></b><br>'+
+    'Thiếu: '+THIEU_SEED.join(', ')+'. Đơn vẫn lên được nhưng <b>không đẩy lên được</b>. '+
+    'Chép lại đủ cả hai file <code>index.html</code> và <code>seed_nv.js</code> vào cùng một thư mục.';
+  document.body.appendChild(d);
+},1200);
+
 /* ══════════════════════════════════════════════════════════
    TU KIEM TRA BAN CU BI CACHE — khong phu thuoc header server
    ══════════════════════════════════════════════════════════
@@ -679,7 +746,7 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260909a';
+var APP_VER='20260909c';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1323,7 +1390,14 @@ async function hoi(tham){
 async function taiNV(ver){
   var j=await hoi('nv=1&ver='+encodeURIComponent(VER.nv||''));
   if(!j.ok||!j.moi) return false;
-  var ds=(j.ds||[]).map(function(x){return {ten:x.ten,ma:CFG.ma,key:String(x.key),maNV:x.ma}});
+  /* SỬA 09/09/2026: trước đây dòng này gán ma:CFG.ma cho MỌI nhân viên — tức là
+     sau mỗi lần đồng bộ, cả danh sách bị ghi đè thành đúng một mã máy (máy đang
+     đăng nhập). Hậu quả: ô "chọn máy" ở màn hình đăng nhập co lại còn 1 dòng,
+     máy mới thêm (NV04…) biến mất khỏi danh sách dù đã có trên Sheet, và việc
+     dò đăng nhập theo (mã máy + mã đăng nhập) không còn khớp nên phải rơi xuống
+     nhánh dự phòng dò theo mã đăng nhập không thôi. Nay giữ đúng mã máy đọc từ
+     cột A trang NHAN_VIEN, khớp y hệt lúc khởi động (xem chỗ set('nvds') ở trên). */
+  var ds=(j.ds||[]).map(function(x){return {ten:x.ten,ma:x.ma,key:String(x.key),maNV:x.ma}});
   set('nvds',ds); VER.nv=ver||j.ver||''; veChonNV();
   // người đang đăng nhập bị chủ cho ngưng → đá ra ngay
   if(CFG.ten && !ds.some(function(x){return x.ten===CFG.ten})){
@@ -1793,7 +1867,7 @@ function veMang(){
     // Vua moi tu 'con don cho' chuyen sang 'het don cho' — bao thanh cong that su,
     // khong am tham bien mat, de nguoi dung yen tam la da gui xong, khong phai doan.
     if(MANG_CD_TRUOC>0){
-      b.style.display='block'; b.style.background='#16241c'; b.style.color='var(--ok)';
+      b.style.display='block'; b.style.background='var(--okBg)'; b.style.color='var(--ok)';
       b.innerHTML='✓ Đã đồng bộ xong — mọi đơn đã lên Drive';
       setTimeout(function(){ if(chuaDay().length===0) b.style.display='none' },4000);
     } else b.style.display='none';
@@ -1801,7 +1875,7 @@ function veMang(){
   }
   MANG_CD_TRUOC=cd;
   b.style.display='block';
-  b.style.background = on?'#3a2d10':'#3a1a1a';
+  b.style.background = on?'var(--warnBg)':'var(--badBg)';
   b.style.color = on?'var(--warn)':'var(--bad)';
   b.innerHTML = on ? cd+' đơn đang chờ đẩy lên Drive — sẽ tự gửi trong giây lát'
                    : 'MẤT MẠNG — vẫn bán bình thường, đơn xếp hàng chờ. Có mạng sẽ tự gửi.'+(cd?' ('+cd+' đơn)':'');
@@ -1816,7 +1890,7 @@ function dem(){
   if(loiGanDay){
     $('hDay').textContent='⚠ Đồng bộ đang lỗi';
     $('hDay').className='pill w';
-    $('hDay').style.background='#3a1a1a';
+    $('hDay').style.background='var(--badBg)';
     $('hDay').title='Lỗi gần nhất: '+LOI_DONGBO.msg+'\n\nBấm để thử tải lại toàn bộ ngay.';
     $('hDay').style.cursor='pointer';
     $('hDay').onclick=taiLaiToanBo;
@@ -1962,17 +2036,23 @@ function timSP(){
 }
 $('q').addEventListener('input',function(){SLIM=30;timSP()});
 
-function them(sku,dungQD){
+/* giaEp (thêm 09/09/2026): giá bán lẻ do nhân viên tự gõ cho ĐÚNG khách này.
+   Giá bán lẻ vốn tuỳ khách nên nó thuộc về DÒNG HÀNG trong giỏ, không thuộc về
+   bảng giá gốc — vì vậy chỉ đè lên giá của dòng này, tuyệt đối không ghi ngược
+   vào SP[].gb. Vẫn giữ 'goc' là giá theo bảng giá để giỏ hàng đánh dấu được
+   "dòng này đã sửa giá", đúng như khi nhân viên tự sửa tay trong giỏ. */
+function them(sku,dungQD,giaEp){
   var p=SP.filter(function(x){return x.sku===sku})[0]; if(!p)return;
   var k=khHienTai();
   var gr=k&&k.gia&&k.gia[sku]&&k.gia[sku].het>=today()?k.gia[sku]:null;
   var gle=gr?gr.gia:p.gb;
   var dv=dungQD?p.qd_dv:p.dvt, hs=dungQD?p.qd_sl:1;
-  var gia=dungQD?(p.qd_gb||gle*p.qd_sl):gle;
+  var giaGoc=dungQD?(p.qd_gb||gle*p.qd_sl):gle;
+  var gia=(giaEp>0)?giaEp:giaGoc;
   var c=GIO.filter(function(x){return x.sku===sku&&x.dv===dv})[0];
   var idx;
-  if(c){ c.sl++; idx=GIO.indexOf(c) }
-  else { GIO.push({sku:sku,ten:p.ten,brand:p.brand||'',dv:dv,hs:hs,gia:gia,goc:gia,sl:1,riêng:!!gr}); idx=GIO.length-1 }
+  if(c){ c.sl++; if(giaEp>0) c.gia=giaEp; idx=GIO.indexOf(c) }
+  else { GIO.push({sku:sku,ten:p.ten,brand:p.brand||'',dv:dv,hs:hs,gia:gia,goc:giaGoc,sl:1,riêng:!!gr}); idx=GIO.length-1 }
   $('q').value=''; timSP(); veGio();
   // Nhảy thẳng con trỏ vào ô số lượng vừa thêm, bôi đen sẵn — gõ số là ghi đè ngay,
   // khỏi phải tự cuộn xuống giỏ rồi tự bấm vào ô mới gõ được (mua 100 món khỏi bấm 100 lần).
@@ -2118,11 +2198,22 @@ async function luuMoi(){
   // TÌM TRƯỚC KHI TẠO — nếu đã có sản phẩm TRÙNG TÊN (kể cả do máy khác vừa
   // tạo, đã về qua kênh "chờ duyệt"), dùng lại đúng mã đó, KHÔNG tạo mã mới.
   // Đây là chỗ chặn gốc của lỗi "1 sản phẩm bị tách thành 2-3 mã SKU khác nhau".
+  /* SỬA 09/09/2026 — GIÁ BÁN LẺ LÀ CỦA KHÁCH, KHÔNG PHẢI CỦA MÃ HÀNG.
+     Trước đây gặp trùng tên là app đóng ô lại, bắt nhân viên tự đi tìm mã cũ
+     rồi tự sửa giá trong giỏ — GIÁ VỪA GÕ BỊ VỨT ĐI. Nhân viên hiểu thành
+     "hệ thống bắt bán theo giá của mã kia", trong khi giá bán lẻ mỗi khách
+     mỗi khác là chuyện bình thường.
+     Việc gộp mã CHỈ nhằm để một sản phẩm không bị tách thành nhiều mã SKU,
+     tức là để tính GIÁ VỐN và báo cáo lãi lỗ cho gọn — nó không có lý do gì
+     đụng tới giá bán. Nay: vẫn dùng lại đúng mã cũ (không đẻ mã mới), nhưng
+     bỏ thẳng vào giỏ với ĐÚNG GIÁ NHÂN VIÊN VỪA GÕ. */
   var trung=timTrungTen(t);
   if(trung){
-    $('dlgThem').close(); $('q').value=t; timSP();
-    bao('newMsg','<b>'+esc(t)+'</b> đã có sẵn trong danh sách (mã '+esc(trung.sku)+
-      (trung.choDuyet?', do máy khác vừa tạo':'')+') — đã dùng lại, <b>không tạo mã mới</b> để tránh trùng sản phẩm.','wa');
+    $('dlgThem').close(); $('q').value=''; timSP();
+    them(trung.sku,false,g);
+    bao('newMsg','<b>'+esc(t)+'</b> đã có sẵn (mã '+esc(trung.sku)+
+      (trung.choDuyet?', do máy khác vừa tạo':'')+') — đã dùng lại mã đó, <b>không đẻ thêm mã mới</b>. '+
+      'Đã bỏ vào giỏ với <b>đúng giá '+tien(g)+'</b> anh/chị vừa nhập, không lấy giá cũ.','ok');
     return;
   }
 
@@ -2278,22 +2369,30 @@ function getDon(ma){ return DON.filter(function(x){return x.ma===ma})[0] }
 
 /* ══ CẤP MÃ ĐƠN ══
    Bộ đếm nằm trên đĩa và CHỈ TĂNG. Xoá đơn, huỷ đơn, xoá trình duyệt
-   đều không làm nó lùi lại. Cấp xong còn dò lại một lượt cho chắc. */
+   đều không làm nó lùi lại. Cấp xong còn dò lại một lượt cho chắc.
+   SỬA 09/09/2026: số thứ tự (3 số cuối) trước đây tính riêng theo TỪNG NGÀY
+   (khoá bộ đếm = pre = mã máy+ngày) nên mỗi ngày mới lại chạy lại từ 001 —
+   khiến nhân viên/quản lý nhìn "008" hôm qua và "008" hôm nay tưởng trùng
+   đơn, dù mã đầy đủ (có kèm ngày) vẫn khác nhau. Giờ đổi khoá bộ đếm sang
+   CHỈ THEO MÃ MÁY (bỏ phần ngày) để số này chạy liên tục xuyên ngày, không
+   reset — vẫn giữ NGUYÊN định dạng mã đơn hiển thị "MÁY-NGÀY-SỐ" như cũ,
+   không đổi gì ở cách Sheet/máy quản lý đọc mã, chỉ đổi cách TÍNH số kế tiếp. */
 function capMa(pre,epNhay){
+  var may=pre.split('-')[0]; // tiền tố mã máy — dùng làm khoá bộ đếm, KHÔNG kèm ngày nữa
   var dem=get('demma',{});
-  var n=dem[pre]||0;
-  if(epNhay) n=Math.max(n, (function(){ var m=0;
-    DON.forEach(function(d){ if(d.ma.indexOf(pre)!==0) return;
-      var x=parseInt(d.ma.slice(pre.length+1),10)||0; if(x>m)m=x });
-    return m })());
-  // dò cả đơn đang có (kể cả đơn kéo từ Sheet về của máy này) để không bao giờ tụt
+  var n=dem[may]||0;
+  // dò lại toàn bộ đơn của ĐÚNG MÁY NÀY (mọi ngày, kể cả đơn kéo từ Sheet về) để
+  // không bao giờ tụt — trước đây chỉ dò theo đúng ngày hôm nay nên không "thấy"
+  // được số cao nhất của các ngày trước, giờ dò xuyên ngày.
+  var max=0;
   DON.forEach(function(d){
-    if(d.ma.indexOf(pre)!==0) return;
-    var x=parseInt(d.ma.slice(pre.length+1),10)||0; if(x>n) n=x;
+    if(d.ma.indexOf(may+'-')!==0) return;
+    var x=parseInt(d.ma.slice(d.ma.lastIndexOf('-')+1),10)||0; if(x>max) max=x;
   });
+  if(max>n) n=max;
   var ma;
   do { n++; ma=pre+'-'+('00'+n).slice(-3) } while(DON.some(function(d){return d.ma===ma}));
-  dem[pre]=n; set('demma',dem);
+  dem[may]=n; set('demma',dem);
   return ma;
 }
 function xoaDon(ma,tuPG){
@@ -2439,9 +2538,9 @@ function vePG(epVe){
         (d.phiChanh?' · <b style="color:var(--bad)">chành '+tien(d.phiChanh)+'</b>':'')+
         (d.giam?' · giảm '+tien(d.giam):'')+'</div>'+
       '<div class="t">'+tien(d.tong)+'</div></div>'+
-      '<div class="pga"><button onclick="moGiaoDot(\''+d.ma+'\')" style="background:#2a2140;color:var(--pur);padding:8px 15px;font-size:13px">Giao đợt mới</button>'+
+      '<div class="pga"><button onclick="moGiaoDot(\''+d.ma+'\')" style="background:var(--purBg);color:var(--pur);padding:8px 15px;font-size:13px">Giao đợt mới</button>'+
       '<button onclick="suaTaiCho(\''+d.ma+'\',1)" style="background:var(--c2);color:var(--acc);padding:8px 15px;font-size:13px">Sửa đơn</button>'+
-      '<button onclick="doiTT(\''+d.ma+'\')" style="background:'+(d.tt==='DA'?'#16241c':'var(--c2)')+
+      '<button onclick="doiTT(\''+d.ma+'\')" style="background:'+(d.tt==='DA'?'var(--okBg)':'var(--c2)')+
         ';color:'+(d.tt==='DA'?'var(--ok)':'var(--warn)')+';padding:8px 15px;font-size:13px">'+
         (d.tt==='DA'?'Bỏ đã thu':'Đánh dấu ĐÃ THU')+'</button>'+
       '<button onclick="inPhieu([\''+d.ma+'\'],1)" style="background:var(--c2);color:var(--tx2);padding:8px 15px;font-size:13px">In phiếu này</button>'+
@@ -3062,7 +3161,7 @@ function veThuTam(sdt){
         TUOI.map(function(u){return '<option'+(u===x.tuoi?' selected':'')+'>'+u+'</option>'}).join('')+
       '</select><span class="sm">'+esc(TUOI_MO[x.tuoi]||'')+'</span>'+
       '<button class="btn-nho" onclick="THU_TAM.splice('+i+',1);veThuTam(\''+sdt+'\')" '+
-        'style="background:#3a1a1a;color:var(--bad)">Bỏ</button></div>'
+        'style="background:var(--badBg);color:var(--bad)">Bỏ</button></div>'
   }).join('')||'<div class="sm">Chưa ghi nhận thú cưng nào.</div>';
 }
 function themDongThu(sdt){ THU_TAM.push({sl:1,tuoi:'Trưởng thành'}); veThuTam(sdt) }
@@ -3321,7 +3420,7 @@ async function dayChiPhi(im){
 function nhanDongBo(d){
   var nutDay='<button class="btn-nho" style="background:#5a1010;color:#fff;padding:3px 9px;font-size:11.5px;margin-left:4px" '+
     'onclick="event.stopPropagation();bao(\'pgMsg\',\'Đang gửi…\',\'wa\');dayLen(true)">Đồng bộ ngay</button>';
-  if(!d.day) return '<span class="tagin chua" style="background:#3a1a1a;color:var(--bad)">CHƯA ĐẨY LÊN</span>'+nutDay;
+  if(!d.day) return '<span class="tagin chua" style="background:var(--badBg);color:var(--bad)">CHƯA ĐẨY LÊN</span>'+nutDay;
   if(d.suaSauDay) return '<span class="tagin chua">ĐÃ SỬA — CHỜ ĐẨY LẠI</span>'+nutDay;
   return '<span class="tagin da">ĐÃ ĐỒNG BỘ</span>';
 }

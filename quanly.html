@@ -451,7 +451,7 @@ dialog::backdrop{background:rgba(20,25,40,.55)}
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260909a';
+var APP_VER='20260909c';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -604,7 +604,8 @@ function veTrungTen(){
     '<b>Đơn hàng cũ trên Google Sheet giữ nguyên</b> — chỉ gộp ở phía tính toán/hiển thị, không sửa lịch sử. '+
     '<b style="color:var(--warn)">Đây chỉ là GỢI Ý — vì so tên có nới lỏng nên có thể bắt nhầm 2 sản phẩm '+
     'thật sự khác nhau (tên gần giống nhưng không phải cùng 1 món). Đọc kỹ tên + nhóm hàng trước khi bấm gộp, '+
-    'nhóm nào đánh dấu ⚠ bên dưới thì càng phải xem kỹ.</b></div>'+
+    'nhóm nào đánh dấu ⚠ bên dưới thì càng phải xem kỹ.</b> '+
+    '<b>Gộp chỉ dùng chung GIÁ VỐN — giá bán của từng mã giữ nguyên, mỗi khách mỗi giá vẫn bán bình thường.</b></div>'+
     nhom.map(function(ds,gi){
       var tenKhacNhau=false, nhomKhacNhau=false, tenDau=GIA[ds[0]].ten, nhomDau=GIA[ds[0]].nhom;
       ds.forEach(function(k){ if(GIA[k].ten!==tenDau) tenKhacNhau=true; if(GIA[k].nhom!==nhomDau) nhomKhacNhau=true });
@@ -620,8 +621,13 @@ function veTrungTen(){
         ds.map(function(k,i){
           return '<label style="display:flex;gap:7px;align-items:center;margin-bottom:4px">'+
             '<input type="radio" name="tt_'+gi+'" value="'+esc(k)+'" '+(i===0?'checked':'')+'>'+
-            '<span class="sm">'+esc(k)+' ('+esc(GIA[k].nhom||'')+') — giá bán '+tien(GIA[k].gb||0)+
-            (GIA[k].von?', vốn '+tien(GIA[k].von):', <span style="color:var(--warn)">chưa có vốn</span>')+'</span></label>'
+            /* SỬA 09/09/2026: bỏ giá bán khỏi dòng này. Gộp mã là để dùng chung
+               GIÁ VỐN cho báo cáo lãi lỗ — giá bán mỗi mã mỗi khác là bình thường
+               (tuỳ khách, tuỳ kênh) nên in nó ra ngay chỗ quyết định gộp chỉ khiến
+               người xem tưởng phải chọn mã "cùng giá bán" mới được gộp. Nay chỉ
+               hiện đúng thứ cần cân nhắc: nhóm hàng và giá vốn. */
+            '<span class="sm">'+esc(k)+' ('+esc(GIA[k].nhom||'')+') — '+
+            (GIA[k].von?'giá vốn <b>'+tien(GIA[k].von)+'</b>':'<span style="color:var(--warn)">chưa có giá vốn</span>')+'</span></label>'
         }).join('')+
         '<button class="mini mt" onclick=\'gopSanPham('+JSON.stringify(ds)+',this)\'>Gộp nhóm này — theo mã chính đã chọn ở trên</button>'+
       '</div>';
@@ -686,8 +692,8 @@ function veGopKQ(){
     var p=GIA[k];
     return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;'+
       'padding:8px 4px;border-bottom:1px solid var(--vien)">'+
-      '<div class="sm"><b>'+esc(p.ten)+'</b><br>'+esc(k)+' — giá bán '+tien(p.gb||0)+
-      (p.von?', vốn '+tien(p.von):', <span style="color:var(--warn)">chưa có vốn</span>')+'</div>'+
+      '<div class="sm"><b>'+esc(p.ten)+'</b><br>'+esc(k)+' — '+
+      (p.von?'giá vốn <b>'+tien(p.von)+'</b>':'<span style="color:var(--warn)">chưa có giá vốn</span>')+'</div>'+
       '<button class="mini" style="flex-shrink:0" onclick="xacNhanGopThuCong(\''+k+'\')">Chọn làm mã chính</button></div>';
   }).join('');
 }
@@ -2765,7 +2771,13 @@ async function xoaHoSoKhachGop(){
 }
 function veMayGui(){
   MAYGUI=get('maygui',MAYGUI)||{};
-  var mays=['NV01','NV02','NV03'];
+  /* SỬA 09/09/2026: trước đây danh sách máy bị gõ cứng 3 máy, nên máy thứ tư trở
+     đi (NV04…) không bao giờ hiện ở bảng này — chủ không thấy được máy đó còn
+     sống hay đã im. Nay lấy đúng những máy Sheet báo về (MAYGUI), hợp thêm 3 máy
+     gốc để bảng không bị trống khi chưa máy nào kịp gửi lần nào. */
+  var mays=Object.keys(MAYGUI).concat(['NV01','NV02','NV03'])
+    .filter(function(m,i,a){ return m && a.indexOf(m)===i })
+    .sort();
   $('dsMay').innerHTML='<table><tr><th>Máy</th><th>Người gửi cuối</th><th>Lúc</th><th></th></tr>'+
     mays.map(function(m){
       var x=MAYGUI[m];
