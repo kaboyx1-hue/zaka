@@ -451,7 +451,7 @@ dialog::backdrop{background:rgba(20,25,40,.55)}
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260909c';
+var APP_VER='20260909d';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -582,42 +582,110 @@ function skuChinh(sku){
    là "còn liên quan" chừng nào ÍT NHẤT MỘT mã trong nhóm còn cờ moi=true (chưa được
    chủ điền giá vốn/tay để "chuyển chính thức") — vì lúc chủ vừa điền vốn cho 1 mã,
    cờ moi của MÃ ĐÓ tự tắt (xem setF/setN), nhưng mã còn lại vẫn cần được gộp vào. */
+/* Độ giống giữa 2 tên — tỉ lệ từ khoá dùng chung (Jaccard trên tuKhoa_).
+   1.00 = rút gọn ra y hệt nhau. Bản sao của hàm cùng tên bên máy nhân viên;
+   hai file độc lập nên phải chép sang, không dùng chung được. */
+function diemGiong_(a,b){
+  var ta=tuKhoa_(a), tb=tuKhoa_(b);
+  if(!ta||!tb) return 0;
+  var A=ta.split(' '), B=tb.split(' '), setB={};
+  B.forEach(function(w){setB[w]=1});
+  var chung=A.filter(function(w){return setB[w]}).length;
+  var hop=A.length+B.length-chung;
+  return hop?chung/hop:0;
+}
+
+var NGUONG_GIONG=0.6;   // dưới mức này coi như 2 sản phẩm khác nhau, không gom
+
+/* ═══════════════════════════════════════════════════════════════════════
+   GOM NHÓM MÃ NGHI TRÙNG — sửa 09/09/2026
+   ═══════════════════════════════════════════════════════════════════════
+   VÌ SAO PHẢI SỬA: bản cũ chỉ gom được các tên rút gọn ra TRÙNG KHÍT nhau.
+   Thực tế ba mã "Cát tắm thơm cho hamster 1kg", "cát tắm thơm cho hamster
+   1kg" và "Cát tắm thơm cho hamster 1kg (mix mùi)" thì hai mã đầu gom được,
+   mã thứ ba lọt lưới chỉ vì thừa hai chữ — trong khi độ giống của nó với
+   hai mã kia là 0,71. Chủ nhìn bảng giá thấy ba dòng gần như y hệt nằm rời
+   nhau, tưởng nhân viên tự ý đẻ sản phẩm.
+   NAY: gom theo ĐỘ GIỐNG (>= NGUONG_GIONG), và mỗi nhóm tự chấm mức chắc
+   chắn — 'chac' khi mọi mã trong nhóm rút gọn ra y hệt nhau (gộp gần như
+   chắc chắn đúng), 'nghi' khi chỉ gần giống (bắt buộc người đọc tự xem).
+   Chỉ gom hàng NHÂN VIÊN TỰ TẠO như cũ, không đụng 853 mặt hàng gốc.
+   ═══════════════════════════════════════════════════════════════════════ */
 function nhomTrungTen(){
-  var theoTen={};
-  Object.keys(GIA).forEach(function(k){
-    if(ALIAS[k]) return; // mã đã là "mã phụ" của mã khác rồi, không tính là mã gốc riêng nữa
-    var ten=tuKhoa_(GIA[k].ten||'');
-    if(!ten) return;
-    theoTen[ten]=theoTen[ten]||[]; theoTen[ten].push(k);
+  var ds=Object.keys(GIA).filter(function(k){
+    return !ALIAS[k] && tuKhoa_(GIA[k].ten||'');   // mã đã là mã phụ thì thôi
   });
-  return Object.keys(theoTen).map(function(t){return theoTen[t]})
-    .filter(function(a){ return a.length>1 && a.some(function(k){return GIA[k]&&GIA[k].moi}); });
+  var daXep={}, nhom=[];
+  ds.forEach(function(k){
+    if(daXep[k]) return;
+    var cum=[k]; daXep[k]=1;
+    ds.forEach(function(k2){
+      if(daXep[k2]) return;
+      if(diemGiong_(GIA[k].ten||'',GIA[k2].ten||'')>=NGUONG_GIONG){ cum.push(k2); daXep[k2]=1 }
+    });
+    if(cum.length>1) nhom.push(cum);
+  });
+  return nhom.filter(function(a){ return a.some(function(k){return GIA[k]&&GIA[k].moi}) })
+    .map(function(a){
+      var khoa=tuKhoa_(GIA[a[0]].ten||'');
+      a.chac=a.every(function(k){return tuKhoa_(GIA[k].ten||'')===khoa});
+      return a;
+    })
+    .sort(function(x,y){ return (y.chac?1:0)-(x.chac?1:0) });   // nhóm chắc chắn lên trước
+}
+
+/* Mỗi mã đã được dùng ở bao nhiêu đơn, bán cho những ai, giá nào — bằng chứng
+   để chủ thấy ngay đây là GIÁ THEO KHÁCH chứ không phải nhân viên đẻ hàng bậy. */
+function dauVetBan_(sku){
+  var kh={}, soDon=0;
+  SO.forEach(function(d){
+    if(d.huy) return;
+    var co=(d.dong||[]).filter(function(x){return x.sku===sku});
+    if(!co.length) return;
+    soDon++;
+    co.forEach(function(x){
+      var ten=d.khach||d.sdt||'(khách lẻ)';
+      kh[ten]=kh[ten]||{}; kh[ten][x.gia]=1;
+    });
+  });
+  return {soDon:soDon, khach:Object.keys(kh).map(function(t){
+    return {ten:t, gia:Object.keys(kh[t]).map(Number).sort(function(a,b){return a-b})} }) };
 }
 function veTrungTen(){
   var nhom=nhomTrungTen();
   if(!nhom.length) return '';
-  return '<div class="card"><h2>Sản phẩm NHÂN VIÊN TỰ TẠO nghi trùng tên — '+nhom.length+' nhóm</h2>'+
-    '<div class="sm" style="margin-bottom:8px">Chỉ xét sản phẩm nhân viên tự thêm khi tạo đơn (mã <code>MOI-*</code> '+
-    'hoặc từ mục "chờ duyệt") — <b>không đụng tới các mặt hàng cũ có sẵn trong bảng giá</b>. Tên gần giống nhau '+
-    '(kể cả gõ thừa/thiếu 1 chữ) nhưng đang nằm ở nhiều mã SKU khác nhau, thường do nhiều máy cùng tự thêm 1 '+
-    'sản phẩm mới trước khi kịp gộp. Gộp lại để doanh thu/lợi nhuận không bị chia vụn theo báo cáo. '+
-    '<b>Đơn hàng cũ trên Google Sheet giữ nguyên</b> — chỉ gộp ở phía tính toán/hiển thị, không sửa lịch sử. '+
-    '<b style="color:var(--warn)">Đây chỉ là GỢI Ý — vì so tên có nới lỏng nên có thể bắt nhầm 2 sản phẩm '+
-    'thật sự khác nhau (tên gần giống nhưng không phải cùng 1 món). Đọc kỹ tên + nhóm hàng trước khi bấm gộp, '+
-    'nhóm nào đánh dấu ⚠ bên dưới thì càng phải xem kỹ.</b> '+
-    '<b>Gộp chỉ dùng chung GIÁ VỐN — giá bán của từng mã giữ nguyên, mỗi khách mỗi giá vẫn bán bình thường.</b></div>'+
+  var soChac=nhom.filter(function(a){return a.chac}).length;
+  return '<div class="card"><h2>Mã gần giống nhau cần dọn — '+nhom.length+' nhóm</h2>'+
+    (soChac?'<button class="btn mt" style="margin-bottom:10px" onclick="gopHetNhomChac()">'+
+      'Gộp gọn '+soChac+' nhóm chắc chắn (tên rút gọn trùng khít) — chọn mã có giá vốn làm mã chính</button>':'')+
+    '<div class="msg wa" style="margin-bottom:10px">' +
+    '<b>Vì sao có mấy mã gần giống nhau ở đây — và vì sao KHÔNG phải nhân viên làm bậy.</b><br>' +
+    'Ô "Thêm sản phẩm" ở máy nhân viên bắt buộc phải điền giá bán mới cho tạo. Nên mỗi lần gặp khách trả ' +
+    'giá khác, đường dễ đi nhất mà nhân viên thấy là gõ lại tên sản phẩm với giá mới — và thế là đẻ thêm ' +
+    'một mã. Ba mã trông gần như y hệt, chỉ khác giá, thực chất là <b>ba lần bán cho ba khách khác giá</b>, ' +
+    'không phải ba sản phẩm. Bản 20260909c đã bịt đường này: gõ trùng tên giờ tự dùng lại mã cũ và ghi giá ' +
+    'vừa nhập thành <b>giá riêng của đúng khách đó</b> (giữ 90 ngày, lần sau tự nhảy ra, nhân viên không ' +
+    'phải nhớ gì). Bảng dưới đây là để dọn nốt những mã đã lỡ đẻ ra từ trước.</div>' +
+    '<div class="sm" style="margin-bottom:8px">Chỉ xét sản phẩm nhân viên tự thêm (mã <code>MOI-*</code> ' +
+    'hoặc từ mục "chờ duyệt") — <b>không đụng tới các mặt hàng cũ có sẵn trong bảng giá</b>. ' +
+    '<b>Đơn hàng cũ trên Google Sheet giữ nguyên 100%</b> — gộp chỉ là một ánh xạ ở phía máy quản lý để ' +
+    'tính giá vốn và báo cáo cho gọn, tháo ra lúc nào cũng được, không sửa một chữ nào trong lịch sử bán. ' +
+    '<b>Giá bán của từng mã giữ nguyên</b> — mỗi khách mỗi giá vẫn bán bình thường.</div>'+
     nhom.map(function(ds,gi){
       var tenKhacNhau=false, nhomKhacNhau=false, tenDau=GIA[ds[0]].ten, nhomDau=GIA[ds[0]].nhom;
       ds.forEach(function(k){ if(GIA[k].ten!==tenDau) tenKhacNhau=true; if(GIA[k].nhom!==nhomDau) nhomKhacNhau=true });
       var canhBao=nhomKhacNhau
         ? '<div class="sm" style="color:var(--bad);margin-bottom:6px">⚠ Các mã nằm ở NHÓM HÀNG khác nhau — nhiều khả năng đây là 2 sản phẩm thật sự khác nhau, không phải trùng. Kiểm tra kỹ trước khi gộp.</div>'
         : '';
+      var huy=ds.chac
+        ? '<div class="sm" style="color:var(--ok);margin-bottom:6px">✓ Tên rút gọn trùng khít — gộp gần như chắc chắn đúng.</div>'
+        : '<div class="sm" style="color:var(--warn);margin-bottom:6px">⚠ Chỉ GẦN giống, không trùng khít — có thể là biến thể thật (khác mùi, khác khối lượng). Đọc kỹ tên trước khi gộp.</div>';
       return '<div class="tt-nhom" style="margin-bottom:10px;padding:9px;background:var(--c2);border-radius:8px">'+
         (tenKhacNhau
           ? '<div class="sm" style="margin-bottom:6px">Các tên gần giống trong nhóm này: '+
             ds.map(function(k){return '<b>'+esc(GIA[k].ten)+'</b>'}).join(' · ')+'</div>'
           : '<div class="sm" style="margin-bottom:6px"><b>'+esc(tenDau)+'</b></div>')+
-        canhBao+
+        huy+canhBao+
         ds.map(function(k,i){
           return '<label style="display:flex;gap:7px;align-items:center;margin-bottom:4px">'+
             '<input type="radio" name="tt_'+gi+'" value="'+esc(k)+'" '+(i===0?'checked':'')+'>'+
@@ -627,7 +695,13 @@ function veTrungTen(){
                người xem tưởng phải chọn mã "cùng giá bán" mới được gộp. Nay chỉ
                hiện đúng thứ cần cân nhắc: nhóm hàng và giá vốn. */
             '<span class="sm">'+esc(k)+' ('+esc(GIA[k].nhom||'')+') — '+
-            (GIA[k].von?'giá vốn <b>'+tien(GIA[k].von)+'</b>':'<span style="color:var(--warn)">chưa có giá vốn</span>')+'</span></label>'
+            (GIA[k].von?'giá vốn <b>'+tien(GIA[k].von)+'</b>':'<span style="color:var(--warn)">chưa có giá vốn</span>')+
+            (function(){ var v=dauVetBan_(k); if(!v.soDon) return ' · <i style="opacity:.65">chưa bán đơn nào</i>';
+              return ' · <b>'+v.soDon+' đơn</b>'+(v.khach.length
+                ? ' — '+v.khach.slice(0,3).map(function(x){
+                    return esc(x.ten)+' '+x.gia.map(function(g){return tien(g)}).join('/') }).join(', ')+
+                  (v.khach.length>3?' …':'')
+                : '') })()+'</span></label>'
         }).join('')+
         '<button class="mini mt" onclick=\'gopSanPham('+JSON.stringify(ds)+',this)\'>Gộp nhóm này — theo mã chính đã chọn ở trên</button>'+
       '</div>';
@@ -640,6 +714,61 @@ function gopSanPham(ds, btn){
   var khac=ds.filter(function(k){return k!==chinh});
   if(!khac.length) return;
   thucHienGop(khac, chinh);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   GỘP GỌN HÀNG LOẠT — thêm 09/09/2026
+   ═══════════════════════════════════════════════════════════════════════
+   Chỉ đụng những nhóm CHẮC CHẮN (tên rút gọn trùng khít nhau, cờ .chac).
+   Nhóm chỉ gần giống thì để nguyên cho chủ tự đọc rồi quyết, vì đó mới là
+   chỗ có thể bắt nhầm 2 sản phẩm thật sự khác nhau.
+   Mã chính chọn tự động theo thứ tự ưu tiên: có giá vốn trước (để đơn cũ
+   hết treo "chờ vốn"), rồi tới mã bán được nhiều đơn nhất, rồi tới mã tạo
+   sớm nhất. Hỏi xác nhận ĐÚNG MỘT LẦN kèm bảng kê đầy đủ, thay vì bắt bấm
+   xác nhận từng nhóm.
+   AN TOÀN: chỉ ghi ALIAS + cờ ẩn trên GIA, y hệt gộp tay. Không xoá gì,
+   không sửa một chữ nào trong đơn cũ trên Sheet, tháo ra lúc nào cũng được.
+   ═══════════════════════════════════════════════════════════════════════ */
+function gopHetNhomChac(){
+  var nhom=nhomTrungTen().filter(function(a){return a.chac});
+  if(!nhom.length){ alert('Không còn nhóm nào chắc chắn để gộp.'); return }
+  var viec=nhom.map(function(ds){
+    var xep=ds.slice().sort(function(a,b){
+      var va=GIA[a]&&GIA[a].von?1:0, vb=GIA[b]&&GIA[b].von?1:0;
+      if(va!==vb) return vb-va;                                  // có giá vốn lên trước
+      var da=dauVetBan_(a).soDon, db=dauVetBan_(b).soDon;
+      if(da!==db) return db-da;                                  // bán nhiều đơn hơn lên trước
+      return String(a).localeCompare(String(b));                 // cuối cùng: mã tạo sớm hơn
+    });
+    return {chinh:xep[0], khac:xep.slice(1), ten:GIA[xep[0]].ten||''};
+  }).filter(function(x){return x.khac.length});
+  if(!viec.length){ alert('Không còn nhóm nào chắc chắn để gộp.'); return }
+
+  var tongMa=viec.reduce(function(a,x){return a+x.khac.length},0);
+  var ke=viec.map(function(x){
+    return '• '+x.ten+'\n    giữ làm mã chính: '+x.chinh+
+      (GIA[x.chinh].von?' (giá vốn '+tien(GIA[x.chinh].von)+')':' (CHƯA có giá vốn)')+
+      '\n    gộp vào: '+x.khac.join(', ');
+  }).join('\n');
+  if(!confirm('Gộp gọn '+viec.length+' nhóm, tổng cộng '+tongMa+' mã phụ:\n\n'+ke+
+    '\n\nĐơn hàng cũ trên Google Sheet GIỮ NGUYÊN 100% — chỉ gộp cách tính giá vốn và hiển thị báo cáo.\n'+
+    'Giá bán của từng mã giữ nguyên, nhân viên vẫn bán được bình thường.\n'+
+    'Muốn tháo ra thì vào từng mã bấm "Cho bán lại".\n\nĐồng ý gộp?')) return;
+
+  var soMa=0;
+  viec.forEach(function(x){
+    x.khac.forEach(function(k){
+      ALIAS[k]=x.chinh;
+      if(GIA[k]){ GIA[k].ngung=true; GIA[k].gopVao=x.chinh }
+      soMa++;
+    });
+  });
+  set('alias',ALIAS); set('gia',GIA);
+  tinhLaiToanBoSO();
+  veCB(); veSo(); veBC(); veGia(); vePhat();
+  bao('inMsg','Đã gộp gọn <b>'+viec.length+' nhóm</b> ('+soMa+' mã phụ). Đơn cũ đã được tính lại giá vốn '+
+    'theo mã chính — những đơn trước đây treo "chờ vốn" vì mã chưa có giá vốn giờ đã có số. '+
+    'Đơn trên Sheet không bị sửa gì. Nhớ bấm <b>Phát bảng giá</b> để các máy nhân viên nhận bản mới.','ok');
 }
 /* Lõi gộp dùng chung — cho cả 2 lối vào:
    1) mục "Sản phẩm nghi trùng tên" (tự phát hiện, tên phải khớp y hệt sau khi bỏ dấu)
