@@ -1,0 +1,30 @@
+# ═══════════════════════════════════════════════════════════════
+#  ZAKA — NHỮNG FILE TUYỆT ĐỐI KHÔNG ĐƯỢC ĐƯA LÊN GITHUB
+# ═══════════════════════════════════════════════════════════════
+#  Đặt file này tên đúng là ".gitignore" (có dấu chấm đầu),
+#  để ngay thư mục gốc của kho GitHub.
+
+# ── Hai file cài đặt riêng của từng máy ──
+# Chứa link Apps Script và danh sách mã đăng nhập của nhân viên.
+# Ai có link là gửi đơn giả vào Sheet được.
+seed_nv.js
+seed_ql.js
+
+# ── Phiếu báo lỗi ──
+# Bên trong có mã nguồn và có thể có tên khách, số điện thoại.
+PHIEUKYSU_*.md
+PHIEU-KY-SU_*.md
+
+# ── File đơn hàng xuất ra ──
+# Có tên khách, số điện thoại, địa chỉ, giá bán.
+BANHANG_*.csv
+
+# ── Bản sao lưu ──
+*.bak
+*.bak-*
+sao-luu-*.json
+
+# ── Rác của máy ──
+.DS_Store
+Thumbs.db
+desktop.ini
