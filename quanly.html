@@ -51,8 +51,13 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right;
 .kpi div.k-info{border-left-color:var(--info)}
 .kpi div.k-pur{border-left-color:var(--pur)}
 .kpi small{color:var(--tx2);font-size:11.5px;display:block;margin-bottom:3px}.kpi b{font-size:18px}
-/* Bảng giá dùng hết bề ngang màn hình */
-#pg-gia{max-width:none;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);padding:0 16px}
+/* Bảng giá dùng hết bề ngang màn hình. Cách cũ dùng mẹo margin âm theo 50vw — giả định
+   main nằm giữa TOÀN màn hình, nên vỡ lệch/cắt chữ khi có sidebar bên trái (bề rộng
+   sidebar đổi theo màn hình lớn/nhỏ, không thể bù bằng một số cố định). Dùng :has() để
+   main tự bỏ max-width khi tab Bảng giá đang mở — luôn thẳng lề theo đúng phần còn lại
+   sau sidebar, không phụ thuộc bề rộng màn hình. */
+main:has(> #pg-gia:not(.hide)){max-width:none}
+#pg-gia{padding:0 16px}
 #dsGia table{table-layout:auto}
 #dsGia thead th,#dsGia tr:first-child th{position:sticky;top:0;z-index:5;background:var(--card)}
 #dsGia td:nth-child(2){min-width:min(46vw,560px)}
@@ -114,6 +119,39 @@ dialog::backdrop{background:rgba(20,25,40,.55)}
 #khoa .pawRow{display:flex;justify-content:center;gap:10px;margin-top:26px}
 #khoa .pawRow span{width:40px;height:52px;border-radius:16px 16px 20px 20px;display:flex;align-items:flex-end;
   justify-content:center;font-size:17px;padding-bottom:6px;opacity:.85}
+
+/* ══ Sidebar + topbar — bố cục kiểu SaaS doanh nghiệp (Linear/Stripe/Notion), thay cho
+   thanh tab ngang cũ ở màn hình rộng. KHÔNG đổi id/class nào JS đang dùng (tab(),
+   doiSangToi(), #tb-*, #pg-*...) — chỉ tổ chức lại vị trí hiển thị của header/nav/main.
+   Ở điện thoại (≤760px) quay lại đúng thanh ngang cũ để không phá trải nghiệm dùng
+   một tay. ══ */
+.app-shell{display:flex;min-height:100vh}
+.side{width:226px;flex:none;background:var(--card);border-right:1px solid var(--line);
+  display:flex;flex-direction:column;padding:14px 10px;position:sticky;top:0;
+  align-self:flex-start;height:100vh;overflow-y:auto}
+.side-brand{display:flex;align-items:center;gap:10px;padding:6px 8px 16px;margin-bottom:6px;
+  border-bottom:1px solid var(--line)}
+.side-brand .mark{width:32px;height:32px;border-radius:9px;flex:none;
+  background:linear-gradient(135deg,var(--acc) 0%,var(--acc2) 100%);
+  display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px}
+.side-brand .nm{font-weight:700;font-size:15px;line-height:1.25}
+.side-brand .sub{font-size:11px;color:var(--tx2)}
+.side nav{display:flex;flex-direction:column;gap:2px;background:none;border:0;position:static;overflow:visible}
+.side nav button{flex:none;text-align:left;color:var(--tx2);border-radius:10px;padding:10px 12px;
+  font-size:13.5px;font-weight:500;white-space:normal;border-bottom:0;display:flex;align-items:center;
+  justify-content:space-between;gap:8px}
+.side nav button.on{color:var(--acc);background:color-mix(in srgb, var(--acc) 14%, transparent);
+  border-bottom:0;font-weight:600}
+.main-col{flex:1;min-width:0;display:flex;flex-direction:column}
+.main-col header{position:sticky;top:0;z-index:19}
+@media(max-width:760px){
+  .app-shell{flex-direction:column}
+  .side{position:static;height:auto;width:100%;flex-direction:row;overflow:visible;
+    border-right:0;border-bottom:1px solid var(--line);padding:0}
+  .side-brand{display:none}
+  .side nav{flex-direction:row;overflow-x:auto}
+  .side nav button{flex:1;text-align:center;padding:10px 6px;font-size:13px;white-space:nowrap}
+}
 </style></head><body>
 <div id="khoa">
   <div class="logoMark">🐾</div>
@@ -137,17 +175,20 @@ dialog::backdrop{background:rgba(20,25,40,.55)}
   </div>
 </div>
 <div id="thanApp" class="hide">
-
+<div class="app-shell">
+<aside class="side">
+  <div class="side-brand"><div class="mark">Z</div><div><div class="nm">ZAKA</div><div class="sub">Máy quản lý</div></div></div>
+  <nav>
+    <button id="tb-bc" class="on" onclick="tab('bc')">Báo cáo</button>
+    <button id="tb-so" onclick="tab('so')">Sổ cái</button>
+    <button id="tb-gia" onclick="tab('gia')">Bảng giá</button>
+    <button id="tb-in" onclick="tab('in')">Nạp đơn</button>
+    <button id="tb-cb" onclick="tab('cb')">Cảnh báo <span id="cbSo"></span></button>
+    <button id="tb-vh" onclick="tab('vh')">Vận hành <span id="vhSo"></span></button>
+  </nav>
+</aside>
+<div class="main-col">
 <header style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><div><b>Máy chủ — sổ cái, lãi lỗ, giá vốn</b><div>Chỉ chủ dùng. Nhân viên không có file này.</div></div><button id="btnSangToi" onclick="doiSangToi()" title="Đổi chế độ sáng/tối" style="background:var(--c2);color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:18px;cursor:pointer;flex-shrink:0">☀</button></header>
-
-<nav>
-  <button id="tb-bc" class="on" onclick="tab('bc')">Báo cáo</button>
-  <button id="tb-so" onclick="tab('so')">Sổ cái</button>
-  <button id="tb-gia" onclick="tab('gia')">Bảng giá</button>
-  <button id="tb-in" onclick="tab('in')">Nạp đơn</button>
-  <button id="tb-cb" onclick="tab('cb')">Cảnh báo <span id="cbSo"></span></button>
-  <button id="tb-vh" onclick="tab('vh')">Vận hành <span id="vhSo"></span></button>
-</nav>
 <main>
 
 <section id="pg-in" class="hide">
@@ -328,6 +369,8 @@ dialog::backdrop{background:rgba(20,25,40,.55)}
 </section>
 
 </main>
+</div>
+</div>
 
 <dialog id="dlgSP">
   <h2 style="margin-top:0" id="spTitle">Thêm sản phẩm mới</h2>
@@ -408,7 +451,7 @@ dialog::backdrop{background:rgba(20,25,40,.55)}
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260908d';
+var APP_VER='20260909a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){

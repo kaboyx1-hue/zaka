@@ -264,6 +264,43 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{padding:8px 6px;text-align:left;border-bottom:1px solid var(--line)}
 th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
+
+/* ══ Sidebar + topbar — cùng bố cục kiểu SaaS doanh nghiệp đã áp cho máy quản lý,
+   dùng lại cho máy nhân viên để đồng bộ 2 phía. KHÔNG đổi id/class nào JS đang dùng
+   (tab(), doiSangToi(), #tb-*, #pg-*, .total, .fabin...) — chỉ tổ chức lại vị trí
+   hiển thị của header/nav/main. Giữ nguyên bảng màu riêng của máy nhân viên (không
+   đụng tới --bg/--acc...). Ở điện thoại (≤760px, phần lớn nhân viên dùng máy này)
+   quay lại đúng thanh ngang cũ để không phá thao tác một tay. ══ */
+.app-shell{display:flex;min-height:100vh}
+.side{width:200px;flex:none;background:var(--card);border-right:1px solid var(--line);
+  display:flex;flex-direction:column;padding:12px 8px;position:sticky;top:0;
+  align-self:flex-start;height:100vh;overflow-y:auto}
+.side-brand{display:flex;align-items:center;gap:9px;padding:4px 8px 14px;margin-bottom:6px;
+  border-bottom:1px solid var(--line)}
+.side-brand .mark{width:28px;height:28px;border-radius:8px;flex:none;background:var(--acc);
+  display:flex;align-items:center;justify-content:center;color:#03121f;font-weight:700;font-size:13px}
+.side-brand .nm{font-weight:700;font-size:14px;line-height:1.25}
+.side-brand .sub{font-size:10.5px;color:var(--tx2)}
+.side nav{display:flex;flex-direction:column;gap:2px;background:none;border:0;position:static;overflow:visible}
+.side nav button{flex:none;text-align:left;color:var(--tx2);border-radius:9px;padding:9px 10px;
+  font-size:13px;font-weight:500;white-space:normal;border-bottom:0;display:flex;align-items:center;
+  justify-content:space-between;gap:6px}
+.side nav button.on{color:var(--acc);background:color-mix(in srgb, var(--acc) 14%, transparent);
+  border-bottom:0;font-weight:600}
+.main-col{flex:1;min-width:0;display:flex;flex-direction:column}
+.main-col header{top:0}
+@media(min-width:761px){
+  .total{left:200px}
+  .fabin{left:calc(50% + 100px)}
+}
+@media(max-width:760px){
+  .app-shell{flex-direction:column}
+  .side{position:static;height:auto;width:100%;flex-direction:row;overflow:visible;
+    border-right:0;border-bottom:1px solid var(--line);padding:0}
+  .side-brand{display:none}
+  .side nav{flex-direction:row;overflow-x:auto}
+  .side nav button{flex:1;text-align:center;padding:11px 8px;font-size:14px;white-space:nowrap}
+}
 </style></head><body>
 
 <div class="demo" id="mangBar"></div>
@@ -299,6 +336,20 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
 </div>
 
 <div id="app" class="hide">
+<div class="app-shell">
+<aside class="side">
+  <div class="side-brand"><div class="mark">Z</div><div><div class="nm">ZAKA</div><div class="sub">Máy nhân viên</div></div></div>
+  <nav>
+    <button id="tb-new" class="on" onclick="tab('new')">Lên đơn</button>
+    <button id="tb-pg" onclick="tab('pg')">Phiếu giao hàng <span id="pgSo"></span></button>
+    <button id="tb-list" onclick="tab('list')">Lịch sử</button>
+    <button id="tb-kh" onclick="tab('kh')">Khách hàng</button>
+    <button id="tb-out" onclick="tab('out')">Xuất file</button>
+    <button id="tb-cp" onclick="tab('cp')">Chi phí</button>
+    <button id="tb-cfg" onclick="tab('cfg')">Cài đặt</button>
+  </nav>
+</aside>
+<div class="main-col">
 <header>
   <div class="who"><b id="hTen"></b><span id="hMa" class="pill"></span></div>
   <span id="hBG" class="pill" style="background:#16241c;color:var(--ok)"></span>
@@ -307,15 +358,6 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
   <button class="btn-nho" onclick="doiNguoi()">Đổi người</button>
   <button class="btn-nho" id="btnSangToi" onclick="doiSangToi()" title="Đổi chế độ sáng/tối" style="padding:6px 10px">☀</button>
 </header>
-<nav>
-  <button id="tb-new" class="on" onclick="tab('new')">Lên đơn</button>
-  <button id="tb-pg" onclick="tab('pg')">Phiếu giao hàng <span id="pgSo"></span></button>
-  <button id="tb-list" onclick="tab('list')">Lịch sử</button>
-  <button id="tb-kh" onclick="tab('kh')">Khách hàng</button>
-  <button id="tb-out" onclick="tab('out')">Xuất file</button>
-  <button id="tb-cp" onclick="tab('cp')">Chi phí</button>
-  <button id="tb-cfg" onclick="tab('cfg')">Cài đặt</button>
-</nav>
 <main>
 
 <section id="pg-new">
@@ -497,6 +539,8 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
     <div id="cdOut" class="mt"></div></div>
 </section>
 </main>
+</div>
+</div>
 
 <div class="total" id="thanhToan"><div class="in">
   <div class="sum"><small id="tSL">0 sản phẩm</small><b id="tTien">0 đ</b></div>
@@ -635,7 +679,7 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260908g';
+var APP_VER='20260909a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
