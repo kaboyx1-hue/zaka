@@ -759,7 +759,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260909g';
+var APP_VER='20260909h';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1133,6 +1133,8 @@ function doiNguoi(){
   veChonNV(); $('sErr').innerHTML=''; $('sKey').value=''; $('sKey').focus();
 }
 function vaoApp(){
+  cnKiemTra();
+  setTimeout(function(){ try{ksGuiLaiPhieuKet()}catch(e){} },4000);
   // Don ho so danh ba GIA "9999999999" — noi cac don khach le (khong de lai
   // SDT) TRUOC KHI co ban va 20260908f bi gop nham chung mot nguoi. Chi xoa
   // ho so tong hop gia nay khoi Danh ba tren MAY NAY; KHONG dung, khong doi
@@ -3945,18 +3947,51 @@ function ksGhiPhieu(){
     loiMay:KS_LOI.slice(-5)
   });
   ksLuu(); KS_CHON=null;
-  $('ksDan').innerHTML='<div class="msg ok"><b>Đã ghi phiếu thứ '+KS_PHIEU.length+'.</b><br>'+
-    'Cứ tiếp tục dùng bình thường. Gặp chỗ nào nữa thì bấm nút <b>🛠 Kỹ sư</b> ở góc dưới bên trái. '+
-    'Khi nào muốn gửi thì mở lại nút đó, bấm <b>Xem phiếu &amp; gửi cho kỹ sư</b> để tải một file về, '+
-    'rồi đưa file đó cho kỹ sư ở phiên làm việc sau.</div>';
+  var stt=KS_PHIEU.length;
+  $('ksDan').innerHTML='<div class="msg ok"><b>Đã ghi phiếu thứ '+stt+'.</b><br>'+
+    '<span id="ksGuiTT">Đang gửi về cho chủ…</span></div>';
+  ksGuiChoChu(KS_PHIEU[stt-1]);
   $('ksThan').innerHTML=''; $('ksErr').innerHTML='';
   $('ksNutDay').innerHTML='<button class="btn2" onclick="document.getElementById(\'dlgKS\').close()">Đóng</button>'+
     '<button class="btn" onclick="ksXemPhieu()">Xem tất cả phiếu</button>';
 }
+/* GỬI PHIẾU VỀ CHO CHỦ — thêm 09/09/2026.
+   Nhân viên không làm việc trực tiếp với kỹ sư. Phiếu bay về máy quản lý,
+   chủ đọc, sửa lại lời cho rõ rồi mới duyệt chuyển tiếp. Gửi không được
+   (mất mạng, chưa cập nhật Apps Script) thì phiếu vẫn nằm nguyên trong máy,
+   lần sau tự gửi lại — không mất phiếu nào. */
+async function ksGuiChoChu(ph){
+  if(!ph) return;
+  var url=CFG.url||URL_DRIVE;
+  var o=$('ksGuiTT');
+  if(!url||!CFG.ma){ if(o) o.innerHTML='<b>Chưa gửi được</b> — máy này chưa nối với cửa hàng. Phiếu vẫn được giữ lại.'; return }
+  try{
+    var kq=await guiGoi(url,{may:CFG.ma,nv:CFG.ten,hanhdong:'phieuks',p:{
+      ban:ph.ban, man:ph.man, cho:ph.cho, noi:ph.noi, khung:ph.khung,
+      ma:(ph.ma||[]).map(function(m){return '### '+m.ten+'\n'+m.ma}).join('\n\n'),
+      loiMay:(ph.loiMay||[]).map(function(l){return l.luc+' — '+l.loi}).join('\n')
+    }});
+    if(kq.doc&&kq.j&&kq.j.ok){
+      ph.daGui=true; ksLuu();
+      if(o) o.innerHTML='<b>Đã gửi về cho chủ.</b> Chủ sẽ xem và xử lý. '+
+        'Anh/chị cứ tiếp tục bán hàng bình thường.';
+    } else throw new Error((kq.j&&kq.j.loi)||'chủ chưa nhận được');
+  }catch(e){
+    if(o) o.innerHTML='<b>Chưa gửi được</b> ('+esc(e.message)+'). Phiếu vẫn nằm trong máy, '+
+      'lần sau máy tự gửi lại. Không mất phiếu nào.';
+  }
+}
+/* Lần mở app sau: gửi lại những phiếu còn kẹt */
+async function ksGuiLaiPhieuKet(){
+  var ket=KS_PHIEU.filter(function(x){return !x.daGui});
+  for(var i=0;i<ket.length;i++){ await ksGuiChoChu(ket[i]) }
+}
 function ksXemPhieu(){
-  $('ksDan').innerHTML='Đang giữ <b>'+KS_PHIEU.length+' phiếu</b>. Bấm <b>Tải file gửi kỹ sư</b> rồi '+
-    'đưa file đó cho kỹ sư ở phiên làm việc sau — trong file có đủ lời của anh/chị và phần bên trong '+
-    'của máy, kỹ sư đọc là hiểu ngay.';
+  var ket=KS_PHIEU.filter(function(x){return !x.daGui}).length;
+  $('ksDan').innerHTML='Đang giữ <b>'+KS_PHIEU.length+' phiếu</b>'+
+    (ket?', trong đó <b style="color:var(--warn)">'+ket+' phiếu chưa gửi được</b> (máy sẽ tự gửi lại khi có mạng)':
+         ' — <b style="color:var(--ok)">đã gửi hết cho chủ</b>')+
+    '. Chủ sẽ xem rồi chuyển cho kỹ sư. Cần bản giấy thì bấm tải file bên dưới.';
   $('ksThan').innerHTML=KS_PHIEU.length
     ? KS_PHIEU.map(function(x,i){
         return '<div class="card" style="padding:11px;margin-bottom:8px">'+
@@ -4003,6 +4038,73 @@ function ksTaiVe(){
       'Phiếu vẫn giữ trong máy cho tới khi anh/chị tự bỏ.</div>';
   }catch(e){ $('ksErr').innerHTML='<div class="msg er">Không tải được file: '+esc(e.message)+'</div>' }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CÓ GÌ MỚI — bảng tin cập nhật, kiểu ghi chú bản vá của game
+   ═══════════════════════════════════════════════════════════════════════
+   Mở app mà bản trong máy mới hơn lần xem trước thì bật bảng này lên một
+   lần. Xem xong không hỏi lại nữa. Lúc nào muốn đọc lại thì bấm số bản
+   phần mềm ở góc dưới bên phải.
+   CÁCH VIẾT: nói cái người dùng THẤY được, không nói tên hàm hay chuyện
+   bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
+   ═══════════════════════════════════════════════════════════════════════ */
+var CAP_NHAT=[
+ {ban:'20260909h', ngay:'09/09/2026', ten:'Dọn hàng trùng & Kỹ sư hệ thống',
+  muc:[
+   ['moi','Trang <b>Cần làm</b> — mở phần mềm lên là thấy ngay hôm nay cần làm gì, xếp sẵn thứ tự, mỗi việc một nút.'],
+   ['moi','Dọn món trùng theo kiểu <b>hỏi từng câu một</b>: chỉ nhìn hai món rồi trả lời cùng một món hay khác nhau. Có nút <b>Hoàn tác</b> nếu bấm nhầm.'],
+   ['moi','Nút <b>🛠 Kỹ sư</b> ở góc dưới bên trái: chỉ thẳng vào chỗ đang có vấn đề, gõ một câu, máy tự gói lại gửi cho kỹ sư.'],
+   ['moi','Máy học được <b>giá riêng của từng khách</b> từ đơn cũ — lần sau đúng khách đó là giá tự hiện ra.'],
+   ['sua','Nhân viên gõ tên món đã có thì máy <b>báo động kèm mã số và chỗ nó nằm</b>, không cho đẻ thêm dòng trùng nữa.'],
+   ['sua','Số thứ tự đơn <b>chạy tiếp mỗi ngày</b>, không quay về 001 nữa.'],
+   ['sua','Bấm tab không còn bị văng về trang chủ trên máy cảm ứng.'],
+   ['nhanh','Đổi tab <b>phản hồi tức thì</b>, không còn đứng hình một hai giây. Trang Cần làm nhanh hơn gấp ba.'],
+   ['dep','Hai máy dùng chung một bộ màu. Chế độ sáng không còn chữ tối trên nền tối.'],
+   ['moi','Nhân viên bấm nút Kỹ sư thì <b>phiếu bay thẳng về máy chủ</b> — chủ đọc, duyệt rồi mới chuyển cho kỹ sư.'],
+   ['moi','Bảng <b>Có gì mới</b> này — mỗi lần cập nhật sẽ tự hiện một lần cho biết có gì thay đổi.'],
+  ]},
+ {ban:'20260908g', ngay:'08/09/2026', ten:'In A5 & lọc theo nhân viên',
+  muc:[
+   ['moi','Thêm khổ in A5 — máy nào nạp sẵn giấy A5 thì in hai đơn một tờ.'],
+   ['moi','Lọc đơn theo từng nhân viên ở tab Lịch sử.'],
+   ['sua','Sửa lỗi khách lẻ bị gộp chung vào một hồ sơ.'],
+  ]},
+];
+var CN_NHAN={moi:['MỚI','var(--ok)'],sua:['SỬA LỖI','var(--warn)'],
+             nhanh:['NHANH HƠN','var(--info)'],dep:['GIAO DIỆN','var(--pur)']};
+
+function cnVe(ds){
+  return ds.map(function(b,i){
+    return '<div style="margin-bottom:18px">'+
+      '<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px">'+
+        '<b style="font-size:16px">'+esc(b.ten)+'</b>'+
+        (i===0?'<span class="pill" style="background:var(--okBg);color:var(--ok)">bản đang dùng</span>':'')+
+        '<span class="sm" style="margin-left:auto;opacity:.65">'+esc(b.ngay)+' · '+esc(b.ban)+'</span>'+
+      '</div>'+
+      b.muc.map(function(m){
+        var n=CN_NHAN[m[0]]||['KHÁC','var(--tx2)'];
+        return '<div style="display:flex;gap:9px;align-items:flex-start;padding:5px 0">'+
+          '<span style="flex:none;font-size:10px;font-weight:700;letter-spacing:.4px;padding:2px 7px;'+
+            'border-radius:999px;border:1px solid '+n[1]+';color:'+n[1]+';margin-top:2px">'+n[0]+'</span>'+
+          '<span class="sm" style="line-height:1.5">'+m[1]+'</span></div>';
+      }).join('')+'</div>';
+  }).join('<div style="border-top:1px solid var(--line);margin:14px 0"></div>');
+}
+function cnMo(tatCa){
+  $('cnThan').innerHTML=cnVe(tatCa?CAP_NHAT:CAP_NHAT.slice(0,1));
+  $('cnNut').innerHTML=(tatCa?'':'<button class="btn2" onclick="cnMo(true)">Xem các bản trước</button>')+
+    '<button class="btn" onclick="cnDong()">Đã hiểu, vào làm việc</button>';
+  $('dlgCN').showModal();
+}
+function cnDong(){
+  try{ localStorage.setItem('cn_daxem', APP_VER) }catch(e){}
+  $('dlgCN').close();
+}
+function cnKiemTra(){
+  var da=''; try{ da=localStorage.getItem('cn_daxem')||'' }catch(e){}
+  if(da===APP_VER) return;
+  setTimeout(function(){ cnMo(false) }, 900);
+}
 </script>
 <div id="inKhung"></div>
 <div style="position:fixed;right:8px;bottom:4px;font-size:10px;opacity:.35;pointer-events:none;z-index:99">v1.0-zaka</div>
@@ -4013,6 +4115,13 @@ function ksTaiVe(){
   <div id="ksThan"></div>
   <div id="ksErr"></div>
   <div id="ksNutDay" class="row mt"></div>
+</dialog>
+
+<dialog id="dlgCN" style="max-width:600px">
+  <div class="sm" style="color:var(--tx2);letter-spacing:1.2px;font-weight:700;font-size:10.5px">CÓ GÌ MỚI</div>
+  <h2 style="margin:4px 0 14px">Phần mềm vừa được cập nhật</h2>
+  <div id="cnThan" style="max-height:56vh;overflow:auto"></div>
+  <div id="cnNut" class="row mt"></div>
 </dialog>
 
 </body></html>

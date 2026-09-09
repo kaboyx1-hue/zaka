@@ -491,6 +491,29 @@ body.ks-chi *{cursor:crosshair!important}
 
 <script src="seed_ql.js"></script>
 <script>
+/* ═══════════════════════════════════════════════════════════════════════
+   PHAO CỨU SINH CHO BIẾN NẰM Ở seed_ql.js — thêm 09/09/2026
+   ═══════════════════════════════════════════════════════════════════════
+   File quanly.html này KHÔNG tự chạy được một mình, y như bên máy nhân viên.
+   Bảng giá gốc (BANGGIA) và link Apps Script (URL_DRIVE) nằm ở file seed_ql.js
+   đi kèm. BANGGIA đang được dùng trần ở hai chỗ trong lúc khởi động — chép
+   quanly.html sang máy khác mà quên chép seed_ql.js là màn hình trắng, không
+   một dòng báo lỗi. Nay thiếu thì lấy giá trị rỗng an toàn và báo thẳng ra
+   màn hình cho chủ biết phải chép thêm file nào. */
+if(typeof BANGGIA==='undefined')   var BANGGIA=[];
+if(typeof URL_DRIVE==='undefined') var URL_DRIVE='';
+if(typeof BGV_SEED==='undefined')  var BGV_SEED='';
+if(!BANGGIA.length) setTimeout(function(){
+  var d=document.createElement('div');
+  d.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:9999;padding:12px 14px;'+
+    'background:#7f1d1d;color:#fff;font:13px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif';
+  d.innerHTML='<b>Máy này thiếu file <code>seed_ql.js</code></b><br>'+
+    'Bảng giá gốc nằm trong file đó. Chép lại <b>cả hai file</b> <code>quanly.html</code> và '+
+    '<code>seed_ql.js</code> vào cùng một thư mục rồi mở lại.';
+  document.body.appendChild(d);
+},1200);
+</script>
+<script>
 /* ══════════════════════════════════════════════════════════
    TỰ KIỂM TRA BẢN CŨ BỊ TRÌNH DUYỆT GIỮ LẠI (giống bản nhân viên)
    ══════════════════════════════════════════════════════════
@@ -501,7 +524,7 @@ body.ks-chi *{cursor:crosshair!important}
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260909g';
+var APP_VER='20260909h';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -662,45 +685,81 @@ var NGUONG_GIONG=0.6;   // dưới mức này coi như 2 sản phẩm khác nhau
    Chỉ gom hàng NHÂN VIÊN TỰ TẠO như cũ, không đụng 853 mặt hàng gốc.
    ═══════════════════════════════════════════════════════════════════════ */
 function nhomTrungTen(){
-  var ds=Object.keys(GIA).filter(function(k){
-    return !ALIAS[k] && tuKhoa_(GIA[k].ten||'');   // mã đã là mã phụ thì thôi
+  if(DEM_TRUNG) return DEM_TRUNG;
+  /* NHANH HƠN — sửa 09/09/2026.
+     Bản trước so từng cặp một trong TOÀN BỘ bảng giá: 889 mặt hàng là gần
+     400.000 lần so, mỗi lần lại rút gọn tên lại từ đầu — mở tab "Cần làm" là
+     đứng hình một hai giây. Nay:
+       1. rút gọn tên MỘT LẦN cho mỗi mặt hàng, nhớ luôn danh sách từ;
+       2. dựng bảng tra ngược "từ → những mặt hàng chứa từ đó", nên chỉ so với
+          các mặt hàng có ít nhất một từ chung, thay vì so với tất cả;
+       3. chỉ xuất phát từ hàng NHÂN VIÊN TỰ THÊM — vì một nhóm chỉ được tính
+          khi có ít nhất một mã như vậy, nên xuất phát từ chỗ khác là thừa;
+       4. nhớ kết quả lại, chỉ tính lại khi bảng giá hoặc sổ cái thay đổi. */
+  var ds=[], tra={};
+  Object.keys(GIA).forEach(function(k){
+    if(ALIAS[k]) return;
+    var khoa=tuKhoa_(GIA[k].ten||''); if(!khoa) return;
+    var tu=khoa.split(' ');
+    var m={sku:k,khoa:khoa,tu:tu,bo:{},moi:!!GIA[k].moi};
+    tu.forEach(function(w){ m.bo[w]=1; (tra[w]=tra[w]||[]).push(m) });
+    ds.push(m);
   });
+  function giong(a,b){
+    var chung=0; for(var i=0;i<a.tu.length;i++) if(b.bo[a.tu[i]]) chung++;
+    var hop=a.tu.length+b.tu.length-chung;
+    return hop?chung/hop:0;
+  }
+  var khoaCua={}; ds.forEach(function(x){ khoaCua[x.sku]=x.khoa });
   var daXep={}, nhom=[];
-  ds.forEach(function(k){
-    if(daXep[k]) return;
-    var cum=[k]; daXep[k]=1;
-    ds.forEach(function(k2){
-      if(daXep[k2]) return;
-      if(diemGiong_(GIA[k].ten||'',GIA[k2].ten||'')>=NGUONG_GIONG){ cum.push(k2); daXep[k2]=1 }
+  ds.filter(function(m){return m.moi}).forEach(function(m){
+    if(daXep[m.sku]) return;
+    var cum=[m.sku]; daXep[m.sku]=1;
+    var ungVien={};
+    m.tu.forEach(function(w){ (tra[w]||[]).forEach(function(x){
+      if(x.sku!==m.sku && !daXep[x.sku]) ungVien[x.sku]=x }) });
+    Object.keys(ungVien).forEach(function(k2){
+      var x=ungVien[k2];
+      if(giong(m,x)>=NGUONG_GIONG){ cum.push(k2); daXep[k2]=1 }
     });
-    if(cum.length>1) nhom.push(cum);
+    if(cum.length>1){
+      // dùng lại tên đã rút gọn sẵn, đừng rút gọn lại lần nữa
+      cum.chac=cum.every(function(k){return khoaCua[k]===m.khoa});
+      nhom.push(cum);
+    }
   });
-  return nhom.filter(function(a){ return a.some(function(k){return GIA[k]&&GIA[k].moi}) })
-    .map(function(a){
-      var khoa=tuKhoa_(GIA[a[0]].ten||'');
-      a.chac=a.every(function(k){return tuKhoa_(GIA[k].ten||'')===khoa});
-      return a;
-    })
-    .sort(function(x,y){ return (y.chac?1:0)-(x.chac?1:0) });   // nhóm chắc chắn lên trước
+  nhom.sort(function(x,y){ return (y.chac?1:0)-(x.chac?1:0) });
+  DEM_TRUNG=nhom; return nhom;
 }
+
 
 /* Mỗi mã đã được dùng ở bao nhiêu đơn, bán cho những ai, giá nào — bằng chứng
    để chủ thấy ngay đây là GIÁ THEO KHÁCH chứ không phải nhân viên đẻ hàng bậy. */
 function dauVetBan_(sku){
-  var kh={}, soDon=0;
-  SO.forEach(function(d){
-    if(d.huy) return;
-    var co=(d.dong||[]).filter(function(x){return x.sku===sku});
-    if(!co.length) return;
-    soDon++;
-    co.forEach(function(x){
-      var ten=d.khach||d.sdt||'(khách lẻ)';
-      kh[ten]=kh[ten]||{}; kh[ten][x.gia]=1;
+  /* NHANH HƠN — sửa 09/09/2026: trước đây mỗi lần hỏi một món là quét lại
+     TOÀN BỘ sổ cái. Bảng "Cần làm" hỏi mấy chục lần, lại còn hỏi trong lúc
+     sắp xếp, nên quét đi quét lại hàng chục nghìn đơn. Nay quét đúng một
+     lượt rồi nhớ lại cho mọi món. */
+  if(!DEM_BAN){
+    DEM_BAN={};
+    SO.forEach(function(d){
+      if(d.huy) return;
+      var da={};
+      (d.dong||[]).forEach(function(x){
+        var k=x.sku; if(!k) return;
+        var o=DEM_BAN[k]||(DEM_BAN[k]={soDon:0,kh:{}});
+        if(!da[k]){ o.soDon++; da[k]=1 }
+        var ten=d.khach||d.sdt||'(khách lẻ)';
+        (o.kh[ten]=o.kh[ten]||{})[x.gia]=1;
+      });
     });
-  });
-  return {soDon:soDon, khach:Object.keys(kh).map(function(t){
-    return {ten:t, gia:Object.keys(kh[t]).map(Number).sort(function(a,b){return a-b})} }) };
+  }
+  var o=DEM_BAN[sku];
+  if(!o) return {soDon:0,khach:[]};
+  return {soDon:o.soDon, khach:Object.keys(o.kh).map(function(t){
+    return {ten:t, gia:Object.keys(o.kh[t]).map(Number).sort(function(a,b){return a-b})} })};
 }
+
 function veTrungTen(){
   var nhom=nhomTrungTen();
   if(!nhom.length) return '';
@@ -916,6 +975,18 @@ function veLam(){
        'trả lời <b>cùng một món</b> hay <b>hai món khác nhau</b>.',
     nut:'Xem từng cái một',
     ham:'batDauHoiGom()'
+  });
+
+  // ── Việc: nhân viên báo có chỗ trục trặc ──
+  var cho=phieuNVChoDuyet();
+  if(cho.length) viec.push({
+    do:true,
+    ten:'Nhân viên báo '+cho.length+' chỗ đang trục trặc',
+    vi:'Nhân viên bấm nút Kỹ sư trên máy của họ để báo về. Anh/chị đọc xem có đúng là lỗi không, '+
+       'sửa lại lời cho rõ nếu cần, rồi <b>duyệt</b> những cái muốn chuyển cho kỹ sư. '+
+       'Cái nào không phải lỗi thì bỏ qua, khỏi làm phiền kỹ sư.',
+    nut:'Đọc '+cho.length+' báo cáo của nhân viên',
+    ham:'moPhieuNV()'
   });
 
   // ── Việc 2: đơn chưa tính được lời vì thiếu giá vốn ──
@@ -1284,7 +1355,16 @@ function dinhDangTien(el){
   el.setSelectionRange(viTriMoi,viTriMoi);
 }
 function get(k,d){try{var v=localStorage.getItem(K+k);return v?JSON.parse(v):d}catch(e){return d}}
-function set(k,v){try{localStorage.setItem(K+k,JSON.stringify(v))}catch(e){}}
+function set(k,v){
+  /* SỬA 09/09/2026: dữ liệu đổi thì xoá bộ nhớ đệm của mấy phép tính nặng
+     (dò món trùng tên, đếm đơn theo món). Gắn ngay tại đây để không bao giờ
+     sót chỗ nào — mọi lần ghi đều đi qua hàm này. */
+  if(k==='gia'||k==='alias'||k==='so') xoaDemNang_();
+  try{localStorage.setItem(K+k,JSON.stringify(v))}catch(e){}
+}
+var DEM_TRUNG=null, DEM_BAN=null;
+var PHIEU_NV=[];
+function xoaDemNang_(){ DEM_TRUNG=null; DEM_BAN=null }
 /* Chế độ sáng/tối — lưu lựa chọn trên máy, tự áp dụng lại mỗi lần mở app,
    kể cả trước màn hình nhập mật khẩu. Cùng khuôn với bên nhân viên. */
 function doiSangToi(){
@@ -1342,6 +1422,7 @@ async function hoiNhanh(){
 }
 
 function apDungKeoVe(j, luc){
+  if(j&&j.phieuKS) { PHIEU_NV=j.phieuKS; set('phieunv',PHIEU_NV) }
   if(j.von&&j.von.length) napVonTuSheet(j.von, j.vonVer);
   if(j.suavon) napSuaVonTuSheet(j.suavon, j.svVer);
   if(j.ship) SHIP=j.ship; set('ship',SHIP);
@@ -1383,6 +1464,7 @@ async function keoDon(im){
 })();
 
 function khoiDongQL(){
+  cnKiemTra();
   QCFG=get('qcfg',{url:typeof URL_DRIVE!=='undefined'?URL_DRIVE:'',key:''});
   setTimeout(function(){ $('qUrl').value=QCFG.url||''; $('qKey').value=QCFG.key||'';
     if(MOKHOA_PRELOAD && MOKHOA_PRELOAD.ok){
@@ -1648,8 +1730,21 @@ async function nap(files){
 }
 
 /* ── BÁO CÁO ── */
-function tab(t){['lam','in','bc','so','gia','cb','vh'].forEach(function(x){
-  $('pg-'+x).classList.toggle('hide',x!==t);$('tb-'+x).classList.toggle('on',x===t)});
+function tab(t){
+  /* SỬA 09/09/2026 — HẾT CẢM GIÁC ĐỨNG HÌNH KHI ĐỔI TAB.
+     Trước đây bấm tab là vẽ luôn nội dung ngay tại chỗ, mà có tab phải tính
+     cả nghìn đơn — trình duyệt chưa kịp vẽ lại màn hình thì đã bận tính, nên
+     bấm xong phải đợi một hai giây mới thấy tab đổi màu. Nay tách làm hai
+     nhịp: đổi tab hiện ra NGAY, rồi nhường cho trình duyệt vẽ xong màn hình,
+     xong mới tính nội dung. Tổng thời gian y như cũ nhưng cảm giác nhanh hẳn
+     vì tab phản hồi tức thì và có chữ "Đang tính…" trong lúc chờ. */
+  ['lam','in','bc','so','gia','cb','vh'].forEach(function(x){
+    $('pg-'+x).classList.toggle('hide',x!==t);$('tb-'+x).classList.toggle('on',x===t)});
+  var oCho={lam:'lamDs',bc:'bc',so:'dsSo',cb:'cb'}[t];
+  if(oCho && $(oCho) && !$(oCho).innerHTML) $(oCho).innerHTML='<div class="card"><div class="empty">Đang tính…</div></div>';
+  requestAnimationFrame(function(){ setTimeout(function(){ veTab_(t) },0) });
+}
+function veTab_(t){
   if(t==='lam')veLam();
   if(t==='bc')veBC(); if(t==='so')veSo(); if(t==='gia'){veGia();vePhat()} if(t==='cb')veCB();
   if(t==='vh'){veNV();veMayGui();veNhatKy();veKhaiTruong();nhacSaoLuu();veNvXemLS()}
@@ -3626,6 +3721,144 @@ function ksTaiVe(){
       'Phiếu vẫn giữ trong máy cho tới khi anh/chị tự bỏ.</div>';
   }catch(e){ $('ksErr').innerHTML='<div class="msg er">Không tải được file: '+esc(e.message)+'</div>' }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CÓ GÌ MỚI — bảng tin cập nhật, kiểu ghi chú bản vá của game
+   ═══════════════════════════════════════════════════════════════════════
+   Mở app mà bản trong máy mới hơn lần xem trước thì bật bảng này lên một
+   lần. Xem xong không hỏi lại nữa. Lúc nào muốn đọc lại thì bấm số bản
+   phần mềm ở góc dưới bên phải.
+   CÁCH VIẾT: nói cái người dùng THẤY được, không nói tên hàm hay chuyện
+   bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
+   ═══════════════════════════════════════════════════════════════════════ */
+var CAP_NHAT=[
+ {ban:'20260909h', ngay:'09/09/2026', ten:'Dọn hàng trùng & Kỹ sư hệ thống',
+  muc:[
+   ['moi','Trang <b>Cần làm</b> — mở phần mềm lên là thấy ngay hôm nay cần làm gì, xếp sẵn thứ tự, mỗi việc một nút.'],
+   ['moi','Dọn món trùng theo kiểu <b>hỏi từng câu một</b>: chỉ nhìn hai món rồi trả lời cùng một món hay khác nhau. Có nút <b>Hoàn tác</b> nếu bấm nhầm.'],
+   ['moi','Nút <b>🛠 Kỹ sư</b> ở góc dưới bên trái: chỉ thẳng vào chỗ đang có vấn đề, gõ một câu, máy tự gói lại gửi cho kỹ sư.'],
+   ['moi','Máy học được <b>giá riêng của từng khách</b> từ đơn cũ — lần sau đúng khách đó là giá tự hiện ra.'],
+   ['sua','Nhân viên gõ tên món đã có thì máy <b>báo động kèm mã số và chỗ nó nằm</b>, không cho đẻ thêm dòng trùng nữa.'],
+   ['sua','Số thứ tự đơn <b>chạy tiếp mỗi ngày</b>, không quay về 001 nữa.'],
+   ['sua','Bấm tab không còn bị văng về trang chủ trên máy cảm ứng.'],
+   ['nhanh','Đổi tab <b>phản hồi tức thì</b>, không còn đứng hình một hai giây. Trang Cần làm nhanh hơn gấp ba.'],
+   ['dep','Hai máy dùng chung một bộ màu. Chế độ sáng không còn chữ tối trên nền tối.'],
+   ['moi','Nhân viên bấm nút Kỹ sư thì <b>phiếu bay thẳng về máy chủ</b> — chủ đọc, duyệt rồi mới chuyển cho kỹ sư.'],
+   ['moi','Bảng <b>Có gì mới</b> này — mỗi lần cập nhật sẽ tự hiện một lần cho biết có gì thay đổi.'],
+  ]},
+ {ban:'20260908g', ngay:'08/09/2026', ten:'In A5 & lọc theo nhân viên',
+  muc:[
+   ['moi','Thêm khổ in A5 — máy nào nạp sẵn giấy A5 thì in hai đơn một tờ.'],
+   ['moi','Lọc đơn theo từng nhân viên ở tab Lịch sử.'],
+   ['sua','Sửa lỗi khách lẻ bị gộp chung vào một hồ sơ.'],
+  ]},
+];
+var CN_NHAN={moi:['MỚI','var(--ok)'],sua:['SỬA LỖI','var(--warn)'],
+             nhanh:['NHANH HƠN','var(--info)'],dep:['GIAO DIỆN','var(--pur)']};
+
+function cnVe(ds){
+  return ds.map(function(b,i){
+    return '<div style="margin-bottom:18px">'+
+      '<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px">'+
+        '<b style="font-size:16px">'+esc(b.ten)+'</b>'+
+        (i===0?'<span class="pill" style="background:var(--okBg);color:var(--ok)">bản đang dùng</span>':'')+
+        '<span class="sm" style="margin-left:auto;opacity:.65">'+esc(b.ngay)+' · '+esc(b.ban)+'</span>'+
+      '</div>'+
+      b.muc.map(function(m){
+        var n=CN_NHAN[m[0]]||['KHÁC','var(--tx2)'];
+        return '<div style="display:flex;gap:9px;align-items:flex-start;padding:5px 0">'+
+          '<span style="flex:none;font-size:10px;font-weight:700;letter-spacing:.4px;padding:2px 7px;'+
+            'border-radius:999px;border:1px solid '+n[1]+';color:'+n[1]+';margin-top:2px">'+n[0]+'</span>'+
+          '<span class="sm" style="line-height:1.5">'+m[1]+'</span></div>';
+      }).join('')+'</div>';
+  }).join('<div style="border-top:1px solid var(--line);margin:14px 0"></div>');
+}
+function cnMo(tatCa){
+  $('cnThan').innerHTML=cnVe(tatCa?CAP_NHAT:CAP_NHAT.slice(0,1));
+  $('cnNut').innerHTML=(tatCa?'':'<button class="btn2" onclick="cnMo(true)">Xem các bản trước</button>')+
+    '<button class="btn" onclick="cnDong()">Đã hiểu, vào làm việc</button>';
+  $('dlgCN').showModal();
+}
+function cnDong(){
+  try{ localStorage.setItem('cn_daxem', APP_VER) }catch(e){}
+  $('dlgCN').close();
+}
+function cnKiemTra(){
+  var da=''; try{ da=localStorage.getItem('cn_daxem')||'' }catch(e){}
+  if(da===APP_VER) return;
+  setTimeout(function(){ cnMo(false) }, 900);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PHIẾU NHÂN VIÊN BÁO — chủ duyệt trước khi chuyển cho kỹ sư
+   ═══════════════════════════════════════════════════════════════════════
+   Nhân viên không làm việc trực tiếp với kỹ sư. Họ bấm nút Kỹ sư trên máy
+   mình, phiếu bay về Sheet, chủ đọc ở đây. Chủ có ba lựa chọn cho mỗi phiếu:
+     · Duyệt   — đúng là lỗi, chuyển cho kỹ sư (kèm lời chủ ghi thêm)
+     · Bỏ qua  — không phải lỗi, hoặc chủ tự xử lý xong rồi
+     · Để đó   — chưa quyết, để lần sau xem lại
+   Không xoá dòng nào trên Sheet, chỉ đổi trạng thái — để còn lần lại được.
+   ═══════════════════════════════════════════════════════════════════════ */
+function phieuNVChoDuyet(){
+  if(!PHIEU_NV.length){ try{ PHIEU_NV=get('phieunv',[])||[] }catch(e){ PHIEU_NV=[] } }
+  return PHIEU_NV.filter(function(x){ return String(x.tt||'').trim().toUpperCase()==='CHO DUYET' });
+}
+function moPhieuNV(){
+  var ds=phieuNVChoDuyet();
+  $('ksDan').innerHTML='Nhân viên báo <b>'+ds.length+' chỗ</b> đang trục trặc. Đọc từng cái, '+
+    'cái nào đúng là lỗi thì bấm <b>Đúng là lỗi</b> để chuyển cho kỹ sư. Cái nào không phải thì '+
+    '<b>Bỏ qua</b>. Anh/chị ghi thêm gì thì kỹ sư đọc được luôn.';
+  $('ksThan').innerHTML=ds.length? ds.map(function(x,i){
+    return '<div class="card" style="padding:12px;margin-bottom:10px" id="pnv'+i+'">'+
+      '<div class="sm" style="color:var(--tx2)">'+esc(x.luc||'')+' · máy <b>'+esc(x.may||'')+'</b>'+
+        ' · <b>'+esc(x.nv||'')+'</b> · màn hình '+esc(x.man||'')+'</div>'+
+      '<div style="font-weight:600;margin:6px 0 8px;line-height:1.45">"'+esc(x.noi||'')+'"</div>'+
+      '<div class="sm" style="opacity:.7">Chỗ được chỉ: '+esc(x.cho||'(không chỉ vào đâu)')+'</div>'+
+      (x.loiMay?'<div class="sm" style="color:var(--warn);margin-top:4px">Máy có ghi được lỗi lúc đó</div>':'')+
+      '<label class="mt">Anh/chị muốn nói thêm gì với kỹ sư? (không bắt buộc)</label>'+
+      '<input id="pnvGhi'+i+'" placeholder="Ví dụ: tôi thử lại cũng bị, máy nào cũng vậy">'+
+      '<div class="row mt" style="gap:7px">'+
+        '<button class="btn" onclick="duyetPhieuNV('+i+',1)">Đúng là lỗi — chuyển cho kỹ sư</button>'+
+        '<button class="btn2" onclick="duyetPhieuNV('+i+',0)">Bỏ qua</button>'+
+      '</div></div>';
+  }).join('') : '<div class="empty">Không còn phiếu nào chờ.</div>';
+  $('ksErr').innerHTML='';
+  $('ksNutDay').innerHTML='<button class="btn2" onclick="document.getElementById(\'dlgKS\').close()">Để đó, lần sau xem</button>';
+  $('dlgKS').showModal();
+}
+async function duyetPhieuNV(i,dung){
+  var ds=phieuNVChoDuyet(), x=ds[i]; if(!x) return;
+  var ghi=($('pnvGhi'+i)&&$('pnvGhi'+i).value||'').trim();
+  if(!QCFG.url||!QCFG.key){ $('ksErr').innerHTML='<div class="msg er">Cần dán link và mật khẩu quản lý ở tab Nạp đơn trước.</div>'; return }
+  var o=document.getElementById('pnv'+i);
+  if(o) o.style.opacity='.5';
+  try{
+    var r=await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'duyetks',
+        ks:[{luc:x.luc,may:x.may,tt:dung?'DA DUYET':'BO QUA',chuGhi:ghi}]})});
+    var j=JSON.parse(await r.text());
+    if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
+    x.tt=dung?'DA DUYET':'BO QUA'; x.chuGhi=ghi; set('phieunv',PHIEU_NV);
+    if(dung){
+      // đưa thẳng vào tập phiếu của chủ để lát nữa xuất file cho kỹ sư
+      KS_PHIEU.push({luc:x.luc, app:'May nhan vien ('+(x.may||'')+')', ban:x.ban||'?',
+        man:x.man||'', cho:x.cho||'', khung:x.khung||'',
+        noi:(x.noi||'')+(ghi?'\n\n[Chủ ghi thêm] '+ghi:''),
+        ma:(x.ma?[{ten:'(mã nguồn máy nhân viên gửi kèm)',ma:String(x.ma)}]:[]),
+        loiMay:(x.loiMay?String(x.loiMay).split('\n').filter(Boolean).map(function(l){return {luc:'',loi:l}}):[])});
+      ksLuu();
+    }
+    if(o) o.remove();
+    $('ksErr').innerHTML='<div class="msg ok">'+(dung
+      ? 'Đã nhận. Phiếu này nằm trong tập gửi kỹ sư — bấm nút <b>🛠 Kỹ sư</b> rồi <b>Tải file gửi kỹ sư</b> khi muốn gửi.'
+      : 'Đã bỏ qua. Nhân viên không bị làm phiền gì thêm.')+'</div>';
+    veLam();
+    if(!phieuNVChoDuyet().length) setTimeout(function(){ moPhieuNV() },600);
+  }catch(e){
+    if(o) o.style.opacity='1';
+    $('ksErr').innerHTML='<div class="msg er">Không ghi được lên Sheet: '+esc(e.message)+'</div>';
+  }
+}
 </script><div style="position:fixed;right:8px;bottom:4px;font-size:10px;opacity:.35;pointer-events:none;z-index:99">v1.0-zaka</div>
 <button id="ksNut" onclick="ksMo()" title="Báo cho kỹ sư một chỗ đang có vấn đề">🛠 Kỹ sư</button>
 <dialog id="dlgKS" style="max-width:640px">
@@ -3634,6 +3867,13 @@ function ksTaiVe(){
   <div id="ksThan"></div>
   <div id="ksErr"></div>
   <div id="ksNutDay" class="row mt"></div>
+</dialog>
+
+<dialog id="dlgCN" style="max-width:600px">
+  <div class="sm" style="color:var(--tx2);letter-spacing:1.2px;font-weight:700;font-size:10.5px">CÓ GÌ MỚI</div>
+  <h2 style="margin:4px 0 14px">Phần mềm vừa được cập nhật</h2>
+  <div id="cnThan" style="max-height:56vh;overflow:auto"></div>
+  <div id="cnNut" class="row mt"></div>
 </dialog>
 
 </body></html>
