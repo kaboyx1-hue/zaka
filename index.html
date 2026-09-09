@@ -333,6 +333,17 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
   .side nav{flex-direction:row;overflow-x:auto}
   .side nav button{flex:1;text-align:center;padding:11px 8px;font-size:14px;white-space:nowrap}
 }
+/* ══ KỸ SƯ HỆ THỐNG ══ */
+#ksNut{position:fixed;left:12px;bottom:12px;z-index:9998;background:var(--card);color:var(--tx2);
+  border:1px solid var(--line);border-radius:999px;padding:9px 14px;font-size:12.5px;
+  box-shadow:var(--shadow);opacity:.75}
+#ksNut:hover{opacity:1;color:var(--acc);border-color:var(--acc)}
+#ksNut.dangChi{background:var(--bad);color:#fff;opacity:1;border-color:var(--bad)}
+.ks-soi{outline:3px solid var(--warn)!important;outline-offset:2px;cursor:crosshair!important}
+body.ks-chi *{cursor:crosshair!important}
+#ksBang{white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  background:var(--c2);border:1px solid var(--line);border-radius:10px;padding:10px;
+  max-height:200px;overflow:auto;margin-top:8px}
 </style></head><body>
 
 <div class="demo" id="mangBar"></div>
@@ -680,15 +691,17 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right}
 </dialog>
 
 <dialog id="dlgThem">
-  <h2 style="margin-top:0">Thêm sản phẩm mới</h2>
-  <div class="sm" style="margin-bottom:12px">Bán được ngay. Quản lý sẽ hoàn thiện thông tin sản phẩm sau.</div>
+  <h2 style="margin-top:0">Thêm món chưa có trong bảng giá</h2>
+  <div class="sm" style="margin-bottom:12px"><b>Chỉ dùng khi món này thật sự chưa có.</b>
+  Nếu chỉ là bán cho khách này giá khác thì <b>đừng thêm mới</b> — cứ tìm món có sẵn, bỏ vào giỏ
+  rồi sửa giá ngay tại dòng đó. Máy sẽ tự nhớ giá riêng cho đúng khách này.</div>
   <label>Tên sản phẩm</label><input id="nTen" oninput="goiYTrung()">
   <div id="nGoiY"></div>
   <div class="row mt">
     <div><label>Nhóm</label><select id="nNhom"></select></div>
     <div><label>Đơn vị tính</label><input id="nDvt" placeholder="Túi / Gói / Bao"></div>
   </div>
-  <div class="mt"><label>Giá bán</label><input id="nGia" inputmode="numeric"></div>
+  <div class="mt"><label>Giá bán cho khách này</label><input id="nGia" inputmode="numeric"></div>
   <div id="nErr"></div>
   <div class="row mt">
     <button onclick="document.getElementById('dlgThem').close()" style="background:var(--c2);color:var(--tx2)">Huỷ</button>
@@ -746,7 +759,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260909d';
+var APP_VER='20260909g';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -2191,6 +2204,38 @@ function dungSPCoSan(sku){
   $('dlgThem').close(); $('q').value=p.ten; timSP();
   bao('newMsg','Đã chọn dùng lại <b>'+esc(p.ten)+'</b> (mã '+esc(p.sku)+') — không tạo sản phẩm mới.','wa');
 }
+/* Nhớ tên mà nhân viên đã khẳng định "là món khác" — để lần bấm thứ hai đi thẳng,
+   không hỏi lại vòng vo. Xoá ngay sau khi tạo xong. */
+var XAC_NHAN_MON_KHAC='';
+function khangDinhMonKhac(){
+  XAC_NHAN_MON_KHAC=tuKhoa_($('nTen').value.trim());
+  $('nErr').innerHTML='';
+  luuMoi();
+}
+/* Đóng ô thêm món, gõ sẵn tên vào ô tìm rồi nháy sáng đúng dòng đó — để nhân
+   viên tận mắt thấy món cũ nằm đâu, thay vì phải tin lời cảnh báo. */
+function chiChoToiXem(sku){
+  var p=SP.filter(function(x){return x.sku===sku})[0]; if(!p) return;
+  $('dlgThem').close(); $('nErr').innerHTML='';
+  tab('new'); $('q').value=p.ten; timSP();
+  setTimeout(function(){
+    var o=document.querySelector('[data-sku="'+sku+'"]')||
+          document.getElementById('sp_'+sku)||$('dsSP');
+    if(o){ o.scrollIntoView({block:'center',behavior:'smooth'});
+      o.style.transition='box-shadow .25s'; o.style.boxShadow='0 0 0 3px var(--acc)';
+      setTimeout(function(){ o.style.boxShadow='' },2200) }
+  },260);
+  bao('newMsg','Đây là <b>'+esc(p.ten)+'</b> (mã '+esc(sku)+') đang có sẵn. '+
+    'Bỏ vào giỏ rồi sửa giá ngay tại dòng đó là bán được giá riêng cho khách này.','wa');
+}
+function dungMonNay(sku,gia){
+  $('dlgThem').close(); $('nErr').innerHTML=''; XAC_NHAN_MON_KHAC='';
+  $('q').value=''; timSP();
+  them(sku,false,gia);
+  var p=SP.filter(function(x){return x.sku===sku})[0];
+  bao('newMsg','Đã bỏ <b>'+esc(p?p.ten:sku)+'</b> vào giỏ với <b>đúng giá '+tien(gia)+'</b> '+
+    'anh/chị vừa gõ. Lưu đơn xong máy sẽ nhớ đây là giá riêng của khách này — lần sau tự hiện ra.','ok');
+}
 async function luuMoi(){
   var t=$('nTen').value.trim(), g=so($('nGia').value), dv=$('nDvt').value.trim()||'Cái';
   if(!t||!g){bao('nErr','Cần đủ tên và giá bán','er');return}
@@ -2216,6 +2261,49 @@ async function luuMoi(){
       'Đã bỏ vào giỏ với <b>đúng giá '+tien(g)+'</b> anh/chị vừa nhập, không lấy giá cũ.','ok');
     return;
   }
+
+  /* CHẶN THẬT SỰ — thêm 09/09/2026.
+     Trước đây chỉ chặn khi tên rút gọn TRÙNG KHÍT. Thêm hai chữ vào tên là lọt,
+     nên vẫn đẻ ra hàng loạt món y hệt nhau chỉ khác giá — chủ mở bảng giá ra
+     thấy một nùi, tưởng nhân viên tự ý tạo bừa. Nay hễ GẦN GIỐNG tới ngưỡng là
+     phải chọn: dùng lại món có sẵn (kèm đúng giá vừa gõ cho khách này), hoặc
+     bấm thêm một lần nữa để khẳng định đây là món khác thật. Không chặn cứng —
+     hàng mới thật vẫn tạo được, chỉ tốn thêm một cú bấm. */
+  var gan=SP.map(function(p){return {p:p,d:diemGiong_(t,p.ten)}})
+    .filter(function(x){return x.d>=0.5})
+    .sort(function(a,b){return b.d-a.d}).slice(0,4);
+  if(gan.length && XAC_NHAN_MON_KHAC!==tuKhoa_(t)){
+    /* BÁO ĐỘNG TRÙNG TÊN — nói rõ món đã có NẰM Ở ĐÂU và MÃ SỐ là gì, để nhân
+       viên tự kiểm chứng được chứ không phải tin suông. Kèm nút chỉ thẳng tới
+       chỗ nó nằm trong danh sách. */
+    $('nErr').innerHTML='<div class="msg er" style="border:2px solid var(--bad)">'+
+      '<b style="color:var(--bad)">⚠ KHOAN ĐÃ — MÓN NÀY ĐÃ CÓ SẴN TRONG MÁY</b><br>'+
+      'Thêm mới sẽ tạo thêm một dòng trùng trong bảng giá của chủ, và <b>không giúp bán được '+
+      'giá khác</b>. Muốn bán giá khác thì cứ dùng lại món cũ — máy tự nhớ giá riêng cho khách này.'+
+      '</div>'+
+      gan.map(function(x){
+        var nhomTen=x.p.nhom||'(chưa xếp nhóm)';
+        return '<div style="padding:9px 4px;border-bottom:1px solid var(--line)">'+
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'+
+            '<div class="sm" style="min-width:0">'+
+              '<b>'+esc(x.p.ten)+'</b>'+
+              '<div style="margin-top:3px">Mã số: <b style="font-family:ui-monospace,monospace">'+
+                esc(x.p.sku)+'</b>'+(x.p.choDuyet?' <span class="tag moi">máy khác vừa tạo</span>':'')+'</div>'+
+              '<div>Chỗ nó nằm: tab <b>Lên đơn</b> › nhóm <b>'+esc(nhomTen)+'</b></div>'+
+              '<div>Bán theo <b>'+esc(x.p.dvt||'—')+'</b> · đang để giá <b>'+tien(x.p.gb||0)+'</b></div>'+
+              '<div style="opacity:.65">Giống tên tới '+Math.round(x.d*100)+'%</div>'+
+            '</div>'+
+            '<div style="flex:none;display:flex;flex-direction:column;gap:5px">'+
+              '<button class="mini" type="button" onclick=\'dungMonNay("'+x.p.sku+'",'+g+')\'>Dùng món này</button>'+
+              '<button class="btn-nho" type="button" onclick=\'chiChoToiXem("'+x.p.sku+'")\'>Chỉ chỗ nó nằm</button>'+
+            '</div>'+
+          '</div></div>';
+      }).join('')+
+      '<button class="btn-nho mt" type="button" style="width:100%;padding:9px" '+
+      'onclick=\'khangDinhMonKhac()\'>Không phải — đây là món khác hẳn, vẫn thêm mới</button>';
+    return;
+  }
+  XAC_NHAN_MON_KHAC='';
 
   var d0=new Date();
   var sku='MOI-'+CFG.ma+'-'+String(d0.getFullYear()).slice(2)+
@@ -3710,7 +3798,221 @@ function xuat(){
   veDon(); veOut(); dem();
   bao('outMsg',m,'ok');
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   KỸ SƯ HỆ THỐNG — thêm 09/09/2026
+   ═══════════════════════════════════════════════════════════════════════
+   Ý TƯỞNG CỦA CHỦ: đang dùng mà thấy chỗ nào bất thường thì chỉ thẳng vào
+   chỗ đó, nói một câu bằng lời của mình. Máy tự nhặt lấy phần MÃ NGUỒN
+   đứng sau chỗ đó rồi ghép với lời của chủ thành một "phiếu". Phiên làm
+   việc sau, kỹ sư đọc phiếu là biết chuyện gì, khỏi phải tả lại từ đầu.
+
+   CÁCH LẤY MÃ NGUỒN: không đọc file (mở bằng file:// thì trình duyệt cấm
+   đọc chính nó). Thay vào đó lấy từ bộ nhớ đang chạy — mọi hàm trong máy
+   đều tự đọc lại được mã của chính nó. Từ chỗ chủ bấm, dò ngược lên tìm
+   các nút/ô có gắn hành động, lấy tên hàm trong đó rồi trích mã ra. Cách
+   này chạy được ở mọi kiểu mở file, không cần mạng.
+
+   AN TOÀN: chỉ ĐỌC, không sửa gì. Phiếu nằm trong máy này, chỉ rời đi khi
+   chủ tự bấm tải về.
+   ═══════════════════════════════════════════════════════════════════════ */
+var KS_TEN_APP=(typeof MAT_KHAU_QUANLY!=='undefined'||typeof QCFG!=='undefined')?'May quan ly':'May nhan vien';
+var KS_PHIEU=[], KS_LOI=[], KS_DANG_CHI=false, KS_CHON=null;
+try{ KS_PHIEU=JSON.parse(localStorage.getItem('ks_phieu')||'[]') }catch(e){ KS_PHIEU=[] }
+function ksLuu(){ try{ localStorage.setItem('ks_phieu',JSON.stringify(KS_PHIEU)) }catch(e){} }
+
+/* Ghi lại lỗi máy tự phát sinh — thường chủ không thấy, nhưng kỹ sư cần */
+window.addEventListener('error',function(e){
+  KS_LOI.push({luc:new Date().toLocaleString('vi-VN'),
+    loi:String(e.message||''),o:String(e.filename||'').split('/').pop()+':'+e.lineno});
+  if(KS_LOI.length>20) KS_LOI.shift();
+});
+window.addEventListener('unhandledrejection',function(e){
+  KS_LOI.push({luc:new Date().toLocaleString('vi-VN'),loi:'Chờ mãi không xong: '+String(e.reason&&e.reason.message||e.reason),o:''});
+  if(KS_LOI.length>20) KS_LOI.shift();
+});
+
+function ksManHinh(){
+  var n=document.querySelector('nav button.on');
+  return n?n.textContent.trim().replace(/\s*\(\d+\)$/,''):'(không rõ)';
+}
+/* Trích mã nguồn của những hàm đứng sau chỗ chủ chỉ vào */
+function ksTrichMa(el){
+  var ten={}, cur=el, sau=0;
+  while(cur && cur!==document.body && sau<6){
+    ['onclick','onchange','oninput','onsubmit'].forEach(function(k){
+      var v=cur.getAttribute&&cur.getAttribute(k); if(!v) return;
+      (v.match(/([A-Za-z_$][\w$]*)\s*\(/g)||[]).forEach(function(m){
+        ten[m.replace(/\s*\($/,'')]=1 });
+    });
+    cur=cur.parentElement; sau++;
+  }
+  // thêm hàm vẽ ra màn hình đang mở, vì lỗi hay nằm ở đó
+  var n=document.querySelector('nav button.on');
+  var t=n&&(n.getAttribute('onclick')||'').match(/tab\('([^']+)'\)/);
+  if(t) ['ve'+t[1].toUpperCase(),'ve'+t[1].charAt(0).toUpperCase()+t[1].slice(1)].forEach(function(x){ten[x]=1});
+  var ra=[];
+  Object.keys(ten).forEach(function(k){
+    try{
+      var f=window[k];
+      if(typeof f!=='function') return;
+      var src=f.toString();
+      if(src.length>4000) src=src.slice(0,4000)+'\n… (cắt bớt cho gọn)';
+      ra.push({ten:k,ma:src});
+    }catch(e){}
+  });
+  return ra;
+}
+function ksMoTa(el){
+  if(!el) return '(không chỉ vào đâu cả — nói chung về màn hình này)';
+  var t=(el.innerText||'').trim().replace(/\s+/g,' ').slice(0,80);
+  return (el.tagName||'').toLowerCase()+
+    (el.id?'#'+el.id:'')+(el.className&&typeof el.className==='string'?'.'+el.className.trim().split(/\s+/).join('.'):'')+
+    (t?'  —  "'+t+'"':'');
+}
+
+function ksMo(){
+  if(KS_DANG_CHI){ ksThoiChi(); return }
+  KS_CHON=null;
+  $('ksDan').innerHTML='Anh/chị thấy chỗ nào chạy không đúng ý? Chỉ thẳng vào chỗ đó rồi nói một câu '+
+    'bằng lời của mình. Máy sẽ tự lấy phần bên trong đứng sau chỗ đó gộp với lời của anh/chị, '+
+    'để lần sau kỹ sư đọc là hiểu ngay, khỏi phải tả lại.';
+  $('ksThan').innerHTML='';
+  $('ksErr').innerHTML='';
+  $('ksNutDay').innerHTML=
+    '<button class="btn" onclick="ksBatDauChi()">Chỉ vào chỗ có vấn đề</button>'+
+    '<button class="btn2" onclick="ksVietNgay(null)">Nói chung về màn hình này</button>';
+  if(KS_PHIEU.length) $('ksNutDay').innerHTML+=
+    '<button class="btn2" style="flex-basis:100%" onclick="ksXemPhieu()">Xem '+KS_PHIEU.length+
+    ' phiếu đã ghi &amp; gửi cho kỹ sư</button>';
+  $('dlgKS').showModal();
+}
+function ksBatDauChi(){
+  $('dlgKS').close();
+  KS_DANG_CHI=true; document.body.classList.add('ks-chi');
+  $('ksNut').textContent='✋ Bấm vào chỗ đó — hoặc bấm đây để thôi';
+  $('ksNut').classList.add('dangChi');
+  document.addEventListener('mouseover',ksSoi,true);
+  document.addEventListener('click',ksBat,true);
+}
+function ksThoiChi(){
+  KS_DANG_CHI=false; document.body.classList.remove('ks-chi');
+  $('ksNut').textContent='🛠 Kỹ sư'; $('ksNut').classList.remove('dangChi');
+  document.removeEventListener('mouseover',ksSoi,true);
+  document.removeEventListener('click',ksBat,true);
+  document.querySelectorAll('.ks-soi').forEach(function(x){x.classList.remove('ks-soi')});
+}
+function ksSoi(e){
+  if(e.target===$('ksNut')) return;
+  document.querySelectorAll('.ks-soi').forEach(function(x){x.classList.remove('ks-soi')});
+  if(e.target&&e.target.classList) e.target.classList.add('ks-soi');
+}
+function ksBat(e){
+  if(e.target===$('ksNut')) return;
+  e.preventDefault(); e.stopPropagation();
+  var el=e.target; ksThoiChi(); ksVietNgay(el);
+}
+function ksVietNgay(el){
+  KS_CHON=el;
+  var ma=ksTrichMa(el);
+  $('ksDan').innerHTML='<b>Chỗ anh/chị chỉ:</b> '+esc(ksMoTa(el))+'<br>'+
+    '<b>Đang ở màn hình:</b> '+esc(ksManHinh())+
+    (ma.length?'<br><b>Máy đã tự lấy được '+ma.length+' đoạn bên trong</b> liên quan tới chỗ này.':
+      '<br><span style="color:var(--warn)">Chỗ này không gắn với đoạn nào cụ thể — vẫn ghi phiếu bình thường.</span>');
+  $('ksThan').innerHTML='<label class="mt">Chỗ này có vấn đề gì? Cứ nói bằng lời thường.</label>'+
+    '<textarea id="ksLoi" rows="4" style="width:100%;font:inherit;padding:11px;border-radius:14px;'+
+    'border:1px solid var(--line);background:var(--c2);color:var(--tx)" '+
+    'placeholder="Ví dụ: bấm nút này xong số tiền không đổi, phải tải lại trang mới thấy"></textarea>'+
+    (ma.length?'<div class="sm mt">Máy sẽ gửi kèm: '+ma.map(function(x){return '<code>'+esc(x.ten)+'</code>'}).join(', ')+'</div>':'');
+  $('ksErr').innerHTML='';
+  $('ksNutDay').innerHTML='<button class="btn2" onclick="document.getElementById(\'dlgKS\').close()">Thôi</button>'+
+    '<button class="btn" onclick="ksGhiPhieu()">Ghi phiếu này lại</button>';
+  $('dlgKS').showModal();
+  setTimeout(function(){ var o=$('ksLoi'); if(o) o.focus() },80);
+}
+function ksGhiPhieu(){
+  var loi=($('ksLoi')&&$('ksLoi').value||'').trim();
+  if(!loi){ $('ksErr').innerHTML='<div class="msg er">Chưa nói chỗ này có vấn đề gì.</div>'; return }
+  KS_PHIEU.push({
+    luc:new Date().toLocaleString('vi-VN'),
+    app:KS_TEN_APP,
+    ban:(typeof APP_VER!=='undefined'?APP_VER:'?'),
+    man:ksManHinh(),
+    cho:ksMoTa(KS_CHON),
+    khung:KS_CHON?String(KS_CHON.outerHTML||'').replace(/\s+/g,' ').slice(0,600):'',
+    noi:loi,
+    ma:ksTrichMa(KS_CHON),
+    loiMay:KS_LOI.slice(-5)
+  });
+  ksLuu(); KS_CHON=null;
+  $('ksDan').innerHTML='<div class="msg ok"><b>Đã ghi phiếu thứ '+KS_PHIEU.length+'.</b><br>'+
+    'Cứ tiếp tục dùng bình thường. Gặp chỗ nào nữa thì bấm nút <b>🛠 Kỹ sư</b> ở góc dưới bên trái. '+
+    'Khi nào muốn gửi thì mở lại nút đó, bấm <b>Xem phiếu &amp; gửi cho kỹ sư</b> để tải một file về, '+
+    'rồi đưa file đó cho kỹ sư ở phiên làm việc sau.</div>';
+  $('ksThan').innerHTML=''; $('ksErr').innerHTML='';
+  $('ksNutDay').innerHTML='<button class="btn2" onclick="document.getElementById(\'dlgKS\').close()">Đóng</button>'+
+    '<button class="btn" onclick="ksXemPhieu()">Xem tất cả phiếu</button>';
+}
+function ksXemPhieu(){
+  $('ksDan').innerHTML='Đang giữ <b>'+KS_PHIEU.length+' phiếu</b>. Bấm <b>Tải file gửi kỹ sư</b> rồi '+
+    'đưa file đó cho kỹ sư ở phiên làm việc sau — trong file có đủ lời của anh/chị và phần bên trong '+
+    'của máy, kỹ sư đọc là hiểu ngay.';
+  $('ksThan').innerHTML=KS_PHIEU.length
+    ? KS_PHIEU.map(function(x,i){
+        return '<div class="card" style="padding:11px;margin-bottom:8px">'+
+          '<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">'+
+          '<div class="sm" style="min-width:0"><b>'+(i+1)+'. '+esc(x.noi)+'</b>'+
+          '<div style="opacity:.7;margin-top:3px">'+esc(x.luc)+' · '+esc(x.app)+' bản '+esc(x.ban)+
+          ' · màn hình <b>'+esc(x.man)+'</b></div>'+
+          '<div style="opacity:.7">Chỗ chỉ: '+esc(x.cho)+'</div>'+
+          '<div style="opacity:.7">Kèm '+x.ma.length+' đoạn bên trong'+
+            (x.loiMay.length?' và '+x.loiMay.length+' lỗi máy tự ghi':'')+'</div></div>'+
+          '<button class="mini" style="flex:none" onclick="ksXoaPhieu('+i+')">Bỏ</button></div></div>';
+      }).join('')
+    : '<div class="empty">Chưa có phiếu nào.</div>';
+  $('ksErr').innerHTML='';
+  $('ksNutDay').innerHTML='<button class="btn2" onclick="document.getElementById(\'dlgKS\').close()">Đóng</button>'+
+    (KS_PHIEU.length?'<button class="btn" onclick="ksTaiVe()">Tải file gửi kỹ sư</button>':'');
+}
+function ksXoaPhieu(i){
+  if(!confirm('Bỏ phiếu này?')) return;
+  KS_PHIEU.splice(i,1); ksLuu(); ksXemPhieu();
+}
+function ksTaiVe(){
+  var d=new Date();
+  var t='# Phiếu báo cho kỹ sư — ZAKA\n\n'+
+    'Người báo: chủ cửa hàng · Ghi lúc: '+d.toLocaleString('vi-VN')+'\n\n'+
+    'Kỹ sư đọc file này rồi trình bày lại từng phiếu cho chủ, kèm giải pháp đề xuất.\n\n---\n\n'+
+    KS_PHIEU.map(function(x,i){
+      return '## Phiếu '+(i+1)+'\n\n'+
+        '**Chủ nói:** '+x.noi+'\n\n'+
+        '- Lúc: '+x.luc+'\n- Máy: '+x.app+' (bản '+x.ban+')\n- Màn hình: '+x.man+'\n- Chỗ được chỉ: `'+x.cho+'`\n\n'+
+        (x.khung?'**Khung giao diện tại chỗ đó**\n\n```html\n'+x.khung+'\n```\n\n':'')+
+        (x.ma.length?'**Mã nguồn liên quan**\n\n'+x.ma.map(function(m){
+          return '`'+m.ten+'`\n\n```js\n'+m.ma+'\n```\n' }).join('\n'):'_Không trích được mã nguồn nào._\n')+
+        (x.loiMay.length?'\n**Lỗi máy tự ghi được quanh lúc đó**\n\n'+
+          x.loiMay.map(function(l){return '- '+l.luc+' — '+l.loi+(l.o?' ('+l.o+')':'')}).join('\n')+'\n':'');
+    }).join('\n---\n\n');
+  var ten='PHIEU-KY-SU_'+String(d.getFullYear()).slice(2)+('0'+(d.getMonth()+1)).slice(-2)+
+    ('0'+d.getDate()).slice(-2)+'_'+('0'+d.getHours()).slice(-2)+('0'+d.getMinutes()).slice(-2)+'.md';
+  try{
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([t],{type:'text/markdown;charset=utf-8'}));
+    a.download=ten; a.click(); setTimeout(function(){URL.revokeObjectURL(a.href)},2000);
+    $('ksErr').innerHTML='<div class="msg ok">Đã tải <b>'+ten+'</b> về máy. Đưa file này cho kỹ sư ở phiên sau. '+
+      'Phiếu vẫn giữ trong máy cho tới khi anh/chị tự bỏ.</div>';
+  }catch(e){ $('ksErr').innerHTML='<div class="msg er">Không tải được file: '+esc(e.message)+'</div>' }
+}
 </script>
 <div id="inKhung"></div>
 <div style="position:fixed;right:8px;bottom:4px;font-size:10px;opacity:.35;pointer-events:none;z-index:99">v1.0-zaka</div>
+<button id="ksNut" onclick="ksMo()" title="Báo cho kỹ sư một chỗ đang có vấn đề">🛠 Kỹ sư</button>
+<dialog id="dlgKS" style="max-width:640px">
+  <h2 style="margin-top:0">Báo cho kỹ sư</h2>
+  <div class="sm" id="ksDan"></div>
+  <div id="ksThan"></div>
+  <div id="ksErr"></div>
+  <div id="ksNutDay" class="row mt"></div>
+</dialog>
+
 </body></html>

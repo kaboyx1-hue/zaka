@@ -152,6 +152,17 @@ dialog::backdrop{background:rgba(20,25,40,.55)}
   .side nav{flex-direction:row;overflow-x:auto}
   .side nav button{flex:1;text-align:center;padding:10px 6px;font-size:13px;white-space:nowrap}
 }
+/* ══ KỸ SƯ HỆ THỐNG ══ */
+#ksNut{position:fixed;left:12px;bottom:12px;z-index:9998;background:var(--card);color:var(--tx2);
+  border:1px solid var(--line);border-radius:999px;padding:9px 14px;font-size:12.5px;
+  box-shadow:var(--shadow);opacity:.75}
+#ksNut:hover{opacity:1;color:var(--acc);border-color:var(--acc)}
+#ksNut.dangChi{background:var(--bad);color:#fff;opacity:1;border-color:var(--bad)}
+.ks-soi{outline:3px solid var(--warn)!important;outline-offset:2px;cursor:crosshair!important}
+body.ks-chi *{cursor:crosshair!important}
+#ksBang{white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+  background:var(--c2);border:1px solid var(--line);border-radius:10px;padding:10px;
+  max-height:200px;overflow:auto;margin-top:8px}
 </style></head><body>
 <div id="khoa">
   <div class="logoMark">🐾</div>
@@ -179,7 +190,8 @@ dialog::backdrop{background:rgba(20,25,40,.55)}
 <aside class="side">
   <div class="side-brand"><div class="mark">Z</div><div><div class="nm">ZAKA</div><div class="sub">Máy quản lý</div></div></div>
   <nav>
-    <button id="tb-bc" class="on" onclick="tab('bc')">Báo cáo</button>
+    <button id="tb-lam" class="on" onclick="tab('lam')">Cần làm <span id="lamSo"></span></button>
+    <button id="tb-bc" onclick="tab('bc')">Báo cáo</button>
     <button id="tb-so" onclick="tab('so')">Sổ cái</button>
     <button id="tb-gia" onclick="tab('gia')">Bảng giá</button>
     <button id="tb-in" onclick="tab('in')">Nạp đơn</button>
@@ -190,6 +202,19 @@ dialog::backdrop{background:rgba(20,25,40,.55)}
 <div class="main-col">
 <header style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><div><b>Máy chủ — sổ cái, lãi lỗ, giá vốn</b><div>Chỉ chủ dùng. Nhân viên không có file này.</div></div><button id="btnSangToi" onclick="doiSangToi()" title="Đổi chế độ sáng/tối" style="background:var(--c2);color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:18px;cursor:pointer;flex-shrink:0">☀</button></header>
 <main>
+
+<section id="pg-lam">
+  <div id="lamMsg"></div>
+  <div id="lamDs"></div>
+</section>
+
+<dialog id="dlgHoi" style="max-width:620px">
+  <div class="sm" id="hoiDem" style="color:var(--tx2)"></div>
+  <h2 style="margin:6px 0 4px" id="hoiTieuDe"></h2>
+  <div class="sm" id="hoiPhu" style="margin-bottom:12px"></div>
+  <div id="hoiNoiDung"></div>
+  <div id="hoiNut" style="margin-top:14px"></div>
+</dialog>
 
 <section id="pg-in" class="hide">
   <div id="inMsg"></div>
@@ -210,7 +235,7 @@ dialog::backdrop{background:rgba(20,25,40,.55)}
   <div class="card"><h2>Kết quả</h2><div id="ketQua"><div class="empty">Chưa nạp file nào</div></div></div>
 </section>
 
-<section id="pg-bc"><div id="bc"></div></section>
+<section id="pg-bc" class="hide"><div id="bc"></div></section>
 
 <section id="pg-so" class="hide">
   <div class="card"><input id="fso" placeholder="Tìm mã đơn, khách, nhân viên…" oninput="veSo()">
@@ -284,6 +309,17 @@ dialog::backdrop{background:rgba(20,25,40,.55)}
 
 <section id="pg-vh" class="hide">
   <div id="vhMsg"></div>
+  <div class="card"><h2>Khôi phục giá riêng của khách từ lịch sử bán</h2>
+    <div class="sm">Trước đây mỗi lần khách trả giá khác, nhân viên phải gõ thêm một mã sản phẩm mới —
+    nên cái giá đó nằm rải rác trong đơn cũ chứ không được ghi thành <b>giá riêng của khách</b>.
+    Công cụ này đọc ngược sổ cái, tìm những khách từng mua khác giá niêm yết, rồi đề xuất ghi lại
+    thành giá riêng. Ghi xong thì lần sau đúng khách đó quay lại, <b>giá tự nhảy ra</b>, nhân viên
+    không phải nhớ gì.</div>
+    <div class="msg wa mt"><b>Nên chạy SAU khi đã gộp xong mã trùng</b> ở tab Cảnh báo — vì giá riêng
+    được gắn theo mã chính. Công cụ chỉ đề xuất, <b>bạn duyệt từng dòng rồi mới ghi</b>.</div>
+    <button class="btn mt" onclick="moDeXuatGiaRieng()">Xem đề xuất giá riêng</button>
+    <div id="grMsg"></div>
+  </div>
   <div class="card"><h2>Xem lịch sử đơn theo từng nhân viên</h2>
     <div class="sm">Xem TOÀN BỘ đơn một nhân viên từng lên — <b>y hệt như chính người đó mở tab Lịch sử
     trên máy của mình</b> (gồm cả đơn huỷ, đơn chưa ghi nhận doanh thu), <b>không giới hạn</b> trong khoảng
@@ -423,6 +459,20 @@ dialog::backdrop{background:rgba(20,25,40,.55)}
   </div>
 </dialog>
 
+<dialog id="dlgGR" style="max-width:720px">
+  <h2 style="margin-top:0">Duyệt giá riêng đề xuất</h2>
+  <div class="sm" id="grDan"></div>
+  <div class="row mt" style="gap:6px">
+    <button class="btn2" style="flex:none" onclick="chonHetGR(true)">Chọn tất cả</button>
+    <button class="btn2" style="flex:none" onclick="chonHetGR(false)">Bỏ chọn tất cả</button>
+  </div>
+  <div id="grDs" style="margin-top:10px;max-height:52vh;overflow:auto"></div>
+  <div id="grErr"></div>
+  <div class="row mt">
+    <button class="btn2" onclick="document.getElementById('dlgGR').close()">Đóng</button>
+    <button class="btn" onclick="ghiGiaRiengDaChon()">Ghi những dòng đã chọn lên Sheet</button>
+  </div>
+</dialog>
 <dialog id="dlgGopSP" style="max-width:520px">
   <h2 style="margin-top:0">Gộp <span id="gopTenPhu"></span> vào sản phẩm khác</h2>
   <div class="sm" style="margin-bottom:10px">
@@ -451,7 +501,7 @@ dialog::backdrop{background:rgba(20,25,40,.55)}
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260909d';
+var APP_VER='20260909g';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -707,6 +757,323 @@ function veTrungTen(){
       '</div>';
     }).join('')+'</div>';
 }
+/* ═══════════════════════════════════════════════════════════════════════
+   KHÔI PHỤC GIÁ RIÊNG TỪ LỊCH SỬ BÁN — thêm 09/09/2026
+   ═══════════════════════════════════════════════════════════════════════
+   BỐI CẢNH: ô "Thêm sản phẩm" bên máy nhân viên bắt buộc điền giá bán mới
+   cho tạo, nên suốt thời gian qua mỗi lần khách trả giá khác là nhân viên
+   đẻ thêm một mã. Hậu quả: cái giá của riêng khách đó nằm chôn trong đơn
+   cũ chứ không bao giờ được ghi thành "giá riêng" — nên lần sau khách quay
+   lại, giá KHÔNG tự nhảy ra. Từ bản 20260909c việc này đã tự động cho đơn
+   mới; hàm dưới đây đi nhặt lại phần đã mất của mấy tháng trước.
+
+   NGUYÊN TẮC: hàm này CHỈ ĐỀ XUẤT, không tự ghi. Chủ duyệt từng dòng.
+   Bỏ qua: đơn huỷ, đơn không có SĐT (giá riêng gắn theo SĐT), dòng bán
+   theo quy đổi (hs>1, giống hệt cách máy nhân viên đang làm), khách mua
+   ĐÚNG giá niêm yết (không cần giá riêng), và cặp khách+sản phẩm đã có
+   sẵn giá riêng còn hạn trên Sheet (không đè lên thứ đã cố ý đặt).
+   Giá lấy theo lần mua GẦN NHẤT. Khách nào từng mua nhiều giá khác nhau
+   thì đánh dấu để chủ tự xem, vì đó có thể là gõ nhầm chứ không phải thoả
+   thuận. Mã sản phẩm quy về mã chính (skuChinh) nên phải gộp trùng trước.
+   ═══════════════════════════════════════════════════════════════════════ */
+var GR_DEXUAT=[];
+function ngayCong_(n){
+  var d=new Date(); d.setDate(d.getDate()+n);
+  return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+}
+function deXuatGiaRieng_(grCu){
+  var co={}, homNay=ngayCong_(0);
+  (grCu||[]).forEach(function(g){
+    var sdt=String(g.sdt||'').trim(), sku=String(g.sku||'').trim();
+    if(sdt&&sku&&String(g.het||'')>=homNay) co[sdt+'|'+sku]=Number(g.gia)||0;
+  });
+  var gom={};
+  SO.forEach(function(d){
+    if(d.huy) return;
+    var sdt=String(d.sdt||'').trim(); if(!sdt) return;
+    (d.dong||[]).forEach(function(x){
+      if((x.hs||1)>1) return;
+      var sku=skuChinh(x.sku); if(!sku||!GIA[sku]) return;
+      var gia=Number(x.gia)||0; if(!gia) return;
+      var k=sdt+'|'+sku;
+      gom[k]=gom[k]||{sdt:sdt,sku:sku,khach:d.khach||'',lan:[],moiNhat:'',gia:0,soDon:0};
+      var g=gom[k];
+      g.soDon++; if(g.lan.indexOf(gia)<0) g.lan.push(gia);
+      var iso=String(d.iso||'');
+      if(iso>=g.moiNhat){ g.moiNhat=iso; g.gia=gia; if(d.khach) g.khach=d.khach }
+    });
+  });
+  return Object.keys(gom).map(function(k){return gom[k]})
+    .filter(function(g){
+      var niemYet=Number(GIA[g.sku].gb)||0;
+      if(g.gia===niemYet) return false;
+      if(co[g.sdt+'|'+g.sku]===g.gia) return false;
+      g.daCo=co.hasOwnProperty(g.sdt+'|'+g.sku)?co[g.sdt+'|'+g.sku]:null;
+      g.niemYet=niemYet; g.lech=g.lan.length>1;
+      return true;
+    })
+    .sort(function(a,b){ return (b.lech?1:0)-(a.lech?1:0) ||
+      String(a.khach||a.sdt).localeCompare(String(b.khach||b.sdt)) });
+}
+async function moDeXuatGiaRieng(){
+  bao('grMsg','Đang đọc giá riêng đang có trên Sheet…','wa');
+  var grCu=[];
+  try{
+    if(QCFG.url&&QCFG.key){
+      var r=await fetch(QCFG.url+'?gr=1&key='+encodeURIComponent(QCFG.key));
+      var j=await r.json();
+      if(j&&j.ok&&j.ds) grCu=j.ds;
+      else if(j&&!j.ok) throw new Error(j.loi||'Sheet từ chối');
+    } else throw new Error('chưa có link/mật khẩu quản lý');
+  }catch(e){
+    if(!confirm('Không đọc được giá riêng đang có trên Sheet ('+e.message+').\n\n'+
+      'Vẫn xem đề xuất chứ? Lưu ý: không đối chiếu được nên có thể đề xuất ĐÈ LÊN giá riêng '+
+      'đã đặt trước đó cho cùng khách + cùng sản phẩm.')){ bao('grMsg','Đã dừng.','wa'); return }
+  }
+  GR_DEXUAT=deXuatGiaRieng_(grCu);
+  if(!GR_DEXUAT.length){
+    bao('grMsg','Không tìm thấy trường hợp nào cần khôi phục — mọi khách đều đang mua đúng giá '+
+      'niêm yết, hoặc đã có giá riêng còn hạn rồi.','ok'); return;
+  }
+  var soLech=GR_DEXUAT.filter(function(g){return g.lech}).length;
+  $('grDan').innerHTML='Tìm thấy <b>'+GR_DEXUAT.length+'</b> cặp khách + sản phẩm từng mua khác giá niêm yết. '+
+    'Giá đề xuất lấy theo <b>lần mua gần nhất</b>, hiệu lực 90 ngày kể từ hôm nay.'+
+    (soLech?' <b style="color:var(--warn)">'+soLech+' dòng có dấu ⚠ vì khách từng mua NHIỀU giá khác nhau — '+
+      'có thể là gõ nhầm chứ không phải thoả thuận, xem kỹ rồi hãy chọn.</b>':'')+
+    '<br><b>Đơn hàng cũ không bị sửa gì</b> — chỉ ghi thêm bảng giá riêng.';
+  $('grErr').innerHTML='';
+  $('grDs').innerHTML='<table><tr><th></th><th>Khách</th><th>Sản phẩm</th><th class="r">Giá đề xuất</th>'+
+    '<th class="r">Niêm yết</th><th class="r">Đơn</th><th>Ghi chú</th></tr>'+
+    GR_DEXUAT.map(function(g,i){
+      return '<tr><td><input type="checkbox" class="grck" data-i="'+i+'" '+(g.lech?'':'checked')+
+        ' style="width:18px;height:18px"></td>'+
+        '<td>'+esc(g.khach||'(chưa có tên)')+'<div class="sm">'+esc(g.sdt)+'</div></td>'+
+        '<td class="sm">'+esc(GIA[g.sku].ten||g.sku)+'<div style="opacity:.6">'+esc(g.sku)+'</div></td>'+
+        '<td class="r"><b>'+tien(g.gia)+'</b></td>'+
+        '<td class="r sm">'+tien(g.niemYet)+'</td>'+
+        '<td class="r sm">'+g.soDon+'</td>'+
+        '<td class="sm">'+(g.lech?'<span style="color:var(--warn)">⚠ từng mua '+
+            g.lan.map(function(x){return tien(x)}).join(' / ')+'</span>':'')+
+          (g.daCo!==null?'<div style="color:var(--bad)">đang có giá riêng '+tien(g.daCo)+' — sẽ bị thay</div>':'')+
+        '</td></tr>';
+    }).join('')+'</table>';
+  bao('grMsg','','');
+  $('dlgGR').showModal();
+}
+function chonHetGR(v){ document.querySelectorAll('.grck').forEach(function(c){c.checked=v}) }
+async function ghiGiaRiengDaChon(){
+  var chon=[];
+  document.querySelectorAll('.grck').forEach(function(c){ if(c.checked) chon.push(GR_DEXUAT[+c.dataset.i]) });
+  if(!chon.length){ $('grErr').innerHTML='<div class="msg er">Chưa chọn dòng nào.</div>'; return }
+  if(!QCFG.url||!QCFG.key){ $('grErr').innerHTML='<div class="msg er">Cần dán link và mật khẩu quản lý ở tab Nhận đơn trước.</div>'; return }
+  var deDoi=chon.filter(function(g){return g.daCo!==null}).length;
+  if(!confirm('Ghi '+chon.length+' giá riêng lên Sheet?\n\n'+
+    (deDoi?'Trong đó '+deDoi+' dòng sẽ THAY giá riêng đang có sẵn của cùng khách + cùng sản phẩm.\n\n':'')+
+    'Đơn hàng cũ không bị đụng. Các máy nhân viên sẽ nhận ở lần đồng bộ kế tiếp.\n\nĐồng ý?')) return;
+  var hn=ngayCong_(0), het=ngayCong_(90);
+  var gr=chon.map(function(g){
+    return {sdt:g.sdt,sku:g.sku,ten:(GIA[g.sku]&&GIA[g.sku].ten)||'',gia:g.gia,luc:hn,het:het,nv:'QUAN LY'};
+  });
+  $('grErr').innerHTML='<div class="msg wa">Đang gửi…</div>';
+  try{
+    var r=await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'giarieng',gr:gr})});
+    var j=JSON.parse(await r.text());
+    if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
+    $('dlgGR').close();
+    bao('grMsg','Đã ghi <b>'+((j.them||0)+(j.sua||0))+' giá riêng</b> lên Sheet ('+(j.them||0)+' mới, '+
+      (j.sua||0)+' cập nhật), hiệu lực tới <b>'+het.split('-').reverse().join('/')+'</b>. '+
+      'Máy nhân viên sẽ nhận ở lần đồng bộ kế tiếp — từ đó đúng khách này là giá tự nhảy ra.','ok');
+  }catch(e){ $('grErr').innerHTML='<div class="msg er">Không ghi được: '+esc(e.message)+'</div>' }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   TRANG "CẦN LÀM" + HỎI TỪNG CÂU MỘT — thêm 09/09/2026
+   ═══════════════════════════════════════════════════════════════════════
+   VÌ SAO: chủ mở phần mềm ra chỉ thấy một rừng tính năng, không biết nên
+   bấm cái nào trước, sợ bấm nhầm. Chữ nghĩa thì toàn từ chuyên môn —
+   "gộp", "mã chính", "SKU", "alias" — chủ đọc không hiểu nên không dám
+   đụng. Trang này lật ngược lại: chỉ hiện ĐANG CẦN LÀM GÌ, xếp theo thứ
+   tự nên làm trước sau, mỗi việc một câu tiếng Việt thường và đúng một
+   nút. Riêng việc khó nhất (gom món trùng) thì hỏi TỪNG CÂU MỘT, mỗi lần
+   chỉ nhìn hai món và trả lời có/không, và luôn có nút Hoàn tác.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Nhật ký các lần gom, để hoàn tác. Chỉ sống trong phiên làm việc này —
+   đủ cho tình huống "lỡ bấm nhầm, bấm lại ngay". */
+var NHAT_KY_GOM=[];
+
+function veLam(){
+  var viec=[];
+
+  // ── Việc 1: món trùng nhau ──
+  var nhom=nhomTrungTen();
+  if(nhom.length) viec.push({
+    do:true,
+    ten:'Có '+nhom.length+' chỗ nghi bán cùng một món dưới nhiều tên khác nhau',
+    vi:'Cùng một món mà đang nằm ở mấy dòng riêng thì tiền lời tính bị chia nhỏ, nhìn báo cáo '+
+       'không ra được món nào thật sự bán chạy. Tôi sẽ đưa từng cặp cho anh/chị xem và chỉ cần '+
+       'trả lời <b>cùng một món</b> hay <b>hai món khác nhau</b>.',
+    nut:'Xem từng cái một',
+    ham:'batDauHoiGom()'
+  });
+
+  // ── Việc 2: đơn chưa tính được lời vì thiếu giá vốn ──
+  var thieu=SO.filter(function(d){return d.thieuVon});
+  if(thieu.length) viec.push({
+    ten:'Có '+thieu.length+' đơn chưa biết lời lỗ bao nhiêu',
+    vi:'Mấy đơn này bán món chưa điền <b>giá nhập vào</b>, nên máy không tính được lời. '+
+       'Điền giá nhập cho mấy món đó là mấy đơn này tự có số.',
+    nut:'Đi điền giá nhập',
+    ham:"tab('gia')"
+  });
+
+  // ── Việc 3: bảng giá đã đổi mà chưa gửi cho nhân viên ──
+  try{
+    var b=goiGia().length;
+    if(BGV && BGV.ver && b!==BGV.so) viec.push({
+      ten:'Bảng giá trong máy này đã khác bản nhân viên đang dùng',
+      vi:'Anh/chị vừa sửa bảng giá nhưng ba máy bán hàng chưa nhận được. '+
+         'Bấm gửi thì lát nữa máy nào mở lên cũng có bản mới.',
+      nut:'Gửi bảng giá cho nhân viên',
+      ham:"tab('gia')"
+    });
+  }catch(e){}
+
+  // ── Việc 4: khách từng mua giá riêng mà máy chưa nhớ ──
+  viec.push({
+    nhe:true,
+    ten:'Dạy máy nhớ giá riêng của từng khách',
+    vi:'Khách quen hay được bán giá mềm hơn. Máy đọc lại đơn cũ, tìm xem ai từng mua giá khác, '+
+       'rồi ghi nhớ — <b>lần sau đúng khách đó là giá tự hiện ra</b>, nhân viên khỏi nhớ. '+
+       'Nên làm sau khi đã gom xong món trùng.',
+    nut:'Xem máy đề xuất gì',
+    ham:'moDeXuatGiaRieng()'
+  });
+
+  var so=viec.filter(function(v){return !v.nhe}).length;
+  var o=$('lamSo'); if(o) o.textContent=so?('('+so+')'):'';
+
+  $('lamDs').innerHTML=
+    '<div class="card"><h2 style="margin-bottom:4px">Hôm nay cần làm gì</h2>'+
+    '<div class="sm">Cứ làm từ trên xuống. Việc nào cũng <b>không đụng tới đơn hàng đã bán</b>, '+
+    'và cái nào lỡ bấm nhầm cũng sửa lại được.</div></div>'+
+    (viec.length?viec.map(function(v,i){
+      return '<div class="card" style="border-left:4px solid '+(v.nhe?'var(--info)':'var(--warn)')+'">'+
+        '<div style="display:flex;gap:10px;align-items:flex-start">'+
+          '<div style="flex:none;width:26px;height:26px;border-radius:50%;background:var(--c2);'+
+            'display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px">'+(i+1)+'</div>'+
+          '<div style="flex:1;min-width:0">'+
+            '<h2 style="margin:2px 0 6px">'+v.ten+'</h2>'+
+            '<div class="sm" style="margin-bottom:12px">'+v.vi+'</div>'+
+            '<button class="btn" onclick="'+v.ham+'">'+v.nut+'</button>'+
+          '</div>'+
+        '</div></div>';
+    }).join(''):'')+
+    (so?'':'<div class="card"><div class="empty">Không có việc gấp nào. Sổ sách đang ổn.</div></div>')+
+    (NHAT_KY_GOM.length?'<div class="card"><h2>Vừa làm xong</h2>'+
+      NHAT_KY_GOM.slice().reverse().map(function(g,i){
+        var vt=NHAT_KY_GOM.length-1-i;
+        return '<div class="sm" style="display:flex;justify-content:space-between;align-items:center;gap:8px;'+
+          'padding:7px 0;border-bottom:1px solid var(--line)">'+
+          '<span>Đã gom <b>'+esc(g.tenPhu)+'</b> chung với <b>'+esc(g.tenChinh)+'</b></span>'+
+          '<button class="mini" style="flex:none" onclick="hoanTacGom('+vt+')">Hoàn tác</button></div>';
+      }).join('')+'</div>':'');
+}
+
+/* ══ HỎI TỪNG CÂU MỘT ══
+   Mỗi lần chỉ đưa ra ĐÚNG MỘT cặp món và một câu hỏi có/không. Không bảng,
+   không ô chọn, không chữ chuyên môn. Chủ nhìn hai cái thẻ cạnh nhau, thấy
+   tên, cách đóng gói, giá nhập, đã bán mấy đơn cho ai — rồi trả lời. */
+var HOI_DS=[], HOI_I=0;
+
+function batDauHoiGom(){
+  HOI_DS=[];
+  nhomTrungTen().forEach(function(nh){
+    // tách một nhóm nhiều món thành từng cặp, để mỗi câu hỏi chỉ có 2 món
+    for(var i=1;i<nh.length;i++) HOI_DS.push([nh[0],nh[i]]);
+  });
+  if(!HOI_DS.length){ bao('lamMsg','Không còn chỗ nào nghi trùng nữa.','ok'); return }
+  HOI_I=0; veCauHoi();
+  $('dlgHoi').showModal();
+}
+
+function theMon_(sku, nhan){
+  var p=GIA[sku]||{}, v=dauVetBan_(sku);
+  var ai=v.khach.slice(0,2).map(function(x){
+    return esc(x.ten)+' mua '+x.gia.map(function(g){return tien(g)}).join(' và ') }).join('<br>');
+  return '<div style="flex:1;min-width:0;background:var(--c2);border-radius:14px;padding:12px">'+
+    '<div class="sm" style="color:var(--tx2);margin-bottom:4px">'+nhan+'</div>'+
+    '<div style="font-weight:600;line-height:1.35;margin-bottom:8px">'+esc(p.ten||sku)+'</div>'+
+    '<div class="sm">Bán theo: <b>'+esc(p.dvt||'—')+'</b></div>'+
+    '<div class="sm">Giá bán đang để: <b>'+tien(p.gb||0)+'</b></div>'+
+    '<div class="sm">Giá nhập vào: '+(p.von?'<b>'+tien(p.von)+'</b>':
+      '<b style="color:var(--warn)">chưa điền</b>')+'</div>'+
+    '<div class="sm" style="margin-top:6px;color:var(--tx2)">'+
+      (v.soDon?'Đã bán <b>'+v.soDon+' đơn</b>'+(ai?'<br>'+ai:''):'Chưa bán đơn nào')+'</div>'+
+    '</div>';
+}
+
+function veCauHoi(){
+  var c=HOI_DS[HOI_I];
+  if(!c){ dongHoi(); return }
+  $('hoiDem').textContent='Câu '+(HOI_I+1)+' trong '+HOI_DS.length;
+  $('hoiTieuDe').textContent='Hai cái này có phải là cùng một món không?';
+  $('hoiPhu').innerHTML='Nếu là cùng một món, máy sẽ tính chung tiền lời cho chúng. '+
+    '<b>Đơn đã bán không bị sửa gì cả</b>, giá bán của từng cái cũng giữ nguyên — '+
+    'nhân viên vẫn bán bình thường. Bấm nhầm thì hoàn tác được ngay.';
+  $('hoiNoiDung').innerHTML='<div class="row" style="gap:10px">'+
+    theMon_(c[0],'Cái thứ nhất')+theMon_(c[1],'Cái thứ hai')+'</div>';
+  $('hoiNut').innerHTML=
+    '<div class="row" style="gap:8px">'+
+    '<button class="btn" onclick="traLoiGom(true)">Cùng một món</button>'+
+    '<button class="btn2" onclick="traLoiGom(false)">Hai món khác nhau</button>'+
+    '</div>'+
+    '<button class="btn2 mt" style="width:100%" onclick="dongHoi()">Để lúc khác</button>';
+}
+
+function traLoiGom(cungMon){
+  var c=HOI_DS[HOI_I];
+  if(cungMon && c){
+    // Giữ lại cái NÀO: ưu tiên cái đã điền giá nhập (để đơn cũ hết treo),
+    // rồi tới cái bán được nhiều đơn hơn. Chủ không phải chọn.
+    var a=c[0], b=c[1];
+    var chinh=(GIA[a]&&GIA[a].von?1:0) >= (GIA[b]&&GIA[b].von?1:0) ? a : b;
+    if((GIA[a]&&GIA[a].von?1:0)===(GIA[b]&&GIA[b].von?1:0))
+      chinh = dauVetBan_(a).soDon>=dauVetBan_(b).soDon ? a : b;
+    var phu = chinh===a ? b : a;
+    NHAT_KY_GOM.push({phu:phu,chinh:chinh,
+      tenPhu:(GIA[phu]&&GIA[phu].ten)||phu, tenChinh:(GIA[chinh]&&GIA[chinh].ten)||chinh});
+    ALIAS[phu]=chinh;
+    if(GIA[phu]){ GIA[phu].ngung=true; GIA[phu].gopVao=chinh }
+    set('alias',ALIAS); set('gia',GIA);
+    tinhLaiToanBoSO();
+  }
+  HOI_I++;
+  if(HOI_I<HOI_DS.length) veCauHoi(); else dongHoi();
+}
+
+function dongHoi(){
+  $('dlgHoi').close();
+  veCB(); veSo(); veBC(); veGia(); vePhat(); veLam();
+  var n=NHAT_KY_GOM.length;
+  if(n) bao('lamMsg','Đã gom xong <b>'+n+'</b> chỗ. Đơn cũ đã được tính lại tiền lời. '+
+    'Đơn trên Google Sheet không bị sửa gì. Nếu có chỗ nào gom nhầm, bấm <b>Hoàn tác</b> ở cuối trang.','ok');
+  else bao('lamMsg','Chưa gom cái nào.','wa');
+}
+
+function hoanTacGom(i){
+  var g=NHAT_KY_GOM[i]; if(!g) return;
+  if(!confirm('Tách "'+g.tenPhu+'" ra khỏi "'+g.tenChinh+'" như cũ?')) return;
+  delete ALIAS[g.phu];
+  if(GIA[g.phu]){ GIA[g.phu].ngung=false; delete GIA[g.phu].gopVao }
+  set('alias',ALIAS); set('gia',GIA);
+  tinhLaiToanBoSO();
+  NHAT_KY_GOM.splice(i,1);
+  veCB(); veSo(); veBC(); veGia(); vePhat(); veLam();
+  bao('lamMsg','Đã tách ra như cũ.','ok');
+}
+
 function gopSanPham(ds, btn){
   var box=btn.closest('.tt-nhom');
   var chinh=''; box.querySelectorAll('input[type=radio]').forEach(function(r){ if(r.checked) chinh=r.value });
@@ -1243,7 +1610,7 @@ function napDon(ds,nguon,ct){
   if(ct&&ct.length)h+='<div class="msg er mt">'+ct.map(esc).join('<br>')+'</div>';
   $('ketQua').innerHTML=h;
   if(them||capnhat) bao('inMsg','Nhận '+(them+capnhat)+' đơn từ '+nguon+'.','ok');
-  veSo();veBC();veGia();veCB();
+  veSo();veBC();veGia();veCB();veLam();
 }
 async function nap(files){
   if(!files||!files.length)return;
@@ -1281,8 +1648,9 @@ async function nap(files){
 }
 
 /* ── BÁO CÁO ── */
-function tab(t){['in','bc','so','gia','cb','vh'].forEach(function(x){
+function tab(t){['lam','in','bc','so','gia','cb','vh'].forEach(function(x){
   $('pg-'+x).classList.toggle('hide',x!==t);$('tb-'+x).classList.toggle('on',x===t)});
+  if(t==='lam')veLam();
   if(t==='bc')veBC(); if(t==='so')veSo(); if(t==='gia'){veGia();vePhat()} if(t==='cb')veCB();
   if(t==='vh'){veNV();veMayGui();veNhatKy();veKhaiTruong();nhacSaoLuu();veNvXemLS()}
 }
@@ -3053,5 +3421,219 @@ function doiMkQL(){
     'Đổi xong, mọi máy quản lý và điện thoại phải đăng nhập lại bằng mật khẩu mới.\n'+
     'Đây cũng là cách khoá một máy bị mất.');
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   KỸ SƯ HỆ THỐNG — thêm 09/09/2026
+   ═══════════════════════════════════════════════════════════════════════
+   Ý TƯỞNG CỦA CHỦ: đang dùng mà thấy chỗ nào bất thường thì chỉ thẳng vào
+   chỗ đó, nói một câu bằng lời của mình. Máy tự nhặt lấy phần MÃ NGUỒN
+   đứng sau chỗ đó rồi ghép với lời của chủ thành một "phiếu". Phiên làm
+   việc sau, kỹ sư đọc phiếu là biết chuyện gì, khỏi phải tả lại từ đầu.
+
+   CÁCH LẤY MÃ NGUỒN: không đọc file (mở bằng file:// thì trình duyệt cấm
+   đọc chính nó). Thay vào đó lấy từ bộ nhớ đang chạy — mọi hàm trong máy
+   đều tự đọc lại được mã của chính nó. Từ chỗ chủ bấm, dò ngược lên tìm
+   các nút/ô có gắn hành động, lấy tên hàm trong đó rồi trích mã ra. Cách
+   này chạy được ở mọi kiểu mở file, không cần mạng.
+
+   AN TOÀN: chỉ ĐỌC, không sửa gì. Phiếu nằm trong máy này, chỉ rời đi khi
+   chủ tự bấm tải về.
+   ═══════════════════════════════════════════════════════════════════════ */
+var KS_TEN_APP=(typeof MAT_KHAU_QUANLY!=='undefined'||typeof QCFG!=='undefined')?'May quan ly':'May nhan vien';
+var KS_PHIEU=[], KS_LOI=[], KS_DANG_CHI=false, KS_CHON=null;
+try{ KS_PHIEU=JSON.parse(localStorage.getItem('ks_phieu')||'[]') }catch(e){ KS_PHIEU=[] }
+function ksLuu(){ try{ localStorage.setItem('ks_phieu',JSON.stringify(KS_PHIEU)) }catch(e){} }
+
+/* Ghi lại lỗi máy tự phát sinh — thường chủ không thấy, nhưng kỹ sư cần */
+window.addEventListener('error',function(e){
+  KS_LOI.push({luc:new Date().toLocaleString('vi-VN'),
+    loi:String(e.message||''),o:String(e.filename||'').split('/').pop()+':'+e.lineno});
+  if(KS_LOI.length>20) KS_LOI.shift();
+});
+window.addEventListener('unhandledrejection',function(e){
+  KS_LOI.push({luc:new Date().toLocaleString('vi-VN'),loi:'Chờ mãi không xong: '+String(e.reason&&e.reason.message||e.reason),o:''});
+  if(KS_LOI.length>20) KS_LOI.shift();
+});
+
+function ksManHinh(){
+  var n=document.querySelector('nav button.on');
+  return n?n.textContent.trim().replace(/\s*\(\d+\)$/,''):'(không rõ)';
+}
+/* Trích mã nguồn của những hàm đứng sau chỗ chủ chỉ vào */
+function ksTrichMa(el){
+  var ten={}, cur=el, sau=0;
+  while(cur && cur!==document.body && sau<6){
+    ['onclick','onchange','oninput','onsubmit'].forEach(function(k){
+      var v=cur.getAttribute&&cur.getAttribute(k); if(!v) return;
+      (v.match(/([A-Za-z_$][\w$]*)\s*\(/g)||[]).forEach(function(m){
+        ten[m.replace(/\s*\($/,'')]=1 });
+    });
+    cur=cur.parentElement; sau++;
+  }
+  // thêm hàm vẽ ra màn hình đang mở, vì lỗi hay nằm ở đó
+  var n=document.querySelector('nav button.on');
+  var t=n&&(n.getAttribute('onclick')||'').match(/tab\('([^']+)'\)/);
+  if(t) ['ve'+t[1].toUpperCase(),'ve'+t[1].charAt(0).toUpperCase()+t[1].slice(1)].forEach(function(x){ten[x]=1});
+  var ra=[];
+  Object.keys(ten).forEach(function(k){
+    try{
+      var f=window[k];
+      if(typeof f!=='function') return;
+      var src=f.toString();
+      if(src.length>4000) src=src.slice(0,4000)+'\n… (cắt bớt cho gọn)';
+      ra.push({ten:k,ma:src});
+    }catch(e){}
+  });
+  return ra;
+}
+function ksMoTa(el){
+  if(!el) return '(không chỉ vào đâu cả — nói chung về màn hình này)';
+  var t=(el.innerText||'').trim().replace(/\s+/g,' ').slice(0,80);
+  return (el.tagName||'').toLowerCase()+
+    (el.id?'#'+el.id:'')+(el.className&&typeof el.className==='string'?'.'+el.className.trim().split(/\s+/).join('.'):'')+
+    (t?'  —  "'+t+'"':'');
+}
+
+function ksMo(){
+  if(KS_DANG_CHI){ ksThoiChi(); return }
+  KS_CHON=null;
+  $('ksDan').innerHTML='Anh/chị thấy chỗ nào chạy không đúng ý? Chỉ thẳng vào chỗ đó rồi nói một câu '+
+    'bằng lời của mình. Máy sẽ tự lấy phần bên trong đứng sau chỗ đó gộp với lời của anh/chị, '+
+    'để lần sau kỹ sư đọc là hiểu ngay, khỏi phải tả lại.';
+  $('ksThan').innerHTML='';
+  $('ksErr').innerHTML='';
+  $('ksNutDay').innerHTML=
+    '<button class="btn" onclick="ksBatDauChi()">Chỉ vào chỗ có vấn đề</button>'+
+    '<button class="btn2" onclick="ksVietNgay(null)">Nói chung về màn hình này</button>';
+  if(KS_PHIEU.length) $('ksNutDay').innerHTML+=
+    '<button class="btn2" style="flex-basis:100%" onclick="ksXemPhieu()">Xem '+KS_PHIEU.length+
+    ' phiếu đã ghi &amp; gửi cho kỹ sư</button>';
+  $('dlgKS').showModal();
+}
+function ksBatDauChi(){
+  $('dlgKS').close();
+  KS_DANG_CHI=true; document.body.classList.add('ks-chi');
+  $('ksNut').textContent='✋ Bấm vào chỗ đó — hoặc bấm đây để thôi';
+  $('ksNut').classList.add('dangChi');
+  document.addEventListener('mouseover',ksSoi,true);
+  document.addEventListener('click',ksBat,true);
+}
+function ksThoiChi(){
+  KS_DANG_CHI=false; document.body.classList.remove('ks-chi');
+  $('ksNut').textContent='🛠 Kỹ sư'; $('ksNut').classList.remove('dangChi');
+  document.removeEventListener('mouseover',ksSoi,true);
+  document.removeEventListener('click',ksBat,true);
+  document.querySelectorAll('.ks-soi').forEach(function(x){x.classList.remove('ks-soi')});
+}
+function ksSoi(e){
+  if(e.target===$('ksNut')) return;
+  document.querySelectorAll('.ks-soi').forEach(function(x){x.classList.remove('ks-soi')});
+  if(e.target&&e.target.classList) e.target.classList.add('ks-soi');
+}
+function ksBat(e){
+  if(e.target===$('ksNut')) return;
+  e.preventDefault(); e.stopPropagation();
+  var el=e.target; ksThoiChi(); ksVietNgay(el);
+}
+function ksVietNgay(el){
+  KS_CHON=el;
+  var ma=ksTrichMa(el);
+  $('ksDan').innerHTML='<b>Chỗ anh/chị chỉ:</b> '+esc(ksMoTa(el))+'<br>'+
+    '<b>Đang ở màn hình:</b> '+esc(ksManHinh())+
+    (ma.length?'<br><b>Máy đã tự lấy được '+ma.length+' đoạn bên trong</b> liên quan tới chỗ này.':
+      '<br><span style="color:var(--warn)">Chỗ này không gắn với đoạn nào cụ thể — vẫn ghi phiếu bình thường.</span>');
+  $('ksThan').innerHTML='<label class="mt">Chỗ này có vấn đề gì? Cứ nói bằng lời thường.</label>'+
+    '<textarea id="ksLoi" rows="4" style="width:100%;font:inherit;padding:11px;border-radius:14px;'+
+    'border:1px solid var(--line);background:var(--c2);color:var(--tx)" '+
+    'placeholder="Ví dụ: bấm nút này xong số tiền không đổi, phải tải lại trang mới thấy"></textarea>'+
+    (ma.length?'<div class="sm mt">Máy sẽ gửi kèm: '+ma.map(function(x){return '<code>'+esc(x.ten)+'</code>'}).join(', ')+'</div>':'');
+  $('ksErr').innerHTML='';
+  $('ksNutDay').innerHTML='<button class="btn2" onclick="document.getElementById(\'dlgKS\').close()">Thôi</button>'+
+    '<button class="btn" onclick="ksGhiPhieu()">Ghi phiếu này lại</button>';
+  $('dlgKS').showModal();
+  setTimeout(function(){ var o=$('ksLoi'); if(o) o.focus() },80);
+}
+function ksGhiPhieu(){
+  var loi=($('ksLoi')&&$('ksLoi').value||'').trim();
+  if(!loi){ $('ksErr').innerHTML='<div class="msg er">Chưa nói chỗ này có vấn đề gì.</div>'; return }
+  KS_PHIEU.push({
+    luc:new Date().toLocaleString('vi-VN'),
+    app:KS_TEN_APP,
+    ban:(typeof APP_VER!=='undefined'?APP_VER:'?'),
+    man:ksManHinh(),
+    cho:ksMoTa(KS_CHON),
+    khung:KS_CHON?String(KS_CHON.outerHTML||'').replace(/\s+/g,' ').slice(0,600):'',
+    noi:loi,
+    ma:ksTrichMa(KS_CHON),
+    loiMay:KS_LOI.slice(-5)
+  });
+  ksLuu(); KS_CHON=null;
+  $('ksDan').innerHTML='<div class="msg ok"><b>Đã ghi phiếu thứ '+KS_PHIEU.length+'.</b><br>'+
+    'Cứ tiếp tục dùng bình thường. Gặp chỗ nào nữa thì bấm nút <b>🛠 Kỹ sư</b> ở góc dưới bên trái. '+
+    'Khi nào muốn gửi thì mở lại nút đó, bấm <b>Xem phiếu &amp; gửi cho kỹ sư</b> để tải một file về, '+
+    'rồi đưa file đó cho kỹ sư ở phiên làm việc sau.</div>';
+  $('ksThan').innerHTML=''; $('ksErr').innerHTML='';
+  $('ksNutDay').innerHTML='<button class="btn2" onclick="document.getElementById(\'dlgKS\').close()">Đóng</button>'+
+    '<button class="btn" onclick="ksXemPhieu()">Xem tất cả phiếu</button>';
+}
+function ksXemPhieu(){
+  $('ksDan').innerHTML='Đang giữ <b>'+KS_PHIEU.length+' phiếu</b>. Bấm <b>Tải file gửi kỹ sư</b> rồi '+
+    'đưa file đó cho kỹ sư ở phiên làm việc sau — trong file có đủ lời của anh/chị và phần bên trong '+
+    'của máy, kỹ sư đọc là hiểu ngay.';
+  $('ksThan').innerHTML=KS_PHIEU.length
+    ? KS_PHIEU.map(function(x,i){
+        return '<div class="card" style="padding:11px;margin-bottom:8px">'+
+          '<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">'+
+          '<div class="sm" style="min-width:0"><b>'+(i+1)+'. '+esc(x.noi)+'</b>'+
+          '<div style="opacity:.7;margin-top:3px">'+esc(x.luc)+' · '+esc(x.app)+' bản '+esc(x.ban)+
+          ' · màn hình <b>'+esc(x.man)+'</b></div>'+
+          '<div style="opacity:.7">Chỗ chỉ: '+esc(x.cho)+'</div>'+
+          '<div style="opacity:.7">Kèm '+x.ma.length+' đoạn bên trong'+
+            (x.loiMay.length?' và '+x.loiMay.length+' lỗi máy tự ghi':'')+'</div></div>'+
+          '<button class="mini" style="flex:none" onclick="ksXoaPhieu('+i+')">Bỏ</button></div></div>';
+      }).join('')
+    : '<div class="empty">Chưa có phiếu nào.</div>';
+  $('ksErr').innerHTML='';
+  $('ksNutDay').innerHTML='<button class="btn2" onclick="document.getElementById(\'dlgKS\').close()">Đóng</button>'+
+    (KS_PHIEU.length?'<button class="btn" onclick="ksTaiVe()">Tải file gửi kỹ sư</button>':'');
+}
+function ksXoaPhieu(i){
+  if(!confirm('Bỏ phiếu này?')) return;
+  KS_PHIEU.splice(i,1); ksLuu(); ksXemPhieu();
+}
+function ksTaiVe(){
+  var d=new Date();
+  var t='# Phiếu báo cho kỹ sư — ZAKA\n\n'+
+    'Người báo: chủ cửa hàng · Ghi lúc: '+d.toLocaleString('vi-VN')+'\n\n'+
+    'Kỹ sư đọc file này rồi trình bày lại từng phiếu cho chủ, kèm giải pháp đề xuất.\n\n---\n\n'+
+    KS_PHIEU.map(function(x,i){
+      return '## Phiếu '+(i+1)+'\n\n'+
+        '**Chủ nói:** '+x.noi+'\n\n'+
+        '- Lúc: '+x.luc+'\n- Máy: '+x.app+' (bản '+x.ban+')\n- Màn hình: '+x.man+'\n- Chỗ được chỉ: `'+x.cho+'`\n\n'+
+        (x.khung?'**Khung giao diện tại chỗ đó**\n\n```html\n'+x.khung+'\n```\n\n':'')+
+        (x.ma.length?'**Mã nguồn liên quan**\n\n'+x.ma.map(function(m){
+          return '`'+m.ten+'`\n\n```js\n'+m.ma+'\n```\n' }).join('\n'):'_Không trích được mã nguồn nào._\n')+
+        (x.loiMay.length?'\n**Lỗi máy tự ghi được quanh lúc đó**\n\n'+
+          x.loiMay.map(function(l){return '- '+l.luc+' — '+l.loi+(l.o?' ('+l.o+')':'')}).join('\n')+'\n':'');
+    }).join('\n---\n\n');
+  var ten='PHIEU-KY-SU_'+String(d.getFullYear()).slice(2)+('0'+(d.getMonth()+1)).slice(-2)+
+    ('0'+d.getDate()).slice(-2)+'_'+('0'+d.getHours()).slice(-2)+('0'+d.getMinutes()).slice(-2)+'.md';
+  try{
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([t],{type:'text/markdown;charset=utf-8'}));
+    a.download=ten; a.click(); setTimeout(function(){URL.revokeObjectURL(a.href)},2000);
+    $('ksErr').innerHTML='<div class="msg ok">Đã tải <b>'+ten+'</b> về máy. Đưa file này cho kỹ sư ở phiên sau. '+
+      'Phiếu vẫn giữ trong máy cho tới khi anh/chị tự bỏ.</div>';
+  }catch(e){ $('ksErr').innerHTML='<div class="msg er">Không tải được file: '+esc(e.message)+'</div>' }
+}
 </script><div style="position:fixed;right:8px;bottom:4px;font-size:10px;opacity:.35;pointer-events:none;z-index:99">v1.0-zaka</div>
+<button id="ksNut" onclick="ksMo()" title="Báo cho kỹ sư một chỗ đang có vấn đề">🛠 Kỹ sư</button>
+<dialog id="dlgKS" style="max-width:640px">
+  <h2 style="margin-top:0">Báo cho kỹ sư</h2>
+  <div class="sm" id="ksDan"></div>
+  <div id="ksThan"></div>
+  <div id="ksErr"></div>
+  <div id="ksNutDay" class="row mt"></div>
+</dialog>
+
 </body></html>
