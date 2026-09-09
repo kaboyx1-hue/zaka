@@ -771,7 +771,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260909i';
+var APP_VER='20260910b';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -4063,6 +4063,20 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260910b', ngay:'10/09/2026', ten:'Theo góp ý của chủ — trọn 9 phiếu',
+  vaPhieu:['23:26:14 9/9/2026','23:38:06 9/9/2026','23:39:23 9/9/2026','00:09:29 10/9/2026',
+           '00:10:36 10/9/2026','00:11:08 10/9/2026','00:11:54 10/9/2026','00:12:56 10/9/2026',
+           '00:13:19 10/9/2026'],
+  muc:[
+   ['sua','<b>Lỗi thật:</b> nạp đơn bằng <b>file</b> làm rơi mất <b>phí giao chành</b> nhân viên đã điền — báo cáo hiện 0 đ và tiền lời bị tính cao hơn thực tế. Đã vá. Đường đồng bộ qua Google Sheet không dính lỗi này.'],
+   ['moi','Sổ cái có <b>ô lọc theo nhân viên</b>, kèm số đơn của từng người.'],
+   ['moi','Báo cáo có thêm bảng <b>Theo từng sản phẩm</b> — biết món nào thật sự gánh doanh thu, không chỉ dừng ở thương hiệu.'],
+   ['dep','Mấy bảng phân tích trong Báo cáo <b>mặc định thu gọn</b>, gạt công tắc mới mở. Máy nhớ lựa chọn cho lần sau.'],
+   ['dep','Đổi chữ "Thu gọn" gạch chân kiểu cũ thành <b>công tắc gạt</b> cho đồng bộ với phần còn lại.'],
+   ['moi','<b>Bí mật rời khỏi mã nguồn:</b> mật khẩu quản lý và mã đăng ký nay nằm ở Thuộc tính tập lệnh của Google, không còn nằm trong file Code.gs.'],
+   ['moi','Trong Báo cáo, <b>bấm vào một dòng bất kỳ</b> — kênh, nhân viên, sản phẩm, thương hiệu — là nhảy thẳng sang Sổ cái xem đúng những đơn đứng sau con số đó.'],
+   ['moi','Lúc gom món trùng có thêm đường <b>"tôi muốn sửa lại vài chỗ"</b>: tự chọn giữ cái nào, sửa lại tên, và ghi lý do để sau còn nhớ.'],
+  ]},
  {ban:'20260909i', ngay:'09/09/2026', ten:'Dọn hàng trùng & Kỹ sư hệ thống',
   /* vaPhieu: dán dấu thời gian của những phiếu mà bản này đã chữa xong.
      Máy tự đánh dấu đã vá, báo lên bảng này, giữ 3 ngày rồi tự dọn. */

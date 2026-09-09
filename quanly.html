@@ -213,6 +213,26 @@ body.ks-chi *{cursor:crosshair!important}
   #pg-bc input[type=date]{width:100%;flex:1 1 100%}
   #pg-bc .card>div[style*="display:flex"]{flex-wrap:wrap}
 }
+/* ══ CÔNG TẮC THU GỌN — theo phiếu 6 của chủ, 10/09/2026 ══
+   Trước đây là chữ "Thu gọn" gạch chân kiểu đường dẫn thời 2005, lạc hẳn
+   so với phần còn lại. Nay là công tắc gạt, cùng bo góc và cùng màu nhấn
+   với mọi nút khác trong máy. */
+.ctac{display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none;
+  font-size:12.5px;font-weight:400;color:var(--tx2);vertical-align:middle;margin-left:auto}
+.ctac:hover{color:var(--tx)}
+.ctac .gat{width:34px;height:19px;border-radius:99px;background:var(--c2);
+  border:1px solid var(--line);position:relative;transition:background .16s,border-color .16s;flex:none}
+.ctac .gat::after{content:"";position:absolute;top:2px;left:2px;width:13px;height:13px;
+  border-radius:50%;background:var(--tx2);transition:transform .16s,background .16s}
+.ctac.on .gat{background:color-mix(in srgb, var(--acc) 30%, transparent);border-color:var(--acc)}
+.ctac.on .gat::after{transform:translateX(15px);background:var(--acc)}
+.ctac:focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:8px}
+.bd-h2{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+/* Dòng bảng phân tích bấm được — phiếu 8 */
+#bc tr.dongxem{cursor:pointer}
+#bc tr.dongxem:hover{background:var(--c2)}
+#bc tr.dongxem:hover .mui2{opacity:1}
+.mui2{color:var(--acc);font-size:11.5px;opacity:.45;white-space:nowrap;transition:opacity .15s}
 </style></head><body>
 <div id="khoa">
   <div class="logoMark">🐾</div>
@@ -291,6 +311,7 @@ body.ks-chi *{cursor:crosshair!important}
   <div class="card"><input id="fso" placeholder="Tìm mã đơn, khách, nhân viên…" oninput="veSo()">
     <div class="row mt" style="margin-top:8px">
       <select id="locKenhSo" onchange="veSo()"></select>
+      <select id="locNVSo" onchange="veSo()"></select>
       <select id="locTinhTrangSo" onchange="veSo()">
         <option value="">Tất cả tình trạng</option>
         <option value="daThu">Đã thu</option>
@@ -574,7 +595,7 @@ if(!BANGGIA.length) setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260909i';
+var APP_VER='20260910b';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -601,7 +622,11 @@ var APP_VER='20260909i';
 var SO=[], GIA={}, ALIAS={}, K='dql_', BGV={ver:'',luc:'',so:0};
 var NVS=[], KTRUONG='', MADK='', MAYGUI={}, VONVER='';
 var KY='thangnay';   // kỳ báo cáo đang xem
-var THU_GON_BC={};   // {kenh:true/nv:true/brand:true} — thu gọn từng bảng phân tích trong Báo cáo
+/* SỬA 10/09/2026 theo phiếu 7 của chủ: mặc định THU GỌN hết mấy bảng phân
+   tích, chỉ mở khi thật sự cần xem — trước đây mở toang cả loạt nên phải cuộn
+   rất lâu mới hết trang Báo cáo. Lựa chọn của chủ được nhớ lại, lần sau mở
+   máy vẫn y như lúc để. */
+var THU_GON_BC=get('thugonbc',{kenh:1,nv:1,brand:1,sp:1,shipper:1,htt:1,tk:1});
 var HIEN_CHI_PHI_BC=false;   // co dang mo bang chi tiet chi phi trong Bao cao khong
 var KYS_CHUNG=[['homnay','Hôm nay'],['homqua','Hôm qua'],['thangnay','Tháng này'],['thangtruoc','Tháng trước'],
   ['quynay','Quý này'],['quytruoc','Quý trước'],['namnay','Năm nay'],['tatca','Toàn bộ']];
@@ -1097,7 +1122,8 @@ function veLam(){
         var vt=NHAT_KY_GOM.length-1-i;
         return '<div class="sm" style="display:flex;justify-content:space-between;align-items:center;gap:8px;'+
           'padding:7px 0;border-bottom:1px solid var(--line)">'+
-          '<span>Đã gom <b>'+esc(g.tenPhu)+'</b> chung với <b>'+esc(g.tenChinh)+'</b></span>'+
+          '<span>Đã gom <b>'+esc(g.tenPhu)+'</b> chung với <b>'+esc(g.tenChinh)+'</b>'+
+            (g.lyDo?'<br><span style="opacity:.7">Lý do: '+esc(g.lyDo)+'</span>':'')+'</span>'+
           '<button class="mini" style="flex:none" onclick="hoanTacGom('+vt+')">Hoàn tác</button></div>';
       }).join('')+'</div>':'');
 }
@@ -1150,9 +1176,69 @@ function veCauHoi(){
     '<button class="btn" onclick="traLoiGom(true)">Cùng một món</button>'+
     '<button class="btn2" onclick="traLoiGom(false)">Hai món khác nhau</button>'+
     '</div>'+
+    '<button class="btn2 mt" style="width:100%" onclick="moTuQuyet()">Cùng một món, nhưng tôi muốn sửa lại vài chỗ…</button>'+
     '<button class="btn2 mt" style="width:100%" onclick="dongHoi()">Để lúc khác</button>';
 }
 
+/* ĐƯỜNG THỨ BA — thêm 10/09/2026 theo phiếu 1 của chủ.
+   Hai nút có/không là đủ cho phần lớn trường hợp, nhưng có lúc chủ muốn nói
+   thêm: đúng là một món, NHƯNG giữ cái bên phải chứ không phải cái máy chọn,
+   và nhân tiện sửa lại tên cho đúng, kèm một câu ghi lý do để sau này còn nhớ
+   vì sao gom. Bảng này cho làm cả ba việc đó rồi mới gom.
+   Lý do được lưu lại và hiện ở mục "Vừa làm xong" cùng nút Hoàn tác. */
+var LY_DO_GOM=get('lydogom',{});
+function moTuQuyet(){
+  var c=HOI_DS[HOI_I]; if(!c) return;
+  var a=c[0], b=c[1];
+  var mayChon=(GIA[a]&&GIA[a].von?1:0)>=(GIA[b]&&GIA[b].von?1:0)?a:b;
+  $('hoiTieuDe').textContent='Anh/chị muốn giữ lại cái nào?';
+  $('hoiPhu').innerHTML='Máy đang định giữ cái <b>có giá nhập vào</b>, vì như vậy mấy đơn cũ mới hết treo. '+
+    'Nhưng anh/chị biết rõ hơn máy — cứ chọn theo ý mình.';
+  $('hoiNoiDung').innerHTML=[a,b].map(function(k){
+    var p=GIA[k]||{}, v=dauVetBan_(k);
+    return '<label style="display:flex;gap:9px;align-items:flex-start;background:var(--c2);'+
+      'border-radius:14px;padding:12px;margin-bottom:8px;cursor:pointer">'+
+      '<input type="radio" name="tuchon" value="'+esc(k)+'" '+(k===mayChon?'checked':'')+
+        ' style="width:18px;height:18px;flex:none;margin-top:2px">'+
+      '<span style="min-width:0"><b>'+esc(p.ten||k)+'</b>'+(k===mayChon?' <span class="pill">máy đang chọn</span>':'')+
+      '<div class="sm">Bán theo '+esc(p.dvt||'—')+' · giá nhập '+
+        (p.von?tien(p.von):'<span style="color:var(--warn)">chưa điền</span>')+
+        ' · '+(v.soDon?v.soDon+' đơn đã bán':'chưa bán đơn nào')+'</div></span></label>';
+  }).join('')+
+    '<label class="mt">Sửa lại tên món giữ lại (để trống thì giữ nguyên)</label>'+
+    '<input id="tenGiuLai" placeholder="'+esc((GIA[mayChon]&&GIA[mayChon].ten)||'')+'">'+
+    '<label class="mt">Vì sao gom hai cái này? (ghi để sau còn nhớ, không bắt buộc)</label>'+
+    '<input id="lyDoGom" placeholder="Ví dụ: cùng một túi 1kg, chỉ khác cách gõ tên">';
+  $('hoiNut').innerHTML='<div class="row" style="gap:8px">'+
+    '<button class="btn2" onclick="veCauHoi()">Quay lại</button>'+
+    '<button class="btn" onclick="gomTheoYToi()">Gom theo ý tôi</button></div>';
+  // đổi tên món giữ lại theo đúng ô đang tick
+  setTimeout(function(){
+    document.querySelectorAll('input[name=tuchon]').forEach(function(r){
+      r.addEventListener('change',function(){
+        var o=$('tenGiuLai'); if(o&&!o.value) o.placeholder=(GIA[r.value]&&GIA[r.value].ten)||'';
+      });
+    });
+  },30);
+}
+function gomTheoYToi(){
+  var c=HOI_DS[HOI_I]; if(!c) return;
+  var chinh=''; document.querySelectorAll('input[name=tuchon]').forEach(function(r){ if(r.checked) chinh=r.value });
+  if(!chinh) return;
+  var phu=(chinh===c[0])?c[1]:c[0];
+  var tenMoi=($('tenGiuLai')&&$('tenGiuLai').value||'').trim();
+  var lyDo=($('lyDoGom')&&$('lyDoGom').value||'').trim();
+  if(tenMoi && GIA[chinh]) GIA[chinh].ten=tenMoi;
+  NHAT_KY_GOM.push({phu:phu,chinh:chinh,lyDo:lyDo,
+    tenPhu:(GIA[phu]&&GIA[phu].ten)||phu, tenChinh:(GIA[chinh]&&GIA[chinh].ten)||chinh});
+  if(lyDo){ LY_DO_GOM[phu]={chinh:chinh,lyDo:lyDo,luc:nowStr()}; set('lydogom',LY_DO_GOM) }
+  ALIAS[phu]=chinh;
+  if(GIA[phu]){ GIA[phu].ngung=true; GIA[phu].gopVao=chinh }
+  set('alias',ALIAS); set('gia',GIA);
+  tinhLaiToanBoSO();
+  HOI_I++;
+  if(HOI_I<HOI_DS.length) veCauHoi(); else dongHoi();
+}
 function traLoiGom(cungMon){
   var c=HOI_DS[HOI_I];
   if(cungMon && c){
@@ -1187,6 +1273,7 @@ function hoanTacGom(i){
   var g=NHAT_KY_GOM[i]; if(!g) return;
   if(!confirm('Tách "'+g.tenPhu+'" ra khỏi "'+g.tenChinh+'" như cũ?')) return;
   delete ALIAS[g.phu];
+  if(LY_DO_GOM[g.phu]){ delete LY_DO_GOM[g.phu]; set('lydogom',LY_DO_GOM) }
   if(GIA[g.phu]){ GIA[g.phu].ngung=false; delete GIA[g.phu].gopVao }
   set('alias',ALIAS); set('gia',GIA);
   tinhLaiToanBoSO();
@@ -1628,6 +1715,20 @@ var LOC_TOANBO_KY=false;
    nhảy sang Số cái, lọc đúng đúng nhóm mã đơn của ô đó. Tính lại mỗi lần veBC()
    chạy nên luôn khớp đúng bộ lọc kỳ/kênh hiện tại, không lệch số. */
 var BC_NHOM={};
+/* Bấm một dòng trong bảng phân tích → sang Sổ cái, lọc đúng những đơn đứng
+   sau con số đó. Dùng lại y nguyên cơ chế lọc theo danh sách mã đơn đã có sẵn
+   (LOCMA), nên có luôn thanh tóm tắt và nút "Bỏ lọc, xem tất cả". */
+var BC_DONG=[];   // danh sách mã đơn đứng sau từng dòng bảng phân tích
+function xemDonCua(vt){
+  var g=BC_DONG[vt]; if(!g||!g.ma.length) return;
+  LOCMA=g.ma.slice(); LOCTEN='đơn của '+g.ten; LOC_TOANBO_KY=false;
+  var f=$('fso'); if(f) f.value='';
+  var nv=$('locNVSo'); if(nv) nv.value='';
+  var kn=$('locKenhSo'); if(kn) kn.value='';
+  var tt=$('locTinhTrangSo'); if(tt) tt.value='';
+  var lt=$('locLaiTu'); if(lt) lt.value='';
+  tab('so'); window.scrollTo({top:0,behavior:'smooth'});
+}
 function xemBCNhom(loai,ten){
   var ma=BC_NHOM[loai]||[];
   if(!ma.length) return;
@@ -1757,16 +1858,28 @@ async function nap(files){
       ten:idx(h,['ten san pham']),br:idx(h,['thuong hieu']),dv:idx(h,['don vi']),
       hs:idx(h,['he so quy doi']),sl:idx(h,['so luong']),gia:idx(h,['don gia']),
       tt:idx(h,['thanh tien']),ship:idx(h,['tien ship']),giam:idx(h,['giam gia']),
+      /* SỬA 10/09/2026 — LỖI THẬT theo phiếu 5 của chủ.
+         Máy nhân viên CÓ ô "Phí giao chành", có ghi vào đơn, có gửi lên Sheet,
+         và có ghi vào file CSV. Nhưng bảng đối chiếu cột ở đây lại QUÊN cột đó,
+         nên mỗi lần nạp đơn bằng FILE là phí chành bị rơi mất, về 0 — mà không
+         báo lỗi gì. Hậu quả kép: báo cáo hiện "Tiền chành xe 0 đ" dù nhân viên
+         có điền, VÀ tiền lời bị tính CAO HƠN thực tế đúng bằng khoản phí đó
+         (xem tinhLaiDon: lãi = tiền hàng − vốn − phí chành).
+         Đường đồng bộ qua Google Sheet KHÔNG dính lỗi này — chỉ đường nạp file. */
+      phiChanh:idx(h,['phi giao chanh']),
       tong:idx(h,['tong don']),gc:idx(h,['ghi chu'])};
     if(C.ma<0||C.sku<0){loi.push(files[i].name+' — không nhận dạng được cột');continue}
+    if(C.phiChanh<0) loi.push(files[i].name+' — file này không có cột "Phi giao chanh" (bản máy nhân viên quá cũ). '+
+      'Đơn vẫn nạp được nhưng phí giao chành sẽ là 0, tiền lời sẽ cao hơn thực tế. Nên kéo lại đơn từ Google Sheet để có số đúng.');
     var m={},thutu=[];
     rows.slice(1).forEach(function(r){
       var ma=String(r[C.ma]||'').trim(); if(!ma)return;
       if(!m[ma]){m[ma]={ma:ma,ngay:r[C.ngay]||'',kenh:r[C.kenh]||'',sdt:r[C.sdt]||'',
-        khach:r[C.khach]||'',dc:'',may:r[C.may]||'',nv:r[C.nv]||'',ship:0,giam:0,tong:0,gc:'',sualan:0,ls:'',dong:[]};thutu.push(ma)}
+        khach:r[C.khach]||'',dc:'',may:r[C.may]||'',nv:r[C.nv]||'',ship:0,giam:0,phiChanh:0,tong:0,gc:'',sualan:0,ls:'',dong:[]};thutu.push(ma)}
       var d=m[ma];
       if(C.ship>=0&&String(r[C.ship]).trim()!=='')d.ship=n2(r[C.ship]);
       if(C.giam>=0&&String(r[C.giam]).trim()!=='')d.giam=n2(r[C.giam]);
+      if(C.phiChanh>=0&&String(r[C.phiChanh]).trim()!=='')d.phiChanh=n2(r[C.phiChanh]);
       if(C.tong>=0&&String(r[C.tong]).trim()!=='')d.tong=n2(r[C.tong]);
       if(C.gc>=0&&String(r[C.gc]).trim()!=='')d.gc=r[C.gc];
       if(C.dc>=0&&String(r[C.dc]).trim()!=='')d.dc=r[C.dc];
@@ -1850,7 +1963,16 @@ function datKhoangNgaySo(){
   if(idFocus){ var e=$(idFocus); if(e) e.focus(); }
 }
 
+/* Công tắc mở/thu gọn một bảng trong Báo cáo. Bật = đang mở rộng. */
+function ctacThuGon_(khoa){
+  var mo=!THU_GON_BC[khoa];
+  return '<span class="ctac'+(mo?' on':'')+'" role="switch" aria-checked="'+mo+'" tabindex="0"'+
+    ' onclick="THU_GON_BC[\''+khoa+'\']=!THU_GON_BC[\''+khoa+'\'];set(\'thugonbc\',THU_GON_BC);veBC()"'+
+    ' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.click()}">'+
+    '<span class="gat"></span>'+(mo?'Đang mở':'Đang thu gọn')+'</span>';
+}
 function veBC(){
+  BC_DONG=[];   // dựng lại mỗi lần vẽ báo cáo, tránh phình vô hạn
   var trong=SO.filter(trongKy);
   var huy=trong.filter(function(d){return d.huy});
   var tinhDuoc=trong.filter(function(d){return !d.thieuVon&&!d.huy}),
@@ -1859,21 +1981,37 @@ function veBC(){
   var ok=tinhDuoc.filter(daGhiNhan);
   var choGN=tinhDuoc.filter(function(d){return !daGhiNhan(d)});
   if(!SO.length){$('bc').innerHTML='<div class="card"><div class="empty">Chưa có đơn nào. Sang tab Nạp đơn.</div></div>';return}
-  var hang=0,von=0,ship=0,giam=0,phiChanh=0,kenh={},nv={},br={},shp={},htt={},tkht={};
+  var hang=0,von=0,ship=0,giam=0,phiChanh=0,kenh={},nv={},br={},sp={},shp={},htt={},tkht={};
   var thueTong={doanhThuChuaVAT:0,vatDauRa:0,vatDauVao:0,vatRong:0,laiGopThat:0,tndn:0,loiNhuanSauThue:0};
   ok.forEach(function(d){
     hang+=d.tienHang;von+=d.von;ship+=d.ship;giam+=d.giam;phiChanh+=(d.phiChanh||0);
     var th=tinhThueDon(d);
     thueTong.doanhThuChuaVAT+=th.doanhThuChuaVAT; thueTong.vatDauRa+=th.vatDauRa;
     thueTong.vatDauVao+=th.vatDauVao; thueTong.vatRong+=th.vatRong; thueTong.laiGopThat+=th.laiGopThat;
-    kenh[d.kenh]=kenh[d.kenh]||{dt:0,lai:0,don:0};
-    kenh[d.kenh].dt+=d.tienHang;kenh[d.kenh].lai+=d.lai;kenh[d.kenh].don++;
+    /* SỬA 10/09/2026 theo phiếu 8 của chủ: mỗi dòng trong bảng phân tích giờ
+       nhớ luôn DANH SÁCH MÃ ĐƠN đứng sau con số đó, để bấm vào là nhảy thẳng
+       sang Sổ cái xem từng đơn một — trước đây chỉ xem được số tổng, muốn xem
+       chi tiết phải tự sang Sổ cái lọc lại bằng tay. */
+    kenh[d.kenh]=kenh[d.kenh]||{dt:0,lai:0,don:0,ma:[]};
+    kenh[d.kenh].dt+=d.tienHang;kenh[d.kenh].lai+=d.lai;kenh[d.kenh].don++;kenh[d.kenh].ma.push(d.ma);
     var kn=(d.nv||'(không rõ)')+(d.may?' · '+d.may:'');
-    nv[kn]=nv[kn]||{dt:0,lai:0,don:0};nv[kn].dt+=d.tienHang;nv[kn].lai+=d.lai;nv[kn].don++;
+    nv[kn]=nv[kn]||{dt:0,lai:0,don:0,ma:[]};nv[kn].dt+=d.tienHang;nv[kn].lai+=d.lai;nv[kn].don++;nv[kn].ma.push(d.ma);
     d.dong.forEach(function(x){var b=x.brand||'(không thương hiệu)';
-      br[b]=br[b]||{sl:0,dt:0,lai:0};br[b].sl+=x.sl;br[b].dt+=x.thanhTien;br[b].lai+=x.lai});
-    if(d.nguoiGiao){ shp[d.nguoiGiao]=shp[d.nguoiGiao]||{dt:0,lai:0,don:0};
-      shp[d.nguoiGiao].dt+=d.tienHang;shp[d.nguoiGiao].lai+=d.lai;shp[d.nguoiGiao].don++; }
+      br[b]=br[b]||{sl:0,dt:0,lai:0,ma:[]};br[b].sl+=x.sl;br[b].dt+=x.thanhTien;br[b].lai+=x.lai;
+      if(br[b].ma.indexOf(d.ma)<0) br[b].ma.push(d.ma);
+      /* THEO TỪNG SẢN PHẨM — thêm 10/09/2026 theo phiếu 7 của chủ. Trước đây chỉ
+         gom tới mức thương hiệu, nên biết ZAKA bán chạy nhưng không biết trong đó
+         món nào gánh. Gom theo MÃ CHÍNH (skuChinh) để mã đã gộp dồn chung một
+         dòng, đúng như mọi chỗ khác trong máy. Tên lấy theo bảng giá hiện tại,
+         không có thì lấy tên ghi trong đơn. */
+      var ps=skuChinh(x.sku), tenSP=(GIA[ps]&&GIA[ps].ten)||x.ten||ps;
+      var kSP=tenSP+' · '+ps;
+      sp[kSP]=sp[kSP]||{sl:0,dt:0,lai:0,sku:ps,ma:[]};
+      sp[kSP].sl+=x.sl; sp[kSP].dt+=x.thanhTien; sp[kSP].lai+=x.lai;
+      if(sp[kSP].ma.indexOf(d.ma)<0) sp[kSP].ma.push(d.ma);});
+    if(d.nguoiGiao){ shp[d.nguoiGiao]=shp[d.nguoiGiao]||{dt:0,lai:0,don:0,ma:[]};
+      shp[d.nguoiGiao].dt+=d.tienHang;shp[d.nguoiGiao].lai+=d.lai;shp[d.nguoiGiao].don++;
+      shp[d.nguoiGiao].ma.push(d.ma); }
     if(d.tt==='DA'&&d.ttHt){ htt[d.ttHt]=htt[d.ttHt]||{tong:0,don:0};
       htt[d.ttHt].tong+=d.tong;htt[d.ttHt].don++; }
     if(d.tt==='DA'&&d.tkNhan){ tkht[d.tkNhan]=tkht[d.tkNhan]||{tong:0,don:0};
@@ -1971,9 +2109,8 @@ function veBC(){
 
   function bang(tieude,obj,cot,khoa){
     var gon=THU_GON_BC[khoa];
-    var s='<div class="card"><h2>'+tieude+' <a href="#" class="lnk" style="font-size:13px;font-weight:400" '+
-      'onclick="THU_GON_BC[\''+khoa+'\']=!THU_GON_BC[\''+khoa+'\'];veBC();return false">'+(gon?'Mở rộng':'Thu gọn')+'</a></h2>';
-    if(gon) return s+'<div class="sm">'+Object.keys(obj).length+' dòng — bấm "Mở rộng" để xem.</div></div>';
+    var s='<div class="card"><h2 class="bd-h2">'+tieude+ctacThuGon_(khoa)+'</h2>';
+    if(gon) return s+'<div class="sm">'+Object.keys(obj).length+' dòng — gạt công tắc để mở ra xem.</div></div>';
     s+='<table><tr><th>'+cot+'</th><th class="r">Đơn</th><th class="r">Doanh thu</th><th class="r">Lãi gộp</th><th class="r">Biên</th></tr>';
     /* Thanh dài ngắn cạnh con số — nhìn phát biết ai đang gánh doanh thu,
        khỏi phải đọc từng số rồi tự so trong đầu. Dài theo tỉ lệ với dòng
@@ -1982,17 +2119,26 @@ function veBC(){
     var dinh=ks.length?obj[ks[0]].dt:0;
     ks.forEach(function(k){var e=obj[k];
       var pt=dinh>0?Math.max(2,Math.round(e.dt/dinh*100)):0;
-      s+='<tr><td>'+esc(k)+'</td><td class="r">'+(e.don!==undefined?e.don:e.sl)+'</td>'+
+      /* KHÔNG nhét cả danh sách mã đơn vào thuộc tính onclick: chuỗi có dấu
+         nháy kép sẽ cắt đứt thuộc tính HTML làm hỏng cả nút, mà danh sách vài
+         trăm mã còn phình HTML ra vô ích. Cất mảng vào một chỗ riêng rồi chỉ
+         truyền số thứ tự. */
+      var xem='';
+      if(e.ma&&e.ma.length){
+        var vt=BC_DONG.push({ma:e.ma.slice(), ten:cot+' “'+k+'”'})-1;
+        xem=' class="dongxem" onclick="xemDonCua('+vt+')" title="Bấm để xem từng đơn của dòng này"';
+      }
+      s+='<tr'+xem+'><td>'+esc(k)+(xem?' <span class="mui2">xem đơn ›</span>':'')+'</td><td class="r">'+(e.don!==undefined?e.don:e.sl)+'</td>'+
         '<td class="r"><span class="thanh" title="'+pt+'% so với dòng cao nhất"><i style="width:'+pt+'%"></i></span>'+tien(e.dt)+
         '</td><td class="r" style="color:var(--ok)">'+tien(e.lai)+'</td><td class="r">'+(e.dt?(e.lai/e.dt*100).toFixed(1):0)+'%</td></tr>'});
     return s+'</table></div>';
   }
-  h+=bangKy()+bang('Theo kênh bán',kenh,'Kênh','kenh')+bang('Theo nhân viên',nv,'Nhân viên','nv')+bang('Theo thương hiệu',br,'Thương hiệu','brand')+
+  h+=bangKy()+bang('Theo kênh bán',kenh,'Kênh','kenh')+bang('Theo nhân viên',nv,'Nhân viên','nv')+
+    bang('Theo từng sản phẩm',sp,'Sản phẩm','sp')+bang('Theo thương hiệu',br,'Thương hiệu','brand')+
     (Object.keys(shp).length?bang('Theo người giao (shipper)',shp,'Người giao','shipper'):'');
   if(Object.keys(htt).length){
     var gonHtt=THU_GON_BC['htt'];
-    h+='<div class="card"><h2>Theo hình thức thanh toán <a href="#" class="lnk" style="font-size:13px;font-weight:400" '+
-      'onclick="THU_GON_BC[\'htt\']=!THU_GON_BC[\'htt\'];veBC();return false">'+(gonHtt?'Mở rộng':'Thu gọn')+'</a></h2>';
+    h+='<div class="card"><h2 class="bd-h2">Theo hình thức thanh toán'+ctacThuGon_('htt')+'</h2>';
     if(!gonHtt){
       h+='<table><tr><th>Hình thức / Tài khoản</th><th class="r">Số đơn</th><th class="r">Tổng tiền thực nhận</th></tr>'+
         Object.keys(htt).sort(function(a,b){return htt[b].tong-htt[a].tong}).map(function(k){
@@ -2173,6 +2319,23 @@ function bangKy(){
   return t1+t2;
 }
 
+/* Ô lọc theo nhân viên ở Sổ cái — thêm 10/09/2026 theo phiếu 3 và 9 của chủ.
+   Danh sách dựng từ chính những người đã có đơn trong sổ, kèm số đơn, nên
+   không bao giờ hiện một cái tên rỗng không có đơn nào. Ghi kèm mã máy để
+   phân biệt hai người trùng tên ngồi hai máy khác nhau. */
+function veNVLocSo(){
+  var e=$('locNVSo'); if(!e) return;
+  var co={};
+  SO.forEach(function(d){
+    var k=(d.nv||'(không rõ)')+(d.may?' · '+d.may:'');
+    co[k]=(co[k]||0)+1;
+  });
+  var giu=e.value;
+  e.innerHTML='<option value="">Tất cả nhân viên</option>'+
+    Object.keys(co).sort().map(function(k){
+      return '<option value="'+esc(k)+'">'+esc(k)+' ('+co[k]+')</option>'}).join('');
+  if([].slice.call(e.options).some(function(x){return x.value===giu})) e.value=giu;
+}
 function veKenhLocSo(){
   var e=$('locKenhSo'); if(!e) return;
   var kenhCo={}; SO.forEach(function(d){ if(d.kenh) kenhCo[d.kenh]=(kenhCo[d.kenh]||0)+1 });
@@ -2210,6 +2373,10 @@ function veSo(){
   // Lọc theo kênh
   var kenhLoc=($('locKenhSo')&&$('locKenhSo').value)||'';
   if(kenhLoc) ds=ds.filter(function(d){return d.kenh===kenhLoc});
+  // Lọc theo nhân viên — so đúng chuỗi "tên · mã máy" như lúc dựng danh sách
+  var nvLoc=($('locNVSo')&&$('locNVSo').value)||'';
+  if(nvLoc) ds=ds.filter(function(d){
+    return ((d.nv||'(không rõ)')+(d.may?' · '+d.may:''))===nvLoc });
   // Lọc theo tình trạng — giống cách lọc thanh toán bên máy nhân viên, cho quen tay
   var tt=($('locTinhTrangSo')&&$('locTinhTrangSo').value)||'';
   if(tt==='daHuy') ds=ds.filter(function(d){return d.huy});
@@ -2224,7 +2391,7 @@ function veSo(){
     ds=ds.slice().sort(function(a,b){return (b.lai||0)-(a.lai||0)});
   }
   var nutBoLocLai=$('btnBoLocLaiSo'); if(nutBoLocLai) nutBoLocLai.style.display=coLocLai?'':'none';
-  veKenhLocSo();
+  veKenhLocSo(); veNVLocSo();
   var kyBar='<div class="card"><div class="chips" style="margin:-4px 0 8px">'+
     KYS_CHUNG.map(function(k){return '<button class="chip'+(KY===k[0]?' on':'')+'" onclick="datKy(\''+k[0]+'\')">'+k[1]+'</button>'}).join('')+
     '</div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+
@@ -3815,6 +3982,20 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260910b', ngay:'10/09/2026', ten:'Theo góp ý của chủ — trọn 9 phiếu',
+  vaPhieu:['23:26:14 9/9/2026','23:38:06 9/9/2026','23:39:23 9/9/2026','00:09:29 10/9/2026',
+           '00:10:36 10/9/2026','00:11:08 10/9/2026','00:11:54 10/9/2026','00:12:56 10/9/2026',
+           '00:13:19 10/9/2026'],
+  muc:[
+   ['sua','<b>Lỗi thật:</b> nạp đơn bằng <b>file</b> làm rơi mất <b>phí giao chành</b> nhân viên đã điền — báo cáo hiện 0 đ và tiền lời bị tính cao hơn thực tế. Đã vá. Đường đồng bộ qua Google Sheet không dính lỗi này.'],
+   ['moi','Sổ cái có <b>ô lọc theo nhân viên</b>, kèm số đơn của từng người.'],
+   ['moi','Báo cáo có thêm bảng <b>Theo từng sản phẩm</b> — biết món nào thật sự gánh doanh thu, không chỉ dừng ở thương hiệu.'],
+   ['dep','Mấy bảng phân tích trong Báo cáo <b>mặc định thu gọn</b>, gạt công tắc mới mở. Máy nhớ lựa chọn cho lần sau.'],
+   ['dep','Đổi chữ "Thu gọn" gạch chân kiểu cũ thành <b>công tắc gạt</b> cho đồng bộ với phần còn lại.'],
+   ['moi','<b>Bí mật rời khỏi mã nguồn:</b> mật khẩu quản lý và mã đăng ký nay nằm ở Thuộc tính tập lệnh của Google, không còn nằm trong file Code.gs.'],
+   ['moi','Trong Báo cáo, <b>bấm vào một dòng bất kỳ</b> — kênh, nhân viên, sản phẩm, thương hiệu — là nhảy thẳng sang Sổ cái xem đúng những đơn đứng sau con số đó.'],
+   ['moi','Lúc gom món trùng có thêm đường <b>"tôi muốn sửa lại vài chỗ"</b>: tự chọn giữ cái nào, sửa lại tên, và ghi lý do để sau còn nhớ.'],
+  ]},
  {ban:'20260909i', ngay:'09/09/2026', ten:'Dọn hàng trùng & Kỹ sư hệ thống',
   /* vaPhieu: dán dấu thời gian của những phiếu mà bản này đã chữa xong.
      Máy tự đánh dấu đã vá, báo lên bảng này, giữ 3 ngày rồi tự dọn. */
