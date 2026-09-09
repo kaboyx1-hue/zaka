@@ -163,6 +163,56 @@ body.ks-chi *{cursor:crosshair!important}
 #ksBang{white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
   background:var(--c2);border:1px solid var(--line);border-radius:10px;padding:10px;
   max-height:200px;overflow:auto;margin-top:8px}
+/* ══ BIỂU ĐỒ & XẾP LỚP — 09/09/2026, đưa về đúng bản demo đã duyệt ══ */
+.bd{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;
+  margin-bottom:14px;box-shadow:var(--shadow)}
+.bd-dau{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:2px}
+.bd-dau h2{margin:0}
+.bd-to{font-size:26px;font-weight:700;letter-spacing:-.4px;font-variant-numeric:tabular-nums}
+.bd-phu{font-size:12px;color:var(--tx2);margin-bottom:12px}
+.bd svg{display:block;width:100%;overflow:visible}
+.bd .luoi{stroke:var(--line);stroke-width:1}
+.bd .truc{fill:var(--tx2);font-size:10.5px}
+.bd .cham{fill:var(--acc);stroke:var(--card);stroke-width:2}
+.bd-troi{position:absolute;pointer-events:none;background:var(--card);border:1px solid var(--line);
+  border-radius:12px;padding:8px 11px;font-size:12px;box-shadow:var(--shadow);z-index:30;
+  white-space:nowrap;transform:translate(-50%,-108%)}
+.bd-boc{position:relative}
+.delta{font-size:11px;font-weight:700;padding:2px 7px;border-radius:7px;display:inline-flex;
+  align-items:center;gap:3px;vertical-align:middle}
+.delta.len{color:var(--ok);background:var(--okBg)}
+.delta.xuong{color:var(--bad);background:var(--badBg)}
+.delta.bang{color:var(--tx2);background:var(--c2)}
+.thanh{height:5px;border-radius:99px;background:var(--c2);overflow:hidden;width:62px;
+  display:inline-block;vertical-align:middle;margin-right:8px}
+.thanh i{display:block;height:100%;background:var(--acc);border-radius:99px}
+@media(max-width:640px){.thanh{width:38px}}
+/* SỬA 09/09/2026 — TAB BÁO CÁO BỊ TRÀN NGANG TRÊN ĐIỆN THOẠI.
+   Ô chọn ngày nằm trong một hàng co giãn, mà luật chung là input rộng 100%.
+   Trong hàng co giãn, "100%" tính theo bề rộng do nội dung đòi, nên hai ô ngày
+   tự phình ra 403px trong màn hình 390px, kéo cả thẻ ra ngoài lề — chữ bị cắt và
+   phải vuốt ngang mới đọc hết. Lỗi này có sẵn từ trước, không phải do biểu đồ mới.
+   Nay cho hai ô ngày tự co lại và cho các khối con được phép hẹp hơn nội dung. */
+#pg-bc .chips{flex-wrap:wrap}
+#pg-bc table{table-layout:auto}
+/* Hai ô chọn ngày: luật chung cho input là rộng 100%, nên trong hàng co giãn
+   chúng phình ra chiếm trọn một dòng mỗi ô — nhìn như hai thanh trống to đùng
+   giữa báo cáo. Cho chúng đúng bề ngang cần thiết thôi. */
+#pg-bc input[type=date]{width:auto;min-width:0;flex:0 1 172px}
+/* Trên điện thoại: chặn tràn ngay từ khung ngoài, rồi cho từng thẻ tự cuộn
+   bên trong nếu nội dung thật sự rộng (bảng nhiều cột). Hai ô chọn ngày cho
+   xuống hàng riêng, mỗi ô một dòng — dễ bấm hơn hẳn so với nhét chung một
+   hàng rồi bị ép co lại. Thanh tab trên cùng cũng phải tự cuộn được vì giờ
+   có bảy mục, không nhét vừa bề ngang điện thoại. */
+@media(max-width:760px){
+  .app-shell,.main-col,main,section[id^="pg-"],#bc,#dsSo,#cb,#lamDs{min-width:0;max-width:100%}
+  main{overflow-x:hidden}
+  .side{min-width:0}
+  .side nav{max-width:100%;-webkit-overflow-scrolling:touch}
+  .card{overflow-x:auto}
+  #pg-bc input[type=date]{width:100%;flex:1 1 100%}
+  #pg-bc .card>div[style*="display:flex"]{flex-wrap:wrap}
+}
 </style></head><body>
 <div id="khoa">
   <div class="logoMark">🐾</div>
@@ -524,7 +574,7 @@ if(!BANGGIA.length) setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260909h';
+var APP_VER='20260909i';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1832,6 +1882,26 @@ function veBC(){
   thueTong.tndn=Math.max(0,thueTong.laiGopThat)*0.20;
   thueTong.loiNhuanSauThue=thueTong.laiGopThat-thueTong.tndn;
   var lai=hang-von, chotien=cho.reduce(function(a,d){return a+d.tienHang},0);
+  /* KỲ TRƯỚC — thêm 09/09/2026, để có mũi tên tăng/giảm cạnh mấy con số chính.
+     Lấy đúng một khoảng dài BẰNG kỳ đang xem, nằm ngay liền trước nó. So kiểu
+     này công bằng hơn so với "tháng trước" vì tháng dài ngắn khác nhau. */
+  var truocDT=0, truocLai=0, truocDon=0;
+  (function(){
+    var iso=ok.map(function(d){return String(d.iso||'')}).filter(Boolean).sort();
+    if(iso.length<1) return;
+    var d1=new Date(iso[0]+'T00:00:00'), d2=new Date(iso[iso.length-1]+'T00:00:00');
+    var soNgay=Math.round((d2-d1)/86400000)+1;
+    var t2=new Date(d1); t2.setDate(t2.getDate()-1);
+    var t1=new Date(t2);  t1.setDate(t1.getDate()-soNgay+1);
+    var f=function(x){ return x.getFullYear()+'-'+('0'+(x.getMonth()+1)).slice(-2)+'-'+('0'+x.getDate()).slice(-2) };
+    var a=f(t1), b=f(t2);
+    SO.forEach(function(d){
+      if(d.huy||d.thieuVon) return;
+      var i=String(d.iso||''); if(i<a||i>b) return;
+      if(!daGhiNhan(d)) return;
+      truocDT+=d.tienHang; truocLai+=(d.lai||0); truocDon++;
+    });
+  })();
   var chiPhiTrongKy=CHIPHI_QL.filter(trongKy);
   var tongChiPhi=chiPhiTrongKy.reduce(function(a,x){return a+(Number(x.tien)||0)},0);
   var gnCho=choGN.reduce(function(a,d){return a+d.tienHang},0);
@@ -1854,12 +1924,16 @@ function veBC(){
       '<input type="date" id="denNgay" value="'+esc(DEN_NGAY)+'" onchange="datKhoangNgay()">'+
       (KY==='tuychinh'?'<button class="chip" onclick="TU_NGAY=\'\';DEN_NGAY=\'\';set(\'tungay\',\'\');set(\'denngay\',\'\');datKy(\'thangnay\')">Bỏ lọc ngày</button>':'')+
     '</div><div class="kpi">'+
-    '<div><small>Doanh thu GHI NHẬN</small><b>'+tien(hang)+'</b></div>'+
+    '<div><small>Doanh thu GHI NHẬN</small><b>'+tien(hang)+'</b> '+huyHieu_(hang,truocDT)+
+      (truocDT?'<span class="sm" style="display:block;opacity:.65">kỳ trước '+tien(truocDT)+'</span>':'')+'</div>'+
     '<div><small>Giá vốn</small><b>'+tien(von)+'</b></div>'+
-    '<div><small>Lãi gộp</small><b style="color:var(--ok)">'+tien(lai)+'</b></div>'+
-    '<div><small>Biên lãi</small><b>'+(hang?(lai/hang*100).toFixed(1):0)+'%</b></div></div>'+
+    '<div><small>Lãi gộp</small><b style="color:var(--ok)">'+tien(lai)+'</b> '+huyHieu_(lai,truocLai)+
+      (truocLai?'<span class="sm" style="display:block;opacity:.65">kỳ trước '+tien(truocLai)+'</span>':'')+'</div>'+
+    '<div><small>Biên lãi</small><b>'+(hang?(lai/hang*100).toFixed(1):0)+'%</b></div></div></div>'+
+    veBieuDo_(ok)+'<div class="card">'+
     '<div class="kpi mt"><div'+(ok.length?' class="kpiclick" onclick="xemBCNhom(\'ghiNhan\',\'đơn đã ghi nhận doanh thu\')"':'')+'>'+
-      '<small>Số đơn ghi nhận'+(ok.length?' <span class="mui">↗</span>':'')+'</small><b>'+ok.length+'</b></div>'+
+      '<small>Số đơn ghi nhận'+(ok.length?' <span class="mui">↗</span>':'')+'</small><b>'+ok.length+'</b> '+
+      huyHieu_(ok.length,truocDon)+'</div>'+
     '<div><small>Tiền ship thu</small><b>'+tien(ship)+'</b></div>'+
     '<div><small>Tiền chành xe (shop chịu)</small><b style="color:var(--bad)">'+tien(phiChanh)+'</b></div>'+
     '<div'+(chiPhiTrongKy.length?' class="kpiclick" onclick="toggleChiPhiBC()"':'')+'>'+
@@ -1901,8 +1975,15 @@ function veBC(){
       'onclick="THU_GON_BC[\''+khoa+'\']=!THU_GON_BC[\''+khoa+'\'];veBC();return false">'+(gon?'Mở rộng':'Thu gọn')+'</a></h2>';
     if(gon) return s+'<div class="sm">'+Object.keys(obj).length+' dòng — bấm "Mở rộng" để xem.</div></div>';
     s+='<table><tr><th>'+cot+'</th><th class="r">Đơn</th><th class="r">Doanh thu</th><th class="r">Lãi gộp</th><th class="r">Biên</th></tr>';
-    Object.keys(obj).sort(function(a,b){return obj[b].dt-obj[a].dt}).forEach(function(k){var e=obj[k];
-      s+='<tr><td>'+esc(k)+'</td><td class="r">'+(e.don!==undefined?e.don:e.sl)+'</td><td class="r">'+tien(e.dt)+
+    /* Thanh dài ngắn cạnh con số — nhìn phát biết ai đang gánh doanh thu,
+       khỏi phải đọc từng số rồi tự so trong đầu. Dài theo tỉ lệ với dòng
+       cao nhất, cùng một thước cho cả bảng. */
+    var ks=Object.keys(obj).sort(function(a,b){return obj[b].dt-obj[a].dt});
+    var dinh=ks.length?obj[ks[0]].dt:0;
+    ks.forEach(function(k){var e=obj[k];
+      var pt=dinh>0?Math.max(2,Math.round(e.dt/dinh*100)):0;
+      s+='<tr><td>'+esc(k)+'</td><td class="r">'+(e.don!==undefined?e.don:e.sl)+'</td>'+
+        '<td class="r"><span class="thanh" title="'+pt+'% so với dòng cao nhất"><i style="width:'+pt+'%"></i></span>'+tien(e.dt)+
         '</td><td class="r" style="color:var(--ok)">'+tien(e.lai)+'</td><td class="r">'+(e.dt?(e.lai/e.dt*100).toFixed(1):0)+'%</td></tr>'});
     return s+'</table></div>';
   }
@@ -3684,7 +3765,9 @@ function ksXemPhieu(){
           ' · màn hình <b>'+esc(x.man)+'</b></div>'+
           '<div style="opacity:.7">Chỗ chỉ: '+esc(x.cho)+'</div>'+
           '<div style="opacity:.7">Kèm '+x.ma.length+' đoạn bên trong'+
-            (x.loiMay.length?' và '+x.loiMay.length+' lỗi máy tự ghi':'')+'</div></div>'+
+            (x.loiMay.length?' và '+x.loiMay.length+' lỗi máy tự ghi':'')+'</div>'+
+          (x.daVa?'<div style="color:var(--ok);margin-top:4px">✓ Đã vá ở bản '+esc(x.vaBan||'')+
+            ' — còn giữ '+ksConGiu_(x)+' ngày để đối chiếu, sau đó máy tự dọn</div>':'')+'</div>'+
           '<button class="mini" style="flex:none" onclick="ksXoaPhieu('+i+')">Bỏ</button></div></div>';
       }).join('')
     : '<div class="empty">Chưa có phiếu nào.</div>';
@@ -3732,7 +3815,10 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
- {ban:'20260909h', ngay:'09/09/2026', ten:'Dọn hàng trùng & Kỹ sư hệ thống',
+ {ban:'20260909i', ngay:'09/09/2026', ten:'Dọn hàng trùng & Kỹ sư hệ thống',
+  /* vaPhieu: dán dấu thời gian của những phiếu mà bản này đã chữa xong.
+     Máy tự đánh dấu đã vá, báo lên bảng này, giữ 3 ngày rồi tự dọn. */
+  vaPhieu:[],
   muc:[
    ['moi','Trang <b>Cần làm</b> — mở phần mềm lên là thấy ngay hôm nay cần làm gì, xếp sẵn thứ tự, mỗi việc một nút.'],
    ['moi','Dọn món trùng theo kiểu <b>hỏi từng câu một</b>: chỉ nhìn hai món rồi trả lời cùng một món hay khác nhau. Có nút <b>Hoàn tác</b> nếu bấm nhầm.'],
@@ -3743,6 +3829,10 @@ var CAP_NHAT=[
    ['sua','Bấm tab không còn bị văng về trang chủ trên máy cảm ứng.'],
    ['nhanh','Đổi tab <b>phản hồi tức thì</b>, không còn đứng hình một hai giây. Trang Cần làm nhanh hơn gấp ba.'],
    ['dep','Hai máy dùng chung một bộ màu. Chế độ sáng không còn chữ tối trên nền tối.'],
+   ['moi','Tab <b>Báo cáo</b> có <b>biểu đồ doanh thu từng ngày</b> — rê chuột lên xem được từng ngày một.'],
+   ['moi','Mấy con số chính có thêm <b>mũi tên tăng giảm</b> so với kỳ trước, kèm số của kỳ trước để đối chiếu.'],
+   ['moi','Bảng xếp hạng kênh bán, nhân viên, thương hiệu có <b>thanh dài ngắn</b> — nhìn phát biết ai đang gánh doanh thu.'],
+   ['sua','Tab Báo cáo trên điện thoại không còn bị <b>tràn ngang</b>, hai ô chọn ngày không còn chiếm trọn màn hình.'],
    ['moi','Nhân viên bấm nút Kỹ sư thì <b>phiếu bay thẳng về máy chủ</b> — chủ đọc, duyệt rồi mới chuyển cho kỹ sư.'],
    ['moi','Bảng <b>Có gì mới</b> này — mỗi lần cập nhật sẽ tự hiện một lần cho biết có gì thay đổi.'],
   ]},
@@ -3774,7 +3864,8 @@ function cnVe(ds){
   }).join('<div style="border-top:1px solid var(--line);margin:14px 0"></div>');
 }
 function cnMo(tatCa){
-  $('cnThan').innerHTML=cnVe(tatCa?CAP_NHAT:CAP_NHAT.slice(0,1));
+  try{ ksDoiChieuBanVa() }catch(e){}
+  $('cnThan').innerHTML=cnKhoiVa()+cnVe(tatCa?CAP_NHAT:CAP_NHAT.slice(0,1));
   $('cnNut').innerHTML=(tatCa?'':'<button class="btn2" onclick="cnMo(true)">Xem các bản trước</button>')+
     '<button class="btn" onclick="cnDong()">Đã hiểu, vào làm việc</button>';
   $('dlgCN').showModal();
@@ -3784,8 +3875,9 @@ function cnDong(){
   $('dlgCN').close();
 }
 function cnKiemTra(){
+  try{ ksDoiChieuBanVa() }catch(e){}
   var da=''; try{ da=localStorage.getItem('cn_daxem')||'' }catch(e){}
-  if(da===APP_VER) return;
+  if(da===APP_VER && !ksVuaVa().length) return;
   setTimeout(function(){ cnMo(false) }, 900);
 }
 
@@ -3858,6 +3950,178 @@ async function duyetPhieuNV(i,dung){
     if(o) o.style.opacity='1';
     $('ksErr').innerHTML='<div class="msg er">Không ghi được lên Sheet: '+esc(e.message)+'</div>';
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   BIỂU ĐỒ DOANH THU THEO NGÀY — thêm 09/09/2026
+   ═══════════════════════════════════════════════════════════════════════
+   Bản demo hồi đầu có biểu đồ, lúc áp vào file thật tôi mới chỉ lấy phần
+   khung sườn (thanh bên + thanh trên) mà bỏ sót phần này. Nay bù lại.
+
+   MỘT ĐƯỜNG DUY NHẤT nên không cần bảng chú giải màu — tiêu đề đã nói rõ
+   đang xem cái gì. Nền tô nhạt để mắt bám được vùng, đường kẻ 2px, chấm
+   tròn ở điểm cao nhất và điểm cuối. Rê chuột tới đâu hiện số tới đó.
+   Lưới kẻ để mờ, chữ trục dùng màu chữ phụ — số liệu phải nổi hơn khung.
+   Ngày không bán được đơn nào vẫn giữ chỗ, không bỏ qua, để đường biểu
+   diễn không nói dối về nhịp bán.
+   ═══════════════════════════════════════════════════════════════════════ */
+function gonTien_(n){
+  n=Math.round(n||0);
+  if(n>=1e9) return (n/1e9).toFixed(n>=1e10?0:1).replace('.0','')+' tỉ';
+  if(n>=1e6) return (n/1e6).toFixed(n>=1e7?0:1).replace('.0','')+' tr';
+  if(n>=1e3) return Math.round(n/1e3)+'k';
+  return String(n);
+}
+/* Gom doanh thu theo từng ngày trong kỳ, giữ cả ngày trống */
+function doanhThuTheoNgay_(ds){
+  var m={}, nho='', to='';
+  ds.forEach(function(d){
+    var iso=String(d.iso||''); if(!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return;
+    m[iso]=(m[iso]||0)+(d.tienHang||0);
+    if(!nho||iso<nho) nho=iso; if(!to||iso>to) to=iso;
+  });
+  if(!nho) return [];
+  var ra=[], d0=new Date(nho+'T00:00:00'), d1=new Date(to+'T00:00:00'), an=0;
+  while(d0<=d1 && an++<400){
+    var k=d0.getFullYear()+'-'+('0'+(d0.getMonth()+1)).slice(-2)+'-'+('0'+d0.getDate()).slice(-2);
+    ra.push({ngay:k, tien:m[k]||0});
+    d0.setDate(d0.getDate()+1);
+  }
+  return ra;
+}
+var BD_DL=[];
+function veBieuDo_(ds){
+  BD_DL=doanhThuTheoNgay_(ds);
+  if(BD_DL.length<2) return '';
+  var W=720, H=190, L=48, R=12, T=14, B=26;
+  var w=W-L-R, h=H-T-B;
+  var max=Math.max.apply(null,BD_DL.map(function(x){return x.tien}));
+  if(max<=0) max=1;
+  // trần làm tròn lên cho nhãn trục đọc được số chẵn
+  var buoc=Math.pow(10,Math.floor(Math.log10(max)));
+  var tran=Math.ceil(max/buoc)*buoc; if(tran===max) tran=max*1.1;
+  var x=function(i){ return L + (BD_DL.length===1?w/2:i*w/(BD_DL.length-1)) };
+  var y=function(v){ return T + h - (v/tran)*h };
+
+  var duong=BD_DL.map(function(p,i){return (i?'L':'M')+x(i).toFixed(1)+' '+y(p.tien).toFixed(1)}).join(' ');
+  var nen=duong+' L'+x(BD_DL.length-1).toFixed(1)+' '+(T+h)+' L'+x(0).toFixed(1)+' '+(T+h)+' Z';
+
+  var luoi='', nhanY='';
+  for(var k=0;k<=3;k++){
+    var vy=T+h-(k/3)*h;
+    luoi+='<line class="luoi" x1="'+L+'" y1="'+vy.toFixed(1)+'" x2="'+(L+w)+'" y2="'+vy.toFixed(1)+'" opacity="'+(k?.5:1)+'"/>';
+    nhanY+='<text class="truc" x="'+(L-8)+'" y="'+(vy+3.5).toFixed(1)+'" text-anchor="end">'+gonTien_(tran*k/3)+'</text>';
+  }
+  // nhãn ngày: chỉ vài mốc, tránh chữ chồng lên nhau
+  var buocX=Math.max(1,Math.ceil(BD_DL.length/6)), nhanX='';
+  BD_DL.forEach(function(p,i){
+    if(i%buocX && i!==BD_DL.length-1) return;
+    var t=p.ngay.slice(8)+'/'+p.ngay.slice(5,7);
+    nhanX+='<text class="truc" x="'+x(i).toFixed(1)+'" y="'+(T+h+16)+'" text-anchor="middle">'+t+'</text>';
+  });
+  var iMax=0; BD_DL.forEach(function(p,i){ if(p.tien>BD_DL[iMax].tien) iMax=i });
+  var cham='<circle class="cham" cx="'+x(iMax).toFixed(1)+'" cy="'+y(BD_DL[iMax].tien).toFixed(1)+'" r="4.5"/>'+
+    '<circle class="cham" cx="'+x(BD_DL.length-1).toFixed(1)+'" cy="'+y(BD_DL[BD_DL.length-1].tien).toFixed(1)+'" r="4.5"/>';
+  var nhanMax='<text class="truc" x="'+x(iMax).toFixed(1)+'" y="'+(y(BD_DL[iMax].tien)-10).toFixed(1)+
+    '" text-anchor="middle" style="font-weight:700;fill:var(--tx)">'+gonTien_(BD_DL[iMax].tien)+'</text>';
+
+  var tong=BD_DL.reduce(function(a,p){return a+p.tien},0);
+  var tb=tong/BD_DL.length;
+  return '<div class="bd"><div class="bd-dau"><h2>Doanh thu từng ngày</h2>'+
+    '<span class="sm">'+BD_DL.length+' ngày · cao nhất '+tien(BD_DL[iMax].tien)+'</span></div>'+
+    '<div class="bd-phu">Trung bình <b>'+tien(tb)+'</b> mỗi ngày. Rê chuột lên biểu đồ để xem từng ngày.</div>'+
+    '<div class="bd-boc" id="bdBoc">'+
+    '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" style="height:190px" id="bdSvg" '+
+      'onmousemove="bdRe(event)" onmouseleave="bdThoi()" ontouchmove="bdRe(event)" ontouchend="bdThoi()">'+
+      '<defs><linearGradient id="bdTo" x1="0" y1="0" x2="0" y2="1">'+
+        '<stop offset="0%" stop-color="var(--acc)" stop-opacity=".28"/>'+
+        '<stop offset="100%" stop-color="var(--acc)" stop-opacity="0"/></linearGradient></defs>'+
+      luoi+nhanY+nhanX+
+      '<path d="'+nen+'" fill="url(#bdTo)"/>'+
+      '<path d="'+duong+'" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'+
+      '<line id="bdDoc" x1="0" y1="'+T+'" x2="0" y2="'+(T+h)+'" stroke="var(--acc)" stroke-width="1" opacity="0"/>'+
+      cham+nhanMax+
+    '</svg><div id="bdTroi" class="bd-troi" style="display:none"></div></div></div>';
+}
+function bdRe(e){
+  var svg=$('bdSvg'); if(!svg||!BD_DL.length) return;
+  var r=svg.getBoundingClientRect();
+  if(!r.width) return;                  // tab đang ẩn thì không có gì để chỉ
+  var cx=(e.touches&&e.touches[0]?e.touches[0].clientX:e.clientX)-r.left;
+  var W=720,L=48,R=12,w=W-L-R;
+  var tl=cx/r.width*W;                       // đổi từ pixel màn hình sang toạ độ trong hình
+  var i=Math.round((tl-L)/w*(BD_DL.length-1));
+  i=Math.max(0,Math.min(BD_DL.length-1,i)); if(isNaN(i)) return;
+  var p=BD_DL[i];
+  var xTl=L+(BD_DL.length===1?w/2:i*w/(BD_DL.length-1));
+  var d=$('bdDoc'); if(d){ d.setAttribute('x1',xTl); d.setAttribute('x2',xTl); d.setAttribute('opacity','.55') }
+  var t=$('bdTroi'); if(!t) return;
+  t.style.display='block';
+  t.style.left=(xTl/W*r.width)+'px';
+  t.style.top='24px';
+  t.innerHTML='<b>'+p.ngay.split('-').reverse().join('/')+'</b><br>'+tien(p.tien);
+}
+function bdThoi(){
+  var d=$('bdDoc'); if(d) d.setAttribute('opacity','0');
+  var t=$('bdTroi'); if(t) t.style.display='none';
+}
+/* Huy hiệu tăng/giảm so với kỳ trước — kèm mũi tên và chữ, không chỉ dựa vào màu */
+function huyHieu_(nay,truoc){
+  if(!truoc) return '';
+  var pt=(nay-truoc)/Math.abs(truoc)*100;
+  if(Math.abs(pt)<0.5) return '<span class="delta bang">→ đi ngang</span>';
+  var len=pt>0;
+  return '<span class="delta '+(len?'len':'xuong')+'">'+(len?'▲':'▼')+' '+
+    Math.abs(pt).toFixed(pt>=10||pt<=-10?0:1)+'%</span>';
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   VÒNG ĐỜI PHIẾU GÓP Ý — thêm 09/09/2026
+   ═══════════════════════════════════════════════════════════════════════
+   Chủ yêu cầu: vá xong thì phải báo lại trên bảng "Có gì mới", và phiếu
+   gốc còn giữ thêm BA NGÀY rồi mới tự xoá — phòng khi bản vá chưa chuẩn,
+   còn đọc lại đúng lời góp ý ban đầu để vá cho trúng.
+
+   CÁCH NỐI PHIẾU VỚI BẢN VÁ: mỗi phiếu có một dấu thời gian riêng (luc).
+   Bản vá nào chữa phiếu nào thì ghi dấu thời gian đó vào ô 'vaPhieu' của
+   mục cập nhật tương ứng trong CAP_NHAT. Máy tự dò, tự đánh dấu đã vá, tự
+   đếm ngày, tự dọn. Không cần ai bấm gì.
+   ═══════════════════════════════════════════════════════════════════════ */
+var GIU_NGAY_VA=3;
+function ksDoiChieuBanVa(){
+  var tra={};
+  CAP_NHAT.forEach(function(b){ (b.vaPhieu||[]).forEach(function(l){ tra[String(l).trim()]=b }) });
+  var nay=Date.now(), doi=false;
+  KS_PHIEU.forEach(function(p){
+    var b=tra[String(p.luc||'').trim()];
+    if(b && !p.daVa){ p.daVa=nay; p.vaBan=b.ban; p.vaTen=b.ten; doi=true }
+  });
+  var truoc=KS_PHIEU.length;
+  KS_PHIEU=KS_PHIEU.filter(function(p){
+    return !(p.daVa && (nay-p.daVa) > GIU_NGAY_VA*86400000);
+  });
+  if(doi || KS_PHIEU.length!==truoc) ksLuu();
+}
+function ksVuaVa(){ return KS_PHIEU.filter(function(p){return p.daVa}) }
+function ksConGiu_(p){
+  var het=p.daVa + GIU_NGAY_VA*86400000;
+  var con=Math.ceil((het-Date.now())/86400000);
+  return con>0?con:0;
+}
+function cnKhoiVa(){
+  var ds=ksVuaVa(); if(!ds.length) return '';
+  return '<div style="background:var(--okBg);border:1px solid var(--ok);border-radius:14px;'+
+    'padding:13px;margin-bottom:16px">'+
+    '<div style="font-size:10.5px;letter-spacing:1.2px;font-weight:700;color:var(--ok);margin-bottom:8px">'+
+      'ĐÃ VÁ THEO GÓP Ý CỦA ANH/CHỊ</div>'+
+    ds.map(function(p){
+      var con=ksConGiu_(p);
+      return '<div style="padding:6px 0;border-top:1px solid color-mix(in srgb, var(--ok) 25%, transparent)">'+
+        '<div class="sm">Anh/chị đã báo: <b>"'+esc(p.noi.split('\n')[0].slice(0,140))+'"</b></div>'+
+        '<div class="sm" style="opacity:.75">Đã sửa ở bản '+esc(p.vaBan||'')+
+        ' · <b>còn giữ '+con+' ngày</b> để anh/chị thử lại. Nếu vẫn chưa đúng thì báo lại ngay, '+
+        'kỹ sư còn đọc được nguyên văn góp ý này. Quá '+GIU_NGAY_VA+' ngày máy tự dọn.</div></div>';
+    }).join('')+'</div>';
 }
 </script><div style="position:fixed;right:8px;bottom:4px;font-size:10px;opacity:.35;pointer-events:none;z-index:99">v1.0-zaka</div>
 <button id="ksNut" onclick="ksMo()" title="Báo cho kỹ sư một chỗ đang có vấn đề">🛠 Kỹ sư</button>

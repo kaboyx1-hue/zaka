@@ -344,6 +344,18 @@ body.ks-chi *{cursor:crosshair!important}
 #ksBang{white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
   background:var(--c2);border:1px solid var(--line);border-radius:10px;padding:10px;
   max-height:200px;overflow:auto;margin-top:8px}
+/* SỬA 09/09/2026 — CHẶN TRÀN NGANG TRÊN ĐIỆN THOẠI.
+   Thanh tab có bảy mục, không nhét vừa bề ngang điện thoại, mà lại đẩy cả
+   trang lệch sang phải thay vì tự cuộn trong thanh. Tab Danh bạ cũng bị đẩy
+   rộng ra 416px trên màn 390px, phải vuốt ngang mới đọc hết. Nay khoá bề
+   ngang từ khung ngoài rồi cho từng thẻ tự cuộn bên trong nếu bảng quá rộng. */
+@media(max-width:760px){
+  .app-shell,.main-col,main,section[id^="pg-"]{min-width:0;max-width:100%}
+  main{overflow-x:hidden}
+  .side{min-width:0}
+  .side nav{max-width:100%;-webkit-overflow-scrolling:touch}
+  .card,.don{overflow-x:auto}
+}
 </style></head><body>
 
 <div class="demo" id="mangBar"></div>
@@ -759,7 +771,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260909h';
+var APP_VER='20260909i';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -4001,7 +4013,9 @@ function ksXemPhieu(){
           ' · màn hình <b>'+esc(x.man)+'</b></div>'+
           '<div style="opacity:.7">Chỗ chỉ: '+esc(x.cho)+'</div>'+
           '<div style="opacity:.7">Kèm '+x.ma.length+' đoạn bên trong'+
-            (x.loiMay.length?' và '+x.loiMay.length+' lỗi máy tự ghi':'')+'</div></div>'+
+            (x.loiMay.length?' và '+x.loiMay.length+' lỗi máy tự ghi':'')+'</div>'+
+          (x.daVa?'<div style="color:var(--ok);margin-top:4px">✓ Đã vá ở bản '+esc(x.vaBan||'')+
+            ' — còn giữ '+ksConGiu_(x)+' ngày để đối chiếu, sau đó máy tự dọn</div>':'')+'</div>'+
           '<button class="mini" style="flex:none" onclick="ksXoaPhieu('+i+')">Bỏ</button></div></div>';
       }).join('')
     : '<div class="empty">Chưa có phiếu nào.</div>';
@@ -4049,7 +4063,10 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
- {ban:'20260909h', ngay:'09/09/2026', ten:'Dọn hàng trùng & Kỹ sư hệ thống',
+ {ban:'20260909i', ngay:'09/09/2026', ten:'Dọn hàng trùng & Kỹ sư hệ thống',
+  /* vaPhieu: dán dấu thời gian của những phiếu mà bản này đã chữa xong.
+     Máy tự đánh dấu đã vá, báo lên bảng này, giữ 3 ngày rồi tự dọn. */
+  vaPhieu:[],
   muc:[
    ['moi','Trang <b>Cần làm</b> — mở phần mềm lên là thấy ngay hôm nay cần làm gì, xếp sẵn thứ tự, mỗi việc một nút.'],
    ['moi','Dọn món trùng theo kiểu <b>hỏi từng câu một</b>: chỉ nhìn hai món rồi trả lời cùng một món hay khác nhau. Có nút <b>Hoàn tác</b> nếu bấm nhầm.'],
@@ -4060,6 +4077,10 @@ var CAP_NHAT=[
    ['sua','Bấm tab không còn bị văng về trang chủ trên máy cảm ứng.'],
    ['nhanh','Đổi tab <b>phản hồi tức thì</b>, không còn đứng hình một hai giây. Trang Cần làm nhanh hơn gấp ba.'],
    ['dep','Hai máy dùng chung một bộ màu. Chế độ sáng không còn chữ tối trên nền tối.'],
+   ['moi','Tab <b>Báo cáo</b> có <b>biểu đồ doanh thu từng ngày</b> — rê chuột lên xem được từng ngày một.'],
+   ['moi','Mấy con số chính có thêm <b>mũi tên tăng giảm</b> so với kỳ trước, kèm số của kỳ trước để đối chiếu.'],
+   ['moi','Bảng xếp hạng kênh bán, nhân viên, thương hiệu có <b>thanh dài ngắn</b> — nhìn phát biết ai đang gánh doanh thu.'],
+   ['sua','Tab Báo cáo trên điện thoại không còn bị <b>tràn ngang</b>, hai ô chọn ngày không còn chiếm trọn màn hình.'],
    ['moi','Nhân viên bấm nút Kỹ sư thì <b>phiếu bay thẳng về máy chủ</b> — chủ đọc, duyệt rồi mới chuyển cho kỹ sư.'],
    ['moi','Bảng <b>Có gì mới</b> này — mỗi lần cập nhật sẽ tự hiện một lần cho biết có gì thay đổi.'],
   ]},
@@ -4091,7 +4112,8 @@ function cnVe(ds){
   }).join('<div style="border-top:1px solid var(--line);margin:14px 0"></div>');
 }
 function cnMo(tatCa){
-  $('cnThan').innerHTML=cnVe(tatCa?CAP_NHAT:CAP_NHAT.slice(0,1));
+  try{ ksDoiChieuBanVa() }catch(e){}
+  $('cnThan').innerHTML=cnKhoiVa()+cnVe(tatCa?CAP_NHAT:CAP_NHAT.slice(0,1));
   $('cnNut').innerHTML=(tatCa?'':'<button class="btn2" onclick="cnMo(true)">Xem các bản trước</button>')+
     '<button class="btn" onclick="cnDong()">Đã hiểu, vào làm việc</button>';
   $('dlgCN').showModal();
@@ -4101,9 +4123,59 @@ function cnDong(){
   $('dlgCN').close();
 }
 function cnKiemTra(){
+  try{ ksDoiChieuBanVa() }catch(e){}
   var da=''; try{ da=localStorage.getItem('cn_daxem')||'' }catch(e){}
-  if(da===APP_VER) return;
+  if(da===APP_VER && !ksVuaVa().length) return;
   setTimeout(function(){ cnMo(false) }, 900);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   VÒNG ĐỜI PHIẾU GÓP Ý — thêm 09/09/2026
+   ═══════════════════════════════════════════════════════════════════════
+   Chủ yêu cầu: vá xong thì phải báo lại trên bảng "Có gì mới", và phiếu
+   gốc còn giữ thêm BA NGÀY rồi mới tự xoá — phòng khi bản vá chưa chuẩn,
+   còn đọc lại đúng lời góp ý ban đầu để vá cho trúng.
+
+   CÁCH NỐI PHIẾU VỚI BẢN VÁ: mỗi phiếu có một dấu thời gian riêng (luc).
+   Bản vá nào chữa phiếu nào thì ghi dấu thời gian đó vào ô 'vaPhieu' của
+   mục cập nhật tương ứng trong CAP_NHAT. Máy tự dò, tự đánh dấu đã vá, tự
+   đếm ngày, tự dọn. Không cần ai bấm gì.
+   ═══════════════════════════════════════════════════════════════════════ */
+var GIU_NGAY_VA=3;
+function ksDoiChieuBanVa(){
+  var tra={};
+  CAP_NHAT.forEach(function(b){ (b.vaPhieu||[]).forEach(function(l){ tra[String(l).trim()]=b }) });
+  var nay=Date.now(), doi=false;
+  KS_PHIEU.forEach(function(p){
+    var b=tra[String(p.luc||'').trim()];
+    if(b && !p.daVa){ p.daVa=nay; p.vaBan=b.ban; p.vaTen=b.ten; doi=true }
+  });
+  var truoc=KS_PHIEU.length;
+  KS_PHIEU=KS_PHIEU.filter(function(p){
+    return !(p.daVa && (nay-p.daVa) > GIU_NGAY_VA*86400000);
+  });
+  if(doi || KS_PHIEU.length!==truoc) ksLuu();
+}
+function ksVuaVa(){ return KS_PHIEU.filter(function(p){return p.daVa}) }
+function ksConGiu_(p){
+  var het=p.daVa + GIU_NGAY_VA*86400000;
+  var con=Math.ceil((het-Date.now())/86400000);
+  return con>0?con:0;
+}
+function cnKhoiVa(){
+  var ds=ksVuaVa(); if(!ds.length) return '';
+  return '<div style="background:var(--okBg);border:1px solid var(--ok);border-radius:14px;'+
+    'padding:13px;margin-bottom:16px">'+
+    '<div style="font-size:10.5px;letter-spacing:1.2px;font-weight:700;color:var(--ok);margin-bottom:8px">'+
+      'ĐÃ VÁ THEO GÓP Ý CỦA ANH/CHỊ</div>'+
+    ds.map(function(p){
+      var con=ksConGiu_(p);
+      return '<div style="padding:6px 0;border-top:1px solid color-mix(in srgb, var(--ok) 25%, transparent)">'+
+        '<div class="sm">Anh/chị đã báo: <b>"'+esc(p.noi.split('\n')[0].slice(0,140))+'"</b></div>'+
+        '<div class="sm" style="opacity:.75">Đã sửa ở bản '+esc(p.vaBan||'')+
+        ' · <b>còn giữ '+con+' ngày</b> để anh/chị thử lại. Nếu vẫn chưa đúng thì báo lại ngay, '+
+        'kỹ sư còn đọc được nguyên văn góp ý này. Quá '+GIU_NGAY_VA+' ngày máy tự dọn.</div></div>';
+    }).join('')+'</div>';
 }
 </script>
 <div id="inKhung"></div>
