@@ -29,6 +29,15 @@ input,select{font:inherit;width:100%;padding:11px 12px;border-radius:14px;border
 input:focus,select:focus{outline:none;border-color:var(--acc)}
 label{display:block;font-size:12.5px;color:var(--tx2);margin:0 0 6px}
 .row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1;min-width:150px}.mt{margin-top:12px}
+/* NÚT ✕ Ở GÓC TRÊN MỖI BẢNG — thêm 10/09/2026 theo phiếu 30 của chủ.
+   Trước đây muốn thoát phải kéo xuống cuối tìm nút Huỷ, hoặc bấm Esc mà
+   không ai biết. Nay bảng nào cũng có ✕ ngay góc phải trên. */
+dialog{position:relative}
+.dlgX{position:absolute;top:10px;right:12px;width:34px;height:34px;flex:none;padding:0;
+  border-radius:50%;border:1px solid var(--line);background:var(--c2);color:var(--tx2);
+  font-size:16px;line-height:1;cursor:pointer;z-index:5}
+.dlgX:hover{background:var(--bad);color:#fff;border-color:var(--bad)}
+dialog>h2:first-of-type{padding-right:44px}
 header{background:var(--brand);color:var(--brandTx);border-bottom:1px solid var(--line);padding:14px 16px;box-shadow:var(--shadow)}
 header b{font-size:17px}header div{font-size:12.5px;color:var(--brandTx);opacity:.78;margin-top:2px}
 nav{display:flex;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:19;overflow-x:auto}
@@ -279,6 +288,7 @@ body.ks-chi *{cursor:crosshair!important}
 </section>
 
 <dialog id="dlgHoi" style="max-width:620px">
+  <button class="dlgX" onclick="document.getElementById('dlgHoi').close()" title="Đóng">✕</button>
   <div class="sm" id="hoiDem" style="color:var(--tx2)"></div>
   <h2 style="margin:6px 0 4px" id="hoiTieuDe"></h2>
   <div class="sm" id="hoiPhu" style="margin-bottom:12px"></div>
@@ -308,6 +318,7 @@ body.ks-chi *{cursor:crosshair!important}
 <section id="pg-bc" class="hide"><div id="bc"></div></section>
 
 <section id="pg-so" class="hide">
+  <div id="soMsg"></div>
   <div class="card"><input id="fso" placeholder="Tìm mã đơn, khách, nhân viên…" oninput="veSo()">
     <div class="row mt" style="margin-top:8px">
       <select id="locKenhSo" onchange="veSo()"></select>
@@ -480,6 +491,7 @@ body.ks-chi *{cursor:crosshair!important}
 </div>
 
 <dialog id="dlgSP">
+  <button class="dlgX" onclick="document.getElementById('dlgSP').close()" title="Đóng">✕</button>
   <h2 style="margin-top:0" id="spTitle">Thêm sản phẩm mới</h2>
   <label>Tên sản phẩm</label><input id="spTen">
   <div class="row mt"><div><label>Nhóm</label><select id="spNhom"></select></div>
@@ -493,18 +505,21 @@ body.ks-chi *{cursor:crosshair!important}
 </dialog>
 
 <dialog id="dlgVon">
-  <h2 style="margin-top:0">Sửa giá vốn cho riêng đơn này</h2>
+  <button class="dlgX" onclick="document.getElementById('dlgVon').close()" title="Đóng">✕</button>
+  <h2 style="margin-top:0">Điền giá vốn</h2>
   <div class="sm" id="vInfo" style="margin-bottom:12px"></div>
   <div id="vDong"></div>
-  <div class="mt"><label>Lý do sửa (bắt buộc)</label><input id="vLyDo" placeholder="VD: nhập nhầm lô, hàng khuyến mãi…"></div>
+  <div class="mt"><label>Điền xong thì áp dụng tới đâu?</label><div id="vPham"></div></div>
+  <div class="mt"><label>Lý do (bắt buộc — để sau còn tra lại)</label><input id="vLyDo" placeholder="VD: giá nhập lô tháng 9, hàng khuyến mãi…"></div>
   <div id="vErr"></div>
   <div class="row mt">
     <button class="btn2" onclick="document.getElementById('dlgVon').close()">Huỷ</button>
-    <button class="btn" style="width:auto" onclick="luuVon()">Lưu — chỉ đơn này</button>
+    <button class="btn" style="width:auto" onclick="luuVon()">Lưu giá vốn</button>
   </div>
 </dialog>
 
 <dialog id="dlgSuaDon" style="max-width:560px">
+  <button class="dlgX" onclick="document.getElementById('dlgSuaDon').close()" title="Đóng">✕</button>
   <h2 style="margin-top:0">Sửa đơn <span id="sdMa"></span></h2>
   <div class="sm" id="sdInfo" style="margin-bottom:10px"></div>
   <div class="row"><div><label>Khách</label><input id="sdKhach"></div>
@@ -531,6 +546,7 @@ body.ks-chi *{cursor:crosshair!important}
 </dialog>
 
 <dialog id="dlgGR" style="max-width:720px">
+  <button class="dlgX" onclick="document.getElementById('dlgGR').close()" title="Đóng">✕</button>
   <h2 style="margin-top:0">Duyệt giá riêng đề xuất</h2>
   <div class="sm" id="grDan"></div>
   <div class="row mt" style="gap:6px">
@@ -545,6 +561,7 @@ body.ks-chi *{cursor:crosshair!important}
   </div>
 </dialog>
 <dialog id="dlgGopSP" style="max-width:520px">
+  <button class="dlgX" onclick="document.getElementById('dlgGopSP').close()" title="Đóng">✕</button>
   <h2 style="margin-top:0">Gộp <span id="gopTenPhu"></span> vào sản phẩm khác</h2>
   <div class="sm" style="margin-bottom:10px">
     Dùng khi 2 sản phẩm thực ra là MỘT món nhưng tên gõ khác nhau (thừa/thiếu chữ, sai chính tả…)
@@ -595,7 +612,7 @@ if(!BANGGIA.length) setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260910d';
+var APP_VER='20260910g';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1119,6 +1136,8 @@ function veLam(){
         return '<div class="sm" style="display:flex;justify-content:space-between;align-items:center;gap:8px;'+
           'padding:7px 0;border-bottom:1px solid var(--line)">'+
           '<span>Đã gom <b>'+esc(g.tenPhu)+'</b> chung với <b>'+esc(g.tenChinh)+'</b>'+
+            (g.daXoa?' <span class="tag" style="background:var(--okBg);color:var(--ok)">đã dọn khỏi bảng giá</span>'
+                    :' <span class="tag w">còn giữ lại trong bảng giá</span>')+
             (g.lyDo?'<br><span style="opacity:.7">Lý do: '+esc(g.lyDo)+'</span>':'')+'</span>'+
           '<button class="mini" style="flex:none" onclick="hoanTacGom('+vt+')">Hoàn tác</button></div>';
       }).join('')+'</div>':'');
@@ -1225,32 +1244,57 @@ function gomTheoYToi(){
   var tenMoi=($('tenGiuLai')&&$('tenGiuLai').value||'').trim();
   var lyDo=($('lyDoGom')&&$('lyDoGom').value||'').trim();
   if(tenMoi && GIA[chinh]) GIA[chinh].ten=tenMoi;
-  NHAT_KY_GOM.push({phu:phu,chinh:chinh,lyDo:lyDo,
-    tenPhu:(GIA[phu]&&GIA[phu].ten)||phu, tenChinh:(GIA[chinh]&&GIA[chinh].ten)||chinh});
-  if(lyDo){ LY_DO_GOM[phu]={chinh:chinh,lyDo:lyDo,luc:nowStr()}; set('lydogom',LY_DO_GOM) }
-  ALIAS[phu]=chinh;
-  if(GIA[phu]){ GIA[phu].ngung=true; GIA[phu].gopVao=chinh }
-  set('alias',ALIAS); set('gia',GIA);
-  tinhLaiToanBoSO();
+  gomVaDon_(phu, chinh, lyDo);
   HOI_I++;
   if(HOI_I<HOI_DS.length) veCauHoi(); else dongHoi();
+}
+/* Chấm điểm để chọn giữ lại món nào — sửa 10/09/2026.
+   Ưu tiên cao nhất là món CHỦ ĐÃ TỰ TAY ĐIỀN GIÁ VỐN (cờ suaTay do ô điền
+   nhanh ở tab Cảnh báo đặt). Chủ đã bỏ công tra và gõ số đó, gộp mà vứt đi
+   thì phí công. Sau đó mới tới có giá vốn (dù từ nguồn nào), rồi tới bán
+   được nhiều đơn hơn. */
+function diemGiuLai_(k){
+  var p=GIA[k]||{};
+  return (p.suaTay&&p.von?4000000:0) + (p.von?2000000:0) + dauVetBan_(k).soDon;
+}
+/* ═══ GỘP RỒI DỌN LUÔN MÃ THỪA — thêm 10/09/2026 theo yêu cầu của chủ ═══
+   Chủ muốn: "sát nhập chúng lại rồi xoá hẳn sản phẩm thừa ra", chứ không để
+   nó nằm lại trong bảng giá làm rối mắt.
+
+   VÌ SAO XOÁ ĐƯỢC MÀ KHÔNG MẤT DỮ LIỆU: đơn cũ trên Google Sheet giữ NGUYÊN
+   mã đã bán, không sửa một chữ — đó là luật cứng của hệ thống, lịch sử bán
+   hàng không được viết lại. Nhưng mọi chỗ tính toán đều tra qua skuChinh(),
+   mà bảng ánh xạ ALIAS sống độc lập với bảng giá. Nên xoá dòng thừa khỏi
+   bảng giá xong, đơn cũ vẫn tra được giá vốn qua mã chính như thường.
+   Đây cũng đúng luật an toàn sẵn có ở xoaSP(): đã gộp thì xoá mới an toàn.
+
+   Hoàn tác thì trả lại y nguyên cả dòng bảng giá đã xoá. */
+function gomVaDon_(phu, chinh, lyDo){
+  var banCu = GIA[phu] ? JSON.parse(JSON.stringify(GIA[phu])) : null;
+  var g={phu:phu, chinh:chinh, lyDo:lyDo||'',
+         tenPhu:(GIA[phu]&&GIA[phu].ten)||phu, tenChinh:(GIA[chinh]&&GIA[chinh].ten)||chinh,
+         banCu:banCu, daXoa:false};
+  ALIAS[phu]=chinh;
+  if(GIA[phu]){ GIA[phu].ngung=true; GIA[phu].gopVao=chinh }
+  /* Xoá hẳn khi mã thừa KHÔNG còn giá trị riêng nào đáng giữ: không có giá vốn
+     chủ tự điền, và không có giá bán khác mã chính. Còn thứ đáng giữ thì chỉ
+     ẩn đi như cũ, để chủ tự xem lại rồi quyết. */
+  var pPhu=GIA[phu]||{}, pChinh=GIA[chinh]||{};
+  var dangGiu = (pPhu.suaTay && pPhu.von) || (pPhu.gb && pChinh.gb && pPhu.gb!==pChinh.gb);
+  if(!dangGiu && GIA[phu]){ delete GIA[phu]; g.daXoa=true }
+  NHAT_KY_GOM.push(g);
+  if(lyDo){ LY_DO_GOM[phu]={chinh:chinh,lyDo:lyDo,luc:nowStr()}; set('lydogom',LY_DO_GOM) }
+  set('alias',ALIAS); set('gia',GIA);
+  tinhLaiToanBoSO();
+  return g;
 }
 function traLoiGom(cungMon){
   var c=HOI_DS[HOI_I];
   if(cungMon && c){
-    // Giữ lại cái NÀO: ưu tiên cái đã điền giá nhập (để đơn cũ hết treo),
-    // rồi tới cái bán được nhiều đơn hơn. Chủ không phải chọn.
     var a=c[0], b=c[1];
-    var chinh=(GIA[a]&&GIA[a].von?1:0) >= (GIA[b]&&GIA[b].von?1:0) ? a : b;
-    if((GIA[a]&&GIA[a].von?1:0)===(GIA[b]&&GIA[b].von?1:0))
-      chinh = dauVetBan_(a).soDon>=dauVetBan_(b).soDon ? a : b;
+    var chinh = diemGiuLai_(a)>=diemGiuLai_(b) ? a : b;
     var phu = chinh===a ? b : a;
-    NHAT_KY_GOM.push({phu:phu,chinh:chinh,
-      tenPhu:(GIA[phu]&&GIA[phu].ten)||phu, tenChinh:(GIA[chinh]&&GIA[chinh].ten)||chinh});
-    ALIAS[phu]=chinh;
-    if(GIA[phu]){ GIA[phu].ngung=true; GIA[phu].gopVao=chinh }
-    set('alias',ALIAS); set('gia',GIA);
-    tinhLaiToanBoSO();
+    gomVaDon_(phu, chinh);
   }
   HOI_I++;
   if(HOI_I<HOI_DS.length) veCauHoi(); else dongHoi();
@@ -1270,6 +1314,7 @@ function hoanTacGom(i){
   if(!confirm('Tách "'+g.tenPhu+'" ra khỏi "'+g.tenChinh+'" như cũ?')) return;
   delete ALIAS[g.phu];
   if(LY_DO_GOM[g.phu]){ delete LY_DO_GOM[g.phu]; set('lydogom',LY_DO_GOM) }
+  if(g.daXoa && g.banCu){ GIA[g.phu]=JSON.parse(JSON.stringify(g.banCu)) }  // dựng lại y nguyên dòng đã xoá
   if(GIA[g.phu]){ GIA[g.phu].ngung=false; delete GIA[g.phu].gopVao }
   set('alias',ALIAS); set('gia',GIA);
   tinhLaiToanBoSO();
@@ -1350,22 +1395,22 @@ function thucHienGop(khac, chinh){
     '\n\nCác đơn cũ dùng mã này vẫn giữ nguyên trên Google Sheet — CHỈ gộp chung cách TÍNH GIÁ VỐN và '+
     'HIỂN THỊ báo cáo (lãi/lỗ), KHÔNG đụng gì tới giá bán — mã này vẫn bán bình thường cho nhân viên với '+
     'đúng giá bán riêng của nó (giá có thể khác mã chính, tuỳ khách/kênh).\n\n'+
-    'Mã bị gộp chỉ ẩn khỏi danh sách "đang bán" ở MÁY QUẢN LÝ cho đỡ rối mắt (xem lại trong mục '+
-    '"Hàng ngừng bán") — không xoá dữ liệu, không ảnh hưởng gì tới nhân viên.'))
+    'Mã thừa sẽ được DỌN KHỎI BẢNG GIÁ cho gọn. Mã nào có giá vốn bạn tự tay điền, hoặc có giá bán '+
+    'khác mã chính, thì được giữ lại và chỉ ẩn đi (xem trong mục "Hàng ngừng bán").\n\n'+
+    'Đơn hàng cũ KHÔNG bị sửa. Gom nhầm thì bấm Hoàn tác ở tab Cần làm, mọi thứ về y như cũ.'))
     return false;
-  khac.forEach(function(k){
-    ALIAS[k]=chinh;
-    // ngung=true chỉ để ẨN KHỎI DANH SÁCH "ĐANG BÁN" của máy quản lý cho đỡ rối —
-    // goiGia() đã có ngoại lệ riêng cho mã có gopVao nên vẫn phát bán bình thường
-    // cho nhân viên với đúng giá bán của chính nó, không bị gộp giá bán vào mã chính.
-    if(GIA[k]){ GIA[k].ngung=true; GIA[k].gopVao=chinh }
-  });
-  set('alias',ALIAS); set('gia',GIA);
-  tinhLaiToanBoSO();
-  veCB(); veSo(); veBC(); veGia(); vePhat();
-  bao('inMsg','Đã gộp '+khac.length+' mã vào <b>'+esc(chinh)+'</b> — chỉ dùng chung giá vốn/báo cáo. '+
-    'Mã cũ vẫn bán bình thường với giá bán riêng (đã ẩn khỏi danh sách "đang bán" ở máy quản lý cho đỡ rối, '+
-    'xem lại ở "Hàng ngừng bán"). Doanh thu/lợi nhuận đã tính lại theo nhóm gộp.','ok');
+  /* SỬA 10/09/2026 — đi chung một đường với gomVaDon_ để mã thừa nào không còn
+     giữ thứ gì riêng thì DỌN HẲN khỏi bảng giá, đúng ý chủ. Mã nào còn giá vốn
+     chủ tự tay điền, hoặc còn giá bán khác mã chính, thì vẫn chỉ ẩn đi. */
+  var daXoa=0;
+  khac.forEach(function(k){ if(gomVaDon_(k, chinh).daXoa) daXoa++ });
+  veCB(); veSo(); veBC(); veGia(); vePhat(); veLam();
+  bao('inMsg','Đã gộp <b>'+khac.length+'</b> mã vào <b>'+esc(chinh)+'</b> — dùng chung giá vốn và báo cáo. '+
+    (daXoa?('Đã <b>dọn hẳn '+daXoa+' mã thừa</b> khỏi bảng giá. '):'')+
+    ((khac.length-daXoa)?('Còn '+(khac.length-daXoa)+' mã được giữ lại (vì có giá vốn bạn tự điền hoặc có giá bán riêng) — '+
+      'xem ở mục "Hàng ngừng bán". '):'')+
+    'Đơn cũ trên Google Sheet không sửa một chữ nào; lãi/lỗ đã tính lại theo nhóm gộp. '+
+    'Gom nhầm thì bấm <b>Hoàn tác</b> ở tab Cần làm.','ok');
   return true;
 }
 var GOP_PHU=null;
@@ -2560,14 +2605,42 @@ var maDangSua=null;
 function moVon(ma){
   var d=SO.filter(function(x){return x.ma===ma})[0]; if(!d)return;
   maDangSua=ma;
-  $('vInfo').innerHTML='Đơn <b>'+esc(d.ma)+'</b> · '+esc(d.ngay)+' · '+esc(d.khach)+
-    '<br>Sửa ở đây <b>chỉ ảnh hưởng đơn này</b>. Các đơn khác giữ nguyên.'+
-    '<br><span class="sm">Lưu xong sẽ hỏi có muốn cập nhật luôn vào bảng giá cho các đơn sau không.</span>';
+  /* SỬA 10/09/2026 — phiếu 28 & 29 của chủ.
+     Chủ nói đúng: nút ghi "Lưu — chỉ đơn này" trong khi ý chủ là điền một chỗ
+     rồi mọi chỗ khác ăn theo. Nay bảng này nói thẳng cái sẽ xảy ra, và cho chủ
+     chọn phạm vi ngay trước khi lưu, thay vì lưu xong mới hỏi bằng hộp thoại
+     xám của trình duyệt.
+     PHẠM VI RỘNG chỉ đụng những đơn ĐANG THIẾU giá vốn (chưa từng có số) —
+     đơn nào đã có giá vốn thật thì giữ nguyên, vì đó là bản chụp lúc bán,
+     luật cứng của hệ thống. */
+  $('vInfo').innerHTML='Đơn <b>'+esc(d.ma)+'</b> · '+esc(d.ngay)+' · '+esc(d.khach);
   $('vDong').innerHTML=d.dong.map(function(x,i){
+    var lan=demDonThieuVon_(x.sku);
     return '<div style="margin-bottom:9px"><label>'+esc(x.ten)+' — '+x.sl+' '+esc(x.dv)+'</label>'+
-      '<input id="v_'+i+'" inputmode="numeric" value="'+(x.von||0).toLocaleString('vi-VN')+'" oninput="dinhDangTien(this)"></div>'}).join('');
+      '<input id="v_'+i+'" inputmode="numeric" value="'+(x.von||0).toLocaleString('vi-VN')+'" oninput="dinhDangTien(this)">'+
+      (lan>1?'<div class="sm" style="opacity:.75;margin-top:3px">Món này còn <b>'+(lan-1)+
+        ' đơn khác</b> cũng đang thiếu giá vốn.</div>':'')+'</div>'}).join('');
+  $('vPham').innerHTML=
+    '<label style="display:flex;gap:9px;align-items:flex-start;cursor:pointer;padding:9px;border-radius:12px;background:var(--c2)">'+
+      '<input type="radio" name="vPhamVi" value="all" checked style="width:18px;height:18px;flex:none;margin:3px 0 0">'+
+      '<span style="min-width:0"><b>Điền một lần, dùng cho mọi nơi</b> <span class="tag" style="background:var(--okBg);color:var(--ok)">nên chọn</span>'+
+      '<div class="sm">Ghi vào <b>bảng giá</b>, và điền luôn cho <b>mọi đơn khác đang thiếu giá vốn</b> của cùng món. '+
+      'Đơn nào đã có giá vốn thật thì không đụng tới.</div></span></label>'+
+    '<label style="display:flex;gap:9px;align-items:flex-start;cursor:pointer;padding:9px;border-radius:12px;margin-top:7px">'+
+      '<input type="radio" name="vPhamVi" value="one" style="width:18px;height:18px;flex:none;margin:3px 0 0">'+
+      '<span style="min-width:0"><b>Chỉ riêng đơn này</b>'+
+      '<div class="sm">Dùng khi lô hàng của riêng đơn này có giá khác thường — hàng khuyến mãi, nhập nhầm lô.</div></span></label>';
   $('vLyDo').value=''; $('vErr').innerHTML='';
   $('dlgVon').showModal();
+}
+/* Đếm xem món này còn bao nhiêu đơn đang treo vì thiếu giá vốn (tính cả mã đã gộp). */
+function demDonThieuVon_(sku){
+  var c=skuChinh(sku), n=0;
+  SO.forEach(function(d){
+    if(!d.thieuVon) return;
+    (d.dong||[]).forEach(function(x){ if(skuChinh(x.sku)===c && !x.von) n++ });
+  });
+  return n;
 }
 function luuVon(){
   var d=SO.filter(function(x){return x.ma===maDangSua})[0]; if(!d)return;
@@ -2585,8 +2658,45 @@ function luuVon(){
   });
   d.von=von; d.lai=tinhLaiDon(d,von); d.thieuVon=false;
   d.suaVon={luc:nowStr(),lyDo:ly,cu:cu,moi:von};
-  set('so',SO); $('dlgVon').close(); veSo(); veBC(); veCB(); nhanCB(); daySuaVon();
-  if(doi.length) setTimeout(function(){ hoiVaoBang(doi,ly) },250);
+
+  /* SỬA 10/09/2026 — phiếu 28 & 29. Chủ chọn phạm vi ngay trên bảng. */
+  var pv=document.querySelector('input[name=vPhamVi]:checked');
+  var rong = !pv || pv.value==='all';
+  var lanToa = 0;
+  if(rong && doi.length){
+    // 1) ghi vào bảng giá
+    doi.forEach(function(x){
+      var p=GIA[x.sku]; if(!p)return;
+      p[x.truong]=x.moi; p.moi=false; p.suaTay=true; p.vonLuc=nowStr(); p.vonLyDo=ly||'';
+    });
+    set('gia',GIA);
+    // 2) điền cho MỌI ĐƠN KHÁC ĐANG THIẾU giá vốn của cùng món.
+    //    KHÔNG đụng đơn đã có giá vốn thật — đó là bản chụp lúc bán.
+    var bang={}; doi.forEach(function(x){ bang[skuChinh(x.sku)]=x.moi });
+    SO.forEach(function(k){
+      if(k.ma===d.ma || !k.thieuVon) return;
+      var doiGi=false;
+      (k.dong||[]).forEach(function(x){
+        var v=bang[skuChinh(x.sku)];
+        if(!v || x.von) return;                       // chỉ điền chỗ đang trống
+        x.von=v; x.tongVon=v*x.sl; x.lai=x.thanhTien-v*x.sl; doiGi=true;
+      });
+      if(!doiGi) return;
+      var tong=0, duNo=true;
+      (k.dong||[]).forEach(function(x){ tong+=(x.von||0)*x.sl; if(!x.von) duNo=false });
+      k.von=tong; k.lai=tinhLaiDon(k,tong);
+      if(duNo){ k.thieuVon=false; lanToa++ }
+    });
+  }
+
+  set('so',SO); $('dlgVon').close(); veSo(); veBC(); veCB(); veGia(); vePhat(); nhanCB(); daySuaVon();
+  if(rong){
+    bao('soMsg','Đã lưu giá vốn cho đơn <b>'+esc(d.ma)+'</b>, ghi vào <b>bảng giá</b>'+
+      (lanToa?(', và điền luôn cho <b>'+lanToa+' đơn khác</b> đang treo vì thiếu giá vốn'):'')+'. '+
+      '<span class="sm">Đơn đã có giá vốn thật thì không bị đụng tới — đó là số chốt lúc bán.</span>','ok');
+  }else{
+    bao('soMsg','Đã sửa giá vốn <b>chỉ cho riêng đơn '+esc(d.ma)+'</b>. Bảng giá và các đơn khác giữ nguyên.','wa');
+  }
 }
 
 /* Sửa giá vốn trên một đơn KHÔNG tự động đổi bảng giá.
@@ -4000,6 +4110,29 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260910g', ngay:'10/09/2026', ten:'Máy nhân viên: in A5 hết lệch',
+  vaPhieu:['09:45:46 10/9/2026','2026-10-09T02:46:21.000Z'],
+  muc:[
+   ['sua','Bản này sửa bên <b>máy nhân viên</b>: in 2 phiếu một tờ A5 không còn bị lệch, và khổ phiếu luôn giữ đúng <b>10×15cm</b> dù chọn A4 hay A5. Máy quản lý không đổi gì, chỉ lên cùng số bản cho khỏi lẫn.'],
+  ]},
+ {ban:'20260910f', ngay:'10/09/2026', ten:'Điền giá vốn một lần dùng mọi nơi · nút ✕ trên mọi bảng',
+  vaPhieu:['10:12:31 10/9/2026','10:13:20 10/9/2026','10:24:37 10/9/2026','10:25:18 10/9/2026','10:33:50 10/9/2026'],
+  muc:[
+   ['sua','<b>Nút ghi sai chữ, đã sửa.</b> Bảng sửa giá vốn trước đây ghi "Lưu — chỉ đơn này" rồi lưu xong mới hỏi có đưa vào bảng giá không. Nay bảng nói thẳng, và bạn <b>chọn phạm vi ngay trước khi lưu</b>.'],
+   ['moi','<b>Điền một lần, dùng cho mọi nơi.</b> Điền giá vốn ở một đơn là máy ghi vào bảng giá <b>và</b> điền luôn cho <b>mọi đơn khác đang treo</b> vì thiếu giá vốn của cùng món. Không phải mở từng đơn gõ lại.'],
+   ['moi','Ngay dưới ô điền, máy nói luôn <b>món này còn bao nhiêu đơn khác</b> đang thiếu giá vốn, để bạn biết một lần gõ này gỡ được bao nhiêu chỗ.'],
+   ['moi','Vẫn giữ đường <b>"Chỉ riêng đơn này"</b> cho lô hàng có giá khác thường — hàng khuyến mãi, nhập nhầm lô.'],
+   ['moi','<b>Bảng nào cũng có nút ✕ ở góc phải trên.</b> Trước đây muốn thoát phải kéo xuống cuối tìm nút Huỷ, hoặc bấm Esc mà không ai chỉ.'],
+   ['sua','<b>Bảng "Báo cho kỹ sư" bên máy nhân viên bị vỡ:</b> bốn cái nút chen nhau một hàng, hai nút đầu bị bóp còn một chữ mỗi dòng và bị nút sau đè lên. Đã xếp lại thành lưới.'],
+  ]},
+ {ban:'20260910e', ngay:'10/09/2026', ten:'Vá lỗi vào app trống trơn & dọn hẳn mã hàng thừa',
+  vaPhieu:[],
+  muc:[
+   ['sua','<b>Lỗi nặng: đăng nhập vào máy nhân viên xong bên trong trống trơn.</b> Ai bấm vào đăng nhập trước khi danh sách nhân viên kịp tải xong thì máy nhận nhầm mã máy, thành ra không kéo được bảng giá lẫn đơn hàng. Đã vá. Từ nay nếu vẫn trống, máy tự hiện bảng nói rõ vì sao trống chứ không để người dùng ngồi đoán.'],
+   ['moi','<b>Gom món trùng thì dọn luôn mã thừa.</b> Trước đây gom xong mã thừa vẫn nằm lại trong bảng giá làm rối mắt. Nay gom xong là mã thừa biến khỏi bảng giá. Mã nào có <b>giá vốn bạn tự tay điền</b>, hoặc có <b>giá bán khác</b> mã chính, thì được giữ lại và chỉ ẩn đi — không vứt công của bạn.'],
+   ['moi','<b>Chọn mã giữ lại thông minh hơn.</b> Món nào bạn đã bỏ công tra và gõ giá vốn vào thì luôn được chọn làm mã chính, kể cả khi món kia bán nhiều đơn hơn.'],
+   ['sua','Bấm <b>Hoàn tác</b> giờ dựng lại nguyên vẹn cả dòng bảng giá đã bị dọn, không mất gì.'],
+  ]},
  {ban:'20260910d', ngay:'10/09/2026', ten:'Khoá cửa, hết trùng phiếu, tự nhớ giá khách',
   vaPhieu:['09:47:04 10/9/2026','2026-10-09T02:46:54.000Z'],
   muc:[
@@ -4351,6 +4484,7 @@ function cnKhoiVa(){
 </script><div style="position:fixed;right:8px;bottom:4px;font-size:10px;opacity:.35;pointer-events:none;z-index:99">v1.0-zaka</div>
 <button id="ksNut" onclick="ksMo()" title="Báo cho kỹ sư một chỗ đang có vấn đề">🛠 Kỹ sư</button>
 <dialog id="dlgKS" style="max-width:640px">
+  <button class="dlgX" onclick="document.getElementById('dlgKS').close()" title="Đóng">✕</button>
   <h2 style="margin-top:0">Báo cho kỹ sư</h2>
   <div class="sm" id="ksDan"></div>
   <div id="ksThan"></div>
@@ -4359,6 +4493,7 @@ function cnKhoiVa(){
 </dialog>
 
 <dialog id="dlgCN" style="max-width:600px">
+  <button class="dlgX" onclick="document.getElementById('dlgCN').close()" title="Đóng">✕</button>
   <div class="sm" style="color:var(--tx2);letter-spacing:1.2px;font-weight:700;font-size:10.5px">CÓ GÌ MỚI</div>
   <h2 style="margin:4px 0 14px">Phần mềm vừa được cập nhật</h2>
   <div id="cnThan" style="max-height:56vh;overflow:auto"></div>

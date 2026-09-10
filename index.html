@@ -56,6 +56,22 @@ input,select{font:inherit;width:100%;padding:11px 12px;border-radius:14px;border
 input:focus,select:focus{outline:none;border-color:var(--acc)}
 label{display:block;font-size:12.5px;color:var(--tx2);margin:0 0 6px}
 .row{display:flex;gap:10px}.row>*{flex:1;min-width:0}.mt{margin-top:12px}
+/* NÚT ✕ Ở GÓC TRÊN MỖI BẢNG — thêm 10/09/2026. */
+dialog{position:relative}
+.dlgX{position:absolute;top:10px;right:12px;width:34px;height:34px;flex:none;padding:0;
+  border-radius:50%;border:1px solid var(--line);background:var(--c2);color:var(--tx2);
+  font-size:16px;line-height:1;cursor:pointer;z-index:5}
+.dlgX:hover{background:var(--bad);color:#fff;border-color:var(--bad)}
+dialog>h2:first-of-type{padding-right:44px}
+/* SỬA 10/09/2026 — HÀNG NÚT TRONG BẢNG "BÁO CHO KỸ SƯ" BỊ ÉP DẸP.
+   Lớp .row bên máy nhân viên KHÔNG có xuống dòng: bốn cái nút chen nhau trên
+   một hàng, hai nút đầu bị bóp lại còn một chữ mỗi dòng và bị hai nút sau đè
+   lên. Nay hai hàng nút của hai bảng này dùng lưới riêng: hai cột trên máy
+   tính, một cột trên điện thoại, nút nào cần rộng thì kéo hết hàng. */
+#ksNutDay,#cnNut{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+#ksNutDay>*,#cnNut>*{width:100%;min-width:0;white-space:normal;line-height:1.35}
+#ksNutDay .rong,#cnNut .rong,#ksNutDay>:only-child,#cnNut>:only-child{grid-column:1/-1}
+@media(max-width:560px){#ksNutDay,#cnNut{grid-template-columns:1fr}}
 .demo{background:var(--warnBg);color:var(--warn);padding:7px 14px;font-size:12px;text-align:center}
 #setup{max-width:400px;margin:7vh auto;padding:22px}
 #setup h1{font-size:21px;margin:0 0 4px}#setup p{color:var(--tx2);margin:0 0 20px;font-size:14px}
@@ -113,7 +129,21 @@ header .who b{display:block;font-size:15px}header .who{font-size:12px;color:var(
 /* Tờ khổ A5 — đè lại kích thước + gán khổ giấy in thật (page: a5Zaka) so với
    .intrang mặc định (A4). Grid layout (mấy hàng/cột) vẫn dùng chung .n1/.n2 ở
    dưới vì tỉ lệ khung mỗi ô không đổi, chỉ đổi kích thước tờ giấy tổng. */
-.trangA5{width:148mm;height:210mm;page:a5Zaka}
+/* SỬA 10/09/2026 — GIẤY A5 VẪN NẠP DỌC, PHIẾU XOAY 90°.
+   Chủ báo: ép máy in chạy khổ A5 NẰM NGANG thì bản in bị lệch; để giấy dọc thì
+   in thẳng thớm. Nên từ bản này tờ giấy vẫn là A5 DỌC (148×210mm) đúng như máy
+   in muốn, còn phần nội dung được XOAY 90° bên trong tờ giấy.
+   Nhờ vậy mỗi phiếu vẫn đúng 105×148mm — BẰNG ĐÚNG ô của "4 phiếu / tờ A4",
+   tức khổ 10×15cm quen thuộc, không đổi một li nào so với khổ chuẩn.
+   Cách xoay: khung .xoay là một hộp 210×148mm (đúng chiều nằm ngang), xoay
+   quanh góc trên-trái rồi đẩy sang phải đúng 148mm để lọt khít vào tờ giấy dọc. */
+.trangA5{width:148mm;height:210mm;page:a5Zaka;display:block;position:relative;overflow:hidden}
+.trangA5 .xoay{position:absolute;top:0;left:0;width:210mm;height:148mm;
+    transform:translateX(148mm) rotate(90deg);transform-origin:top left;
+    display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr}
+.trangA5 .xoay.x1{grid-template-columns:1fr}
+.trangA5 .xoay .phieu{font-size:8.4pt}
+.trangA5 .xoay.x1 .phieu{font-size:11pt}
 .n1{grid-template-columns:1fr;grid-template-rows:1fr}
 .n2{grid-template-columns:1fr;grid-template-rows:1fr 1fr}
 .n4{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}
@@ -493,12 +523,12 @@ body.ks-chi *{cursor:crosshair!important}
       <select id="moiTrang"><option value="4">4 phiếu / tờ A4 (khổ 10×15cm)</option>
         <option value="2">2 phiếu / tờ A4</option>
         <option value="1">1 phiếu / tờ A4</option>
-        <option value="A5">2 phiếu / tờ A5 (giấy A5 riêng)</option></select>
+        <option value="A5">2 phiếu / tờ A5 (vẫn khổ 10×15cm)</option></select>
       <button class="btn" id="btnInNhieu" onclick="inDaChon()" style="background:var(--acc);color:#03121f;font-weight:600;padding:8px 15px;font-size:13px">In 0 phiếu đã chọn</button>
       <button class="btn" onclick="inGuiDaChon()" style="background:var(--purBg);color:var(--pur);font-weight:600;padding:8px 15px;font-size:13px">In phiếu gửi nhà xe</button>
     </div>
     <div class="sm" style="margin-top:8px" id="tongThu"></div>
-    <div class="sm" style="margin-top:7px">Bản in trắng đen, khổ 10×15cm đúng chuẩn tem giao hàng.
+    <div class="sm" style="margin-top:7px">Bản in trắng đen, <b>khổ phiếu luôn là 10×15cm</b> đúng chuẩn tem giao hàng — chọn A4 hay A5 thì phiếu vẫn đúng khổ đó. Giấy A5 cứ nạp <b>dọc</b> như thường, phiếu tự xoay ngang trong tờ.
     Trong hộp thoại in của Chrome nhớ để <b>Lề: Không có</b> và bỏ tích <b>Đầu trang và chân trang</b>.</div></div>
   <datalist id="dsShip"></datalist>
   <div id="dsPG"></div>
@@ -517,7 +547,7 @@ body.ks-chi *{cursor:crosshair!important}
       <select id="moiTrangLS"><option value="4">4 phiếu / tờ A4 (khổ 10×15cm)</option>
         <option value="2">2 phiếu / tờ A4</option>
         <option value="1">1 phiếu / tờ A4</option>
-        <option value="A5">2 phiếu / tờ A5 (giấy A5 riêng)</option></select>
+        <option value="A5">2 phiếu / tờ A5 (vẫn khổ 10×15cm)</option></select>
       <button class="btn" id="btnInNhieuLS" onclick="inPhieu(dsChonInLS(),$('moiTrangLS').value)" style="background:var(--acc);color:#03121f;font-weight:600;padding:8px 15px;font-size:13px">In 0 phiếu đã chọn</button>
       <button class="btn" onclick="moKienHang(dsChonInLS(),$('moiTrangLS').value)" style="background:var(--purBg);color:var(--pur);font-weight:600;padding:8px 15px;font-size:13px">In phiếu gửi nhà xe</button>
     </div>
@@ -610,6 +640,7 @@ body.ks-chi *{cursor:crosshair!important}
 </div>
 
 <dialog id="dlgKH">
+  <button class="dlgX" onclick="document.getElementById('dlgKH').close()" title="Đóng">✕</button>
   <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
     <h2 style="margin:0" id="kTen"></h2>
     <button onclick="document.getElementById('dlgKH').close()" style="background:var(--c2);color:var(--tx2);padding:6px 12px">Đóng</button>
@@ -620,6 +651,7 @@ body.ks-chi *{cursor:crosshair!important}
 </dialog>
 
 <dialog id="dlgTT">
+  <button class="dlgX" onclick="document.getElementById('dlgTT').close()" title="Đóng">✕</button>
   <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
     <h2 style="margin:0" id="ttdTen"></h2>
     <button onclick="document.getElementById('dlgTT').close()" style="background:var(--c2);color:var(--tx2);padding:6px 12px">Đóng</button>
@@ -647,6 +679,7 @@ body.ks-chi *{cursor:crosshair!important}
      duyệt liệt kê 4 gợi ý bằng chữ, giờ đổi thành dropdown thật chỉ 2 lựa chọn
      theo đúng yêu cầu chủ: Tiền mặt hoặc Chuyển khoản. */ -->
 <dialog id="dlgThuTien">
+  <button class="dlgX" onclick="document.getElementById('dlgThuTien').close()" title="Đóng">✕</button>
   <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
     <h2 style="margin:0" id="ttNhanhTen">Đánh dấu đã thu</h2>
     <button onclick="document.getElementById('dlgThuTien').close()" style="background:var(--c2);color:var(--tx2);padding:6px 12px">Đóng</button>
@@ -658,6 +691,7 @@ body.ks-chi *{cursor:crosshair!important}
 </dialog>
 
 <dialog id="dlgGD">
+  <button class="dlgX" onclick="document.getElementById('dlgGD').close()" title="Đóng">✕</button>
   <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
     <h2 style="margin:0" id="gdTen"></h2>
     <button onclick="document.getElementById('dlgGD').close()" style="background:var(--c2);color:var(--tx2);padding:6px 12px">Đóng</button>
@@ -676,6 +710,7 @@ body.ks-chi *{cursor:crosshair!important}
 </dialog>
 
 <dialog id="dlgGDQ">
+  <button class="dlgX" onclick="document.getElementById('dlgGDQ').close()" title="Đóng">✕</button>
   <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
     <h2 style="margin:0" id="gdqTen"></h2>
     <button onclick="document.getElementById('dlgGDQ').close()" style="background:var(--c2);color:var(--tx2);padding:6px 12px">Đóng</button>
@@ -688,6 +723,7 @@ body.ks-chi *{cursor:crosshair!important}
 </dialog>
 
 <dialog id="dlgKien">
+  <button class="dlgX" onclick="document.getElementById('dlgKien').close()" title="Đóng">✕</button>
   <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
     <h2 style="margin:0">Số kiện hàng gửi nhà xe</h2>
     <button onclick="huyKien()" style="background:var(--c2);color:var(--tx2);padding:6px 12px">Đóng</button>
@@ -710,6 +746,7 @@ body.ks-chi *{cursor:crosshair!important}
 </dialog>
 
 <dialog id="dlgThem">
+  <button class="dlgX" onclick="document.getElementById('dlgThem').close()" title="Đóng">✕</button>
   <h2 style="margin-top:0">Thêm món chưa có trong bảng giá</h2>
   <div class="sm" style="margin-bottom:12px"><b>Chỉ dùng khi món này thật sự chưa có.</b>
   Nếu chỉ là bán cho khách này giá khác thì <b>đừng thêm mới</b> — cứ tìm món có sẵn, bỏ vào giỏ
@@ -778,7 +815,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260910d';
+var APP_VER='20260910g';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1059,9 +1096,21 @@ var VER=get('ver',{bg:'',nv:'',kh:'',gr:'',kt:'',don:'',ship:'',tk:'',spcd:''}),
         'Đã tự chuyển về link chuẩn — đơn sẽ về đủ trong giây lát.','wa');
     },600);
   }
-  // Hien "Dang tai..." ngay, roi keo NV tu Sheet ve moi ve lai
+  /* SỬA 10/09/2026 — LỖI "ĐĂNG NHẬP XONG TRỐNG TRƠN".
+     Trước đây ô chọn máy hiện chữ "Đang tải..." trong lúc chờ kéo danh sách
+     nhân viên về. Cái option đó KHÔNG có value, nên .value trả về đúng chuỗi
+     "Đang tải...". Ai gõ mã đăng nhập rồi bấm Enter trước khi tải xong thì
+     CFG.ma bị gán thành "Đang tải..." — từ đó mọi lượt hỏi Sheet đều bị từ
+     chối vì mã máy không hợp lệ, và màn hình trống trơn.
+     Lỗi này vốn nằm sẵn nhưng chưa ai gặp, vì trước đây người dùng cũ được
+     tự vào thẳng, không thấy màn đăng nhập. Từ khi bắt đăng nhập lại mỗi lần
+     mở thì ai cũng đi qua đúng chỗ này. Nay điền sẵn mã máy THẬT của file
+     (MA_MAY) làm lựa chọn tạm, và dangNhap() còn kiểm lại lần nữa. */
   (function(){
-    var s=$('sMayChon'); if(s) s.innerHTML='<option>Đang tải...</option>';
+    var s=$('sMayChon'); if(!s) return;
+    var tam=(typeof MA_MAY!=='undefined'&&MA_MAY)||CFG.ma||'';
+    s.innerHTML=tam?('<option value="'+esc(tam)+'">'+esc(tam)+' — đang tải danh sách…</option>')
+                   :'<option value="">Đang tải danh sách…</option>';
   })();
   (async function(){
     try{
@@ -1110,8 +1159,13 @@ function veChonMay(){
   // Khoi phuc lua chon cu neu co
   if(CFG.ma&&mayList.indexOf(CFG.ma)>=0) s.value=CFG.ma;
 }
+/* Mã máy hợp lệ trông như NV01, NV04… — chữ và số, không dấu, không khoảng
+   trắng. Bất cứ thứ gì khác (chữ "Đang tải…", ô trống) đều bị coi là không
+   hợp lệ và rơi về mã máy thật ghi trong file cài đặt. */
+function maMayHopLe_(x){ return /^[A-Za-z0-9_-]{2,20}$/.test(String(x||'')) }
 function dangNhap(){
-  var may=($('sMayChon')&&$('sMayChon').value)||'NV01';
+  var may=($('sMayChon')&&$('sMayChon').value)||'';
+  if(!maMayHopLe_(may)) may=(typeof MA_MAY!=='undefined'&&MA_MAY)||CFG.ma||'NV01';
   var key=$('sKey').value.trim();
   if(!key){bao('sErr','Chưa nhập mã đăng nhập.','er');return}
   // Tim nhan vien theo ma may + key
@@ -1176,6 +1230,25 @@ function vaoApp(){
   // Keo toan bo du lieu tu Sheet ve ngay sau dang nhap — dam bao du lieu luon moi nhat
   // du la browser moi hay may moi, khong can lam gi them
   setTimeout(function(){ dongBo(false); },800);
+  setTimeout(kiemTraTrongTron_, 4000);
+}
+/* ═══ KHÔNG BAO GIỜ ĐỂ MÀN HÌNH TRỐNG MÀ KHÔNG NÓI GÌ — thêm 10/09/2026 ═══
+   Vào được rồi mà bảng giá trống và cũng chẳng có đơn nào thì chắc chắn có
+   trục trặc, chứ không phải "cửa hàng chưa bán gì". Trước đây gặp cảnh này
+   chỉ thấy màn hình trắng, không một dòng giải thích. Nay nói thẳng nghi ngờ
+   gì và bấm đâu để sửa. */
+function kiemTraTrongTron_(){
+  if(!SP.length && !DON.length){
+    var vd=[];
+    if(!maMayHopLe_(CFG.ma)) vd.push('Mã máy đang là "<b>'+esc(String(CFG.ma))+'</b>" — không hợp lệ. '+
+      'Bấm <b>Đổi người dùng</b> rồi đăng nhập lại, lần này đợi ô chọn máy hiện xong mới bấm.');
+    if(!(CFG.url||URL_DRIVE)) vd.push('Máy này chưa có link nối với cửa hàng. Vào <b>Cài đặt</b> dán link.');
+    if(LOI_DONGBO&&LOI_DONGBO.msg) vd.push('Lần đồng bộ gần nhất báo: '+esc(LOI_DONGBO.msg));
+    if(!vd.length) vd.push('Có thể máy chưa kéo được dữ liệu về. Kiểm tra mạng rồi bấm '+
+      '<b>⟳ Đồng bộ đơn</b> ở tab Lịch sử.');
+    bao('newMsg','<b>Chưa thấy bảng giá và cũng chưa thấy đơn nào.</b><br>'+
+      vd.map(function(x){return '• '+x}).join('<br>'),'er');
+  }
 }
 function luuShop(){
   SHOP={ten:$('shTen').value.trim()||'ZAKA STORE',
@@ -3789,7 +3862,11 @@ function xepTrang(ds,n,veHTML,kho){
     var lo=ds.slice(i,i+n); i+=n;
     var o='';
     for(var k=0;k<n;k++) o += lo[k]?veHTML(lo[k],{pt:cuChu(n,kho)}):'<div></div>';
-    out+='<div class="intrang'+(kho==='A5'?' trangA5':'')+' n'+n+'">'+o+'</div>';
+    /* SỬA 10/09/2026: tờ A5 gói nội dung trong khung .xoay để xoay 90° bên
+       trong tờ giấy dọc — xem chú thích ở phần CSS .trangA5. */
+    out += (kho==='A5')
+      ? '<div class="intrang trangA5"><div class="xoay'+(n===1?' x1':'')+'">'+o+'</div></div>'
+      : '<div class="intrang n'+n+'">'+o+'</div>';
   }
   K.innerHTML=out;
   K.classList.add('dothu');
@@ -3976,9 +4053,9 @@ function ksMo(){
   $('ksNutDay').innerHTML=
     '<button class="btn" onclick="ksBatDauChi()">Chỉ vào chỗ có vấn đề</button>'+
     '<button class="btn2" onclick="ksVietNgay(null)">Nói chung về màn hình này</button>'+
-    '<button class="btn2" style="flex-basis:100%" onclick="document.getElementById(\'dlgKS\').close()">Đóng, không báo gì</button>';
+    '<button class="btn2 rong" onclick="document.getElementById(\'dlgKS\').close()">Đóng, không báo gì</button>';
   if(KS_PHIEU.length) $('ksNutDay').innerHTML+=
-    '<button class="btn2" style="flex-basis:100%" onclick="ksXemPhieu()">Xem '+KS_PHIEU.length+
+    '<button class="btn2 rong" onclick="ksXemPhieu()">Xem '+KS_PHIEU.length+
     ' phiếu đã ghi &amp; gửi cho kỹ sư</button>';
   $('dlgKS').showModal();
 }
@@ -4159,6 +4236,26 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260910g', ngay:'10/09/2026', ten:'In A5 không còn lệch — khổ phiếu luôn 10×15',
+  vaPhieu:['09:45:46 10/9/2026','2026-10-09T02:46:21.000Z'],
+  muc:[
+   ['sua','<b>In A5 bị lệch, đã sửa.</b> Trước đây muốn 2 phiếu một tờ A5 thì máy in phải chạy giấy nằm ngang, mà nhiều máy in ra bị lệch. Nay <b>giấy A5 cứ nạp dọc như thường</b> — phần phiếu tự xoay ngang bên trong tờ. Máy in không phải đổi hướng giấy nên hết lệch.'],
+   ['moi','<b>Khổ phiếu giờ luôn là 10×15cm</b>, chọn A4 hay A5 cũng vậy. Trước đây đổi sang A5 là khổ phiếu đổi theo; nay ô phiếu trên tờ A5 <b>bằng đúng từng li</b> ô của "4 phiếu / tờ A4" — dán lên thùng nhìn y hệt nhau.'],
+   ['dep','Đổi tên lựa chọn trong ô chọn khổ in cho đỡ nhầm: <b>"2 phiếu / tờ A5 (vẫn khổ 10×15cm)"</b>.'],
+  ]},
+ {ban:'20260910f', ngay:'10/09/2026', ten:'Vá bảng Báo cho kỹ sư bị vỡ',
+  vaPhieu:['10:33:50 10/9/2026'],
+  muc:[
+   ['sua','<b>Bảng "Báo cho kỹ sư" bị vỡ giao diện.</b> Bốn cái nút chen nhau trên một hàng, hai nút đầu bị bóp lại còn một chữ mỗi dòng và bị hai nút sau đè lên, không đọc được gì. Đã xếp lại: hai cột trên máy tính, một cột trên điện thoại.'],
+   ['moi','<b>Bảng nào cũng có nút ✕ ở góc phải trên</b> để thoát nhanh, khỏi phải mò nút Huỷ ở cuối.'],
+  ]},
+ {ban:'20260910e', ngay:'10/09/2026', ten:'Vá lỗi vào app xong trống trơn',
+  vaPhieu:[],
+  muc:[
+   ['sua','<b>Lỗi nặng: đăng nhập xong bên trong trống trơn</b> — không thấy bảng giá, không thấy đơn nào. Nguyên nhân: ai bấm Vào bán hàng trước khi danh sách nhân viên kịp tải xong thì máy nhận nhầm mã máy. Đã vá.'],
+   ['moi','Nếu lỡ vào mà vẫn trống, máy <b>tự hiện bảng nói rõ vì sao</b> và phải làm gì, thay vì để bạn ngồi đoán.'],
+   ['sua','Bên máy chủ: gom món trùng tên xong thì <b>dọn luôn mã thừa</b> khỏi bảng giá, nên danh sách hàng bạn thấy sẽ gọn hơn.'],
+  ]},
  {ban:'20260910d', ngay:'10/09/2026', ten:'Khoá cửa, hết trùng phiếu, tự nhớ giá khách',
   vaPhieu:['09:47:04 10/9/2026','2026-10-09T02:46:54.000Z'],
   muc:[
@@ -4303,6 +4400,7 @@ function cnKhoiVa(){
 <div style="position:fixed;right:8px;bottom:4px;font-size:10px;opacity:.35;pointer-events:none;z-index:99">v1.0-zaka</div>
 <button id="ksNut" onclick="ksMo()" title="Báo cho kỹ sư một chỗ đang có vấn đề">🛠 Kỹ sư</button>
 <dialog id="dlgKS" style="max-width:640px">
+  <button class="dlgX" onclick="document.getElementById('dlgKS').close()" title="Đóng">✕</button>
   <h2 style="margin-top:0">Báo cho kỹ sư</h2>
   <div class="sm" id="ksDan"></div>
   <div id="ksThan"></div>
@@ -4311,6 +4409,7 @@ function cnKhoiVa(){
 </dialog>
 
 <dialog id="dlgCN" style="max-width:600px">
+  <button class="dlgX" onclick="document.getElementById('dlgCN').close()" title="Đóng">✕</button>
   <div class="sm" style="color:var(--tx2);letter-spacing:1.2px;font-weight:700;font-size:10.5px">CÓ GÌ MỚI</div>
   <h2 style="margin:4px 0 14px">Phần mềm vừa được cập nhật</h2>
   <div id="cnThan" style="max-height:56vh;overflow:auto"></div>
