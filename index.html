@@ -879,7 +879,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260911c';
+var APP_VER='20260911d';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1671,7 +1671,7 @@ function napSPCD(){
   }
   // món đã duyệt thì bỏ cờ chờ — bán được ngay, không đợi bảng giá về
   SP.forEach(function(p){ if(duyet[p.sku]) p.choDuyet=false });
-  if(!cd.length) return;
+  if(!cd.length){ donSPMoi_(); return }
   var coRoi={}; SP.forEach(function(p){coRoi[p.sku]=1});
   var them=cd.filter(function(x){
       if(coRoi[x.sku]) return false;
@@ -1684,6 +1684,47 @@ function napSPCD(){
         moi:true, choDuyet: tt!=='DA DUYET'};
     });
   if(them.length) SP=SP.concat(them);
+  donSPMoi_();
+}
+
+/* ═══ SỬA 11/09/2026 — CHỦ ĐÃ DUYỆT MÀ MÁY NHÂN VIÊN VẪN BÁO "CHỜ CHỦ DUYỆT" ═══
+   Chủ báo đúng. Nguyên nhân: món do CHÍNH MÁY NÀY thêm được cất trong kho tạm
+   'spmoi' của trình duyệt, và cờ "chờ duyệt" nằm luôn trong đó. Bước nạp danh
+   sách chờ duyệt chỉ gỡ cờ trên bản đang nằm trong bộ nhớ tạm thời, KHÔNG ghi
+   lại vào kho tạm. Nên mở app lần sau, hoặc mỗi lần bảng giá mới về, bản cũ
+   trong kho tạm lại chồng lên — cờ "chờ duyệt" sống dậy.
+   Tệ hơn: khi chủ đã phát bảng giá, món đó có mặt ở CẢ HAI chỗ (bản chính thức
+   và bản tạm), thành hai dòng cùng một mã, bản tạm đứng trước.
+
+   Hàm này dọn cả ba: ghi lại kho tạm, bỏ bản tạm khi đã có bản chính thức,
+   và gộp trùng mã trong danh sách đang hiện. */
+function donSPMoi_(){
+  var chinh={}; (get('bgsp',[])||[]).forEach(function(p){ if(p&&p.sku) chinh[p.sku]=1 });
+  var duyet={}; (get('spcd',[])||[]).forEach(function(x){
+    if(String(x.tt||'').trim().toUpperCase()==='DA DUYET') duyet[x.sku]=1 });
+
+  // 1) ghi lại kho tạm: bỏ món đã có bản chính thức, gỡ cờ chờ cho món đã duyệt
+  var moi=get('spmoi',[])||[], giu=[], doi=false;
+  moi.forEach(function(p){
+    if(!p||!p.sku) { doi=true; return }
+    if(chinh[p.sku]){ doi=true; return }                 // bảng giá chính thức đã có -> bỏ bản tạm
+    if(duyet[p.sku] && p.choDuyet){ p.choDuyet=false; doi=true }
+    giu.push(p);
+  });
+  if(doi) set('spmoi',giu);
+
+  // 2) một mã chỉ còn MỘT dòng — bản chính thức thắng bản tạm
+  var viTri={}, sach=[];
+  SP.forEach(function(p){
+    if(!p||!p.sku) return;
+    var i=viTri[p.sku];
+    if(i===undefined){ viTri[p.sku]=sach.length; sach.push(p); return }
+    if(sach[i].moi && !p.moi) sach[i]=p;
+  });
+  SP=sach;
+
+  // 3) đã có trong bảng giá chính thức hoặc đã được duyệt -> hết là hàng chờ
+  SP.forEach(function(p){ if(chinh[p.sku]||duyet[p.sku]) p.choDuyet=false });
 }
 
 /* Xin chủ duyệt gấp — gửi lại đúng cửa spmoi, chủ thấy món nhảy lên đầu
@@ -1920,6 +1961,7 @@ async function taiGia(ver){
   BG={ver:j.ver,luc:nowStr(),so:b.length}; set('bg',BG); VER.bg=ver||j.ver||'';
   var tuThem=get('spmoi',[]);
   SP = tuThem.length ? tuThem.concat(b) : b;
+  donSPMoi_();   // xem chú thích ở donSPMoi_ — bỏ bản tạm khi bản chính thức đã về
 
   var soDoi=tang.length+giam.length+moi.length+het.length;
   var ban={ver:j.ver,luc:nowStr(),so:b.length,tang:tang,giam:giam,
@@ -4537,6 +4579,13 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260911d', ngay:'11/09/2026', ten:'Vá lỗi chủ duyệt rồi mà vẫn báo chờ duyệt',
+  vaPhieu:[],
+  muc:[
+   ['sua','<b>Chủ đã duyệt và điền giá rồi mà máy vẫn báo "⏳ CHỜ CHỦ DUYỆT" — đã vá.</b> Món do chính máy này thêm được cất trong bộ nhớ riêng của máy, và cờ chờ duyệt nằm luôn trong đó. Máy chỉ gỡ cờ ở bản đang xem, không ghi lại vào bộ nhớ — nên mở app lần sau là cờ sống dậy.'],
+   ['sua','<b>Hết chuyện một món hiện hai dòng.</b> Sau khi chủ phát bảng giá, món đó có mặt ở cả bảng giá chính thức lẫn bộ nhớ tạm của máy, thành hai dòng cùng một mã. Nay bản chính thức thắng, bản tạm bị dọn.'],
+   ['sua','Món chủ <b>từ chối</b> giờ biến mất khỏi cả danh sách lẫn bộ nhớ tạm, không mọc lại.'],
+  ]},
  {ban:'20260911c', ngay:'11/09/2026', ten:'Bên máy chủ: cập nhật bảng giá hàng loạt',
   vaPhieu:[],
   muc:[

@@ -656,7 +656,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260911c';
+var APP_VER='20260911d';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -4648,6 +4648,11 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260911d', ngay:'11/09/2026', ten:'Vá lỗi bên máy nhân viên',
+  vaPhieu:[],
+  muc:[
+   ['sua','Bản này sửa bên <b>máy nhân viên</b>: chủ duyệt và điền giá xong mà máy nhân viên vẫn báo "chờ chủ duyệt". Máy quản lý không đổi gì, chỉ lên cùng số bản cho khỏi lẫn.'],
+  ]},
  {ban:'20260911c', ngay:'11/09/2026', ten:'Cập nhật hàng loạt kiểu Shopee',
   vaPhieu:['16:01:51 10/9/2026'],
   muc:[
