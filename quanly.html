@@ -381,11 +381,11 @@ body.ks-chi *{cursor:crosshair!important}
 <section id="pg-vh" class="hide">
   <div id="vhMsg"></div>
   <div class="card"><h2>Khôi phục giá riêng của khách từ lịch sử bán</h2>
-    <div class="sm">Trước đây mỗi lần khách trả giá khác, nhân viên phải gõ thêm một mã sản phẩm mới —
-    nên cái giá đó nằm rải rác trong đơn cũ chứ không được ghi thành <b>giá riêng của khách</b>.
-    Công cụ này đọc ngược sổ cái, tìm những khách từng mua khác giá niêm yết, rồi đề xuất ghi lại
-    thành giá riêng. Ghi xong thì lần sau đúng khách đó quay lại, <b>giá tự nhảy ra</b>, nhân viên
-    không phải nhớ gì.</div>
+    <div class="sm"><b>Bình thường không cần dùng tới cái này.</b> Từ bản 10/09/2026, máy nhân viên
+    <b>tự nhớ lấy</b>: chọn đúng khách, chọn lại đúng món họ từng mua thì giá của đơn gần nhất tự
+    hiện ra, bán xong giá nào thì nhớ giá đó cho lần sau. Không cần ai duyệt.<br>
+    Công cụ này chỉ để dùng khi anh/chị muốn <b>đẩy hàng loạt giá cũ lên Sheet một lượt</b> cho cả
+    ba máy cùng thấy ngay, thay vì đợi từng khách quay lại.</div>
     <div class="msg wa mt"><b>Nên chạy SAU khi đã gộp xong mã trùng</b> ở tab Cảnh báo — vì giá riêng
     được gắn theo mã chính. Công cụ chỉ đề xuất, <b>bạn duyệt từng dòng rồi mới ghi</b>.</div>
     <button class="btn mt" onclick="moDeXuatGiaRieng()">Xem đề xuất giá riêng</button>
@@ -595,7 +595,7 @@ if(!BANGGIA.length) setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260910c';
+var APP_VER='20260910d';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1086,16 +1086,12 @@ function veLam(){
     });
   }catch(e){}
 
-  // ── Việc 4: khách từng mua giá riêng mà máy chưa nhớ ──
-  viec.push({
-    nhe:true,
-    ten:'Dạy máy nhớ giá riêng của từng khách',
-    vi:'Khách quen hay được bán giá mềm hơn. Máy đọc lại đơn cũ, tìm xem ai từng mua giá khác, '+
-       'rồi ghi nhớ — <b>lần sau đúng khách đó là giá tự hiện ra</b>, nhân viên khỏi nhớ. '+
-       'Nên làm sau khi đã gom xong món trùng.',
-    nut:'Xem máy đề xuất gì',
-    ham:'moDeXuatGiaRieng()'
-  });
+  /* BỎ việc "duyệt giá riêng" khỏi đây — 10/09/2026 theo yêu cầu của chủ:
+     danh sách đề xuất quá dài, mà duyệt hay không cũng chẳng khác gì vì giá
+     vẫn sửa được lúc bán. Từ bản này MÁY NHÂN VIÊN TỰ NHỚ: chọn đúng khách,
+     chọn lại đúng món họ từng mua thì giá của đơn gần nhất tự hiện ra, bán
+     xong giá nào thì nhớ giá đó cho lần sau. Không cần chủ duyệt gì cả.
+     Công cụ khôi phục hàng loạt vẫn còn ở tab Vận hành cho ai cần dùng tay. */
 
   var so=viec.filter(function(v){return !v.nhe}).length;
   var o=$('lamSo'); if(o) o.textContent=so?('('+so+')'):'';
@@ -3863,9 +3859,13 @@ function ksMo(){
     'để lần sau kỹ sư đọc là hiểu ngay, khỏi phải tả lại.';
   $('ksThan').innerHTML='';
   $('ksErr').innerHTML='';
+  /* SỬA 10/09/2026: bảng này trước đây KHÔNG CÓ NÚT ĐÓNG — mở lên rồi chỉ
+     còn hai đường đi tiếp, muốn thoát phải bấm phím Esc mà không ai biết.
+     Trên điện thoại thì gần như kẹt luôn. Nay có nút Đóng rõ ràng. */
   $('ksNutDay').innerHTML=
     '<button class="btn" onclick="ksBatDauChi()">Chỉ vào chỗ có vấn đề</button>'+
-    '<button class="btn2" onclick="ksVietNgay(null)">Nói chung về màn hình này</button>';
+    '<button class="btn2" onclick="ksVietNgay(null)">Nói chung về màn hình này</button>'+
+    '<button class="btn2" style="flex-basis:100%" onclick="document.getElementById(\'dlgKS\').close()">Đóng, không báo gì</button>';
   if(KS_PHIEU.length) $('ksNutDay').innerHTML+=
     '<button class="btn2" style="flex-basis:100%" onclick="ksXemPhieu()">Xem '+KS_PHIEU.length+
     ' phiếu đã ghi &amp; gửi cho kỹ sư</button>';
@@ -4000,6 +4000,16 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260910d', ngay:'10/09/2026', ten:'Khoá cửa, hết trùng phiếu, tự nhớ giá khách',
+  vaPhieu:['09:47:04 10/9/2026','2026-10-09T02:46:54.000Z'],
+  muc:[
+   ['moi','<b>Máy nhân viên giờ phải đăng nhập mới vào được.</b> Trước đây mở file lên là thấy hết đơn hàng và danh bạ khách. Vẫn nhớ tên và máy để chọn nhanh, chỉ mã đăng nhập là lần nào cũng phải gõ.'],
+   ['moi','<b>Máy tự nhớ giá của từng khách.</b> Chọn đúng khách, chọn lại đúng món họ từng mua thì giá của đơn gần nhất tự hiện ra. Bán giá nào thì nhớ giá đó cho lần sau. Không cần ai duyệt gì.'],
+   ['sua','<b>Hết trùng phiếu kỹ sư.</b> Trước đây một chuyện bị gửi về hai ba lần vì bước thử lại lúc mạng chập chờn. Nay Sheet chặn ghi trùng, và mấy bản đã lỡ trùng thì gộp lại thành một dòng.'],
+   ['sua','<b>Nút Kỹ sư bên nhân viên bị thanh thanh toán đè lên</b>, chữ chồng chữ không đọc nổi trên điện thoại. Đã đẩy lên trên.'],
+   ['sua','Bảng Kỹ sư trước đây <b>không có nút Đóng</b> — mở lên rồi muốn thoát phải bấm Esc mà không ai biết. Nay có nút rõ ràng.'],
+   ['nhanh','Tab <b>Lịch sử</b> chỉ hiện 50 đơn mới nhất, bấm mới xem thêm — trước đây dàn hết ra, kéo mỏi tay và máy dựng lại cả nghìn dòng sau mỗi nhịp đồng bộ. Ô tìm vẫn soi toàn bộ đơn.'],
+  ]},
  {ban:'20260910c', ngay:'10/09/2026', ten:'Theo góp ý của chủ — trọn 9 phiếu',
   vaPhieu:['23:26:14 9/9/2026','23:38:06 9/9/2026','23:39:23 9/9/2026','00:09:29 10/9/2026',
            '00:10:36 10/9/2026','00:11:08 10/9/2026','00:11:54 10/9/2026','00:12:56 10/9/2026',
@@ -4093,7 +4103,19 @@ function cnKiemTra(){
    ═══════════════════════════════════════════════════════════════════════ */
 function phieuNVChoDuyet(){
   if(!PHIEU_NV.length){ try{ PHIEU_NV=get('phieunv',[])||[] }catch(e){ PHIEU_NV=[] } }
-  return PHIEU_NV.filter(function(x){ return String(x.tt||'').trim().toUpperCase()==='CHO DUYET' });
+  var cho=PHIEU_NV.filter(function(x){ return String(x.tt||'').trim().toUpperCase()==='CHO DUYET' });
+  /* GỘP BẢN TRÙNG — sửa 10/09/2026.
+     Những phiếu đã lỡ bị ghi hai ba lần lên Sheet trước khi có bước chặn trùng
+     thì vẫn nằm đó. Ở đây gộp lại khi CÙNG MÁY và CÙNG NỘI DUNG, giữ bản sớm
+     nhất, và ghi lại số bản để lúc duyệt còn đánh dấu hết cả chùm — chứ duyệt
+     một bản mà hai bản kia vẫn treo thì lần sau mở ra lại thấy y nguyên. */
+  var thay={}, ra=[];
+  cho.forEach(function(x){
+    var khoa=String(x.may||'')+'|'+String(x.noi||'').trim();
+    if(thay[khoa]){ thay[khoa].ban.push(x); return }
+    x.ban=[x]; thay[khoa]=x; ra.push(x);
+  });
+  return ra;
 }
 function moPhieuNV(){
   var ds=phieuNVChoDuyet();
@@ -4103,7 +4125,8 @@ function moPhieuNV(){
   $('ksThan').innerHTML=ds.length? ds.map(function(x,i){
     return '<div class="card" style="padding:12px;margin-bottom:10px" id="pnv'+i+'">'+
       '<div class="sm" style="color:var(--tx2)">'+esc(x.luc||'')+' · máy <b>'+esc(x.may||'')+'</b>'+
-        ' · <b>'+esc(x.nv||'')+'</b> · màn hình '+esc(x.man||'')+'</div>'+
+        ' · <b>'+esc(x.nv||'')+'</b> · màn hình '+esc(x.man||'')+
+        ((x.ban&&x.ban.length>1)?' · <span class="tag w">gộp '+x.ban.length+' bản trùng</span>':'')+'</div>'+
       '<div style="font-weight:600;margin:6px 0 8px;line-height:1.45">"'+esc(x.noi||'')+'"</div>'+
       '<div class="sm" style="opacity:.7">Chỗ được chỉ: '+esc(x.cho||'(không chỉ vào đâu)')+'</div>'+
       (x.loiMay?'<div class="sm" style="color:var(--warn);margin-top:4px">Máy có ghi được lỗi lúc đó</div>':'')+
@@ -4127,10 +4150,12 @@ async function duyetPhieuNV(i,dung){
   try{
     var r=await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'duyetks',
-        ks:[{luc:x.luc,may:x.may,tt:dung?'DA DUYET':'BO QUA',chuGhi:ghi}]})});
+        ks:(x.ban||[x]).map(function(b){
+          return {luc:b.luc,may:b.may,tt:dung?'DA DUYET':'BO QUA',chuGhi:ghi} })})});
     var j=JSON.parse(await r.text());
     if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
-    x.tt=dung?'DA DUYET':'BO QUA'; x.chuGhi=ghi; set('phieunv',PHIEU_NV);
+    (x.ban||[x]).forEach(function(b){ b.tt=dung?'DA DUYET':'BO QUA'; b.chuGhi=ghi });
+    set('phieunv',PHIEU_NV);
     if(dung){
       // đưa thẳng vào tập phiếu của chủ để lát nữa xuất file cho kỹ sư
       KS_PHIEU.push({luc:x.luc, app:'May nhan vien ('+(x.may||'')+')', ban:x.ban||'?',

@@ -356,6 +356,13 @@ body.ks-chi *{cursor:crosshair!important}
   .side nav{max-width:100%;-webkit-overflow-scrolling:touch}
   .card,.don{overflow-x:auto}
 }
+/* SỬA 10/09/2026 — NÚT KỸ SƯ BỊ THANH THANH TOÁN ĐÈ LÊN.
+   Máy nhân viên có thanh "Lưu đơn / tổng tiền" dán cứng ở đáy màn hình, mà
+   nút Kỹ sư cũng dán ở đáy góc trái — hai cái chồng lên nhau, trên điện thoại
+   thì chữ đè chữ không đọc nổi. Nay đẩy nút Kỹ sư lên trên thanh đó.
+   (Máy quản lý không có thanh này nên giữ nguyên vị trí cũ.) */
+#ksNut{bottom:82px}
+@media(min-width:761px){ #ksNut{bottom:16px} }
 </style></head><body>
 
 <div class="demo" id="mangBar"></div>
@@ -771,7 +778,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260910c';
+var APP_VER='20260910d';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1067,9 +1074,14 @@ var VER=get('ver',{bg:'',nv:'',kh:'',gr:'',kt:'',don:'',ship:'',tk:'',spcd:''}),
     veChonMay();
   })();
   setTimeout(function(){ var m=$('sMay'); if(m) m.textContent='· máy '+(CFG.ma||MA_MAY) },50);
-  // Auto-login neu da co session cu hop le
-  if(CFG.ten&&CFG.ma) vaoApp();
-  else $('setup').classList.remove('hide');
+  /* SỬA 10/09/2026 — PHẢI QUA CỬA ĐĂNG NHẬP MỚI VÀO ĐƯỢC.
+     Trước đây máy nhớ người dùng lần trước rồi TỰ VÀO THẲNG, ai mở file lên
+     cũng thấy hết đơn hàng, danh bạ khách, số điện thoại. Máy quản lý đã bỏ
+     kiểu tự vào này từ lâu vì đúng là rủi ro thật; nay máy nhân viên theo
+     cùng một luật. Vẫn nhớ tên và máy để chọn sẵn cho nhanh, nhưng MÃ ĐĂNG
+     NHẬP thì lần nào cũng phải gõ. */
+  $('setup').classList.remove('hide');
+  setTimeout(function(){ var k=$('sKey'); if(k) k.focus() },120);
 })();
 
 function dsNV(){
@@ -2068,18 +2080,55 @@ $('q').addEventListener('input',function(){SLIM=30;timSP()});
    bảng giá gốc — vì vậy chỉ đè lên giá của dòng này, tuyệt đối không ghi ngược
    vào SP[].gb. Vẫn giữ 'goc' là giá theo bảng giá để giỏ hàng đánh dấu được
    "dòng này đã sửa giá", đúng như khi nhân viên tự sửa tay trong giỏ. */
+/* ═══ GIÁ LẦN TRƯỚC CỦA ĐÚNG KHÁCH NÀY — thêm 10/09/2026 ═══
+   Chủ yêu cầu: đừng bắt duyệt gì cả, cứ tự nhớ. Chọn đúng khách, chọn lại
+   đúng món họ từng mua, thì lấy luôn giá của ĐƠN GẦN NHẤT ra dùng — nhân
+   viên khỏi phải nhớ, khỏi phải hỏi. Giá vẫn sửa được như thường; sửa xong
+   lưu đơn là lần sau nhớ theo giá mới (xem chỗ ghi giá riêng trong luu()).
+   Đọc thẳng từ lịch sử đơn có sẵn trong máy, không cần bảng nào thêm. */
+function giaLanTruoc_(sdt,sku){
+  if(!sdt||!sku) return 0;
+  var tot=null;
+  DON.forEach(function(d){
+    if(d.huy) return;
+    if(String(d.sdt||'')!==String(sdt)) return;
+    (d.dong||[]).forEach(function(x){
+      if(x.sku!==sku) return;
+      if((x.hs||1)>1) return;                 // dòng bán quy đổi tính khác, bỏ qua
+      var moc=String(d.ngay||'')+' '+String(d.ma||'');
+      if(!tot||moc>tot.moc) tot={moc:moc,gia:Number(x.gia)||0};
+    });
+  });
+  return tot?tot.gia:0;
+}
 function them(sku,dungQD,giaEp){
   var p=SP.filter(function(x){return x.sku===sku})[0]; if(!p)return;
   var k=khHienTai();
   var gr=k&&k.gia&&k.gia[sku]&&k.gia[sku].het>=today()?k.gia[sku]:null;
-  var gle=gr?gr.gia:p.gb;
+  /* Thứ tự ưu tiên giá cho khách này:
+       1. giá nhân viên vừa gõ tay (giaEp)
+       2. giá riêng đã nhớ của khách  (gr)
+       3. GIÁ CỦA ĐƠN GẦN NHẤT khách này từng mua đúng món này  ← thêm 10/09
+       4. giá niêm yết trong bảng giá
+     Nhờ bước 3 mà khách quen quay lại là giá tự hiện ra, kể cả khi giá riêng
+     đã hết hạn 90 ngày hoặc chưa kịp được ghi nhớ. */
+  var giaCu=(!gr&&k&&k.sdt)?giaLanTruoc_(k.sdt,sku):0;
+  var gleNiem=gr?gr.gia:p.gb;              // giá CHÍNH THỨC của khách này
+  var gle=gr?gr.gia:(giaCu||p.gb);         // giá thực sẽ đặt vào giỏ
+  var tuLichSu=(!gr&&giaCu>0&&giaCu!==p.gb);
   var dv=dungQD?p.qd_dv:p.dvt, hs=dungQD?p.qd_sl:1;
-  var giaGoc=dungQD?(p.qd_gb||gle*p.qd_sl):gle;
+  /* 'goc' luôn là giá chính thức, KHÔNG phải giá vừa moi từ lịch sử — để giỏ
+     hàng đánh dấu được "dòng này khác bảng giá", nhân viên nhìn phát biết đang
+     bán giá riêng chứ không phải giá niêm yết. */
+  var giaGoc=dungQD?(p.qd_gb||gleNiem*p.qd_sl):gleNiem;
   var gia=(giaEp>0)?giaEp:giaGoc;
   var c=GIO.filter(function(x){return x.sku===sku&&x.dv===dv})[0];
   var idx;
   if(c){ c.sl++; if(giaEp>0) c.gia=giaEp; idx=GIO.indexOf(c) }
-  else { GIO.push({sku:sku,ten:p.ten,brand:p.brand||'',dv:dv,hs:hs,gia:gia,goc:giaGoc,sl:1,riêng:!!gr}); idx=GIO.length-1 }
+  else { GIO.push({sku:sku,ten:p.ten,brand:p.brand||'',dv:dv,hs:hs,gia:gia,goc:giaGoc,sl:1,
+                   riêng:!!(gr||tuLichSu), tuCu:tuLichSu}); idx=GIO.length-1 }
+  if(tuLichSu && !giaEp) bao('newMsg','Khách này lần trước mua <b>'+esc(p.ten)+'</b> giá <b>'+tien(giaCu)+
+    '</b> — đã lấy sẵn giá đó. Sửa lại được bình thường nếu lần này khác.','wa');
   $('q').value=''; timSP(); veGio();
   // Nhảy thẳng con trỏ vào ô số lượng vừa thêm, bôi đen sẵn — gõ số là ghi đè ngay,
   // khỏi phải tự cuộn xuống giỏ rồi tự bấm vào ô mới gõ được (mua 100 món khỏi bấm 100 lần).
@@ -2418,7 +2467,14 @@ function luu(){
     var k=KH[sdt]; k.ten=ten||k.ten; k.kenh=kenh; if(dc)k.dc=dc; k.gia=k.gia||{}; k.canDay=true;
     GIO.forEach(function(g){
       if(g.hs>1) return;
-      if(g.gia!==g.goc || (k.gia[g.sku]&&k.gia[g.sku].het>=today()))
+      /* GHI ĐÈ giá riêng mỗi khi bán — sửa 10/09/2026 theo yêu cầu của chủ:
+         "ghi đè nếu giá lần này thay đổi so với lần trước để dùng cho đơn
+         tương lai". Nhớ khi giá khác bảng giá, khi đã từng nhớ (để cập nhật
+         số mới), hoặc khi giá này lấy ra từ lịch sử (để gia hạn thêm 90 ngày
+         thay vì để nó rơi rụng). Bán đúng giá niêm yết cho khách chưa từng
+         có giá riêng thì không ghi gì — khỏi phình bảng vô ích. */
+      var daNho=k.gia[g.sku]&&k.gia[g.sku].het>=today();
+      if(g.gia!==g.goc || daNho || g.tuCu)
         k.gia[g.sku]={gia:g.gia,luc:today(),het:addD(today(),HAN),canDay:true};
     });
   }
@@ -2876,6 +2932,8 @@ function veLocNV(){
     ten.map(function(t){return '<option value="'+esc(t)+'">'+esc(t)+' ('+dem[t]+')</option>'}).join('');
   if([].slice.call(e.options).some(function(o){return o.value===giu})) e.value=giu;
 }
+var LS_HIEN=50;   // số đơn hiện một lúc ở tab Lịch sử
+var LS_DAU_LOC='';
 function veDon(){
   if(dangGoTrongFormSua()){ CHO_VE_LAI=true; return }
   // Nhớ lại 2 nhóm ô đang tích (chọn để in / chọn để huỷ) TRƯỚC khi vẽ lại toàn bộ
@@ -2885,6 +2943,9 @@ function veDon(){
   veLocNV();
   var q=kd(($('fdon')&&$('fdon').value||'').trim());
   var nv=($('locNV')&&$('locNV').value)||'';
+  // Đổi bộ lọc hay gõ tìm thì đếm lại từ đầu, đừng giữ mức "đã xem thêm" của lần trước
+  var dauLoc=q+'|'+nv;
+  if(dauLoc!==LS_DAU_LOC){ LS_DAU_LOC=dauLoc; LS_HIEN=50 }
   var ds=DON.filter(function(d){
     if(nv && (d.nv||'(không rõ)')!==nv) return false;
     return !q||kd(d.ma+' '+d.khach+' '+d.sdt).indexOf(q)>=0;
@@ -2901,10 +2962,20 @@ function veDon(){
       '</div></div>';
     return;
   }
+  /* ═══ CHỈ HIỆN MỘT SỐ ĐƠN MỘT LÚC — thêm 10/09/2026 theo phiếu 12 của chủ ═══
+     Trước đây dàn hết đơn ra một trang, cửa hàng chạy vài tháng là danh sách
+     dài mấy nghìn dòng — "kéo mệt nghỉ" như chủ nói, mà máy cũng phải dựng lại
+     từng đó dòng sau MỖI nhịp đồng bộ 30 giây. Nay chỉ dựng LS_HIEN đơn mới
+     nhất, còn lại bấm "xem thêm" mới dựng tiếp. Bộ lọc và ô tìm vẫn chạy trên
+     TOÀN BỘ đơn chứ không phải chỉ phần đang hiện — tìm là ra, không sót. */
+  var tong=ds.length;
+  if(ds.length>LS_HIEN) ds=ds.slice(0,LS_HIEN);
   $('dsDon').innerHTML='<div class="intoolbar" style="margin-bottom:9px">'+
     '<button id="btnDongBo" class="btn-nho" onclick="dongBoNgay()" style="background:var(--acc);color:#03121f;font-weight:600">⟳ Đồng bộ đơn</button>'+
     '<button class="btn-nho" onclick="thuGonTatCa(\'ls\',true)" style="background:var(--pur);color:#fff">▾ Thu gọn tất cả</button>'+
     '<button class="btn-nho" onclick="thuGonTatCa(\'ls\',false)">▸ Mở rộng tất cả</button></div>'+
+    (tong>ds.length?'<div class="sm" style="margin-bottom:8px">Đang hiện <b>'+ds.length+'</b> đơn mới nhất '+
+      'trong tổng số <b>'+tong+'</b>. Ô tìm và bộ lọc vẫn soi hết cả '+tong+' đơn.</div>':'')+
     '<div class="card">'+ds.map(function(d){
     var homNay=d.iso===today();
     var gon=THU_GON[d.ma];
@@ -2931,7 +3002,13 @@ function veDon(){
         '<div class="dt">'+_sl+' sp · <b style="color:var(--ok)">'+tien(d.tong)+'</b></div>'
       )+
       '<div id="ct_'+d.ma+'" class="hide"></div>'+
-    '</div>'}).join('')+'</div>';
+    '</div>'}).join('')+'</div>'+
+    (tong>ds.length
+      ? '<button class="btn2 mt" style="width:100%;padding:12px" onclick="LS_HIEN+=50;veDon()">'+
+        'Xem thêm 50 đơn nữa (còn '+(tong-ds.length)+')</button>'+
+        '<button class="btn-nho mt" style="width:100%" onclick="LS_HIEN=99999;veDon()">Hiện hết '+tong+' đơn</button>'
+      : (tong>50?'<div class="sm" style="text-align:center;margin-top:10px;opacity:.6">Hết '+tong+' đơn.'+
+          ' <a href="#" class="lnk" onclick="LS_HIEN=50;veDon();window.scrollTo({top:0});return false">thu lại cho gọn</a></div>':''));
   // Tích lại đúng các đơn đã chọn trước khi vẽ lại (xem ghi chú ở đầu hàm).
   if(dangChonInLS.length||dangChonHuy.length){
     [].slice.call(document.querySelectorAll('.ckinls')).forEach(function(c){
@@ -3893,9 +3970,13 @@ function ksMo(){
     'để lần sau kỹ sư đọc là hiểu ngay, khỏi phải tả lại.';
   $('ksThan').innerHTML='';
   $('ksErr').innerHTML='';
+  /* SỬA 10/09/2026: bảng này trước đây KHÔNG CÓ NÚT ĐÓNG — mở lên rồi chỉ
+     còn hai đường đi tiếp, muốn thoát phải bấm phím Esc mà không ai biết.
+     Trên điện thoại thì gần như kẹt luôn. Nay có nút Đóng rõ ràng. */
   $('ksNutDay').innerHTML=
     '<button class="btn" onclick="ksBatDauChi()">Chỉ vào chỗ có vấn đề</button>'+
-    '<button class="btn2" onclick="ksVietNgay(null)">Nói chung về màn hình này</button>';
+    '<button class="btn2" onclick="ksVietNgay(null)">Nói chung về màn hình này</button>'+
+    '<button class="btn2" style="flex-basis:100%" onclick="document.getElementById(\'dlgKS\').close()">Đóng, không báo gì</button>';
   if(KS_PHIEU.length) $('ksNutDay').innerHTML+=
     '<button class="btn2" style="flex-basis:100%" onclick="ksXemPhieu()">Xem '+KS_PHIEU.length+
     ' phiếu đã ghi &amp; gửi cho kỹ sư</button>';
@@ -3972,8 +4053,13 @@ function ksGhiPhieu(){
    chủ đọc, sửa lại lời cho rõ rồi mới duyệt chuyển tiếp. Gửi không được
    (mất mạng, chưa cập nhật Apps Script) thì phiếu vẫn nằm nguyên trong máy,
    lần sau tự gửi lại — không mất phiếu nào. */
+var KS_DANG_GUI={};
 async function ksGuiChoChu(ph){
   if(!ph) return;
+  var khoa=String(ph.luc||'')+'|'+String(ph.noi||'').slice(0,40);
+  if(KS_DANG_GUI[khoa]) return;    // đang gửi dở thì thôi, đừng gửi chồng lên
+  KS_DANG_GUI[khoa]=1;
+  setTimeout(function(){ delete KS_DANG_GUI[khoa] },15000);
   var url=CFG.url||URL_DRIVE;
   var o=$('ksGuiTT');
   if(!url||!CFG.ma){ if(o) o.innerHTML='<b>Chưa gửi được</b> — máy này chưa nối với cửa hàng. Phiếu vẫn được giữ lại.'; return }
@@ -3987,6 +4073,16 @@ async function ksGuiChoChu(ph){
       ph.daGui=true; ksLuu();
       if(o) o.innerHTML='<b>Đã gửi về cho chủ.</b> Chủ sẽ xem và xử lý. '+
         'Anh/chị cứ tiếp tục bán hàng bình thường.';
+    } else if(kq.doc===false){
+      /* SỬA 10/09/2026 — HẾT TRÙNG PHIẾU.
+         kq.doc===false nghĩa là gói ĐÃ ĐI nhưng trình duyệt không đọc được câu
+         trả lời (chuyện rất thường với Apps Script). Trước đây coi đây là thất
+         bại nên lần mở app sau lại gửi lại — chủ nhận cùng một chuyện hai ba
+         lần. Nay coi như đã gửi: phía Sheet đã có bước chống ghi trùng, nên
+         kể cả lỡ gửi lại cũng không sinh thêm bản. */
+      ph.daGui=true; ksLuu();
+      if(o) o.innerHTML='<b>Đã gửi về cho chủ.</b> (Máy không đọc được xác nhận, '+
+        'nhưng phiếu đã đi và Sheet có chặn trùng nên không lo bị gửi hai lần.)';
     } else throw new Error((kq.j&&kq.j.loi)||'chủ chưa nhận được');
   }catch(e){
     if(o) o.innerHTML='<b>Chưa gửi được</b> ('+esc(e.message)+'). Phiếu vẫn nằm trong máy, '+
@@ -4063,6 +4159,16 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260910d', ngay:'10/09/2026', ten:'Khoá cửa, hết trùng phiếu, tự nhớ giá khách',
+  vaPhieu:['09:47:04 10/9/2026','2026-10-09T02:46:54.000Z'],
+  muc:[
+   ['moi','<b>Máy nhân viên giờ phải đăng nhập mới vào được.</b> Trước đây mở file lên là thấy hết đơn hàng và danh bạ khách. Vẫn nhớ tên và máy để chọn nhanh, chỉ mã đăng nhập là lần nào cũng phải gõ.'],
+   ['moi','<b>Máy tự nhớ giá của từng khách.</b> Chọn đúng khách, chọn lại đúng món họ từng mua thì giá của đơn gần nhất tự hiện ra. Bán giá nào thì nhớ giá đó cho lần sau. Không cần ai duyệt gì.'],
+   ['sua','<b>Hết trùng phiếu kỹ sư.</b> Trước đây một chuyện bị gửi về hai ba lần vì bước thử lại lúc mạng chập chờn. Nay Sheet chặn ghi trùng, và mấy bản đã lỡ trùng thì gộp lại thành một dòng.'],
+   ['sua','<b>Nút Kỹ sư bên nhân viên bị thanh thanh toán đè lên</b>, chữ chồng chữ không đọc nổi trên điện thoại. Đã đẩy lên trên.'],
+   ['sua','Bảng Kỹ sư trước đây <b>không có nút Đóng</b> — mở lên rồi muốn thoát phải bấm Esc mà không ai biết. Nay có nút rõ ràng.'],
+   ['nhanh','Tab <b>Lịch sử</b> chỉ hiện 50 đơn mới nhất, bấm mới xem thêm — trước đây dàn hết ra, kéo mỏi tay và máy dựng lại cả nghìn dòng sau mỗi nhịp đồng bộ. Ô tìm vẫn soi toàn bộ đơn.'],
+  ]},
  {ban:'20260910c', ngay:'10/09/2026', ten:'Theo góp ý của chủ — trọn 9 phiếu',
   vaPhieu:['23:26:14 9/9/2026','23:38:06 9/9/2026','23:39:23 9/9/2026','00:09:29 10/9/2026',
            '00:10:36 10/9/2026','00:11:08 10/9/2026','00:11:54 10/9/2026','00:12:56 10/9/2026',
