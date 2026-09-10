@@ -879,7 +879,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260910i';
+var APP_VER='20260910j';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -4439,8 +4439,13 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260910j', ngay:'10/09/2026', ten:'Bên máy chủ: phiếu đã vá thôi làm phiền',
+  vaPhieu:[],
+  muc:[
+   ['sua','Bản này sửa bên <b>máy chủ</b>: góp ý nào đã được sửa rồi thì thôi hiện ra bắt chủ thao tác nữa. Máy nhân viên không đổi gì, chỉ lên cùng số bản cho khỏi lẫn.'],
+  ]},
  {ban:'20260910i', ngay:'10/09/2026', ten:'Danh sách đơn gọn lại — bấm đâu cũng mở được',
-  vaPhieu:['10:33:50 10/9/2026','10:35:18 10/9/2026'],
+  vaPhieu:['10:33:50 10/9/2026','10:35:18 10/9/2026','09:46:20 10/9/2026','2026-10-09T02:46:54.000Z'],
   muc:[
    ['dep','<b>Mỗi đơn giờ là một dòng gọn.</b> Tên khách, số điện thoại, mã đơn, số món, tiền, trạng thái — đủ để liếc qua là biết. Trước đây một đơn chiếm gần nửa màn hình vì bảng hàng và 6 nút luôn bung sẵn.'],
    ['sua','<b>Bấm vào bất cứ đâu trên dòng là mở chi tiết.</b> Trước đây phải mò đúng chỗ mới mở được — có tới ba chỗ bấm khác nhau mà không chỗ nào nói nó làm gì.'],

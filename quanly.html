@@ -644,7 +644,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260910i';
+var APP_VER='20260910j';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1088,6 +1088,7 @@ async function ghiGiaRiengDaChon(){
 var NHAT_KY_GOM=[];
 
 function veLam(){
+  try{ ksDoiChieuBanVa() }catch(e){}   // phiếu đã vá thì đừng tính vào việc cần làm
   var viec=[];
 
   // ── Việc 1: món trùng nhau ──
@@ -4119,27 +4120,49 @@ function ksGhiPhieu(){
     '<button class="btn" onclick="ksXemPhieu()">Xem tất cả phiếu</button>';
 }
 function ksXemPhieu(){
-  $('ksDan').innerHTML='Đang giữ <b>'+KS_PHIEU.length+' phiếu</b>. Bấm <b>Tải file gửi kỹ sư</b> rồi '+
-    'đưa file đó cho kỹ sư ở phiên làm việc sau — trong file có đủ lời của anh/chị và phần bên trong '+
-    'của máy, kỹ sư đọc là hiểu ngay.';
-  $('ksThan').innerHTML=KS_PHIEU.length
-    ? KS_PHIEU.map(function(x,i){
-        return '<div class="card" style="padding:11px;margin-bottom:8px">'+
-          '<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">'+
-          '<div class="sm" style="min-width:0"><b>'+(i+1)+'. '+esc(x.noi)+'</b>'+
-          '<div style="opacity:.7;margin-top:3px">'+esc(x.luc)+' · '+esc(x.app)+' bản '+esc(x.ban)+
-          ' · màn hình <b>'+esc(x.man)+'</b></div>'+
-          '<div style="opacity:.7">Chỗ chỉ: '+esc(x.cho)+'</div>'+
-          '<div style="opacity:.7">Kèm '+x.ma.length+' đoạn bên trong'+
-            (x.loiMay.length?' và '+x.loiMay.length+' lỗi máy tự ghi':'')+'</div>'+
-          (x.daVa?'<div style="color:var(--ok);margin-top:4px">✓ Đã vá ở bản '+esc(x.vaBan||'')+
-            ' — còn giữ '+ksConGiu_(x)+' ngày để đối chiếu, sau đó máy tự dọn</div>':'')+'</div>'+
-          '<button class="mini" style="flex:none" onclick="ksXoaPhieu('+i+')">Bỏ</button></div></div>';
-      }).join('')
-    : '<div class="empty">Chưa có phiếu nào.</div>';
+  try{ ksDoiChieuBanVa() }catch(e){}
+  /* SỬA 10/09/2026 — TÁCH HAI NHÓM.
+     Trước đây đổ hết vào một danh sách, phiếu đã vá nằm lẫn với phiếu còn
+     đang chờ, nên nhìn vào tưởng còn cả đống việc phải làm. */
+  var cho=[], daVa=[];
+  KS_PHIEU.forEach(function(x,i){ (x.daVa?daVa:cho).push({x:x,i:i}) });
+
+  function the(o, xong){
+    var x=o.x;
+    return '<div class="card" style="padding:11px;margin-bottom:8px'+(xong?';opacity:.72':'')+'">'+
+      '<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">'+
+      '<div class="sm" style="min-width:0"><b>'+esc(x.noi)+'</b>'+
+      '<div style="opacity:.7;margin-top:3px">'+esc(x.luc)+' · '+esc(x.app)+' bản '+esc(x.ban)+
+      ' · màn hình <b>'+esc(x.man)+'</b></div>'+
+      (xong
+        ?'<div style="color:var(--ok);margin-top:5px">✓ Đã sửa ở bản '+esc(x.vaBan||'')+
+          ' — còn giữ <b>'+ksConGiu_(x)+' ngày</b> phòng khi bản vá chưa chuẩn, sau đó máy tự dọn</div>'
+        :'<div style="opacity:.7">Chỗ chỉ: '+esc(x.cho)+'</div>'+
+         '<div style="opacity:.7">Kèm '+x.ma.length+' đoạn bên trong'+
+           (x.loiMay.length?' và '+x.loiMay.length+' lỗi máy tự ghi':'')+'</div>')+
+      '</div>'+
+      '<button class="mini" style="flex:none" onclick="ksXoaPhieu('+o.i+')">Bỏ</button></div></div>';
+  }
+
+  $('ksDan').innerHTML = cho.length
+    ? 'Còn <b>'+cho.length+' phiếu chờ kỹ sư</b>'+(daVa.length?' — '+daVa.length+' phiếu khác đã được sửa rồi.':'.')+
+      ' Bấm <b>Tải file gửi kỹ sư</b> rồi đưa file đó cho kỹ sư ở phiên làm việc sau.'
+    : (daVa.length
+        ? '<b style="color:var(--ok)">Không còn phiếu nào chờ.</b> '+daVa.length+' phiếu đã được sửa xong, '+
+          'máy giữ thêm ít ngày phòng khi bản vá chưa chuẩn rồi tự dọn. Anh/chị không phải làm gì cả.'
+        : 'Chưa có phiếu nào.');
+
+  $('ksThan').innerHTML =
+    (cho.length?'<div class="sm" style="letter-spacing:1px;font-weight:700;color:var(--warn);margin:2px 0 7px">'+
+      'CÒN CHỜ KỸ SƯ ('+cho.length+')</div>'+cho.map(function(o){return the(o,false)}).join(''):'')+
+    (daVa.length?'<div class="sm" style="letter-spacing:1px;font-weight:700;color:var(--ok);margin:14px 0 7px">'+
+      'ĐÃ SỬA XONG ('+daVa.length+') — KHÔNG CẦN LÀM GÌ</div>'+daVa.map(function(o){return the(o,true)}).join(''):'')+
+    (!KS_PHIEU.length?'<div class="empty">Chưa có phiếu nào.</div>':'');
+
   $('ksErr').innerHTML='';
-  $('ksNutDay').innerHTML='<button class="btn2" onclick="document.getElementById(\'dlgKS\').close()">Đóng</button>'+
-    (KS_PHIEU.length?'<button class="btn" onclick="ksTaiVe()">Tải file gửi kỹ sư</button>':'');
+  $('ksNutDay').innerHTML='<button class="btn2 rong" onclick="document.getElementById(\'dlgKS\').close()">Đóng</button>'+
+    (cho.length?'<button class="btn" onclick="ksTaiVe()">Tải file gửi kỹ sư ('+cho.length+' phiếu)</button>':'')+
+    (daVa.length?'<button class="btn2" onclick="ksDonDaVa()">Dọn '+daVa.length+' phiếu đã sửa</button>':'');
 }
 function ksXoaPhieu(i){
   if(!confirm('Bỏ phiếu này?')) return;
@@ -4181,8 +4204,20 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260910j', ngay:'10/09/2026', ten:'Phiếu đã vá thôi làm phiền',
+  vaPhieu:[],
+  muc:[
+   ['sua','<b>Lỗi đã sửa rồi mà vẫn hiện nguyên một danh sách bắt bạn thao tác — đã vá.</b> Ba nguyên nhân, sửa cả ba.'],
+   ['sua','<b>Bản trùng không được đánh dấu.</b> Cùng một góp ý gửi mấy lần thì mỗi bản một dấu thời gian khác nhau, máy chỉ đánh dấu được đúng một bản, mấy bản kia treo mãi. Nay so <b>thêm bằng nội dung</b> — cùng lời góp ý thì cùng được đánh dấu.'],
+   ['sua','<b>Phiếu nhân viên gửi về không được đối chiếu gì cả.</b> Sửa xong rồi nó vẫn nằm trong "Nhân viên báo N chỗ trục trặc", vẫn bắt duyệt từng cái. Nay tự rơi ra khỏi danh sách cần làm.'],
+   ['sua','Máy trước đây <b>chỉ đối chiếu lúc mở bảng "Có gì mới"</b>. Nay đối chiếu cả lúc mở danh sách phiếu, mở bảng duyệt, và lúc vẽ tab Cần làm.'],
+   ['dep','Danh sách phiếu <b>tách hai nhóm rõ ràng</b>: "CÒN CHỜ KỸ SƯ (n)" ở trên, "ĐÃ SỬA XONG (n) — KHÔNG CẦN LÀM GÌ" ở dưới, mờ đi. File gửi kỹ sư chỉ đếm nhóm trên.'],
+   ['moi','Thêm nút <b>"Dọn n phiếu đã sửa"</b> — không muốn chờ đủ 3 ngày thì dọn ngay.'],
+   ['moi','Thêm nút <b>"Bỏ qua tất cả n phiếu"</b> ở bảng duyệt phiếu nhân viên, khỏi phải bấm từng cái.'],
+  ]},
  {ban:'20260910i', ngay:'10/09/2026', ten:'Nhớ những cặp “hai món khác nhau”',
-  vaPhieu:['10:36:43 10/9/2026'],
+  vaPhieu:['10:36:43 10/9/2026','10:33:50 10/9/2026','10:35:18 10/9/2026',
+           '09:46:20 10/9/2026','2026-10-09T02:46:54.000Z'],
   muc:[
    ['sua','<b>Bấm “hai món khác nhau” xong nó vẫn hỏi lại — đã sửa.</b> Bản cũ chỉ bỏ qua câu hỏi đó trong lần đó, không ghi lại gì, nên mở lại tab Cần làm là hỏi y hệt. Nay <b>nhớ luôn</b>, và cặp đã đánh dấu không tính vào số việc cần làm nữa.'],
    ['moi','Tab Cần làm có thêm mục <b>“Đã đánh dấu hai món khác nhau”</b> — lỡ tay thì bỏ đánh dấu, lần gom sau sẽ hỏi lại.'],
@@ -4321,7 +4356,12 @@ function cnKiemTra(){
    ═══════════════════════════════════════════════════════════════════════ */
 function phieuNVChoDuyet(){
   if(!PHIEU_NV.length){ try{ PHIEU_NV=get('phieunv',[])||[] }catch(e){ PHIEU_NV=[] } }
-  var cho=PHIEU_NV.filter(function(x){ return String(x.tt||'').trim().toUpperCase()==='CHO DUYET' });
+  if(!Object.keys(KS_XONG).length){ try{ KS_XONG=get('ksxong',{})||{} }catch(e){ KS_XONG={} } }
+  var cho=PHIEU_NV.filter(function(x){
+    if(String(x.tt||'').trim().toUpperCase()!=='CHO DUYET') return false;
+    if(KS_XONG[khoaPhieuNV_(x)]) return false;   // đã vá hoặc chủ đã bỏ qua — thôi hỏi
+    return true;
+  });
   /* GỘP BẢN TRÙNG — sửa 10/09/2026.
      Những phiếu đã lỡ bị ghi hai ba lần lên Sheet trước khi có bước chặn trùng
      thì vẫn nằm đó. Ở đây gộp lại khi CÙNG MÁY và CÙNG NỘI DUNG, giữ bản sớm
@@ -4336,6 +4376,7 @@ function phieuNVChoDuyet(){
   return ra;
 }
 function moPhieuNV(){
+  try{ ksDoiChieuBanVa() }catch(e){}
   var ds=phieuNVChoDuyet();
   $('ksDan').innerHTML='Nhân viên báo <b>'+ds.length+' chỗ</b> đang trục trặc. Đọc từng cái, '+
     'cái nào đúng là lỗi thì bấm <b>Đúng là lỗi</b> để chuyển cho kỹ sư. Cái nào không phải thì '+
@@ -4356,7 +4397,8 @@ function moPhieuNV(){
       '</div></div>';
   }).join('') : '<div class="empty">Không còn phiếu nào chờ.</div>';
   $('ksErr').innerHTML='';
-  $('ksNutDay').innerHTML='<button class="btn2" onclick="document.getElementById(\'dlgKS\').close()">Để đó, lần sau xem</button>';
+  $('ksNutDay').innerHTML='<button class="btn2" onclick="document.getElementById(\'dlgKS\').close()">Để đó, lần sau xem</button>'+
+    (ds.length>1?'<button class="btn2" style="color:var(--bad)" onclick="boQuaHetPhieuNV()">Bỏ qua tất cả '+ds.length+' phiếu</button>':'');
   $('dlgKS').showModal();
 }
 async function duyetPhieuNV(i,dung){
@@ -4531,19 +4573,93 @@ function huyHieu_(nay,truoc){
    đếm ngày, tự dọn. Không cần ai bấm gì.
    ═══════════════════════════════════════════════════════════════════════ */
 var GIU_NGAY_VA=3;
+/* ═══ SỬA 10/09/2026 — PHIẾU ĐÃ VÁ MÀ VẪN BẮT CHỦ THAO TÁC ═══
+   Chủ báo: "các lỗi đã được vá nhưng vẫn hiện nguyên 1 list và bắt tôi thao tác".
+   Ba nguyên nhân, sửa cả ba:
+
+   1. NỐI PHIẾU VỚI BẢN VÁ CHỈ DỰA VÀO DẤU THỜI GIAN. Cùng một góp ý bị gửi
+      mấy lần thì mỗi bản một dấu thời gian khác nhau (có bản là "10:12:31
+      10/9/2026", có bản là chuỗi ISO của máy nhân viên). Đánh dấu được đúng
+      một bản, mấy bản kia treo mãi. Nay so THÊM BẰNG NỘI DUNG: bản nào cùng
+      lời góp ý với một phiếu đã vá thì cũng coi là đã vá.
+
+   2. PHIẾU NHÂN VIÊN GỬI VỀ (chờ duyệt) KHÔNG ĐƯỢC ĐỐI CHIẾU GÌ CẢ. Sửa xong
+      rồi nó vẫn nằm trong "Nhân viên báo N chỗ đang trục trặc", vẫn bắt bấm
+      duyệt từng cái. Nay cũng đối chiếu, và tự rơi ra khỏi danh sách cần làm.
+
+   3. HÀM ĐỐI CHIẾU CHỈ CHẠY LÚC MỞ BẢNG "CÓ GÌ MỚI". Nay chạy cả lúc mở danh
+      sách phiếu, mở bảng duyệt, và lúc vẽ tab Cần làm. */
+var KS_XONG={};   // {khoá phiếu nhân viên: {luc,noi,ban}} — đã vá rồi, đừng hỏi nữa
+
+function chuanNoi_(t){
+  return String(t||'').toLowerCase()
+    .replace(/\[chủ ghi thêm\][\s\S]*$/,'')       // bỏ phần chủ ghi thêm
+    .replace(/[^a-z0-9à-ỹ]+/gi,' ').trim().slice(0,70);
+}
+function khoaPhieuNV_(x){ return String(x.may||'')+'|'+chuanNoi_(x.noi) }
+
 function ksDoiChieuBanVa(){
   var tra={};
   CAP_NHAT.forEach(function(b){ (b.vaPhieu||[]).forEach(function(l){ tra[String(l).trim()]=b }) });
   var nay=Date.now(), doi=false;
+
+  // Vòng 1: nối theo dấu thời gian như cũ
   KS_PHIEU.forEach(function(p){
     var b=tra[String(p.luc||'').trim()];
     if(b && !p.daVa){ p.daVa=nay; p.vaBan=b.ban; p.vaTen=b.ten; doi=true }
   });
+  // Vòng 2: lan sang những phiếu CÙNG NỘI DUNG (bản trùng, bản của máy nhân viên)
+  var traNoi={};
+  KS_PHIEU.forEach(function(p){ if(p.daVa){ var k=chuanNoi_(p.noi); if(k) traNoi[k]=p } });
+  KS_PHIEU.forEach(function(p){
+    if(p.daVa) return;
+    var g=traNoi[chuanNoi_(p.noi)];
+    if(g){ p.daVa=g.daVa; p.vaBan=g.vaBan; p.vaTen=g.vaTen; doi=true }
+  });
+
+  // Vòng 3: phiếu nhân viên đang chờ duyệt — cái nào đã vá thì thôi hỏi nữa
+  try{
+    if(!PHIEU_NV.length){ PHIEU_NV=get('phieunv',[])||[] }
+    if(!Object.keys(KS_XONG).length) KS_XONG=get('ksxong',{})||{};
+    var doiNV=false;
+    PHIEU_NV.forEach(function(x){
+      if(String(x.tt||'').trim().toUpperCase()!=='CHO DUYET') return;
+      var b = tra[String(x.luc||'').trim()] || null;
+      var g = traNoi[chuanNoi_(x.noi)] || null;
+      if(!b && !g) return;
+      var k=khoaPhieuNV_(x);
+      if(KS_XONG[k]) return;
+      KS_XONG[k]={luc:x.luc||'', noi:x.noi||'', ban:(b&&b.ban)||(g&&g.vaBan)||'', danhDau:nay};
+      doiNV=true;
+    });
+    if(doiNV) set('ksxong',KS_XONG);
+  }catch(e){}
+
   var truoc=KS_PHIEU.length;
   KS_PHIEU=KS_PHIEU.filter(function(p){
     return !(p.daVa && (nay-p.daVa) > GIU_NGAY_VA*86400000);
   });
   if(doi || KS_PHIEU.length!==truoc) ksLuu();
+}
+/* Chủ bấm là dọn ngay, không phải chờ hết 3 ngày */
+function ksDonDaVa(){
+  var n=ksVuaVa().length;
+  if(!n){ return }
+  if(!confirm('Dọn '+n+' phiếu đã vá ra khỏi danh sách?\n\nMấy phiếu này đã được sửa ở bản mới. '+
+    'Dọn rồi thì không đọc lại được nguyên văn góp ý nữa — nếu bản vá chưa chuẩn thì báo lại từ đầu.')) return;
+  KS_PHIEU=KS_PHIEU.filter(function(p){ return !p.daVa });
+  ksLuu(); ksXemPhieu();
+}
+/* Bỏ qua cả loạt phiếu nhân viên mà không cần lên Sheet từng cái */
+function boQuaHetPhieuNV(){
+  var ds=phieuNVChoDuyet();
+  if(!ds.length) return;
+  if(!confirm('Bỏ qua '+ds.length+' phiếu nhân viên đang chờ?\n\nMáy này sẽ không hỏi lại nữa. '+
+    'Nhân viên không bị làm phiền gì thêm.')) return;
+  ds.forEach(function(x){ KS_XONG[khoaPhieuNV_(x)]={luc:x.luc||'',noi:x.noi||'',ban:'(chủ bỏ qua)',danhDau:Date.now()} });
+  set('ksxong',KS_XONG);
+  veLam();
+  if($('dlgKS')&&$('dlgKS').open) moPhieuNV();
 }
 function ksVuaVa(){ return KS_PHIEU.filter(function(p){return p.daVa}) }
 function ksConGiu_(p){
