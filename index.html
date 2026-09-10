@@ -879,7 +879,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260910j';
+var APP_VER='20260911b';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -996,7 +996,12 @@ function dinhDangTien(el){
 }
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){
  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
-function kd(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase()}
+/* SỬA 11/09/2026 — CHỮ Đ KHÔNG ĐƯỢC BỎ DẤU, GÕ "dau nanh" KHÔNG RA "đậu nành".
+   normalize('NFD') tách được dấu của â, ê, ậ… nhưng chữ đ là MỘT KÝ TỰ RIÊNG
+   trong bảng mã, không phải d + dấu, nên nó nằm nguyên. Người Việt gõ nhanh thì
+   gõ "dau", "dong", "duong" — không ai gõ "đ". Nay đổi đ→d, Đ→D trước khi so.
+   Ảnh hưởng: mọi ô tìm kiếm trong app đều dễ tìm hơn. */
+function kd(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\u0111/g,'d').replace(/\u0110/g,'D').toLowerCase()}
 /* ══ TÔ MÀU MÃ ĐƠN THEO MÁY LÊN ĐƠN ══
    Mã đơn dạng "NV01-260907-005" — phần đuôi (ngày-số) chạy tương tự nhau giữa
    các máy nên rất dễ nhìn nhầm đơn của máy này với máy khác khi liếc nhanh một
@@ -1516,7 +1521,17 @@ async function dongBo(im){
     if(v.gr!==VER.gr){ if(await taiGR(v.gr)) doi.push('giá riêng khách') }
     if(v.ship!==VER.ship){ if(await taiShip()) doi.push('danh sách shipper') }
     if(v.tk!==VER.tk){ if(await taiTaiKhoan()) doi.push('danh sách tài khoản') }
-    if(v.spcd!==VER.spcd){ if(await taiSPCD(v.spcd)) doi.push('sản phẩm mới của máy khác') }
+    if(v.spcd!==VER.spcd){ if(await taiSPCD(v.spcd)) doi.push('sản phẩm chờ duyệt') }
+    /* SỬA 10/09/2026 — công tắc của chủ: cho bán món chưa duyệt hay không.
+       Sheet trả về mỗi nhịp hỏi, không cần tải lại trang. */
+    if(v.chobanchuaduyet!==undefined){
+      var ctMoi=!!v.chobanchuaduyet;
+      if(ctMoi!==CHO_BAN_CHUA_DUYET){
+        CHO_BAN_CHUA_DUYET=ctMoi; set('chobanchuaduyet',ctMoi); timSP();
+        doi.push(ctMoi?'chủ cho bán món chưa duyệt':'chủ yêu cầu duyệt trước khi bán');
+      }
+    }
+    baoMonBiBac();
     var coLoiDb=false;
     if(v.don!==VER.don){ if(await taiDon()){ VER.don=v.don||''; doi.push('đơn hàng mới') } else coLoiDb=true; }
     set('ver',VER);
@@ -1631,14 +1646,74 @@ async function taiGR(ver){
    MÃ đó, thay vì tạo mã mới. Xem gopSPCD() bên dưới thực hiện việc gộp
    vào danh sách tìm kiếm SP; xem luuMoi() thực hiện việc tìm-trước-khi-tạo.
    ══════════════════════════════════════════════════════════════════ */
+/* Công tắc của chủ: cho bán món chưa duyệt hay không. Mặc định TẮT.
+   Giá trị thật lấy từ Sheet mỗi nhịp đồng bộ (xem dongBo). */
+var CHO_BAN_CHUA_DUYET = get('chobanchuaduyet', false);
+
+/* SỬA 10/09/2026 — nạp danh sách chờ duyệt, HIỂU CẢ TRẠNG THÁI.
+   - TU CHOI  : chủ đã bác — bỏ hẳn khỏi máy, không cho bán, không hiện.
+   - DA DUYET : chủ đã nhận — món sẽ về theo bảng giá chính thức, bỏ cờ chờ.
+   - trống hoặc CHO DUYET : còn chờ, hiện ra nhưng chưa bán được. */
 function napSPCD(){
   var cd=get('spcd',[]);
+  var bac={}, duyet={};
+  cd.forEach(function(x){
+    var tt=String(x.tt||'').trim().toUpperCase();
+    if(tt==='TU CHOI') bac[x.sku]={ten:x.ten,lyDo:x.lyDo||''};
+    else if(tt==='DA DUYET') duyet[x.sku]=1;
+  });
+  // món bị bác thì gỡ khỏi máy này luôn, kể cả món chính máy này tạo ra
+  if(Object.keys(bac).length){
+    SP=SP.filter(function(p){ return !bac[p.sku] });
+    var ds0=get('spmoi',[]).filter(function(p){ return !bac[p.sku] });
+    set('spmoi',ds0);
+    set('spbac',bac);
+  }
+  // món đã duyệt thì bỏ cờ chờ — bán được ngay, không đợi bảng giá về
+  SP.forEach(function(p){ if(duyet[p.sku]) p.choDuyet=false });
   if(!cd.length) return;
   var coRoi={}; SP.forEach(function(p){coRoi[p.sku]=1});
-  var them=cd.filter(function(x){return !coRoi[x.sku]})
-    .map(function(x){return {sku:x.sku,nhom:x.nhom||'KHÁC',brand:x.brand||'',ten:x.ten,
-      dvt:x.dvt,gb:Number(x.gb)||0,qd_dv:'',qd_sl:0,qd_gb:0,moi:true,choDuyet:true}});
+  var them=cd.filter(function(x){
+      if(coRoi[x.sku]) return false;
+      return String(x.tt||'').trim().toUpperCase()!=='TU CHOI';
+    })
+    .map(function(x){
+      var tt=String(x.tt||'').trim().toUpperCase();
+      return {sku:x.sku,nhom:x.nhom||'KHÁC',brand:x.brand||'',ten:x.ten,
+        dvt:x.dvt,gb:Number(x.gb)||0,qd_dv:'',qd_sl:0,qd_gb:0,
+        moi:true, choDuyet: tt!=='DA DUYET'};
+    });
   if(them.length) SP=SP.concat(them);
+}
+
+/* Xin chủ duyệt gấp — gửi lại đúng cửa spmoi, chủ thấy món nhảy lên đầu
+   danh sách chờ. Không tạo dòng thứ hai vì Sheet đã chặn trùng mã. */
+async function xinDuyetGap(sku){
+  var p=SP.filter(function(x){return x.sku===sku})[0]; if(!p) return;
+  var url=CFG.url||URL_DRIVE;
+  if(!url){ bao('newMsg','Máy này chưa nối với cửa hàng nên chưa xin duyệt được.','er'); return }
+  bao('newMsg','Đang xin chủ duyệt <b>'+esc(p.ten)+'</b>…','wa');
+  try{
+    var kq=await guiGoi(url,{may:CFG.ma,nv:CFG.ten,hanhdong:'spmoi',gap:1,
+      sp:{sku:p.sku,ten:p.ten,nhom:p.nhom,brand:p.brand||'',dvt:p.dvt,gb:p.gb}});
+    if(kq.doc===false || (kq.j&&kq.j.ok)){
+      bao('newMsg','<b>Đã xin duyệt.</b> Chủ mở máy quản lý là thấy ngay. '+
+        'Chủ gật xong, máy này nhận trong vòng một phút — khỏi tải lại trang.','ok');
+    }else{
+      bao('newMsg','Chưa gửi được lời xin duyệt — kiểm tra mạng rồi bấm lại.','er');
+    }
+  }catch(e){ bao('newMsg','Chưa gửi được — kiểm tra mạng. ('+esc(e.message)+')','er') }
+}
+
+/* Chủ bác món nào thì nói cho nhân viên biết lý do, đúng một lần. */
+function baoMonBiBac(){
+  var bac=get('spbac',null); if(!bac||!Object.keys(bac).length) return;
+  var ds=Object.keys(bac).map(function(k){
+    return '<b>'+esc(bac[k].ten||k)+'</b>'+(bac[k].lyDo?' — '+esc(bac[k].lyDo):'') });
+  set('spbac',{});
+  bao('newMsg','<b>Chủ đã bác '+ds.length+' món anh/chị thêm:</b><br>'+ds.join('<br>')+
+    '<br><span class="sm">Mấy món này đã gỡ khỏi máy. Nếu vẫn cần bán, tìm lại trong danh sách '+
+    'xem có món tương đương chưa — không có thì báo chủ.</span>','wa');
 }
 async function taiSPCD(ver){
   var j=await hoi('spcd=1&ver='+encodeURIComponent(VER.spcd||''));
@@ -2196,12 +2271,20 @@ function timSP(){
       (p.brand?'<div class="br">'+esc(p.brand)+'</div>':'')+
       '<div class="n">'+esc(p.ten)+'</div>'+
       (gr?'<span class="tag kh">giá riêng · hết hạn '+gr.het.split('-').reverse().join('/')+'</span>':'')+
-      (p.moi?'<span class="tag moi" title="Chỉ máy này biết — sẽ gửi cho quản lý khi món này nằm trong một đơn đã lưu và đẩy đi">chờ duyệt</span>':'')+
+      (p.choDuyet
+        ?'<span class="tag" style="background:var(--warnBg);color:var(--warn);font-weight:700" '+
+          'title="Chủ chưa duyệt món này nên chưa bán được">⏳ CHỜ CHỦ DUYỆT</span>'
+        :(p.moi?'<span class="tag moi">hàng mới</span>':''))+
       '</div>'+
       '<div class="sp-sku">'+esc(p.sku)+'<br>'+esc(p.nhom)+'</div>'+
       '<div class="sp-gia opts" style="margin-top:0">'+
-      '<button class="opt" onclick="them(\''+p.sku+'\',0)">1 '+esc(p.dvt)+'<b>'+tien(gle)+'</b></button>';
-    if(p.qd_sl) h+='<button class="opt" onclick="them(\''+p.sku+'\',1)">1 '+esc(p.qd_dv)+
+      ((p.choDuyet && !CHO_BAN_CHUA_DUYET)
+        ?'<button class="opt" style="opacity:.55;border-style:dashed" '+
+           'onclick="them(\''+p.sku+'\',0)">Chưa bán được</button>'+
+         '<button class="opt" style="background:var(--warnBg);color:var(--warn);font-weight:700" '+
+           'onclick="xinDuyetGap(\''+p.sku+'\')">Xin duyệt gấp</button>'
+        :'<button class="opt" onclick="them(\''+p.sku+'\',0)">1 '+esc(p.dvt)+'<b>'+tien(gle)+'</b></button>');
+    if(p.qd_sl && !(p.choDuyet && !CHO_BAN_CHUA_DUYET)) h+='<button class="opt" onclick="them(\''+p.sku+'\',1)">1 '+esc(p.qd_dv)+
       '<b>'+tien(p.qd_gb||gle*p.qd_sl)+'</b><small>= '+p.qd_sl+' '+esc(p.dvt)+'</small></button>';
     return h+'</div></div></div>';
   }).join('')+
@@ -2240,6 +2323,15 @@ function giaLanTruoc_(sdt,sku){
 }
 function them(sku,dungQD,giaEp){
   var p=SP.filter(function(x){return x.sku===sku})[0]; if(!p)return;
+  /* SỬA 10/09/2026 — cửa chặn món chưa được chủ duyệt. Chủ bật công tắc
+     "cho bán khi chưa duyệt" ở máy quản lý thì bỏ qua cửa này, nhưng đơn
+     sẽ bị đánh dấu treo chờ duyệt. */
+  if(p.choDuyet && !CHO_BAN_CHUA_DUYET){
+    bao('newMsg','<b>"'+esc(p.ten)+'" đang chờ chủ duyệt</b> nên chưa bán được.<br>'+
+      'Chọn món khác có sẵn, hoặc bấm <b>Xin duyệt gấp</b> ở dòng sản phẩm đó rồi chờ một chút — '+
+      'chủ gật là món hiện ra bán được ngay.','er');
+    return;
+  }
   var k=khHienTai();
   var gr=k&&k.gia&&k.gia[sku]&&k.gia[sku].het>=today()?k.gia[sku]:null;
   /* Thứ tự ưu tiên giá cho khách này:
@@ -2510,10 +2602,16 @@ async function luuMoi(){
     ('0'+(d0.getMonth()+1)).slice(-2)+('0'+d0.getDate()).slice(-2)+'-'+
     ('0'+d0.getHours()).slice(-2)+('0'+d0.getMinutes()).slice(-2)+('0'+d0.getSeconds()).slice(-2);
   var nhom=$('nNhom').value;
-  var m={sku:sku,nhom:nhom,brand:'',ten:t,dvt:dv,gb:g,moi:true,tao:today(),nguoiTao:CFG.ten};
+  /* SỬA 10/09/2026 — CHỦ PHẢI DUYỆT MỚI BÁN ĐƯỢC.
+     Trước đây thêm xong là bán ngay, chủ không hề hay biết cho tới lúc đơn
+     về. Nay món mới nằm ở trạng thái CHỜ DUYỆT: vẫn hiện trong danh sách để
+     mọi máy thấy mà không tạo trùng, nhưng chưa kéo vào giỏ được. */
+  var m={sku:sku,nhom:nhom,brand:'',ten:t,dvt:dv,gb:g,moi:true,choDuyet:true,
+         tao:today(),nguoiTao:CFG.ten};
   SP.unshift(m); var ds=get('spmoi',[]); ds.unshift(m); set('spmoi',ds);
   $('dlgThem').close(); $('q').value=t; timSP();
-  bao('newMsg','Đã thêm <b>'+esc(t)+'</b> (mã tạm '+sku+'). Bán được ngay.','wa');
+  bao('newMsg','Đã gửi <b>'+esc(t)+'</b> cho chủ duyệt (mã tạm '+sku+').<br>'+
+    '<b>Chưa bán được ngay</b> — chờ chủ gật. Cần gấp thì bấm <b>Xin duyệt gấp</b> ở ngay dòng sản phẩm đó.','wa');
 
   // Báo ngay cho các máy nhân viên KHÁC biết — không đợi tới lúc đơn được đẩy
   // đi mới lộ ra, để họ tìm thấy và dùng lại đúng mã này ở lần đồng bộ kế tiếp.
@@ -4439,6 +4537,19 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260911b', ngay:'11/09/2026', ten:'Tự chỉ ra món cũ để gộp · gõ không dấu tìm được chữ Đ',
+  vaPhieu:[],
+  muc:[
+   ['sua','<b>Gõ không dấu giờ tìm ra chữ có Đ.</b> Trước đây gõ "dau nanh" không ra "đậu nành", gõ "dong" không ra "đồng" — vì chữ <b>đ</b> là một ký tự riêng trong bảng mã, không phải d có dấu. Đã sửa: ô tìm sản phẩm, tìm khách, tìm đơn đều dễ tìm hơn.'],
+  ]},
+ {ban:'20260911a', ngay:'11/09/2026', ten:'Hàng mới phải chờ chủ duyệt',
+  vaPhieu:[],
+  muc:[
+   ['moi','<b>Thêm sản phẩm mới giờ phải chờ chủ gật.</b> Món vừa thêm mang nhãn <b>⏳ CHỜ CHỦ DUYỆT</b>, hiện trong danh sách để mọi máy thấy mà không tạo trùng, nhưng <b>chưa kéo vào giỏ được</b>.'],
+   ['moi','Cần gấp thì bấm <b>Xin duyệt gấp</b> ngay dòng sản phẩm đó. Chủ mở máy quản lý là thấy ngay. Chủ gật xong máy này nhận trong vòng một phút, <b>khỏi tải lại trang</b>.'],
+   ['moi','Chủ từ chối thì món tự gỡ khỏi máy, kèm <b>lý do của chủ</b> để lần sau khỏi thêm nhầm.'],
+   ['dep','Trước khi cho thêm mới, máy vẫn gợi ý mấy món tên gần giống đã có — chọn đúng món cũ là khỏi phải chờ duyệt.'],
+  ]},
  {ban:'20260910j', ngay:'10/09/2026', ten:'Bên máy chủ: phiếu đã vá thôi làm phiền',
   vaPhieu:[],
   muc:[

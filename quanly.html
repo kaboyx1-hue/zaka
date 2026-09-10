@@ -391,6 +391,10 @@ body.ks-chi *{cursor:crosshair!important}
 
 <section id="pg-vh" class="hide">
   <div id="vhMsg"></div>
+  <div class="card"><h2 style="margin-bottom:4px">Hàng nhân viên tự thêm</h2>
+    <div class="sm" style="margin-bottom:10px">Nhân viên gặp món chưa có trong bảng giá thì thêm mới.
+    Mặc định món đó <b>chờ anh/chị duyệt mới bán được</b> — xem ở tab <b>Cần làm</b>.</div>
+    <div id="ctChoBan"></div></div>
   <div class="card"><h2>Khôi phục giá riêng của khách từ lịch sử bán</h2>
     <div class="sm"><b>Bình thường không cần dùng tới cái này.</b> Từ bản 10/09/2026, máy nhân viên
     <b>tự nhớ lấy</b>: chọn đúng khách, chọn lại đúng món họ từng mua thì giá của đơn gần nhất tự
@@ -644,7 +648,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260910j';
+var APP_VER='20260911b';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -669,6 +673,7 @@ var APP_VER='20260910j';
 })();
 
 var SO=[], GIA={}, ALIAS={}, K='dql_', BGV={ver:'',luc:'',so:0};
+var SPCD=[], CHO_BAN=false;   // sản phẩm nhân viên tự thêm + công tắc cho bán khi chưa duyệt
 var NVS=[], KTRUONG='', MADK='', MAYGUI={}, VONVER='';
 var KY='thangnay';   // kỳ báo cáo đang xem
 /* SỬA 10/09/2026 theo phiếu 7 của chủ: mặc định THU GỌN hết mấy bảng phân
@@ -1087,6 +1092,195 @@ async function ghiGiaRiengDaChon(){
    đủ cho tình huống "lỡ bấm nhầm, bấm lại ngay". */
 var NHAT_KY_GOM=[];
 
+/* ═══════════════════════════════════════════════════════════════════════
+   DUYỆT SẢN PHẨM NHÂN VIÊN TỰ THÊM — thêm 10/09/2026 theo yêu cầu của chủ
+   ═══════════════════════════════════════════════════════════════════════
+   Chủ chọn phương án "phải có tôi duyệt mới được bán". Từ đây:
+     - nhân viên thêm món  → món nằm ở trạng thái CHỜ DUYỆT, chưa bán được
+     - chủ NHẬN            → món vào bảng giá, phát bảng giá là ba máy bán được
+     - chủ GỘP             → món trỏ về mã cũ, dùng lại đúng cơ chế gộp sẵn có
+     - chủ TỪ CHỐI         → món bị gỡ khỏi máy nhân viên, kèm lý do
+   KHÔNG ghi thẳng vào trang BANG_GIA từ đây: việc đó vẫn đi đúng một cửa duy
+   nhất là "Phát bảng giá", để không có hai nguồn ghi cùng một bảng. */
+function spChoDuyet_(){
+  return (SPCD||[]).filter(function(x){
+    var tt=String(x.tt||'').trim().toUpperCase();
+    return tt==='' || tt==='CHO DUYET';
+  });
+}
+function moDuyetSP(){
+  var ds=spChoDuyet_();
+  $('dsDan').innerHTML = ds.length
+    ? 'Nhân viên vừa thêm <b>'+ds.length+' mã hàng</b>. Mấy món này <b>chưa bán được</b> '+
+      'cho tới khi anh/chị quyết. Điền giá nhập rồi bấm <b>Nhận</b>, hoặc chỉ ra nó trùng món nào, '+
+      'hoặc từ chối kèm lý do cho nhân viên biết.'
+    : 'Không còn món nào chờ duyệt.';
+  $('dsThan').innerHTML = ds.length ? ds.map(function(x,i){
+    var g=Number(x.gb)||0;
+    var goiY=timGanGiong_(x.ten);
+    return '<div class="card" style="padding:12px;margin-bottom:10px" id="spd'+i+'">'+
+      '<div class="sm" style="color:var(--tx2)">'+esc(x.luc||'')+' · máy <b>'+esc(x.mayTao||'')+'</b>'+
+        ' · <b>'+esc(x.nguoiTao||'')+'</b> · mã tạm <code>'+esc(x.sku)+'</code></div>'+
+      '<div style="font-weight:700;font-size:16px;margin:6px 0 3px">'+esc(x.ten||'')+'</div>'+
+      '<div class="sm">Bán theo <b>'+esc(x.dvt||'—')+'</b> · nhân viên đặt giá bán <b>'+tien(g)+'</b>'+
+        ' · nhóm '+esc(x.nhom||'KHÁC')+'</div>'+
+      (goiY.length
+        ? '<div class="sm" style="margin-top:8px;padding:8px;border-radius:10px;background:var(--warnBg);color:var(--warn)">'+
+          '<b>Coi chừng trùng.</b> Bảng giá đã có món tên gần giống:<br>'+
+          goiY.map(function(k){ return '• '+esc(GIA[k].ten)+' <code>'+esc(k)+'</code>'+
+            ' <button class="mini" onclick="gopSPCho('+i+',\''+esc(k)+'\')">Chính là món này</button>' }).join('<br>')+
+          '</div>'
+        : '')+
+      /* SỬA 11/09/2026 — CHỦ TỰ CHỈ RA MÓN CŨ.
+         Máy chỉ tự gợi ý khi tên gần giống nhau. Nhân viên gõ tên khác đi một
+         chút ("Cát ĐN 6L" so với "Cát đậu nành ZAKA hương trà xanh 6L") là máy
+         không nhận ra, trong khi chủ biết thừa đó là một món. Nên phải có đường
+         cho chủ TỰ TÌM trong bảng giá rồi chỉ đích danh. */
+      '<div class="mt" style="padding:9px;border-radius:10px;border:1px dashed var(--line)">'+
+        '<label style="margin-top:0">Hoặc tự tìm món cũ trong bảng giá để gộp vào</label>'+
+        '<input id="spdTim'+i+'" placeholder="Gõ tên, thương hiệu hoặc mã món cũ…" '+
+          'oninput="timGopSP('+i+')" autocomplete="off">'+
+        '<div id="spdKQ'+i+'" class="sm" style="max-height:190px;overflow:auto"></div>'+
+      '</div>'+
+      '<label class="mt">Giá nhập (giá vốn) — điền rồi mới nhận được</label>'+
+      '<input id="spdVon'+i+'" inputmode="numeric" placeholder="ví dụ 90.000" oninput="dinhDangTien(this)">'+
+      '<label class="mt">Nếu từ chối thì vì sao? (nhân viên đọc được)</label>'+
+      '<input id="spdLy'+i+'" placeholder="Ví dụ: món này đã có rồi, dùng mã CAT-0012">'+
+      '<div class="row mt" style="gap:7px">'+
+        '<button class="btn" onclick="nhanSP('+i+')">Nhận vào bảng giá</button>'+
+        '<button class="btn2" style="color:var(--bad)" onclick="tuChoiSP('+i+')">Từ chối</button>'+
+      '</div></div>';
+  }).join('') : '<div class="empty">Không còn món nào chờ duyệt.</div>';
+  $('dsErr').innerHTML='';
+  $('dsNut').innerHTML='<button class="btn2 rong" onclick="document.getElementById(\'dlgSPD\').close()">Để đó, lát duyệt</button>';
+  $('dlgSPD').showModal();
+}
+/* Gợi ý món đã có tên gần giống — dùng lại đúng thước đo của công cụ gộp */
+function timGanGiong_(ten){
+  var ch=tuKhoa_(ten||''); if(!ch) return [];
+  var tu=ch.split(' '), ra=[];
+  Object.keys(GIA).forEach(function(k){
+    if(GIA[k].ngung||ALIAS[k]) return;
+    var t2=tuKhoa_(GIA[k].ten||''); if(!t2) return;
+    var b={}; t2.split(' ').forEach(function(w){b[w]=1});
+    var chung=0; tu.forEach(function(w){ if(b[w]) chung++ });
+    var hop=tu.length+t2.split(' ').length-chung;
+    if(hop && chung/hop>=NGUONG_GIONG) ra.push(k);
+  });
+  return ra.slice(0,4);
+}
+async function guiDuyetSP_(sku, tt, lyDo){
+  if(!QCFG.url||!QCFG.key){ bao('dsErr','Cần dán link và mật khẩu quản lý ở tab Vận hành trước.','er'); return false }
+  var r=await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'duyetsp',
+      sp:[{sku:sku,tt:tt,lyDo:lyDo||''}]})});
+  var j=JSON.parse(await r.text());
+  if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
+  // gỡ khỏi danh sách chờ ngay tại máy này, khỏi đợi lần kéo sau
+  SPCD.forEach(function(x){ if(x.sku===sku){ x.tt=tt; x.lyDo=lyDo||'' } });
+  set('spcd',SPCD);
+  return true;
+}
+async function nhanSP(i){
+  var ds=spChoDuyet_(), x=ds[i]; if(!x) return;
+  var von=n2(($('spdVon'+i)&&$('spdVon'+i).value)||'');
+  if(!von){ bao('dsErr','Chưa điền giá nhập cho <b>'+esc(x.ten)+'</b>. Không có giá nhập thì đơn bán món này sẽ treo, không tính được lời.','er'); return }
+  try{
+    await guiDuyetSP_(x.sku,'DA DUYET','');
+    GIA[x.sku]={sku:x.sku, ten:x.ten, brand:x.brand||'', nhom:x.nhom||'KHÁC',
+      dvt:x.dvt||'', gb:Number(x.gb)||0, von:von, suaTay:true, vonLuc:nowStr(),
+      vonLyDo:'duyệt hàng nhân viên thêm', qd_dv:'', qd_sl:0, qd_gb:0, qd_von:0, moi:false};
+    set('gia',GIA); tinhLaiToanBoSO();
+    veGia(); veCB(); veSo(); veBC(); vePhat(); veLam(); moDuyetSP();
+    bao('giaMsg','Đã nhận <b>'+esc(x.ten)+'</b> vào bảng giá, giá nhập '+tien(von)+'. '+
+      '<b>Bấm "Phát bảng giá" ở tab Bảng giá</b> thì ba máy nhân viên bán được ngay.','ok');
+  }catch(e){ bao('dsErr','Không ghi được lên Sheet: '+esc(e.message),'er') }
+}
+async function tuChoiSP(i){
+  var ds=spChoDuyet_(), x=ds[i]; if(!x) return;
+  var ly=(($('spdLy'+i)&&$('spdLy'+i).value)||'').trim();
+  if(!ly){ bao('dsErr','Ghi giúp một câu lý do — nhân viên đọc được, để lần sau khỏi thêm nhầm nữa.','er'); return }
+  try{
+    await guiDuyetSP_(x.sku,'TU CHOI',ly);
+    veLam(); moDuyetSP();
+    bao('lamMsg','Đã từ chối <b>'+esc(x.ten)+'</b>. Máy nhân viên sẽ gỡ món đó và hiện lý do của anh/chị.','ok');
+  }catch(e){ bao('dsErr','Không ghi được lên Sheet: '+esc(e.message),'er') }
+}
+/* Chủ tự gõ để tìm món cũ trong bảng giá — không phụ thuộc vào việc máy có
+   đoán ra tên gần giống hay không. Dùng đúng kiểu tìm của công cụ gộp sẵn có:
+   bỏ dấu, không phân biệt hoa thường, soi cả tên, thương hiệu và mã. */
+function timGopSP(i){
+  var o=$('spdTim'+i), box=$('spdKQ'+i); if(!o||!box) return;
+  var q=kd((o.value||'').trim());
+  var ds=spChoDuyet_(), x=ds[i];
+  if(!q){ box.innerHTML='<div style="opacity:.6;padding:6px 2px">Gõ vài chữ để tìm…</div>'; return }
+  var kq=Object.keys(GIA).filter(function(k){
+    if(x && k===x.sku) return false;
+    if(GIA[k].ngung || ALIAS[k]) return false;
+    return kd(GIA[k].ten+' '+(GIA[k].brand||'')+' '+k).indexOf(q)>=0;
+  }).sort(function(a,b){
+    // món có giá vốn lên trước — gộp vào đó là đơn hết treo ngay
+    return (GIA[b].von?1:0)-(GIA[a].von?1:0) || String(GIA[a].ten).localeCompare(String(GIA[b].ten));
+  }).slice(0,8);
+  if(!kq.length){ box.innerHTML='<div style="opacity:.7;padding:6px 2px">Không thấy món nào khớp. '+
+    'Nếu đúng là hàng mới thì điền giá nhập rồi bấm <b>Nhận</b>.</div>'; return }
+  box.innerHTML=kq.map(function(k){
+    var p=GIA[k];
+    return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;'+
+      'padding:7px 2px;border-bottom:1px solid var(--line)">'+
+      '<span style="min-width:0"><b>'+esc(p.ten)+'</b><br><span style="opacity:.7">'+esc(k)+' · '+
+      esc(p.dvt||'')+' · '+(p.von?'giá nhập '+tien(p.von):'<span style="color:var(--warn)">chưa có giá nhập</span>')+
+      '</span></span>'+
+      '<button class="mini" style="flex:none" onclick="gopSPCho('+i+',\''+esc(k)+'\')">Chính là món này</button></div>';
+  }).join('');
+}
+
+async function gopSPCho(i, skuChinhCu){
+  var ds=spChoDuyet_(), x=ds[i]; if(!x||!GIA[skuChinhCu]) return;
+  if(!confirm('Món "'+x.ten+'" chính là "'+GIA[skuChinhCu].ten+'"?\n\n'+
+    'Máy sẽ gộp mã tạm về mã cũ, dọn mã tạm khỏi bảng giá, và báo nhân viên dùng mã cũ đó.\n\n'+
+    'Đơn cũ lỡ bán bằng mã tạm vẫn tính đúng theo mã cũ. Gộp nhầm thì bấm Hoàn tác ở tab Cần làm.')) return;
+  try{
+    await guiDuyetSP_(x.sku,'TU CHOI','Món này đã có rồi — dùng "'+GIA[skuChinhCu].ten+'" (mã '+skuChinhCu+')');
+    /* Đi qua ĐÚNG cơ chế gộp sẵn có (gomVaDon_) thay vì tự ghi ALIAS:
+       được luôn phần dọn mã thừa khỏi bảng giá, ghi nhật ký, và Hoàn tác. */
+    if(!GIA[x.sku]) GIA[x.sku]={sku:x.sku,ten:x.ten,brand:x.brand||'',nhom:x.nhom||'KHÁC',
+      dvt:x.dvt||'',gb:Number(x.gb)||0,von:null,qd_dv:'',qd_sl:0,qd_gb:0,qd_von:0,moi:true};
+    gomVaDon_(x.sku, skuChinhCu, 'Nhân viên thêm trùng — chủ chỉ về món cũ lúc duyệt');
+    veGia(); veCB(); veSo(); veBC(); vePhat(); veLam(); moDuyetSP();
+    bao('lamMsg','Đã gộp <b>'+esc(x.ten)+'</b> về <b>'+esc(GIA[skuChinhCu].ten)+'</b>. '+
+      'Đơn cũ lỡ dùng mã tạm vẫn tính đúng. Gộp nhầm thì bấm <b>Hoàn tác</b> ở cuối tab Cần làm.','ok');
+  }catch(e){ bao('dsErr','Không ghi được lên Sheet: '+esc(e.message),'er') }
+}
+/* Công tắc ban đêm — mặc định TẮT */
+async function datChoBan(bat){
+  if(!QCFG.url||!QCFG.key){ bao('vhMsg','Cần dán link và mật khẩu quản lý trước.','er'); return }
+  if(bat && !confirm('BẬT "cho bán khi chưa duyệt"?\n\nNhân viên sẽ bán được món chưa duyệt, '+
+    'nhưng anh/chị vẫn phải duyệt sau — trước khi duyệt thì mấy đơn đó chưa vào báo cáo.\n\n'+
+    'Chỉ nên bật khi anh/chị hay bận không duyệt kịp.')) return;
+  try{
+    var r=await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'congtac',
+        congtac:'CHO_BAN_CHUA_DUYET',bat:!!bat})});
+    var j=JSON.parse(await r.text());
+    if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
+    CHO_BAN=!!j.bat; set('choban',CHO_BAN); veCongTac(); veLam();
+    bao('vhMsg', CHO_BAN
+      ? 'Đã <b>BẬT</b>. Nhân viên bán được món chưa duyệt. Ba máy nhận trong vòng một phút.'
+      : 'Đã <b>TẮT</b>. Nhân viên phải chờ anh/chị duyệt mới bán được món mới.','ok');
+  }catch(e){ bao('vhMsg','Không đổi được: '+esc(e.message),'er') }
+}
+function veCongTac(){
+  var o=$('ctChoBan'); if(!o) return;
+  o.innerHTML='<div style="display:flex;gap:10px;align-items:flex-start">'+
+    '<input type="checkbox" id="ctChoBanO" '+(CHO_BAN?'checked':'')+
+      ' style="width:18px;height:18px;flex:none;margin-top:3px" onchange="datChoBan(this.checked)">'+
+    '<span style="min-width:0"><b>Cho nhân viên bán món chưa duyệt</b>'+
+    '<div class="sm">Đang <b style="color:'+(CHO_BAN?'var(--warn)':'var(--ok)')+'">'+
+      (CHO_BAN?'BẬT — nhân viên bán được ngay, anh/chị duyệt sau':'TẮT — phải duyệt mới bán được')+
+    '</b><br>Bật lên nếu anh/chị hay bận không duyệt kịp, nhân viên đứng bánh ngoài quầy.</div></span></div>';
+}
+
 function veLam(){
   try{ ksDoiChieuBanVa() }catch(e){}   // phiếu đã vá thì đừng tính vào việc cần làm
   var viec=[];
@@ -1101,6 +1295,20 @@ function veLam(){
        'trả lời <b>cùng một món</b> hay <b>hai món khác nhau</b>.',
     nut:'Xem từng cái một',
     ham:'batDauHoiGom()'
+  });
+
+  /* ── Việc: nhân viên vừa thêm hàng mới, đang CHẶN họ bán ── thêm 10/09/2026.
+     Đặt lên ĐẦU danh sách vì đây là việc duy nhất đang làm nhân viên đứng bánh
+     ngoài quầy — mọi việc khác đều đợi được. */
+  var spCho=spChoDuyet_();
+  if(spCho.length) viec.unshift({
+    do:true,
+    ten:'Nhân viên vừa thêm '+spCho.length+' mã hàng mới — đang chờ anh/chị duyệt',
+    vi:'Mấy món này <b>nhân viên chưa bán được</b> cho tới khi anh/chị gật. '+
+       'Xem qua rồi <b>nhận vào bảng giá</b>, hoặc <b>gộp</b> nếu là món đã có, hoặc <b>từ chối</b>. '+
+       (CHO_BAN?'<br><span style="color:var(--warn)">Công tắc "cho bán khi chưa duyệt" đang BẬT — nhân viên vẫn bán được, nhưng đơn bị treo chờ.</span>':''),
+    nut:'Duyệt '+spCho.length+' mã hàng',
+    ham:'moDuyetSP()'
   });
 
   // ── Việc: nhân viên báo có chỗ trục trặc ──
@@ -1550,7 +1758,12 @@ function tinhThueDon(d){
 }
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){
  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
-function kd(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase()}
+/* SỬA 11/09/2026 — CHỮ Đ KHÔNG ĐƯỢC BỎ DẤU, GÕ "dau nanh" KHÔNG RA "đậu nành".
+   normalize('NFD') tách được dấu của â, ê, ậ… nhưng chữ đ là MỘT KÝ TỰ RIÊNG
+   trong bảng mã, không phải d + dấu, nên nó nằm nguyên. Người Việt gõ nhanh thì
+   gõ "dau", "dong", "duong" — không ai gõ "đ". Nay đổi đ→d, Đ→D trước khi so.
+   Ảnh hưởng: mọi ô tìm kiếm trong app đều dễ tìm hơn. */
+function kd(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\u0111/g,'d').replace(/\u0110/g,'D').toLowerCase()}
 /* So khớp tên "lỏng" hơn kd() thường — dùng để TỰ GỢI Ý sản phẩm nghi trùng tên.
    kd() chỉ bỏ dấu, nên "Cát tắm thơm hamster 1kg (mix mùi)" và "Cát tấm thơm CHO
    hamster 1kg (mix mùi)" (thừa chữ "cho") vẫn bị coi là 2 tên khác nhau, không tự
@@ -1672,6 +1885,9 @@ async function hoiNhanh(){
 
 function apDungKeoVe(j, luc){
   if(j&&j.phieuKS) { PHIEU_NV=j.phieuKS; set('phieunv',PHIEU_NV) }
+  /* SỬA 10/09/2026 — nhận danh sách sản phẩm nhân viên tự thêm, chờ chủ duyệt. */
+  if(j&&j.spcd){ SPCD=j.spcd; set('spcd',SPCD) }
+  if(j&&j.choBanChuaDuyet!==undefined){ CHO_BAN=!!j.choBanChuaDuyet; set('choban',CHO_BAN) }
   if(j.von&&j.von.length) napVonTuSheet(j.von, j.vonVer);
   if(j.suavon) napSuaVonTuSheet(j.suavon, j.svVer);
   if(j.ship) SHIP=j.ship; set('ship',SHIP);
@@ -1687,7 +1903,7 @@ function apDungKeoVe(j, luc){
   $('keoInfo').innerHTML='Kéo lúc '+(luc||nowStr())+' — nhận <b>'+(j.don||[]).length+'</b> đơn'+
     (soHuy?', trong đó <b style="color:var(--bad)">'+soHuy+' đơn đã huỷ</b>':'')+
     ' · <b>'+NVS.length+'</b> tài khoản nhân viên.';
-  veNV(); veKhaiTruong(); veMayGui(); veShipperQL();
+  veNV(); veKhaiTruong(); veMayGui(); veShipperQL(); veCongTac();
 }
 async function keoDon(im){
   luuQCfg();
@@ -1738,6 +1954,7 @@ function khoiDongQL(){
   });
   SO=get('so',[]); GIA=get('gia',null); ALIAS=get('alias',{});
   KHAC_MON=get('khacmon',{});
+  SPCD=get('spcd',[]); CHO_BAN=!!get('choban',false);
   // VÁ DỮ LIỆU CŨ: những cặp đã bấm "Gộp" TRƯỚC KHI có bản này chỉ mới ghi vào
   // ALIAS, chưa từng được đánh dấu ngung/gopVao trên GIA (vì lúc đó tính năng tự ẩn
   // chưa tồn tại) — nên mã dư vẫn hiện trong bảng "đang bán" như chưa gộp. Quét lại
@@ -4204,6 +4421,22 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260911b', ngay:'11/09/2026', ten:'Tự chỉ ra món cũ để gộp · gõ không dấu tìm được chữ Đ',
+  vaPhieu:[],
+  muc:[
+   ['moi','<b>Tự chỉ ra món cũ để gộp.</b> Máy chỉ tự đoán được khi tên gần giống nhau. Nhân viên gõ "Cát ĐN 6L" trong khi bảng giá ghi "Cát đậu nành ZAKA hương trà xanh 6L" là máy chịu, trong khi anh/chị biết thừa đó là một món. Nay mỗi món chờ duyệt có <b>ô tự tìm trong bảng giá</b> — gõ vài chữ, chọn đúng món cũ, bấm <b>Chính là món này</b>.'],
+   ['moi','Gộp kiểu đó đi qua đúng cơ chế gộp sẵn có: <b>dọn luôn mã tạm</b> khỏi bảng giá, ghi nhật ký, và <b>Hoàn tác được</b> ở cuối tab Cần làm.'],
+   ['sua','<b>Gõ không dấu giờ tìm ra chữ có Đ.</b> Trước đây gõ "dau nanh" không ra "đậu nành" — vì chữ <b>đ</b> là một ký tự riêng trong bảng mã, không phải d có dấu, nên bước bỏ dấu không đụng tới nó. Đã sửa: mọi ô tìm kiếm trong app đều dễ tìm hơn.'],
+  ]},
+ {ban:'20260911a', ngay:'11/09/2026', ten:'Duyệt hàng nhân viên tự thêm',
+  vaPhieu:[],
+  muc:[
+   ['sua','<b>Trước đây nhân viên thêm sản phẩm, anh/chị không hề hay biết.</b> Máy quản lý chưa bao giờ đọc trang <code>SAN_PHAM_CHO_DUYET</code> — chỉ tới lúc món đó được bán, nó mới lòi ra ở tab Cảnh báo dưới dạng "thiếu giá vốn". Đã sửa.'],
+   ['moi','Tab <b>Cần làm</b> có việc mới đứng đầu danh sách: <b>"Nhân viên vừa thêm N mã hàng mới"</b> — ai thêm, máy nào, lúc nào, giá bán họ đặt.'],
+   ['moi','Mỗi món ba đường: <b>Nhận vào bảng giá</b> (điền giá nhập tại chỗ) · <b>Chính là món này</b> (gộp về mã cũ) · <b>Từ chối</b> (bắt buộc ghi lý do cho nhân viên đọc).'],
+   ['moi','Máy <b>tự cảnh báo trùng</b>: món mới tên gần giống hàng đã có thì hiện ngay bên cạnh, bấm một nút là gộp.'],
+   ['moi','Tab <b>Vận hành</b> có công tắc <b>"Cho nhân viên bán món chưa duyệt"</b> — <b>mặc định TẮT</b>. Bật lên nếu anh/chị hay bận không duyệt kịp, nhân viên đứng bánh ngoài quầy.'],
+  ]},
  {ban:'20260910j', ngay:'10/09/2026', ten:'Phiếu đã vá thôi làm phiền',
   vaPhieu:[],
   muc:[
@@ -4684,6 +4917,15 @@ function cnKhoiVa(){
 }
 </script><div style="position:fixed;right:8px;bottom:4px;font-size:10px;opacity:.35;pointer-events:none;z-index:99">v1.0-zaka</div>
 <button id="ksNut" onclick="ksMo()" title="Báo cho kỹ sư một chỗ đang có vấn đề">🛠 Kỹ sư</button>
+<dialog id="dlgSPD" style="max-width:640px">
+  <button class="dlgX" onclick="document.getElementById('dlgSPD').close()" title="Đóng">✕</button>
+  <h2 style="margin-top:0">Duyệt hàng nhân viên thêm</h2>
+  <div class="sm" id="dsDan"></div>
+  <div id="dsThan" style="max-height:60vh;overflow:auto;margin-top:10px"></div>
+  <div id="dsErr"></div>
+  <div id="dsNut" class="row mt"></div>
+</dialog>
+
 <dialog id="dlgKS" style="max-width:640px">
   <button class="dlgX" onclick="document.getElementById('dlgKS').close()" title="Đóng">✕</button>
   <h2 style="margin-top:0">Báo cho kỹ sư</h2>
