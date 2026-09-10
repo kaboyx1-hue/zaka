@@ -38,6 +38,13 @@ dialog{position:relative}
   font-size:16px;line-height:1;cursor:pointer;z-index:5}
 .dlgX:hover{background:var(--bad);color:#fff;border-color:var(--bad)}
 dialog>h2:first-of-type{padding-right:44px}
+/* Bảng xem trước lúc nạp CSV / sửa hàng loạt — thêm 11/09/2026 */
+.bangnap{overflow-x:auto}
+.bangnap table{width:100%;border-collapse:collapse;font-size:13.5px}
+.bangnap th{text-align:left;font-size:11px;letter-spacing:1px;text-transform:uppercase;
+    color:var(--tx2);padding:7px 9px;border-bottom:1px solid var(--line)}
+.bangnap td{padding:9px;border-bottom:1px solid var(--line);vertical-align:top}
+.bangnap tr:last-child td{border-bottom:none}
 header{background:var(--brand);color:var(--brandTx);border-bottom:1px solid var(--line);padding:14px 16px;box-shadow:var(--shadow)}
 header b{font-size:17px}header div{font-size:12.5px;color:var(--brandTx);opacity:.78;margin-top:2px}
 nav{display:flex;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:19;overflow-x:auto}
@@ -377,6 +384,7 @@ body.ks-chi *{cursor:crosshair!important}
       <button class="btn" onclick="luuBangGia()">Cập nhật bảng giá</button>
       <button class="btn2" onclick="tinhLai()">Tính lại các đơn đang chờ</button>
       <button class="btn2" onclick="dayVon(true)" style="color:var(--ok)">Lưu giá vốn lên Sheet</button>
+      <button class="btn2" onclick="moSuaLo()" style="color:var(--pur)">Sửa hàng loạt món đang lọc</button>
       <button class="btn2" onclick="taiBangGia()">Tải bảng giá ra CSV</button>
       <button class="btn2" id="btnNgung" onclick="toggleNgung()">Hàng ngừng bán</button>
       <button class="btn2" id="btnDonNgung" onclick="donNgung()" style="color:var(--bad);display:none">Xoá hẳn hàng ngừng bán</button>
@@ -648,7 +656,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260911b';
+var APP_VER='20260911c';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -3409,43 +3417,254 @@ function tachCSV(t){
   if(c!==''||row.length){ row.push(c); r.push(row) }
   return r.filter(function(x){return x.some(function(y){return String(y).trim()})});
 }
+/* ═══════════════════════════════════════════════════════════════════════
+   NẠP BẢNG GIÁ TỪ CSV — LÀM LẠI 11/09/2026 theo phiếu 35 của chủ
+   ═══════════════════════════════════════════════════════════════════════
+   Chủ muốn "cập nhật hàng loạt giống Shopee". Bản cũ CÓ nạp file thật, nhưng
+   nạp phát ăn ngay: không cho xem trước, không cảnh báo gì, không hoàn tác.
+   File sai một cột là cả bảng giá bị ghi đè, không biết đường lần.
+   Nay đi ba bước: ĐỌC FILE → XEM TRƯỚC TỪNG THAY ĐỔI → ĐỒNG Ý MỚI GHI,
+   kèm chụp lại bảng giá trước khi ghi để hoàn tác được. */
+var NAP_CHO=null, NAP_BAN_CU=null, SUA_LO_CHO=null;
+
+var TRUONG_NAP=[
+  {k:'ten',   nhan:'Tên',          cot:['Ten san pham','Tên sản phẩm']},
+  {k:'nhom',  nhan:'Nhóm',         cot:['Nhom','Nhóm']},
+  {k:'brand', nhan:'Thương hiệu',  cot:['Thuong hieu','Thương hiệu']},
+  {k:'dvt',   nhan:'ĐVT',          cot:['DVT','ĐVT lẻ']},
+  {k:'gb',    nhan:'Giá bán',      cot:['Gia ban','Giá bán lẻ'], so:1},
+  {k:'von',   nhan:'Giá vốn',      cot:['Gia von','Giá vốn'],    so:1},
+  {k:'qd_dv', nhan:'ĐVT sỉ',       cot:['DVT quy doi','ĐVT quy đổi']},
+  {k:'qd_sl', nhan:'Số lẻ mỗi sỉ', cot:['1 dv = may le'],        so:1},
+  {k:'qd_gb', nhan:'Giá sỉ',       cot:['Gia ban quy doi','Giá bán quy đổi'], so:1},
+  {k:'qd_von',nhan:'Giá vốn sỉ',   cot:['Gia von quy doi'],      so:1}
+];
+
 async function napGiaCSV(f){
   if(!f)return;
   var t=await f.text(), r=tachCSV(t);
+  var o=$('fgia'); if(o) o.value='';
   if(r.length<2){ bao('giaMsg','File không đọc được hoặc rỗng.','er'); return }
   var H=r[0].map(function(x){return kd(String(x).trim())}), C={};
-  H.forEach(function(h,i){C[h]=i});
-  function lay(row,ten){ var i=C[kd(ten)]; return i===undefined?'':String(row[i]==null?'':row[i]).trim() }
+  H.forEach(function(h,i){ if(C[h]===undefined) C[h]=i });
+  function lay(row,dsTen){
+    for(var j=0;j<dsTen.length;j++){ var i=C[kd(dsTen[j])];
+      if(i!==undefined) return String(row[i]==null?'':row[i]).trim() }
+    return null;
+  }
   if(C[kd('SKU')]===undefined && C[kd('Ma SKU')]===undefined){
-    bao('giaMsg','File thiếu cột <b>SKU</b>. Cần các cột: SKU · Ten san pham · DVT · Gia ban · Gia von '+
-      '(thêm được: Nhom · Thuong hieu · DVT quy doi · 1 dv = may le · Gia ban quy doi).','er'); return }
-  var them=0,capnhat=0,boQua=0;
+    bao('giaMsg','File thiếu cột <b>SKU</b> nên máy không biết dòng nào ứng với món nào.<br>'+
+      '<span class="sm">Cách chắc ăn: bấm <b>Tải bảng giá ra CSV</b>, sửa ngay trên file đó rồi nạp lại.</span>','er');
+    return }
+  var ds=[], loi=[], trung={};
   for(var i=1;i<r.length;i++){
     var row=r[i];
-    var sku=lay(row,'SKU')||lay(row,'Ma SKU'); if(!sku){boQua++;continue}
-    var cu=GIA[sku]||{};
-    var gvRaw=lay(row,'Gia von')||lay(row,'Giá vốn');
-    var p={sku:sku,
-      nhom:lay(row,'Nhom')||lay(row,'Nhóm')||cu.nhom||'KHÁC',
-      brand:lay(row,'Thuong hieu')||lay(row,'Thương hiệu')||cu.brand||'',
-      ten:lay(row,'Ten san pham')||lay(row,'Tên sản phẩm')||cu.ten||sku,
-      dvt:lay(row,'DVT')||lay(row,'ĐVT lẻ')||cu.dvt||'',
-      gb:n2(lay(row,'Gia ban')||lay(row,'Giá bán lẻ'))||cu.gb||0,
-      von:gvRaw!==''?(n2(gvRaw)||null):(cu.von||null),
-      qd_dv:lay(row,'DVT quy doi')||lay(row,'ĐVT quy đổi')||cu.qd_dv||'',
-      qd_sl:n2(lay(row,'1 dv = may le'))||cu.qd_sl||0,
-      qd_gb:n2(lay(row,'Gia ban quy doi')||lay(row,'Giá bán quy đổi'))||cu.qd_gb||0,
-      qd_von:cu.qd_von||0, ngung:false};
-    var ng=(lay(row,'Ngung ban')||lay(row,'Ngừng bán')).toLowerCase();
-    if(ng==='x'||ng==='1'||ng==='co'||ng==='có') p.ngung=true;
-    if(GIA[sku])capnhat++; else them++;
-    GIA[sku]=p;
+    var sku=(lay(row,['SKU'])||lay(row,['Ma SKU'])||'').trim();
+    if(!sku){ loi.push({dong:i+1, vi:'không có SKU'}); continue }
+    if(trung[sku]){ loi.push({dong:i+1, vi:'SKU <code>'+esc(sku)+'</code> lặp lại (đã có ở dòng '+trung[sku]+')'}); continue }
+    trung[sku]=i+1;
+    var cu=GIA[sku], moi=!cu, doi=[], canh=[], gia={};
+    TRUONG_NAP.forEach(function(T){
+      var v=lay(row,T.cot);
+      if(v===null){ gia[T.k]=cu?cu[T.k]:(T.so?0:''); return }
+      var vm = T.so ? (v===''?0:n2(v)) : v;
+      gia[T.k]=vm;
+      var vc = cu ? (cu[T.k]||(T.so?0:'')) : (T.so?0:'');
+      if(String(vc)!==String(vm)) doi.push({nhan:T.nhan, cu:vc, moi:vm, so:!!T.so});
+    });
+    var ngRaw=lay(row,['Ngung ban','Ngừng bán']);
+    var ngMoi = ngRaw===null ? (cu?!!cu.ngung:false)
+              : ['x','1','co','có','ngung','ngừng','true'].indexOf(String(ngRaw).trim().toLowerCase())>=0;
+    if(cu && !!cu.ngung!==ngMoi) doi.push({nhan:'Ngừng bán', cu:cu.ngung?'có':'không', moi:ngMoi?'có':'không'});
+    gia.ngung=ngMoi;
+    if(gia.gb && gia.von && gia.von>gia.gb) canh.push('giá vốn CAO HƠN giá bán');
+    if(cu && cu.gb && gia.gb && Math.abs(gia.gb-cu.gb)/cu.gb>0.5)
+      canh.push('giá bán đổi '+(gia.gb>cu.gb?'tăng':'giảm')+' '+Math.round(Math.abs(gia.gb-cu.gb)/cu.gb*100)+'%');
+    if(cu && cu.von && gia.von && Math.abs(gia.von-cu.von)/cu.von>0.5)
+      canh.push('giá vốn đổi '+Math.round(Math.abs(gia.von-cu.von)/cu.von*100)+'%');
+    if(moi && !gia.von) canh.push('hàng mới chưa có giá vốn — đơn bán món này sẽ treo');
+    if(!gia.ten) canh.push('không có tên');
+    if(moi || doi.length) ds.push({sku:sku, ten:gia.ten||(cu&&cu.ten)||sku, moi:moi, gia:gia, doi:doi, canh:canh});
   }
-  set('gia',GIA); GLIM=40; veGia(); vePhat();
-  bao('giaMsg','Đã nạp từ file: <b>'+capnhat+' cập nhật</b>, <b>'+them+' thêm mới</b>'+
-    (boQua?', '+boQua+' dòng bỏ qua vì không có SKU':'')+
-    '.<br>Kiểm lại rồi bấm <b>Phát bảng giá ngay</b> để ba máy nhận.','ok');
-  $('fgia').value='';
+  NAP_CHO={ds:ds, loi:loi, khongDoi:(r.length-1)-ds.length-loi.length, tongDong:r.length-1};
+  veXemTruocNap();
+}
+
+function veXemTruocNap(){
+  var N=NAP_CHO; if(!N) return;
+  var them=N.ds.filter(function(x){return x.moi}).length, sua=N.ds.length-them;
+  var coCanh=N.ds.filter(function(x){return x.canh.length});
+  $('npDan').innerHTML='Đọc được <b>'+N.tongDong+' dòng</b>. '+
+    '<b style="color:var(--ok)">'+sua+' món sẽ đổi</b> · '+
+    '<b style="color:var(--pur)">'+them+' món thêm mới</b> · '+N.khongDoi+' món y nguyên'+
+    (N.loi.length?' · <b style="color:var(--bad)">'+N.loi.length+' dòng bỏ qua</b>':'')+'.'+
+    '<br><span class="sm">Món nào <b>không có trong file</b> thì <b>giữ nguyên</b>, máy không xoá gì cả.</span>';
+  var h='';
+  if(coCanh.length) h+='<div class="msg wa"><b>'+coCanh.length+' món cần nhìn kỹ:</b><br>'+
+    coCanh.slice(0,12).map(function(x){ return '• <b>'+esc(x.ten)+'</b> — '+x.canh.join('; ') }).join('<br>')+
+    (coCanh.length>12?'<br>… và '+(coCanh.length-12)+' món nữa':'')+'</div>';
+  if(N.loi.length) h+='<div class="msg er"><b>Bỏ qua '+N.loi.length+' dòng:</b><br>'+
+    N.loi.slice(0,8).map(function(e){ return '• Dòng '+e.dong+': '+e.vi }).join('<br>')+
+    (N.loi.length>8?'<br>… và '+(N.loi.length-8)+' dòng nữa':'')+'</div>';
+  if(!N.ds.length){ h+='<div class="empty">File này không đổi gì so với bảng giá đang có.</div>' }
+  else {
+    h+='<div class="bangnap"><table><tr><th>Món</th><th>Đổi gì</th></tr>'+
+      N.ds.slice(0,300).map(function(x){
+        return '<tr><td><b>'+esc(x.ten)+'</b><div class="sm" style="opacity:.65">'+esc(x.sku)+
+          (x.moi?' <span class="tag" style="background:var(--purBg);color:var(--pur)">MỚI</span>':'')+'</div></td>'+
+          '<td class="sm">'+(x.moi
+            ? 'Thêm mới · giá bán '+tien(x.gia.gb||0)+(x.gia.von?' · giá vốn '+tien(x.gia.von):'')
+            : x.doi.map(function(d){
+                return esc(d.nhan)+': <span style="opacity:.6">'+(d.so?tien(d.cu||0):esc(String(d.cu||'—')))+'</span>'+
+                  ' → <b>'+(d.so?tien(d.moi||0):esc(String(d.moi||'—')))+'</b>' }).join('<br>'))+
+          (x.canh.length?'<div style="color:var(--warn)">⚠ '+x.canh.join('; ')+'</div>':'')+'</td></tr>';
+      }).join('')+'</table></div>'+
+      (N.ds.length>300?'<div class="sm" style="margin-top:6px">Bảng hiện 300 dòng đầu, khi đồng ý máy ghi hết <b>'+N.ds.length+'</b> món.</div>':'');
+  }
+  $('npThan').innerHTML=h;
+  $('npErr').innerHTML='';
+  $('npNut').innerHTML='<button class="btn2" onclick="document.getElementById(\'dlgNap\').close()">Huỷ, không ghi gì</button>'+
+    (N.ds.length?'<button class="btn" onclick="apDungNapGia()">Đồng ý ghi '+N.ds.length+' món</button>':'');
+  $('dlgNap').showModal();
+}
+
+function apDungNapGia(){
+  var N=NAP_CHO; if(!N||!N.ds.length) return;
+  NAP_BAN_CU=JSON.parse(JSON.stringify(GIA));
+  var them=0,sua=0;
+  N.ds.forEach(function(x){
+    var cu=GIA[x.sku]||{};
+    var p={sku:x.sku, nhom:x.gia.nhom||cu.nhom||'KHÁC', brand:x.gia.brand||cu.brand||'',
+      ten:x.gia.ten||cu.ten||x.sku, dvt:x.gia.dvt||cu.dvt||'',
+      gb:Number(x.gia.gb)||0, von:Number(x.gia.von)||null,
+      qd_dv:x.gia.qd_dv||'', qd_sl:Number(x.gia.qd_sl)||0,
+      qd_gb:Number(x.gia.qd_gb)||0, qd_von:Number(x.gia.qd_von)||0,
+      ngung:!!x.gia.ngung, moi:false};
+    if(p.von){ p.suaTay=true; p.vonLuc=nowStr(); p.vonLyDo='nạp từ file CSV' }
+    if(GIA[x.sku]) sua++; else them++;
+    GIA[x.sku]=p;
+  });
+  set('gia',GIA); GLIM=40; tinhLaiToanBoSO();
+  veGia(); vePhat(); veCB(); veSo(); veBC(); veLam();
+  $('dlgNap').close(); NAP_CHO=null;
+  bao('giaMsg','Đã ghi: <b>'+sua+' món cập nhật</b>, <b>'+them+' món thêm mới</b>. '+
+    'Bấm <b>Phát bảng giá</b> để ba máy nhân viên nhận.<br>'+
+    '<button class="mini mt" onclick="hoanTacNapGia()">Hoàn tác lần nạp này</button>','ok');
+}
+
+function hoanTacNapGia(){
+  if(!NAP_BAN_CU){ bao('giaMsg','Không còn bản trước để quay lại.','wa'); return }
+  if(!confirm('Trả bảng giá về đúng như trước?\n\nMọi thay đổi của lần vừa rồi sẽ mất.')) return;
+  GIA=JSON.parse(JSON.stringify(NAP_BAN_CU)); NAP_BAN_CU=null;
+  set('gia',GIA); tinhLaiToanBoSO();
+  veGia(); vePhat(); veCB(); veSo(); veBC(); veLam();
+  bao('giaMsg','Đã trả bảng giá về như trước.','ok');
+}
+
+/* ═══ SỬA HÀNG LOẠT NGAY TRONG APP — thêm 11/09/2026 ═══
+   Đi CSV qua Excel là đường mạnh nhất, nhưng đổi nhóm cho 30 món hay tăng giá
+   10% cả một thương hiệu thì mở Excel là quá phiền. Cái này làm thẳng trên
+   ĐÚNG những món đang hiện sau bộ lọc/ô tìm. Vẫn xem trước và hoàn tác được. */
+function loDangLoc_(){
+  var q=kd(($('gq').value||'').trim()), nh=$('gn').value;
+  return Object.keys(GIA).map(function(k){return GIA[k]})
+    .filter(function(p){ return XEMNGUNG?p.ngung:!p.ngung })
+    .filter(function(p){ if(LOCQD) return LOCQD.indexOf(p.sku)>=0; return true })
+    .filter(function(p){
+      if(nh&&p.nhom!==nh) return false;
+      return !q||kd(p.ten+' '+(p.brand||'')+' '+p.sku).indexOf(q)>=0 });
+}
+function moSuaLo(){
+  var ds=loDangLoc_();
+  if(!ds.length){ bao('giaMsg','Bộ lọc hiện tại không ra món nào. Gõ ô tìm hoặc chọn nhóm trước.','wa'); return }
+  var nhoms={}; Object.keys(GIA).forEach(function(k){ if(GIA[k].nhom) nhoms[GIA[k].nhom]=1 });
+  $('slDan').innerHTML='Sẽ sửa <b>'+ds.length+' món</b> — đúng những món đang hiện trong danh sách. '+
+    'Bỏ trống ô nào thì ô đó <b>không đụng tới</b>.'+
+    '<div class="sm" style="margin-top:5px;opacity:.75">Muốn sửa ít hơn thì đóng bảng này, gõ ô tìm cho hẹp lại rồi mở lại.</div>';
+  $('slThan').innerHTML=
+    '<label class="mt">Đổi nhóm thành</label>'+
+    '<input id="slNhom" list="dsNhomLo" placeholder="để trống = giữ nguyên">'+
+    '<datalist id="dsNhomLo">'+Object.keys(nhoms).sort().map(function(n){return '<option value="'+esc(n)+'">'}).join('')+'</datalist>'+
+    '<label class="mt">Đổi thương hiệu thành</label>'+
+    '<input id="slBrand" placeholder="để trống = giữ nguyên">'+
+    '<label class="mt">Giá bán</label>'+
+    '<div class="row" style="gap:7px">'+
+      '<select id="slKieu"><option value="">— không đổi giá —</option>'+
+        '<option value="pt">Tăng/giảm theo %</option>'+
+        '<option value="so">Cộng/trừ số tiền</option>'+
+        '<option value="dat">Đặt bằng đúng một giá</option></select>'+
+      '<input id="slGia" placeholder="ví dụ 10 hoặc -5"></div>'+
+    '<div class="sm" style="margin-top:5px;opacity:.75">Số dương là tăng, số âm là giảm. '+
+      'Chọn "theo %" rồi gõ <b>10</b> nghĩa là tăng 10%. Giá tính xong được <b>làm tròn tới 500đ</b>.</div>'+
+    '<label class="mt">Ngừng bán / bán lại</label>'+
+    '<select id="slNgung"><option value="">— không đổi —</option>'+
+      '<option value="1">Cho ngừng bán hết</option>'+
+      '<option value="0">Cho bán lại hết</option></select>';
+  $('slErr').innerHTML='';
+  $('slNut').innerHTML='<button class="btn2" onclick="document.getElementById(\'dlgSuaLo\').close()">Huỷ</button>'+
+    '<button class="btn" onclick="xemTruocSuaLo()">Xem trước</button>';
+  $('dlgSuaLo').showModal();
+}
+function lamTron500_(x){ return Math.max(0, Math.round(x/500)*500) }
+function xemTruocSuaLo(){
+  var ds=loDangLoc_();
+  var nhom=($('slNhom').value||'').trim(), brand=($('slBrand').value||'').trim();
+  var kieu=$('slKieu').value, raw=$('slGia').value||'', so=n2(raw), ngung=$('slNgung').value;
+  if(/^\s*-/.test(raw)) so=-Math.abs(so);
+  if(!nhom && !brand && !kieu && ngung===''){ bao('slErr','Chưa chọn đổi gì cả.','wa'); return }
+  if(kieu && !so){ bao('slErr','Chọn đổi giá thì phải điền số.','wa'); return }
+  var ra=[];
+  ds.forEach(function(p){
+    var doi=[];
+    if(nhom && p.nhom!==nhom) doi.push({nhan:'Nhóm',cu:p.nhom||'—',moi:nhom});
+    if(brand && (p.brand||'')!==brand) doi.push({nhan:'Thương hiệu',cu:p.brand||'—',moi:brand});
+    var gbMoi=p.gb;
+    if(kieu==='pt') gbMoi=lamTron500_((p.gb||0)*(1+so/100));
+    else if(kieu==='so') gbMoi=lamTron500_((p.gb||0)+so);
+    else if(kieu==='dat') gbMoi=lamTron500_(so);
+    if(kieu && gbMoi!==p.gb) doi.push({nhan:'Giá bán',cu:p.gb||0,moi:gbMoi,so:1});
+    var ngMoi = ngung==='' ? p.ngung : (ngung==='1');
+    if(ngung!=='' && !!p.ngung!==!!ngMoi) doi.push({nhan:'Ngừng bán',cu:p.ngung?'có':'không',moi:ngMoi?'có':'không'});
+    if(!doi.length) return;
+    var canh=[];
+    if(p.von && gbMoi && p.von>gbMoi) canh.push('giá bán mới THẤP HƠN giá vốn '+tien(p.von));
+    ra.push({sku:p.sku,ten:p.ten,doi:doi,canh:canh,
+             ap:{nhom:nhom||p.nhom, brand:brand||p.brand, gb:gbMoi, ngung:!!ngMoi}});
+  });
+  if(!ra.length){ bao('slErr','Không có món nào thay đổi với lựa chọn này.','wa'); return }
+  SUA_LO_CHO=ra;
+  var coCanh=ra.filter(function(x){return x.canh.length});
+  $('slDan').innerHTML='<b>'+ra.length+' món</b> sẽ đổi. Xem kỹ rồi bấm đồng ý.';
+  $('slThan').innerHTML=
+    (coCanh.length?'<div class="msg wa"><b>'+coCanh.length+' món bán dưới giá vốn:</b><br>'+
+      coCanh.slice(0,10).map(function(x){return '• '+esc(x.ten)+' — '+x.canh.join('; ')}).join('<br>')+
+      (coCanh.length>10?'<br>… và '+(coCanh.length-10)+' món nữa':'')+'</div>':'')+
+    '<div class="bangnap"><table><tr><th>Món</th><th>Đổi gì</th></tr>'+
+    ra.slice(0,300).map(function(x){
+      return '<tr><td><b>'+esc(x.ten)+'</b><div class="sm" style="opacity:.65">'+esc(x.sku)+'</div></td>'+
+        '<td class="sm">'+x.doi.map(function(d){
+          return esc(d.nhan)+': <span style="opacity:.6">'+(d.so?tien(d.cu||0):esc(String(d.cu)))+'</span> → <b>'+
+            (d.so?tien(d.moi||0):esc(String(d.moi)))+'</b>' }).join('<br>')+
+        (x.canh.length?'<div style="color:var(--warn)">⚠ '+x.canh.join('; ')+'</div>':'')+'</td></tr>';
+    }).join('')+'</table></div>'+
+    (ra.length>300?'<div class="sm" style="margin-top:6px">Bảng hiện 300 dòng đầu, sẽ ghi hết '+ra.length+' món.</div>':'');
+  $('slErr').innerHTML='';
+  $('slNut').innerHTML='<button class="btn2" onclick="moSuaLo()">Quay lại sửa</button>'+
+    '<button class="btn" onclick="apDungSuaLo()">Đồng ý đổi '+ra.length+' món</button>';
+}
+function apDungSuaLo(){
+  var ra=SUA_LO_CHO; if(!ra||!ra.length) return;
+  NAP_BAN_CU=JSON.parse(JSON.stringify(GIA));
+  ra.forEach(function(x){
+    var p=GIA[x.sku]; if(!p) return;
+    p.nhom=x.ap.nhom||p.nhom; p.brand=x.ap.brand||p.brand;
+    p.gb=Number(x.ap.gb)||p.gb; p.ngung=!!x.ap.ngung;
+  });
+  set('gia',GIA); tinhLaiToanBoSO();
+  veGia(); vePhat(); veCB(); veSo(); veBC();
+  $('dlgSuaLo').close(); SUA_LO_CHO=null;
+  bao('giaMsg','Đã đổi <b>'+ra.length+' món</b>. Bấm <b>Phát bảng giá</b> để ba máy nhân viên nhận.<br>'+
+    '<button class="mini mt" onclick="hoanTacNapGia()">Hoàn tác lần sửa này</button>','ok');
 }
 
 /* Ô BÁN SỈ — viết thành câu, và luôn tự chia ngược ra giá mỗi đơn vị */
@@ -3514,18 +3733,26 @@ function luuBangGia(){
     '<br><b style="color:var(--warn)">Nhớ bấm "Phát bảng giá ngay" để ba máy nhân viên nhận giá mới.</b>','ok');
   vePhat(); dayVon(false);
 }
+/* SỬA 11/09/2026 — XUẤT ĐỦ CỘT ĐỂ TẢI XUỐNG → SỬA EXCEL → NẠP LẠI KHÔNG MẤT GÌ.
+   LỖI CŨ: bản xuất thiếu cột "Ngung ban" và các cột giá sỉ. Nạp lại chính file
+   vừa tải xuống là mọi hàng ĐANG NGỪNG BÁN sống dậy hết, vì bước nạp mặc định
+   ngung=false khi không thấy cột đó. Nay xuất đủ, nạp lại y nguyên. */
 function taiBangGia(){
-  var hh=['SKU','Nhom','Thuong hieu','Ten san pham','DVT','Gia ban','Gia von','Bien %'];
+  var hh=['SKU','Nhom','Thuong hieu','Ten san pham','DVT','Gia ban','Gia von',
+          'DVT quy doi','1 dv = may le','Gia ban quy doi','Gia von quy doi','Ngung ban','Bien %'];
   var rows=[hh];
   Object.keys(GIA).sort().forEach(function(k){var p=GIA[k];
     rows.push([p.sku,p.nhom||'',p.brand||'',p.ten,p.dvt||'',p.gb||'',p.von||'',
+      p.qd_dv||'',p.qd_sl||'',p.qd_gb||'',p.qd_von||'', p.ngung?'x':'',
       (p.gb&&p.von)?((p.gb-p.von)/p.gb*100).toFixed(1):''])});
-  var csv='\ufeff'+rows.map(function(r){return r.map(function(c){
+  var csv='﻿'+rows.map(function(r){return r.map(function(c){
     var s=String(c==null?'':c);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}).join(',')}).join('\r\n');
   var a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
   a.download='BANG_GIA_'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
-  bao('giaMsg','Đã tải bảng giá ra CSV.','ok');
+  bao('giaMsg','Đã tải <b>'+(rows.length-1)+' mặt hàng</b> ra CSV. Mở bằng Excel, sửa thoải mái, '+
+    'rồi bấm <b>Nạp bảng giá từ file CSV</b> — máy cho xem trước những gì sắp đổi trước khi ghi.<br>'+
+    '<span class="sm">Cột <b>Bien %</b> chỉ để xem. Đừng đổi cột <b>SKU</b> — đó là chứng minh thư của món hàng.</span>','ok');
 }
 function setF(sku,f,v){GIA[sku][f]=String(v).trim();GIA[sku].moi=false;set('gia',GIA);giaLai()}
 function setN(sku,f,v){GIA[sku][f]=n2(v)||null;
@@ -4421,6 +4648,16 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260911c', ngay:'11/09/2026', ten:'Cập nhật hàng loạt kiểu Shopee',
+  vaPhieu:['16:01:51 10/9/2026'],
+  muc:[
+   ['moi','<b>Nạp bảng giá từ CSV giờ cho XEM TRƯỚC.</b> Đọc file xong máy liệt kê từng món sắp đổi gì, cũ → mới, <b>chưa ghi một chữ nào</b> cho tới khi anh/chị bấm đồng ý. Bản cũ nạp phát ăn ngay, file sai một cột là cả bảng giá bị ghi đè.'],
+   ['sua','<b>Lỗi thật: tải bảng giá xuống rồi nạp lại y nguyên là hàng ngừng bán sống dậy hết.</b> Bản xuất thiếu cột "Ngừng bán", mà bước nạp thấy vắng cột đó thì mặc định cho bán lại. Đã xuất đủ cột — nay tải xuống nạp lại không đổi một chữ.'],
+   ['moi','Máy <b>tự cảnh báo</b> trước khi ghi: giá vốn cao hơn giá bán · giá đổi quá 50% · hàng mới chưa có giá vốn · SKU lặp trong file · dòng thiếu SKU.'],
+   ['moi','<b>Hoàn tác được</b> cả lần nạp file lẫn lần sửa hàng loạt — máy chụp lại bảng giá trước khi ghi.'],
+   ['moi','<b>Sửa hàng loạt ngay trong app</b>, không cần mở Excel: lọc ra nhóm hoặc gõ ô tìm, bấm <b>Sửa hàng loạt món đang lọc</b> — đổi nhóm, đổi thương hiệu, tăng/giảm giá theo % hoặc theo số tiền, cho ngừng bán hoặc bán lại cả loạt. Cũng có xem trước.'],
+   ['dep','Món nào <b>không có trong file</b> thì <b>giữ nguyên</b> — máy không bao giờ xoá món chỉ vì file thiếu nó.'],
+  ]},
  {ban:'20260911b', ngay:'11/09/2026', ten:'Tự chỉ ra món cũ để gộp · gõ không dấu tìm được chữ Đ',
   vaPhieu:[],
   muc:[
@@ -4917,6 +5154,24 @@ function cnKhoiVa(){
 }
 </script><div style="position:fixed;right:8px;bottom:4px;font-size:10px;opacity:.35;pointer-events:none;z-index:99">v1.0-zaka</div>
 <button id="ksNut" onclick="ksMo()" title="Báo cho kỹ sư một chỗ đang có vấn đề">🛠 Kỹ sư</button>
+<dialog id="dlgSuaLo" style="max-width:680px">
+  <button class="dlgX" onclick="document.getElementById('dlgSuaLo').close()" title="Đóng">✕</button>
+  <h2 style="margin-top:0">Sửa hàng loạt</h2>
+  <div class="sm" id="slDan"></div>
+  <div id="slThan" style="max-height:56vh;overflow:auto;margin-top:10px"></div>
+  <div id="slErr"></div>
+  <div id="slNut" class="row mt"></div>
+</dialog>
+
+<dialog id="dlgNap" style="max-width:760px">
+  <button class="dlgX" onclick="document.getElementById('dlgNap').close()" title="Đóng">✕</button>
+  <h2 style="margin-top:0">Xem trước trước khi ghi đè bảng giá</h2>
+  <div class="sm" id="npDan"></div>
+  <div id="npThan" style="max-height:56vh;overflow:auto;margin-top:10px"></div>
+  <div id="npErr"></div>
+  <div id="npNut" class="row mt"></div>
+</dialog>
+
 <dialog id="dlgSPD" style="max-width:640px">
   <button class="dlgX" onclick="document.getElementById('dlgSPD').close()" title="Đóng">✕</button>
   <h2 style="margin-top:0">Duyệt hàng nhân viên thêm</h2>
