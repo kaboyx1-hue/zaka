@@ -595,7 +595,7 @@ if(!BANGGIA.length) setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260910b';
+var APP_VER='20260910c';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -3730,7 +3730,25 @@ async function moKhoa(){
     if(url){
       try{
         var r=await fetch(url+'?key='+encodeURIComponent(v));
-        var j=JSON.parse(await r.text());
+        var txt=await r.text();
+        var j=null; try{ j=JSON.parse(txt) }catch(e0){}
+        /* SỬA 10/09/2026: phân biệt "sai mật khẩu" với "cửa hàng chưa đặt mật khẩu".
+           Từ bản 10/09 mật khẩu không còn nằm trong mã nguồn mà nằm ở Thuộc tính
+           tập lệnh. Ai triển khai code mới mà chưa đặt thuộc tính thì mọi mật khẩu
+           đều không vào được — kể cả mật khẩu cũ. Trước đây máy chỉ nói cụt lủn
+           "Sai mật khẩu", chủ ngồi thử lại mật khẩu cũ mãi không hiểu vì sao. */
+        if(j && j.chuaCaiDat){
+          bao('khErr','<b>Chưa vào được vì cửa hàng chưa đặt mật khẩu ở nơi mới.</b><br>'+
+            'Từ bản 10/09/2026, mật khẩu không còn nằm trong file Code.gs nữa (để đưa file lên '+
+            'GitHub không bị lộ). Nó nằm ở <b>Thuộc tính tập lệnh</b> của Apps Script.<br><br>'+
+            'Cách đặt: mở trình soạn Apps Script → <b>⚙ Cài đặt dự án</b> → kéo xuống '+
+            '<b>Thuộc tính tập lệnh</b> → Thêm thuộc tính:<br>'+
+            '&nbsp;&nbsp;<code>MAT_KHAU_QUANLY</code> = mật khẩu mới<br>'+
+            '&nbsp;&nbsp;<code>MA_DK</code> = mã đăng ký nhân viên mới<br>'+
+            'Xong bấm <b>Triển khai → Quản lý triển khai → ✏️ → Phiên bản mới → Triển khai</b>.<br><br>'+
+            '<b>Đừng đặt lại mật khẩu cũ</b> — nó đã từng nằm trong mã nguồn nên coi như đã lộ.','er');
+          $('khKey').value=''; return;
+        }
         if(j&&j.ok){
           set('mkql',v);
           var c=get('qcfg',{url:url,key:''}); c.url=url; c.key=v; set('qcfg',c);
@@ -3982,7 +4000,7 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
- {ban:'20260910b', ngay:'10/09/2026', ten:'Theo góp ý của chủ — trọn 9 phiếu',
+ {ban:'20260910c', ngay:'10/09/2026', ten:'Theo góp ý của chủ — trọn 9 phiếu',
   vaPhieu:['23:26:14 9/9/2026','23:38:06 9/9/2026','23:39:23 9/9/2026','00:09:29 10/9/2026',
            '00:10:36 10/9/2026','00:11:08 10/9/2026','00:11:54 10/9/2026','00:12:56 10/9/2026',
            '00:13:19 10/9/2026'],
@@ -3992,6 +4010,7 @@ var CAP_NHAT=[
    ['moi','Báo cáo có thêm bảng <b>Theo từng sản phẩm</b> — biết món nào thật sự gánh doanh thu, không chỉ dừng ở thương hiệu.'],
    ['dep','Mấy bảng phân tích trong Báo cáo <b>mặc định thu gọn</b>, gạt công tắc mới mở. Máy nhớ lựa chọn cho lần sau.'],
    ['dep','Đổi chữ "Thu gọn" gạch chân kiểu cũ thành <b>công tắc gạt</b> cho đồng bộ với phần còn lại.'],
+   ['sua','Màn hình đăng nhập quản lý giờ nói <b>đúng lý do</b> khi chưa vào được: chưa đặt mật khẩu ở nơi mới, chứ không phải gõ sai. Kèm chỉ dẫn từng bước.'],
    ['moi','<b>Bí mật rời khỏi mã nguồn:</b> mật khẩu quản lý và mã đăng ký nay nằm ở Thuộc tính tập lệnh của Google, không còn nằm trong file Code.gs.'],
    ['moi','Trong Báo cáo, <b>bấm vào một dòng bất kỳ</b> — kênh, nhân viên, sản phẩm, thương hiệu — là nhảy thẳng sang Sổ cái xem đúng những đơn đứng sau con số đó.'],
    ['moi','Lúc gom món trùng có thêm đường <b>"tôi muốn sửa lại vài chỗ"</b>: tự chọn giữ cái nào, sửa lại tên, và ghi lý do để sau còn nhớ.'],
