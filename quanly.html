@@ -644,7 +644,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260910h';
+var APP_VER='20260910i';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -844,6 +844,7 @@ function nhomTrungTen(){
       if(x.sku!==m.sku && !daXep[x.sku]) ungVien[x.sku]=x }) });
     Object.keys(ungVien).forEach(function(k2){
       var x=ungVien[k2];
+      if(laKhacMon_(m.sku,k2)) return;          // chủ đã nói hai món này khác nhau
       if(giong(m,x)>=NGUONG_GIONG){ cum.push(k2); daXep[k2]=1 }
     });
     if(cum.length>1){
@@ -1172,7 +1173,22 @@ function veLam(){
                     :' <span class="tag w">còn giữ lại trong bảng giá</span>')+
             (g.lyDo?'<br><span style="opacity:.7">Lý do: '+esc(g.lyDo)+'</span>':'')+'</span>'+
           '<button class="mini" style="flex:none" onclick="hoanTacGom('+vt+')">Hoàn tác</button></div>';
-      }).join('')+'</div>':'');
+      }).join('')+'</div>':'')+
+    /* Danh sách cặp đã đánh dấu "hai món khác nhau" — thêm 10/09/2026, phiếu 34 */
+    (function(){
+      var ks=Object.keys(KHAC_MON); if(!ks.length) return '';
+      return '<div class="card"><h2 style="margin-bottom:4px">Đã đánh dấu "hai món khác nhau"</h2>'+
+        '<div class="sm" style="margin-bottom:8px">Mấy cặp này sẽ <b>không hỏi lại</b> nữa. '+
+        'Lỡ đánh dấu nhầm thì bỏ ra, lần gom sau sẽ hỏi lại.</div>'+
+        ks.map(function(k){
+          var g=KHAC_MON[k];
+          return '<div class="sm" style="display:flex;justify-content:space-between;align-items:center;gap:8px;'+
+            'padding:7px 0;border-bottom:1px solid var(--line)">'+
+            '<span><b>'+esc(g.tenA||g.a)+'</b> khác với <b>'+esc(g.tenB||g.b)+'</b>'+
+            (g.luc?'<br><span style="opacity:.7">Đánh dấu lúc '+esc(g.luc)+'</span>':'')+'</span>'+
+            '<button class="mini" style="flex:none" onclick="boKhacMon_(\''+esc(k).replace(/'/g,"\\'")+'\')">Bỏ đánh dấu</button></div>';
+        }).join('')+'</div>';
+    })();
 }
 
 /* ══ HỎI TỪNG CÂU MỘT ══
@@ -1327,6 +1343,8 @@ function traLoiGom(cungMon){
     var chinh = diemGiuLai_(a)>=diemGiuLai_(b) ? a : b;
     var phu = chinh===a ? b : a;
     gomVaDon_(phu, chinh);
+  }else if(c){
+    ghiKhacMon_(c[0],c[1]);   // SỬA 10/09/2026 — phiếu 34: nhớ luôn, đừng hỏi lại
   }
   HOI_I++;
   if(HOI_I<HOI_DS.length) veCauHoi(); else dongHoi();
@@ -1573,6 +1591,26 @@ function set(k,v){
   try{localStorage.setItem(K+k,JSON.stringify(v))}catch(e){}
 }
 var DEM_TRUNG=null, DEM_BAN=null;
+/* ═══ NHỚ NHỮNG CẶP CHỦ ĐÃ NÓI "HAI MÓN KHÁC NHAU" — 10/09/2026, phiếu 34 ═══
+   Chủ báo: "đã nhấn nút hai sản phẩm này khác nhau, nó vẫn hiện tiếp mà không
+   có cách nào biến mất". Đúng — bản cũ chỉ bỏ qua câu hỏi đó trong LẦN NÀY,
+   không ghi lại gì, nên mở lại tab Cần làm là nó hỏi y hệt. Nay ghi lại vĩnh
+   viễn, và cặp đã đánh dấu thì không tính vào số việc cần làm nữa.
+   Vẫn bỏ đánh dấu được, phòng khi lỡ tay. */
+var KHAC_MON={};
+function khoaCap_(a,b){ return a<b ? a+'|'+b : b+'|'+a }
+function laKhacMon_(a,b){ return !!KHAC_MON[khoaCap_(a,b)] }
+function ghiKhacMon_(a,b){
+  KHAC_MON[khoaCap_(a,b)]={a:a,b:b,luc:nowStr(),
+    tenA:(GIA[a]&&GIA[a].ten)||a, tenB:(GIA[b]&&GIA[b].ten)||b};
+  set('khacmon',KHAC_MON); xoaDemNang_();
+}
+function boKhacMon_(k){
+  if(!KHAC_MON[k]) return;
+  delete KHAC_MON[k]; set('khacmon',KHAC_MON); xoaDemNang_();
+  veLam(); veCB();
+  bao('lamMsg','Đã bỏ đánh dấu. Cặp đó sẽ được hỏi lại ở lần gom sau.','ok');
+}
 var PHIEU_NV=[];
 function xoaDemNang_(){ DEM_TRUNG=null; DEM_BAN=null }
 /* Chế độ sáng/tối — lưu lựa chọn trên máy, tự áp dụng lại mỗi lần mở app,
@@ -1698,6 +1736,7 @@ function khoiDongQL(){
     if(QCFG.url&&QCFG.key&&navigator.onLine) hoiNhanh();
   });
   SO=get('so',[]); GIA=get('gia',null); ALIAS=get('alias',{});
+  KHAC_MON=get('khacmon',{});
   // VÁ DỮ LIỆU CŨ: những cặp đã bấm "Gộp" TRƯỚC KHI có bản này chỉ mới ghi vào
   // ALIAS, chưa từng được đánh dấu ngung/gopVao trên GIA (vì lúc đó tính năng tự ẩn
   // chưa tồn tại) — nên mã dư vẫn hiện trong bảng "đang bán" như chưa gộp. Quét lại
@@ -4142,6 +4181,13 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260910i', ngay:'10/09/2026', ten:'Nhớ những cặp “hai món khác nhau”',
+  vaPhieu:['10:36:43 10/9/2026'],
+  muc:[
+   ['sua','<b>Bấm “hai món khác nhau” xong nó vẫn hỏi lại — đã sửa.</b> Bản cũ chỉ bỏ qua câu hỏi đó trong lần đó, không ghi lại gì, nên mở lại tab Cần làm là hỏi y hệt. Nay <b>nhớ luôn</b>, và cặp đã đánh dấu không tính vào số việc cần làm nữa.'],
+   ['moi','Tab Cần làm có thêm mục <b>“Đã đánh dấu hai món khác nhau”</b> — lỡ tay thì bỏ đánh dấu, lần gom sau sẽ hỏi lại.'],
+   ['dep','Bên <b>máy nhân viên</b>: danh sách Phiếu giao hàng và Lịch sử gọn lại thành một dòng mỗi đơn, bấm đâu cũng mở được chi tiết.'],
+  ]},
  {ban:'20260910h', ngay:'10/09/2026', ten:'Hết báo động giả “thiếu seed_ql.js”',
   vaPhieu:[],
   muc:[

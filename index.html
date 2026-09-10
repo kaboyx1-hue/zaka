@@ -296,6 +296,57 @@ h2{font-size:15px;margin:0 0 10px}
 .pgf .l{font-size:14px;color:var(--tx2)}
 .pgf .t{font-size:24px;font-weight:800;color:var(--ok)}
 .pga{padding:10px 16px 14px;display:flex;gap:8px;flex-wrap:wrap}
+/* Hàng lọc gọn + khối "In hàng loạt" gấp lại — thêm 10/09/2026, phiếu 32 & 33.
+   Trước đây phải kéo qua 8 nút và hai đoạn chữ dài mới tới đơn đầu tiên. */
+.hangloc{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:9px}
+.hangloc .oloc{display:flex;align-items:center;gap:6px;cursor:pointer;white-space:nowrap}
+.hangloc .oloc input{width:17px;height:17px;flex:none;accent-color:var(--warn);margin:0}
+.hangloc .mo-in{margin-left:auto;white-space:nowrap}
+.khoin{display:none;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+.card.mo .khoin,.hangloc.mo+.khoin{display:block}
+.khoin .meo{margin-top:8px;opacity:.75;line-height:1.5}
+/* ═══ DÒNG ĐƠN GỌN — thêm 10/09/2026 theo phiếu 32 & 33 ═══
+   Một đơn = một dòng đọc lướt được: tên khách, mã, số món, tiền, trạng thái.
+   Bấm đâu trên dòng cũng bung chi tiết, không phải mò nút. */
+.dgon{display:flex;align-items:center;gap:11px;padding:13px 15px;cursor:pointer;
+    background:var(--card);transition:background .12s}
+.dgon:hover{background:var(--c2)}
+.pgc.gon,.don.gon{margin-bottom:8px}
+.don .dgon{background:transparent;padding:11px 12px;border-radius:12px}
+.dgon>input[type=checkbox]{width:19px;height:19px;flex:none;accent-color:var(--acc);margin:0}
+.dg-giua{flex:1;min-width:0}
+.dg-ten{font-size:16.5px;font-weight:700;color:var(--tx);line-height:1.25;
+    display:flex;gap:9px;align-items:baseline;flex-wrap:wrap}
+.dg-sdt{font-size:14px;font-weight:600;color:var(--ok);letter-spacing:.03em}
+.dg-phu{font-size:12.5px;color:var(--tx2);margin-top:2px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dg-chip{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;align-items:center}
+.ck{font-size:10.5px;font-weight:700;letter-spacing:.4px;padding:2px 8px;border-radius:999px;
+    white-space:nowrap;border:1px solid transparent}
+.ck-thu{background:var(--warnBg);color:var(--warn)}
+.ck-xong{background:var(--okBg);color:var(--ok)}
+.ck-can{background:var(--badBg);color:var(--bad)}
+.ck-nhat{background:var(--c2);color:var(--tx2);border-color:var(--line)}
+.dg-phai{flex:none;text-align:right;display:flex;align-items:center;gap:9px}
+.dg-tien{font-size:17px;font-weight:800;color:var(--ok);white-space:nowrap;
+    font-variant-numeric:tabular-nums}
+.dg-mui{font-size:15px;color:var(--tx2);width:14px;text-align:center}
+.pgh2{padding:2px 15px 11px}
+.pgh2 .dc{font-size:15px;font-weight:600;line-height:1.45;color:var(--tx)}
+.pgh2 .gc{font-size:13.5px;color:var(--warn);margin-top:6px;font-weight:600}
+/* Nút thao tác trong đơn — cùng một kiểu, chỉ khác màu chữ */
+.na{background:var(--c2);color:var(--tx2);padding:8px 14px;font-size:13px;font-weight:600;
+    border-radius:9px;border:1px solid var(--line)}
+.na-chinh{background:var(--acc);color:#03121f;border-color:transparent}
+.na-them{margin-left:auto}
+.pga-them{padding-top:0;border-top:1px dashed var(--line);margin:0 15px;padding-left:0;padding-right:0}
+@media(max-width:520px){
+  .dgon{padding:12px 12px;gap:9px}
+  .dg-ten{font-size:15.5px}
+  .dg-tien{font-size:15.5px}
+  .na{flex:1 1 46%}
+  .na-them{margin-left:0}
+}
 .edt{background:#141d27;border:1px solid var(--acc);border-radius:11px;padding:12px;margin-top:9px}
 .edt h3{font-size:12.5px;color:var(--acc);margin:0 0 9px;letter-spacing:.04em;text-transform:uppercase}
 .el{display:flex;gap:8px;align-items:center;background:var(--c2);border-radius:9px;padding:8px 9px;margin-bottom:6px}
@@ -514,26 +565,29 @@ body.ks-chi *{cursor:crosshair!important}
   <div id="pgMsg"></div>
   <div class="card"><input id="fpg" placeholder="Tìm mã đơn, tên khách, số điện thoại…" oninput="vePG()">
     <select id="locTT" onchange="vePG()" style="margin-top:8px"></select>
-    <div class="sm" style="margin-bottom:9px;margin-top:6px">Màn hình cho shipper. Bấm <b>Sửa</b> để chỉnh — sửa ở đây hay ở Lịch sử đều như nhau.</div>
-    <div class="intoolbar">
-      <button class="btn-nho" onclick="thuGonTatCa('pg',true)" style="background:var(--pur);color:#fff">▾ Thu gọn tất cả</button>
-      <button class="btn-nho" onclick="thuGonTatCa('pg',false)">▸ Mở rộng tất cả</button>
-      <button class="btn-nho" id="btnChuaIn" onclick="chonChuaIn()" style="background:var(--warnBg);color:var(--warn)">Chọn đơn chưa in</button>
-      <button class="btn-nho" onclick="chonHetIn(1)">Chọn tất cả</button>
-      <button class="btn-nho" onclick="chonHetIn(0)">Bỏ chọn</button>
-      <label class="sm" style="display:flex;align-items:center;gap:6px;cursor:pointer">
-        <input type="checkbox" id="locChuaIn" onchange="vePG()" style="width:17px;height:17px;accent-color:var(--warn)">
-        Chỉ hiện đơn chưa in</label>
-      <select id="moiTrang"><option value="4">4 phiếu / tờ A4 (khổ 10×15cm)</option>
-        <option value="2">2 phiếu / tờ A4</option>
-        <option value="1">1 phiếu / tờ A4</option>
-        <option value="A5">2 phiếu / tờ A5 (vẫn khổ 10×15cm)</option></select>
-      <button class="btn" id="btnInNhieu" onclick="inDaChon()" style="background:var(--acc);color:#03121f;font-weight:600;padding:8px 15px;font-size:13px">In 0 phiếu đã chọn</button>
-      <button class="btn" onclick="inGuiDaChon()" style="background:var(--purBg);color:var(--pur);font-weight:600;padding:8px 15px;font-size:13px">In phiếu gửi nhà xe</button>
+    <div class="hangloc">
+      <label class="sm oloc"><input type="checkbox" id="locChuaIn" onchange="vePG()">Chỉ đơn chưa in</label>
+      <span class="sm" id="tongThu"></span>
+      <a href="#" class="lnk sm mo-in" onclick="event.preventDefault();this.parentNode.parentNode.classList.toggle('mo')">In hàng loạt ▾</a>
     </div>
-    <div class="sm" style="margin-top:8px" id="tongThu"></div>
-    <div class="sm" style="margin-top:7px">Bản in trắng đen, <b>khổ phiếu luôn là 10×15cm</b> đúng chuẩn tem giao hàng — chọn A4 hay A5 thì phiếu vẫn đúng khổ đó. Giấy A5 cứ nạp <b>dọc</b> như thường, phiếu tự xoay ngang trong tờ.
-    Trong hộp thoại in của Chrome nhớ để <b>Lề: Không có</b> và bỏ tích <b>Đầu trang và chân trang</b>.</div></div>
+    <div class="khoin">
+      <div class="intoolbar">
+        <button class="btn-nho" id="btnChuaIn" onclick="chonChuaIn()" style="background:var(--warnBg);color:var(--warn)">Chọn đơn chưa in</button>
+        <button class="btn-nho" onclick="chonHetIn(1)">Chọn tất cả</button>
+        <button class="btn-nho" onclick="chonHetIn(0)">Bỏ chọn</button>
+        <select id="moiTrang"><option value="4">4 phiếu / tờ A4 (khổ 10×15cm)</option>
+          <option value="2">2 phiếu / tờ A4</option>
+          <option value="1">1 phiếu / tờ A4</option>
+          <option value="A5">2 phiếu / tờ A5 (vẫn khổ 10×15cm)</option></select>
+        <button class="btn" id="btnInNhieu" onclick="inDaChon()" style="background:var(--acc);color:#03121f;font-weight:600;padding:8px 15px;font-size:13px">In 0 phiếu đã chọn</button>
+        <button class="btn" onclick="inGuiDaChon()" style="background:var(--purBg);color:var(--pur);font-weight:600;padding:8px 15px;font-size:13px">In phiếu gửi nhà xe</button>
+        <button class="btn-nho" onclick="thuGonTatCa('pg',false)">Mở rộng mọi đơn</button>
+        <button class="btn-nho" onclick="thuGonTatCa('pg',true)">Thu gọn lại</button>
+      </div>
+      <div class="sm meo">Bản in trắng đen, <b>khổ phiếu luôn là 10×15cm</b> — chọn A4 hay A5 thì phiếu vẫn đúng khổ đó.
+      Giấy A5 cứ nạp <b>dọc</b> như thường, phiếu tự xoay ngang trong tờ.
+      Trong hộp thoại in của Chrome nhớ để <b>Lề: Không có</b> và bỏ tích <b>Đầu trang và chân trang</b>.</div>
+    </div></div>
   <datalist id="dsShip"></datalist>
   <div id="dsPG"></div>
   <div class="fabin" id="fabIn" onclick="inDaChon()">
@@ -546,21 +600,27 @@ body.ks-chi *{cursor:crosshair!important}
   <div id="listMsg"></div>
   <div class="card"><input id="fdon" placeholder="Tìm mã đơn, khách, số điện thoại…" oninput="veDon()">
     <select id="locNV" onchange="veDon()" style="margin-top:8px"></select>
-    <div class="intoolbar" style="margin-top:9px">
-      <button class="btn-nho" onclick="chonHetInLS(1)">Chọn tất cả để in</button>
-      <select id="moiTrangLS"><option value="4">4 phiếu / tờ A4 (khổ 10×15cm)</option>
-        <option value="2">2 phiếu / tờ A4</option>
-        <option value="1">1 phiếu / tờ A4</option>
-        <option value="A5">2 phiếu / tờ A5 (vẫn khổ 10×15cm)</option></select>
-      <button class="btn" id="btnInNhieuLS" onclick="inPhieu(dsChonInLS(),$('moiTrangLS').value)" style="background:var(--acc);color:#03121f;font-weight:600;padding:8px 15px;font-size:13px">In 0 phiếu đã chọn</button>
-      <button class="btn" onclick="moKienHang(dsChonInLS(),$('moiTrangLS').value)" style="background:var(--purBg);color:var(--pur);font-weight:600;padding:8px 15px;font-size:13px">In phiếu gửi nhà xe</button>
+    <div class="hangloc">
+      <a href="#" class="lnk sm mo-in" onclick="event.preventDefault();this.parentNode.parentNode.classList.toggle('mo')">In / huỷ hàng loạt ▾</a>
     </div>
-    <div class="intoolbar" style="margin-top:9px">
-      <button class="btn-nho" onclick="chonHetDon(1)">Chọn tất cả đơn hôm nay</button>
-      <button class="btn-nho" onclick="chonHetInLS(0);chonHetDon(0)">Bỏ chọn</button>
-      <button class="btn-nho" id="btnHuyLo" onclick="huyLo()" style="background:var(--badBg);color:var(--bad)">Huỷ 0 đơn đã chọn</button>
+    <div class="khoin">
+      <div class="intoolbar">
+        <button class="btn-nho" onclick="chonHetInLS(1)">Chọn tất cả để in</button>
+        <button class="btn-nho" onclick="chonHetInLS(0);chonHetDon(0)">Bỏ chọn</button>
+        <select id="moiTrangLS"><option value="4">4 phiếu / tờ A4 (khổ 10×15cm)</option>
+          <option value="2">2 phiếu / tờ A4</option>
+          <option value="1">1 phiếu / tờ A4</option>
+          <option value="A5">2 phiếu / tờ A5 (vẫn khổ 10×15cm)</option></select>
+        <button class="btn" id="btnInNhieuLS" onclick="inPhieu(dsChonInLS(),$('moiTrangLS').value)" style="background:var(--acc);color:#03121f;font-weight:600;padding:8px 15px;font-size:13px">In 0 phiếu đã chọn</button>
+        <button class="btn" onclick="moKienHang(dsChonInLS(),$('moiTrangLS').value)" style="background:var(--purBg);color:var(--pur);font-weight:600;padding:8px 15px;font-size:13px">In phiếu gửi nhà xe</button>
+      </div>
+      <div class="intoolbar" style="margin-top:8px">
+        <button class="btn-nho" onclick="chonHetDon(1)">Chọn tất cả đơn hôm nay</button>
+        <button class="btn-nho" id="btnHuyLo" onclick="huyLo()" style="background:var(--badBg);color:var(--bad)">Huỷ 0 đơn đã chọn</button>
+      </div>
+      <div class="sm meo">Ô tích <b>xanh</b> là chọn để in — bất kỳ đơn nào.
+      Ô tích <b>đỏ</b> là chọn để huỷ — chỉ hiện ở đơn <b>trong ngày hôm nay</b>, đơn cũ phải báo chủ.</div>
     </div>
-    <div class="sm" style="margin-top:6px">Chọn để in — bất kỳ đơn nào. Chọn để huỷ — chỉ đơn <b>trong ngày hôm nay</b>, đơn cũ phải báo chủ.</div>
   </div>
   <div id="dsDon"></div>
   <div class="fabin" id="fabInLS" onclick="inPhieu(dsChonInLS(),$('moiTrangLS').value)">
@@ -819,7 +879,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260910h';
+var APP_VER='20260910i';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -2672,7 +2732,27 @@ function veLocTT(){
       return '<option value="'+esc(h)+'">Đã TT — '+esc(h)+' ('+n+')</option>'}).join('');
   if([].slice.call(e.options).some(function(o){return o.value===giu})) e.value=giu;
 }
-function toggleChiTiet(ma){ THU_GON[ma]=!THU_GON[ma]; vePG() }
+/* ═══ TINH GỌN DANH SÁCH ĐƠN — 10/09/2026, phiếu 32 & 33 của chủ ═══
+   Trước đây mỗi đơn dàn hết ra: bảng hàng, ô người giao, 6 nút thao tác — ba
+   đơn là hết một màn hình, mà nhìn vào không biết bấm đâu để xem chi tiết.
+   Nay MẶC ĐỊNH THU GỌN: mỗi đơn một dòng gọn (tên khách · mã · số món · tiền ·
+   trạng thái). Bấm vào bất cứ đâu trên dòng đó là bung chi tiết. */
+function gonHay_(ma){ return THU_GON[ma]===undefined ? true : !!THU_GON[ma] }
+function toggleChiTiet(ma){ THU_GON[ma]=!gonHay_(ma); vePG() }
+/* Nút "Thêm" trong một đơn đang mở — nhớ riêng từng đơn, không lưu lâu dài */
+var THEM_MO={};
+function toggleThem(ma){ THEM_MO[ma]=!THEM_MO[ma]; vePG() }
+/* Tab Lịch sử: bấm cả dòng để bung. Vẽ lại danh sách trước, rồi mới đổ chi tiết
+   vào ô vừa được tạo ra. */
+function chiTietGon(ma){
+  var sapMo = gonHay_(ma);
+  THU_GON[ma] = !sapMo;
+  veDon();
+  if(sapMo){
+    var b=$('ct_'+ma);
+    if(b){ b.classList.add('hide'); chiTiet(ma) }
+  }
+}
 function thuGonTatCa(loai,v){
   var vungId = loai==='pg' ? 'dsPG' : 'dsDon';
   var vung=$(vungId); if(!vung) return;
@@ -2726,31 +2806,43 @@ function vePG(epVe){
    try{
     if(ED&&ED.ma===d.ma) return '<div class="pgc" id="pgw_'+d.ma+'"><div class="pgb" id="ct_'+d.ma+'"></div></div>';
     var mon=d.dong.reduce(function(a,x){return a+x.sl},0);
-    return '<div class="pgc" id="pgw_'+d.ma+'">'+
-      '<button onclick="event.stopPropagation();toggleChiTiet(\''+d.ma+'\')" '+
-        'style="background:var(--pur);color:#fff;font-weight:600;padding:4px 11px;font-size:12px;border-radius:7px;margin-bottom:6px">'+
-        (THU_GON[d.ma]?'▸ Mở rộng':'▾ Thu gọn')+'</button>'+
-      '<div class="pgh"><div class="pgsel"><input type="checkbox" class="ckin" value="'+d.ma+'" onchange="demIn()">'+
-      nhanTT(d)+
-      '<button class="btn-nho" style="padding:2px 8px;font-size:11px;margin-left:2px" '+
-        'onclick="event.stopPropagation();moSuaTT(\''+d.ma+'\')">Sửa TT</button>'+
-      nhanGiao(d)+nhanDongBo(d)+
-      (d.inLan
-        ?'<span class="tagin da">ĐÃ IN'+(d.inLan>1?' '+d.inLan+' LẦN':'')+' · '+esc(d.inLuc||'')+'</span>'+
-         '<button class="btn-nho" onclick="boIn(\''+d.ma+'\')">Bỏ đánh dấu</button>'
-        :'<span class="tagin chua">CHƯA IN</span>')+'</div>'+
-      '<div class="ma">'+maHTML(d.ma)+' · '+esc(d.ngay)+'</div>'+
-      '<div class="kh">'+esc(d.khach||'KHÁCH LẺ')+'</div>'+
-      '<div class="sdt">'+esc(d.sdt)+'</div>'+
-      (d.dc?'<div class="dc">'+esc(d.dc)+'</div>':'<div class="dc" style="color:var(--warn)">⚠ Chưa có địa chỉ</div>')+
-      '<div class="sm" style="margin-top:5px;display:flex;gap:6px;align-items:center" '+
-        'title="Dùng làm mặc định cho cả đơn. Nếu đơn giao nhiều đợt và đợt nào đó gán người giao riêng (trong hộp Giao đợt mới), phiếu gửi nhà xe của đợt đó in theo tên riêng, không theo tên ở đây.">Người giao (mặc định cả đơn): '+
-        '<input list="dsShip" value="'+esc(d.nguoiGiao||'')+'" placeholder="tên shipper" '+
-        'style="flex:1;max-width:160px" onchange="ganShipper(\''+d.ma+'\',this.value)"></div>'+
-      ((d.dot||[]).length?'<div class="sm" style="opacity:.7;margin-top:2px">Đơn này giao nhiều đợt — mỗi đợt có thể có người giao riêng, xem trong mục "Các đợt giao" bên dưới.</div>':'')+
-      (d.inLan?'':'<div class="sm" style="color:var(--warn)">Chưa in phiếu giao hàng</div>')+
-      (d.ghichu?'<div class="gc">Ghi chú: '+esc(d.ghichu)+'</div>':'')+'</div>'+
-      (THU_GON[d.ma]?'':
+    var gon=gonHay_(d.ma);
+    var conThu=conThuDon(d);
+
+    /* ── DÒNG GỌN: luôn hiện, bấm đâu cũng bung ── */
+    var dongGon=
+      '<div class="dgon" onclick="toggleChiTiet(\''+d.ma+'\')">'+
+        '<input type="checkbox" class="ckin" value="'+d.ma+'" onchange="demIn()" '+
+          'onclick="event.stopPropagation()">'+
+        '<div class="dg-giua">'+
+          '<div class="dg-ten">'+esc(d.khach||'KHÁCH LẺ')+
+            '<span class="dg-sdt">'+esc(d.sdt||'')+'</span></div>'+
+          '<div class="dg-phu">'+maHTML(d.ma)+' · '+esc(d.ngay)+' · '+mon+' món</div>'+
+          '<div class="dg-chip">'+
+            (conThu?'<span class="ck ck-thu">THU '+tien(conThu)+'</span>'
+                   :'<span class="ck ck-xong">ĐÃ THU</span>')+
+            (d.inLan?'<span class="ck ck-nhat">ĐÃ IN'+(d.inLan>1?' '+d.inLan+'×':'')+'</span>'
+                    :'<span class="ck ck-can">CHƯA IN</span>')+
+            (d.dc?'':'<span class="ck ck-can">THIẾU ĐỊA CHỈ</span>')+
+            ((d.dot||[]).length?'<span class="ck ck-nhat">GIAO '+d.dot.length+' ĐỢT</span>':'')+
+          '</div>'+
+        '</div>'+
+        '<div class="dg-phai"><div class="dg-tien">'+tien(d.tong)+'</div>'+
+          '<div class="dg-mui">'+(gon?'⌄':'⌃')+'</div></div>'+
+      '</div>';
+
+    if(gon) return '<div class="pgc gon" id="pgw_'+d.ma+'">'+dongGon+'</div>';
+
+    /* ── PHẦN BUNG RA ── */
+    return '<div class="pgc" id="pgw_'+d.ma+'">'+dongGon+
+      '<div class="pgh2">'+
+        (d.dc?'<div class="dc">'+esc(d.dc)+'</div>'
+             :'<div class="dc" style="color:var(--warn)">⚠ Chưa có địa chỉ</div>')+
+        '<div class="dg-chip" style="margin-top:6px">'+nhanGiao(d)+nhanDongBo(d)+
+          (d.inLan?'<span class="sm" style="opacity:.7">in lúc '+esc(d.inLuc||'')+'</span>':'')+
+        '</div>'+
+        (d.ghichu?'<div class="gc">Ghi chú: '+esc(d.ghichu)+'</div>':'')+
+      '</div>'+
       '<div class="pgb"><table><tr><th>Sản phẩm</th><th style="text-align:center">SL</th>'+
       (tgGiaoCua(d)==='DU'?'':'<th style="text-align:center">Đã giao</th>')+
       '<th class="r">Đơn giá</th><th class="r">Thành tiền</th></tr>'+
@@ -2767,20 +2859,32 @@ function vePG(epVe){
           ' <button class="btn-nho" style="padding:2px 8px;font-size:11px" '+
             'onclick="event.stopPropagation();moKienHang([\''+d.ma+'\'],1,'+o.n+')">In phiếu đợt này</button>'
       }).join('<br>')+'</div>':'')+
-      '</div>')+
-      '<div class="pgf"><div class="l"><b style="color:var(--tx)">'+mon+' món</b>'+
-        ' · hàng '+tien(d.tienHang)+(d.ship?' · <b style="color:var(--warn)">ship '+tien(d.ship)+'</b>':'')+
+      '</div>'+
+      '<div class="pgf"><div class="l">hàng '+tien(d.tienHang)+
+        (d.ship?' · <b style="color:var(--warn)">ship '+tien(d.ship)+'</b>':'')+
         (d.phiChanh?' · <b style="color:var(--bad)">chành '+tien(d.phiChanh)+'</b>':'')+
         (d.giam?' · giảm '+tien(d.giam):'')+'</div>'+
       '<div class="t">'+tien(d.tong)+'</div></div>'+
-      '<div class="pga"><button onclick="moGiaoDot(\''+d.ma+'\')" style="background:var(--purBg);color:var(--pur);padding:8px 15px;font-size:13px">Giao đợt mới</button>'+
-      '<button onclick="suaTaiCho(\''+d.ma+'\',1)" style="background:var(--c2);color:var(--acc);padding:8px 15px;font-size:13px">Sửa đơn</button>'+
-      '<button onclick="doiTT(\''+d.ma+'\')" style="background:'+(d.tt==='DA'?'var(--okBg)':'var(--c2)')+
-        ';color:'+(d.tt==='DA'?'var(--ok)':'var(--warn)')+';padding:8px 15px;font-size:13px">'+
+      /* Ba nút hay dùng nhất đứng ngoài; phần còn lại nằm sau nút Thêm */
+      '<div class="pga">'+
+      '<button onclick="inPhieu([\''+d.ma+'\'],1)" class="na na-chinh">In phiếu giao</button>'+
+      '<button onclick="suaTaiCho(\''+d.ma+'\',1)" class="na">Sửa đơn</button>'+
+      '<button onclick="doiTT(\''+d.ma+'\')" class="na" style="color:'+(d.tt==='DA'?'var(--ok)':'var(--warn)')+'">'+
         (d.tt==='DA'?'Bỏ đã thu':'Đánh dấu ĐÃ THU')+'</button>'+
-      '<button onclick="inPhieu([\''+d.ma+'\'],1)" style="background:var(--c2);color:var(--tx2);padding:8px 15px;font-size:13px">In phiếu này</button>'+
-      '<button onclick="moKienHang([\''+d.ma+'\'],1)" style="background:var(--c2);color:var(--pur);padding:8px 15px;font-size:13px">In phiếu gửi nhà xe</button>'+
-      '<button onclick="xoaDon(\''+d.ma+'\',1)" style="background:var(--c2);color:var(--bad);padding:8px 15px;font-size:13px">Xoá đơn</button></div>'+
+      '<button onclick="toggleThem(\''+d.ma+'\')" class="na na-them">'+(THEM_MO[d.ma]?'Bớt ▴':'Thêm ▾')+'</button>'+
+      '</div>'+
+      (THEM_MO[d.ma]?
+      '<div class="pga pga-them">'+
+        '<div class="sm" style="flex:1 1 100%;display:flex;gap:6px;align-items:center" '+
+          'title="Dùng làm mặc định cho cả đơn. Đợt giao nào gán người giao riêng thì phiếu nhà xe của đợt đó in theo tên riêng.">Người giao: '+
+          '<input list="dsShip" value="'+esc(d.nguoiGiao||'')+'" placeholder="tên shipper" '+
+          'style="flex:1;max-width:190px" onchange="ganShipper(\''+d.ma+'\',this.value)"></div>'+
+        '<button onclick="moKienHang([\''+d.ma+'\'],1)" class="na" style="color:var(--pur)">In phiếu gửi nhà xe</button>'+
+        '<button onclick="moGiaoDot(\''+d.ma+'\')" class="na" style="color:var(--pur)">Giao đợt mới</button>'+
+        '<button onclick="moSuaTT(\''+d.ma+'\')" class="na">Sửa cách thanh toán</button>'+
+        (d.inLan?'<button onclick="boIn(\''+d.ma+'\')" class="na">Bỏ đánh dấu đã in</button>':'')+
+        '<button onclick="xoaDon(\''+d.ma+'\',1)" class="na" style="color:var(--bad)">Xoá đơn</button>'+
+      '</div>':'')+
       '</div>';
    }catch(e){
     console.error('Loi ve the don '+d.ma+':',e);
@@ -3055,29 +3159,37 @@ function veDon(){
       'trong tổng số <b>'+tong+'</b>. Ô tìm và bộ lọc vẫn soi hết cả '+tong+' đơn.</div>':'')+
     '<div class="card">'+ds.map(function(d){
     var homNay=d.iso===today();
-    var gon=THU_GON[d.ma];
+    var gon=gonHay_(d.ma);
     var _ngay=(function(n){if(n&&n.indexOf('T')>=0){try{var dt=new Date(n);return('0'+dt.getHours()).slice(-2)+':'+('0'+dt.getMinutes()).slice(-2)}catch(e){}}return n||''})(d.ngay);
     var _sl=d.sl||(d.dong||[]).reduce(function(a,x){return a+((x.hs||1)>1?1:x.sl)},0);
     var _gui=(d.xuat||d.tuSheet||d.day)?(d.guiLai?' <span class="tag moi">sửa sau khi gửi</span>':' <span class="tag qd">đã gửi</span>'):' <span class="tag moi">chưa gửi</span>';
-    return '<div class="don" id="pgw_'+d.ma+'">'+
-      '<div class="pgsel"><input type="checkbox" class="ckinls" value="'+d.ma+'" onchange="demInLS()"><span class="sm">chọn để in</span></div>'+
-      (homNay?'<div class="pgsel"><input type="checkbox" class="ckdon" value="'+d.ma+'" onchange="demHuy()"><span class="sm">chọn để huỷ</span></div>':'')+
-      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px">'+
-        '<div onclick="chiTiet(\''+d.ma+'\');" style="cursor:pointer;flex:1">'+
-          '<div class="ma">'+maHTML(d.ma)+_gui+
-            (d.sualan?' <span class="tag kh">sửa '+d.sualan+' lần</span>':'')+
-            ' '+nhanTT(d)+
-            ' <button class="btn-nho" style="padding:2px 8px;font-size:11px" onclick="event.stopPropagation();moSuaTT(\''+d.ma+'\')">Sửa TT</button>'+
+    /* SỬA 10/09/2026 — phiếu 33: "khó tìm được chỗ để mở ra xem chi tiết".
+       Trước đây mỗi đơn có tới ba chỗ bấm khác nhau (vùng mã đơn mở chi tiết,
+       chữ "Thu gọn" ở góc phải làm việc khác, hai ô tích nằm trên cùng), không
+       ai đoán được cái nào ra cái gì. Nay CẢ DÒNG là nút mở chi tiết, ô tích
+       nằm gọn bên trái, còn lại dồn vào phần bung ra. */
+    var conThuLS=conThuDon(d);
+    return '<div class="don'+(gon?' gon':'')+'" id="pgw_'+d.ma+'">'+
+      '<div class="dgon" onclick="chiTietGon(\''+d.ma+'\')">'+
+        '<input type="checkbox" class="ckinls" value="'+d.ma+'" onchange="demInLS()" '+
+          'onclick="event.stopPropagation()" title="Chọn để in">'+
+        (homNay?'<input type="checkbox" class="ckdon" value="'+d.ma+'" onchange="demHuy()" '+
+          'onclick="event.stopPropagation()" title="Chọn để huỷ" style="accent-color:var(--bad)">':'')+
+        '<div class="dg-giua">'+
+          '<div class="dg-ten">'+esc(d.khach||'KHÁCH LẺ')+
+            '<span class="dg-sdt">'+esc(d.sdt||'')+'</span></div>'+
+          '<div class="dg-phu">'+maHTML(d.ma)+' · '+_ngay+' · '+_sl+' sp'+
+            (d.kenh?' · '+esc(d.kenh):'')+'</div>'+
+          '<div class="dg-chip">'+_gui+
+            (d.sualan?'<span class="ck ck-nhat">SỬA '+d.sualan+'×</span>':'')+
+            (conThuLS?'<span class="ck ck-thu">THU '+tien(conThuLS)+'</span>'
+                     :'<span class="ck ck-xong">ĐÃ THU</span>')+
           '</div>'+
         '</div>'+
-        '<a href="#" class="lnk" style="flex-shrink:0;font-size:12.5px" onclick="event.preventDefault();event.stopPropagation();THU_GON[\''+d.ma+'\']=!THU_GON[\''+d.ma+'\'];veDon()">'+
-          (gon?'Mở rộng':'Thu gọn')+
-        '</a>'+
+        '<div class="dg-phai"><div class="dg-tien">'+tien(d.tong)+'</div>'+
+          '<div class="dg-mui">'+(gon?'⌄':'⌃')+'</div></div>'+
       '</div>'+
-      (gon?'':
-        '<div class="dt">'+_ngay+' · '+esc(d.kenh)+' · '+esc(d.khach)+' ('+esc(d.sdt)+')</div>'+
-        '<div class="dt">'+_sl+' sp · <b style="color:var(--ok)">'+tien(d.tong)+'</b></div>'
-      )+
+      (gon?'':'<div class="pgh2"><button class="btn-nho" onclick="event.stopPropagation();moSuaTT(\''+d.ma+'\')">Sửa cách thanh toán</button></div>')+
       '<div id="ct_'+d.ma+'" class="hide"></div>'+
     '</div>'}).join('')+'</div>'+
     (tong>ds.length
@@ -3095,6 +3207,13 @@ function veDon(){
       if(dangChonHuy.indexOf(c.value)>=0) c.checked=true;
     });
   }
+  /* Đơn nào đang mở thì đổ luôn chi tiết vào — nếu không, bấm "Mở rộng tất cả"
+     hoặc mở đơn đó ở tab Phiếu giao hàng xong quay lại đây sẽ thấy một ô trống. */
+  ds.forEach(function(d){
+    if(gonHay_(d.ma)) return;
+    var b=$('ct_'+d.ma);
+    if(b && !b.innerHTML){ b.classList.add('hide'); try{ chiTiet(d.ma) }catch(e){} }
+  });
   demHuy(); demInLS();
   veLaiFormSua(false);
 }
@@ -4320,6 +4439,16 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260910i', ngay:'10/09/2026', ten:'Danh sách đơn gọn lại — bấm đâu cũng mở được',
+  vaPhieu:['10:33:50 10/9/2026','10:35:18 10/9/2026'],
+  muc:[
+   ['dep','<b>Mỗi đơn giờ là một dòng gọn.</b> Tên khách, số điện thoại, mã đơn, số món, tiền, trạng thái — đủ để liếc qua là biết. Trước đây một đơn chiếm gần nửa màn hình vì bảng hàng và 6 nút luôn bung sẵn.'],
+   ['sua','<b>Bấm vào bất cứ đâu trên dòng là mở chi tiết.</b> Trước đây phải mò đúng chỗ mới mở được — có tới ba chỗ bấm khác nhau mà không chỗ nào nói nó làm gì.'],
+   ['dep','Khi mở ra chỉ còn <b>3 nút hay dùng nhất</b>: In phiếu giao · Sửa đơn · Đánh dấu ĐÃ THU. Những việc ít làm hơn (in phiếu nhà xe, giao đợt mới, người giao, xoá đơn) nằm sau nút <b>Thêm</b>.'],
+   ['dep','Mấy nút in hàng loạt và đoạn hướng dẫn in <b>gấp lại</b> sau chữ “In hàng loạt”. Trước đây phải kéo qua 8 nút và hai đoạn chữ dài mới tới đơn đầu tiên.'],
+   ['dep','Tab <b>Lịch sử</b> cũng vậy, và hai ô tích tách rõ màu: <b>xanh</b> là chọn để in, <b>đỏ</b> là chọn để huỷ.'],
+   ['moi','Tích ô chọn <b>không còn làm bung đơn</b> — chọn nhiều đơn để in không bị nhảy màn hình nữa.'],
+  ]},
  {ban:'20260910h', ngay:'10/09/2026', ten:'Đơn nhiều món không còn bị cắt mất dòng',
   vaPhieu:[],
   muc:[
