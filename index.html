@@ -180,6 +180,10 @@ header .who b{display:block;font-size:15px}header .who{font-size:12px;color:var(
 .ph-cod b{font-size:1.85em;letter-spacing:.3px}
 .ph-cod.ph-datra{border-width:2.5pt}
 .ph-cod.ph-datra b{font-size:1.25em;letter-spacing:1px}
+/* Đơn nhiều món phải chia nhiều tờ — thêm 10/09/2026 */
+.ph-tr{border:1pt solid #000;padding:0 .35em;font-size:.62em;letter-spacing:.5px;
+    vertical-align:middle;white-space:nowrap}
+.ph-cod.ph-tiep{border-style:dashed}
 .ph-gc{font-size:.88em;margin-top:.35em;font-style:italic}
 .ph-ft{margin-top:auto;padding-top:.45em;border-top:1pt dashed #000;
     font-size:.78em;display:flex;justify-content:space-between;align-items:flex-end}
@@ -815,7 +819,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260910g';
+var APP_VER='20260910h';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -3529,20 +3533,29 @@ function phieuHTML(d,cu){
       (sDc?'<div>'+esc(sDc)+'</div>':'')+'</div>'+
       '<div style="text-align:right"><div class="ph-lh">LIÊN HỆ: '+esc(sDt)+'</div>'+
       '<div>'+esc(d.ngay)+'</div></div></div>'+
-    '<div class="ph-ma">'+esc(d.ma)+'</div>'+
+    '<div class="ph-ma">'+esc(d.ma)+
+      (d._soTrang>1?' <span class="ph-tr">TỜ '+d._trang+'/'+d._soTrang+'</span>':'')+'</div>'+
     '<div class="ph-lb">NGƯỜI NHẬN</div>'+
     '<div class="ph-ten">'+esc(d.khach||'KHÁCH LẺ')+'</div>'+
     '<div class="ph-sdt">'+esc(d.sdt||'—')+'</div>'+
     '<div class="ph-dc">'+esc(d.dc||'(chưa có địa chỉ)')+'</div>'+
     (d.nguoiGiao?'<div class="sm">Người giao: <b>'+esc(d.nguoiGiao)+'</b></div>':'')+
-    '<div class="ph-lb">HÀNG GIAO</div>'+
+    '<div class="ph-lb">HÀNG GIAO'+
+      (d._soTrang>1?' — phần '+d._trang+' trong '+d._soTrang:'')+'</div>'+
     '<table class="ph-tb"><tr><th>Sản phẩm</th><th style="text-align:center">SL</th><th class="r">Thành tiền</th></tr>'+
       d.dong.map(function(x){return '<tr><td>'+esc(x.ten)+
         (gonDV?'':'<div class="dv">'+esc(x.dv)+(x.hs>1?' (= '+x.hs+' đv lẻ)':'')+' × '+pTien(x.gia)+'</div>')+
         (gonDV?' <span class="dv">'+esc(x.dv)+' × '+pTien(x.gia)+'</span>':'')+'</td>'+
         '<td class="c">'+x.sl+'</td><td class="r">'+pTien(x.thanhTien)+'</td></tr>'}).join('')+
     '</table>'+
-    '<div class="ph-sum"><div><span>Tiền hàng</span><span>'+pTien(d.tienHang)+'</span></div>'+
+    /* TỜ CHƯA PHẢI TỜ CUỐI: không in tiền, không in ô thu hộ — để shipper
+       không thu nhầm hai lần. Chỉ ghi rõ là còn tờ nữa. */
+    (d._soTrang>1 && d._trang<d._soTrang
+      ? '<div class="ph-cod ph-tiep"><span>CÒN TIẾP</span><b>XEM TỜ '+(d._trang+1)+'/'+d._soTrang+'</b></div>'+
+        '<div class="ph-ft"><div>NV lên đơn: '+esc(d.nv||'')+' · '+esc(d.may||'')+'</div>'+
+        '<div>Tiền và chữ ký nằm ở tờ '+d._soTrang+'/'+d._soTrang+'</div></div></div>'
+      :
+    '<div class="ph-sum"><div><span>Tiền hàng'+(d._soTrang>1?' (cả '+d._soTrang+' tờ)':'')+'</span><span>'+pTien(d.tienHang)+'</span></div>'+
       (d.ship?'<div><span>Phí giao hàng</span><span>'+pTien(d.ship)+'</span></div>':'')+
       (d.giam?'<div><span>Giảm giá</span><span>− '+pTien(d.giam)+'</span></div>':'')+'</div>'+
     (function(){
@@ -3562,7 +3575,65 @@ function phieuHTML(d,cu){
       (d.nguoiGiao?'<div style="font-size:1.2em">Người giao: <b>'+esc(d.nguoiGiao)+'</b></div>'
         :'<div>Người nhận ký: ______________</div>')+'</div>'+
     '<div class="ph-camon">'+esc(SHOP.camon||CAMON_MAC_DINH).replace(/\n/g,'<br>')+'</div>'+
-  '</div>';
+  '</div>');
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ĐƠN NHIỀU MÓN QUÁ THÌ CHIA RA NHIỀU TỜ — thêm 10/09/2026
+   ═══════════════════════════════════════════════════════════════════════
+   Chủ hỏi đúng chỗ: "đơn đó nhiều sản phẩm thì làm sao nhét hết vào 1 khổ?"
+   Trước bản này máy chỉ biết THU NHỎ CHỮ cho vừa. Đo thực tế trên khổ 10×15:
+     8 món → 7,4pt · 12 món → 6,2pt · 20 món → 5,8pt · 30 món → 4,5pt
+     40 món → ép hết cỡ vẫn tràn, MẤT DÒNG mà không báo gì.
+   Dưới 6pt thì shipper cầm ngoài nắng không đọc nổi, mà mất dòng thì giao
+   thiếu hàng. Cả hai đều không chấp nhận được.
+
+   Nay: món nào không vừa ở cỡ chữ ĐỌC ĐƯỢC thì chia đơn ra nhiều tờ CÙNG
+   KHỔ, mỗi tờ ghi "TỜ 1/3", lặp lại đầy đủ tên khách - số điện thoại - địa
+   chỉ (để rời tờ nào vẫn biết của ai), và TIỀN CHỈ IN Ở TỜ CUỐI để shipper
+   không thu hai lần. Khổ phiếu không đổi một li. */
+var CU_DOC_DUOC=6.0;   // dưới cỡ này shipper đọc không nổi — thà chia tờ
+
+function catDon_(d, soDong){
+  var ra=[], tong=Math.ceil(d.dong.length/soDong);
+  for(var i=0;i<tong;i++){
+    var b=Object.assign({}, d);
+    b.dong=d.dong.slice(i*soDong,(i+1)*soDong);
+    b._trang=i+1; b._soTrang=tong;
+    ra.push(b);
+  }
+  return ra;
+}
+/* Đo thử một phiếu trong đúng khung sẽ in, trả về cỡ chữ cuối (0 = tràn). */
+function doPhieu_(d, n, kho){
+  var K=$('inKhung'), luu=K.innerHTML, daDo=K.classList.contains('dothu');
+  K.innerHTML = (kho==='A5')
+    ? '<div class="intrang trangA5"><div class="xoay'+(n===1?' x1':'')+'">'+phieuHTML(d,{pt:cuChu(n,kho)})+'</div></div>'
+    : '<div class="intrang n'+n+'">'+phieuHTML(d,{pt:cuChu(n,kho)})+'</div>';
+  K.classList.add('dothu');
+  var pt=nenVua(K.querySelector('.phieu'), cuChu(n,kho));
+  if(!daDo) K.classList.remove('dothu');
+  K.innerHTML=luu;
+  return pt;
+}
+/* Trả về danh sách phiếu đã chia sẵn cho một loạt đơn. */
+function moRongPhieu_(ds, n, kho){
+  var ra=[];
+  ds.forEach(function(d){
+    if(!d.dong || d.dong.length<=1){ ra.push(d); return }
+    if(doPhieu_(d,n,kho) >= CU_DOC_DUOC){ ra.push(d); return }
+    // Tìm số món nhiều nhất mà một tờ vẫn đọc được. Giảm dần, tối thiểu 1.
+    var k=d.dong.length, an=0;
+    while(k>1){
+      k=Math.max(1, Math.floor(k*0.6));
+      var thu=Object.assign({},d);
+      thu.dong=d.dong.slice(0,k); thu._trang=1; thu._soTrang=9;   // 9 chỉ để chừa chỗ chữ "TỜ 1/9"
+      if(doPhieu_(thu,n,kho) >= CU_DOC_DUOC){ an=k; break }
+    }
+    if(!an) an=1;
+    catDon_(d,an).forEach(function(b){ ra.push(b) });
+  });
+  return ra;
 }
 function chuaIn(){ return DON.filter(function(d){return !d.inLan}) }
 /* Trạng thái đã đẩy lên Sheet cho chủ thấy chưa — dùng đúng cờ d.day có sẵn
@@ -3890,7 +3961,20 @@ function phanTichMoiTrang(moiTrang){
 }
 function inChung(ds,moiTrang,veHTML,nhan){
   var cf=phanTichMoiTrang(moiTrang), n=cf.n, kho=cf.kho;
+  /* SỬA 10/09/2026 — đơn nhiều món quá thì chia ra nhiều tờ cùng khổ trước
+     khi xếp trang, thay vì thu nhỏ chữ tới mức không đọc nổi hoặc cắt mất
+     dòng. Chỉ áp dụng cho phiếu giao hàng (phieuHTML); phiếu gửi nhà xe giữ
+     nguyên vì nó vốn ngắn. */
+  var soDonGoc=ds.length;
+  if(veHTML===phieuHTML){ try{ ds=moRongPhieu_(ds,n,kho) }catch(e){} }
+  var soTo=ds.length;
   var r=xepTrang(ds,n,veHTML,kho);
+  if(soTo>soDonGoc){
+    bao('pgMsg','Có đơn nhiều món quá một tờ — đã <b>chia thành nhiều tờ cùng khổ</b> '+
+      '(tổng '+soTo+' tờ cho '+soDonGoc+' đơn), mỗi tờ ghi rõ <b>TỜ 1/2, 2/2…</b> và lặp lại '+
+      'tên khách, số điện thoại, địa chỉ. <b>Tiền chỉ in ở tờ cuối</b> để shipper không thu hai lần. '+
+      'Nhớ kẹp đủ các tờ của cùng một đơn với nhau.','wa');
+  }
   if(r.qua.length && n>1){
     // Bỏ mấy đơn quá khổ ra, xếp lại phần còn lại, rồi in riêng từng đơn quá khổ
     // một tờ — GIỮ NGUYÊN đúng khổ giấy (A4 hay A5) đã chọn, không lẫn giấy.
@@ -4236,6 +4320,15 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260910h', ngay:'10/09/2026', ten:'Đơn nhiều món không còn bị cắt mất dòng',
+  vaPhieu:[],
+  muc:[
+   ['sua','<b>Đơn nhiều món trước đây bị thu nhỏ chữ tới mức không đọc nổi, hoặc cắt mất dòng mà không báo.</b> Đo thật trên khổ 10×15: 20 món chữ còn 5,8pt; 40 món thì ép hết cỡ vẫn tràn — mất dòng, giao thiếu hàng mà không ai biết.'],
+   ['moi','<b>Nay đơn dài tự chia ra nhiều tờ CÙNG KHỔ 10×15.</b> Mỗi tờ ghi rõ <b>TỜ 1/2, 2/2…</b>, lặp lại đầy đủ tên khách, số điện thoại, địa chỉ — rời tờ nào cũng biết của ai.'],
+   ['moi','<b>Tiền chỉ in ở tờ cuối</b>, tờ trước ghi “CÒN TIẾP — XEM TỜ 2/2”. Shipper không thu nhầm hai lần.'],
+   ['moi','Chữ trên phiếu <b>không bao giờ nhỏ hơn 6pt</b> nữa. Thà thêm một tờ giấy còn hơn shipper đứng ngoài nắng đọc không ra.'],
+   ['sua','Lúc in, máy báo luôn đã chia bao nhiêu tờ cho bao nhiêu đơn, nhắc kẹp đủ các tờ của cùng một đơn.'],
+  ]},
  {ban:'20260910g', ngay:'10/09/2026', ten:'In A5 không còn lệch — khổ phiếu luôn 10×15',
   vaPhieu:['09:45:46 10/9/2026','2026-10-09T02:46:21.000Z'],
   muc:[

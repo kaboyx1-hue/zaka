@@ -591,13 +591,45 @@ body.ks-chi *{cursor:crosshair!important}
 if(typeof BANGGIA==='undefined')   var BANGGIA=[];
 if(typeof URL_DRIVE==='undefined') var URL_DRIVE='';
 if(typeof BGV_SEED==='undefined')  var BGV_SEED='';
-if(!BANGGIA.length) setTimeout(function(){
+/* SỬA 10/09/2026 — DẢI ĐỎ NÀY TRƯỚC ĐÂY BÁO OAN.
+   seed_ql.js chỉ là bảng giá GỐC dùng cho LẦN MỞ ĐẦU TIÊN. Sau lần đầu, bảng
+   giá và toàn bộ sổ cái đã nằm trong bộ nhớ của trình duyệt trên máy này rồi.
+   Thế mà dải đỏ cũ chỉ nhìn "BANGGIA rỗng" là hô thiếu file — nên mở bản
+   quanly.html mới ở thư mục khác là dính báo động giả, dù máy vẫn đủ dữ liệu.
+   Nay chỉ báo khi máy THẬT SỰ chưa có gì: không có seed, và cũng chưa có bảng
+   giá lưu sẵn. Trường hợp có dữ liệu nhưng chưa có link cửa hàng thì báo vàng
+   nhẹ, kèm nút tắt. */
+setTimeout(function(){
+  var coLuu=false, coUrl=false;
+  try{
+    var g=localStorage.getItem('dql_gia');
+    coLuu = !!(g && g.length>4 && Object.keys(JSON.parse(g)||{}).length);
+    var c=JSON.parse(localStorage.getItem('dql_qcfg')||'{}');
+    coUrl = !!(c && c.url) || !!URL_DRIVE;
+  }catch(e){}
+  if(BANGGIA.length) return;               // có seed → không cần báo gì
+  if(coLuu && coUrl) return;               // máy đã có đủ dữ liệu và link → im lặng
+
+  var nang = !coLuu;                       // chưa có gì cả mới là nghiêm trọng
   var d=document.createElement('div');
-  d.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:9999;padding:12px 14px;'+
-    'background:#7f1d1d;color:#fff;font:13px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif';
-  d.innerHTML='<b>Máy này thiếu file <code>seed_ql.js</code></b><br>'+
-    'Bảng giá gốc nằm trong file đó. Chép lại <b>cả hai file</b> <code>quanly.html</code> và '+
-    '<code>seed_ql.js</code> vào cùng một thư mục rồi mở lại.';
+  d.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:9999;padding:12px 46px 12px 14px;'+
+    'background:'+(nang?'#7f1d1d':'#78430f')+';color:#fff;'+
+    'font:13px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif';
+  d.innerHTML = nang
+    ? '<b>Máy này chưa có dữ liệu và cũng thiếu file <code>seed_ql.js</code></b><br>'+
+      'Bảng giá gốc nằm trong file đó. Chép <b>cả hai file</b> <code>quanly.html</code> và '+
+      '<code>seed_ql.js</code> vào <b>cùng một thư mục</b> rồi mở lại. '+
+      'Nếu máy này trước giờ vẫn dùng được, nghĩa là bạn đang mở file mới ở chỗ khác — '+
+      'hãy chép <code>quanly.html</code> mới <b>đè lên</b> file cũ trong thư mục cũ.'
+    : '<b>Máy đã có sẵn bảng giá và sổ cái</b> — không thiếu gì để xem. '+
+      'Chỉ là <b>chưa có link nối với cửa hàng</b> nên chưa kéo đơn mới về được. '+
+      'Vào <b>Vận hành</b> để dán link, hoặc chép file này đè lên file cũ trong thư mục có <code>seed_ql.js</code>.';
+  var x=document.createElement('button');
+  x.textContent='✕'; x.title='Tắt lời nhắc này';
+  x.style.cssText='position:absolute;top:8px;right:10px;width:28px;height:28px;border-radius:50%;'+
+    'border:1px solid rgba(255,255,255,.45);background:transparent;color:#fff;cursor:pointer;font-size:14px';
+  x.onclick=function(){ d.remove() };
+  d.style.position='fixed'; d.appendChild(x);
   document.body.appendChild(d);
 },1200);
 </script>
@@ -612,7 +644,7 @@ if(!BANGGIA.length) setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260910g';
+var APP_VER='20260910h';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -4110,6 +4142,13 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260910h', ngay:'10/09/2026', ten:'Hết báo động giả “thiếu seed_ql.js”',
+  vaPhieu:[],
+  muc:[
+   ['sua','<b>Dải đỏ “Máy này thiếu file seed_ql.js” trước đây báo oan.</b> File đó chỉ là bảng giá gốc cho <b>lần mở đầu tiên</b>; sau đó bảng giá và sổ cái đã nằm trong máy rồi. Vậy mà dải đỏ cứ thấy vắng file là hô thiếu.'],
+   ['sua','Nay chỉ báo đỏ khi máy <b>thật sự chưa có gì</b>. Máy đã có dữ liệu mà thiếu link cửa hàng thì báo vàng nhẹ và <b>nói đúng việc cần làm</b>. Dải nào cũng có nút ✕ để tắt.'],
+   ['moi','Bên <b>máy nhân viên</b>: đơn nhiều món tự chia thành nhiều tờ cùng khổ 10×15, không còn cắt mất dòng. Tiền chỉ in ở tờ cuối.'],
+  ]},
  {ban:'20260910g', ngay:'10/09/2026', ten:'Máy nhân viên: in A5 hết lệch',
   vaPhieu:['09:45:46 10/9/2026','2026-10-09T02:46:21.000Z'],
   muc:[
