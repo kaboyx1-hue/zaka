@@ -879,7 +879,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260911d';
+var APP_VER='20260911e';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -890,30 +890,81 @@ var APP_VER='20260911d';
     document.body.appendChild(b);
   }catch(e){}
 })();
-(function(){
+/* ═══════════════════════════════════════════════════════════════════════
+   BÁO CÓ BẢN MỚI — làm lại 11/09/2026 theo yêu cầu của chủ
+   ═══════════════════════════════════════════════════════════════════════
+   Bản cũ chỉ dò MỘT LẦN lúc mở trang, và dò xong thì TỰ TẢI LẠI LẶNG LẼ.
+   Hai chỗ dở:
+     · Ai mở app từ sáng rồi để đó cả ngày thì chẳng bao giờ biết có bản mới.
+     · Tự tải lại giữa lúc đang gõ đơn làm người dùng hoảng, tưởng máy lỗi.
+   Nay: dò lại mỗi 2 phút và mỗi lần quay lại tab, thấy bản mới thì HIỆN
+   BẢNG BÁO cho người dùng tự bấm. KHÔNG tự tải lại bao giờ.
+
+   CHỐNG CDN GIỮ BẢN CŨ: hỏi bằng URL có tham số ngẫu nhiên (?_kt=...) chứ
+   không phải URL đang chạy — CDN thấy URL lạ thì buộc phải hỏi server gốc.
+   Nếu chỉ dùng cache:'no-store' trên đúng URL đang chạy, CDN vẫn có quyền
+   trả lại chính bản cũ nó đang giữ, và máy tưởng mình đã mới nhất. */
+var BAN_MOI_TREN_SERVER='';
+function dangBanDo_(){          // đang dở việc thì đừng giục tải lại
   try{
-    if(sessionStorage.getItem('zaka_da_kt_ver')) return;
-    /* LỖ HỔNG ĐÃ PHÁT HIỆN (08/09/2026): fetch(location.pathname,{cache:'no-store'})
-       chỉ bảo đảm TRÌNH DUYỆT không dùng cache riêng của nó — nhưng nếu trang web
-       này đi qua CDN của nơi host (kể cả GitHub Pages) và CDN đang giữ một bản HTML
-       cũ cho đúng URL đó, thì request "no-store" vẫn được CDN trả lại CHÍNH bản cũ
-       ấy, y hệt bản đang chạy trên máy. So sánh APP_VER lúc đó ra "giống nhau" dù
-       server THẬT đã có bản mới từ lâu — máy nhân viên kẹt vĩnh viễn ở bản cũ mà cơ
-       chế tự kiểm tra này không hề phát hiện ra, tự tin báo "đã mới nhất".
-       CÁCH VÁ: thêm 1 tham số ngẫu nhiên vào URL đi kiểm tra (không phải URL đang
-       chạy) — CDN thấy URL khác (có ?_kt=...) sẽ coi là request mới, không có gì để
-       trả từ cache, buộc phải hỏi lại server gốc. Tham số ngẫu nhiên đổi mỗi lần nên
-       không tự tạo ra một bản cache "cũ" mới cho chính nó ở lần sau. */
-    var urlKiemTra=location.pathname+'?_kt='+Date.now()+Math.random().toString(36).slice(2);
-    fetch(urlKiemTra, {cache:'no-store'}).then(function(r){return r.text()}).then(function(html){
+    if(typeof GIO!=='undefined' && GIO && GIO.length) return true;      // giỏ hàng đang có món
+    if(typeof ED!=='undefined' && ED) return true;                      // đang sửa đơn
+    var d=document.querySelector('dialog[open]');
+    if(d && d.id!=='dlgBanMoi') return true;                            // đang mở một bảng khác
+  }catch(e){}
+  return false;
+}
+function veBangBanMoi_(){
+  var o=document.getElementById('banMoiBox');
+  if(!o){
+    o=document.createElement('div'); o.id='banMoiBox';
+    o.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:100000;'+
+      'max-width:min(560px,94vw);padding:14px 16px;border-radius:16px;'+
+      'background:#12351f;color:#eafaf0;border:1px solid #3f8f63;'+
+      'box-shadow:0 10px 40px -8px rgba(0,0,0,.6);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif';
+    document.body.appendChild(o);
+  }
+  var doViec=dangBanDo_();
+  o.innerHTML=
+    '<div style="font-weight:800;font-size:15px;margin-bottom:3px">Đã có bản mới của phần mềm</div>'+
+    '<div style="opacity:.85">Máy này đang chạy <b>v'+APP_VER+'</b>, trên mạng đã là <b>v'+BAN_MOI_TREN_SERVER+'</b>.'+
+      (doViec
+        ? '<br><b style="color:#ffd479">Đang dở việc — lưu xong rồi hãy cập nhật.</b> Bấm cập nhật lúc này có thể mất phần đang gõ.'
+        : '<br>Bấm nút bên dưới để lấy bản mới. Đơn đã lưu không mất.')+
+    '</div>'+
+    '<div style="display:flex;gap:8px;margin-top:11px;flex-wrap:wrap">'+
+      '<button onclick="capNhatNgay_()" style="flex:1;min-width:150px;padding:10px 14px;border-radius:11px;border:none;'+
+        'background:#5FC896;color:#06251a;font-weight:700;cursor:pointer;font-size:14px">Cập nhật ngay</button>'+
+      '<button onclick="hoanBanMoi_()" style="flex:0 0 auto;padding:10px 14px;border-radius:11px;'+
+        'border:1px solid rgba(255,255,255,.3);background:transparent;color:inherit;cursor:pointer;font-size:14px">Để lát nữa</button>'+
+    '</div>';
+}
+function capNhatNgay_(){
+  if(dangBanDo_() && !confirm('Đang dở việc — cập nhật bây giờ có thể mất phần đang gõ.\n\nVẫn cập nhật?')) return;
+  try{ sessionStorage.setItem('zaka_hoan_ban_moi','') }catch(e){}
+  location.replace(location.pathname+'?_v='+Date.now());
+}
+function hoanBanMoi_(){
+  var o=document.getElementById('banMoiBox'); if(o) o.remove();
+  try{ sessionStorage.setItem('zaka_hoan_ban_moi', BAN_MOI_TREN_SERVER) }catch(e){}
+}
+function doBanMoi_(){
+  try{
+    if(!location.protocol || location.protocol==='file:') return;   // mở bằng file:// thì không dò được
+    var url=location.pathname+'?_kt='+Date.now()+Math.random().toString(36).slice(2);
+    fetch(url,{cache:'no-store'}).then(function(r){return r.text()}).then(function(html){
       var m=html.match(/var APP_VER=['"]([^'"]+)['"]/);
-      if(m && m[1] && m[1]!==APP_VER){
-        sessionStorage.setItem('zaka_da_kt_ver','1');
-        location.replace(location.pathname+'?_v='+Date.now());
-      }
+      if(!m || !m[1] || m[1]===APP_VER) return;
+      BAN_MOI_TREN_SERVER=m[1];
+      var hoan=''; try{ hoan=sessionStorage.getItem('zaka_hoan_ban_moi')||'' }catch(e){}
+      if(hoan===BAN_MOI_TREN_SERVER) return;      // người dùng đã bấm "để lát nữa" cho đúng bản này
+      veBangBanMoi_();
     }).catch(function(){});
   }catch(e){}
-})();
+}
+setTimeout(doBanMoi_, 3000);
+setInterval(doBanMoi_, 120000);
+document.addEventListener('visibilitychange', function(){ if(!document.hidden) doBanMoi_() });
 
 var KENH=['Lẻ','Sỉ','Breeder','Thú y','Shopee','TikTok Shop'];
 var NHOM=['CÁT VỆ SINH','THỨC ĂN','THÚ NHỎ','PHỤ KIỆN','CHĂM SÓC','KHÁC'];
@@ -4579,6 +4630,15 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260911e', ngay:'11/09/2026', ten:'Báo khi có bản mới, thay vì tự tải lại lặng lẽ',
+  vaPhieu:[],
+  muc:[
+   ['moi','<b>Có bản mới là máy hiện bảng báo</b> ở góc dưới: máy này đang chạy bản nào, trên mạng đã là bản nào, kèm nút <b>Cập nhật ngay</b> và <b>Để lát nữa</b>.'],
+   ['sua','<b>Máy không còn tự tải lại lặng lẽ nữa.</b> Bản cũ thấy có bản mới là tự nạp lại ngay — đang gõ dở đơn mà màn hình nhảy thì ai cũng hoảng, tưởng máy lỗi. Nay chỉ báo, bấm mới tải.'],
+   ['sua','<b>Bản cũ chỉ dò đúng một lần lúc mở trang.</b> Ai mở app từ sáng rồi để đó cả ngày thì chẳng bao giờ biết có bản mới. Nay dò lại <b>mỗi 2 phút</b> và mỗi lần quay lại tab.'],
+   ['moi','<b>Đang dở việc thì máy nhắc.</b> Giỏ hàng còn món, đang sửa đơn, hay đang mở một bảng nào đó thì bảng báo ghi rõ "lưu xong rồi hãy cập nhật", bấm cập nhật còn hỏi lại một lần nữa.'],
+   ['moi','Bấm <b>Để lát nữa</b> thì máy im hẳn với bản đó, chỉ báo lại khi có bản mới hơn — không nhắc đi nhắc lại.'],
+  ]},
  {ban:'20260911d', ngay:'11/09/2026', ten:'Vá lỗi chủ duyệt rồi mà vẫn báo chờ duyệt',
   vaPhieu:[],
   muc:[
