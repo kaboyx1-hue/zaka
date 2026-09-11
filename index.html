@@ -879,7 +879,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260911e';
+var APP_VER='20260911f';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1127,6 +1127,12 @@ function get(k,d){try{var v=localStorage.getItem(K+k);return v?JSON.parse(v):d}c
 function set(k,v){try{localStorage.setItem(K+k,JSON.stringify(v))}catch(e){}}
 
 var VER=get('ver',{bg:'',nv:'',kh:'',gr:'',kt:'',don:'',ship:'',tk:'',spcd:''}), DANGDB=false;
+/* ═══ MÃ ĐĂNG NHẬP CỦA PHIÊN NÀY — thêm 11/09/2026 ═══
+   Máy chủ giờ kiểm mã đăng nhập ở MỌI lượt hỏi/gửi (trước đây chỉ kiểm mã
+   máy, mà mã máy + link nằm công khai trên mạng). Mã chỉ giữ trong bộ nhớ,
+   KHÔNG lưu xuống máy — đóng tab là hết, đúng luật "lần nào mở cũng gõ mã".
+   Chưa đăng nhập thì không hỏi/gửi gì cả: đơn chờ vẫn nằm yên trong máy. */
+var MK_PHIEN='', DANG_DN=false;
 (function(){
   napSangToi();
   CFG=get('cfg',CFG); DON=get('don',[]);
@@ -1196,7 +1202,7 @@ var VER=get('ver',{bg:'',nv:'',kh:'',gr:'',kt:'',don:'',ship:'',tk:'',spcd:''}),
   setInterval(function(){
     // Thêm điều kiện tab đang mở + không đang sửa đơn: lưới an toàn này kéo lại
     // TOÀN BỘ đơn nên nặng hơn nhịp thường, không việc gì phải chạy khi không ai nhìn.
-    if(CFG.ma&&navigator.onLine&&!DANGDB&&!document.hidden&&!dangSuaDon()) taiDon();
+    if(CFG.ma&&MK_PHIEN&&navigator.onLine&&!DANGDB&&!document.hidden&&!dangSuaDon()) taiDon();
   },180000);
   // Dam bao URL va ma may luon co gia tri truoc khi hoi Sheet
   if(!CFG.url) { CFG.url=URL_DRIVE; set('cfg',CFG); }
@@ -1236,7 +1242,8 @@ var VER=get('ver',{bg:'',nv:'',kh:'',gr:'',kt:'',don:'',ship:'',tk:'',spcd:''}),
     try{
       var j=await hoi('nv=1');
       if(j.ok&&j.ds&&j.ds.length){
-        set('nvds',j.ds.map(function(x){return {ten:x.ten,key:x.key,ma:x.ma}}));
+        // key chỉ còn khi máy chủ chưa bật BAT_BUOC_KEY — xem dangNhap()
+        set('nvds',j.ds.map(function(x){return {ten:x.ten,key:x.key!=null?String(x.key):undefined,ma:x.ma}}));
         VER.nv=j.ver||''; set('ver',VER);
       }
     }catch(e){ console.error('Loi keo NV:',e); }
@@ -1260,6 +1267,10 @@ function dsNV(){
 }
 function veChonNV(){
   var d=dsNV(), s=$('sTen');
+  // Ô sTen đã bỏ khỏi màn đăng nhập (giờ chọn máy ở sMayChon). Thiếu dòng này thì
+  // mỗi lần chủ đổi danh sách NV, taiNV() gãy ở đây: lượt đồng bộ đó bỏ dở và
+  // bước "đá người bị cho ngưng ra ngoài" ngay bên dưới không bao giờ chạy tới.
+  if(!s) return;
   s.innerHTML=d.length? d.map(function(x,i){return '<option value="'+i+'">'+esc(x.ten)+'</option>'}).join('')
                       : '<option value="-1">(chưa có ai — bấm Đăng ký bên dưới)</option>';
 }
@@ -1283,21 +1294,85 @@ function veChonMay(){
    trắng. Bất cứ thứ gì khác (chữ "Đang tải…", ô trống) đều bị coi là không
    hợp lệ và rơi về mã máy thật ghi trong file cài đặt. */
 function maMayHopLe_(x){ return /^[A-Za-z0-9_-]{2,20}$/.test(String(x||'')) }
-function dangNhap(){
+/* ═══ ĐĂNG NHẬP — sửa 11/09/2026: MÁY CHỦ KIỂM MÃ ═══
+   Trước đây máy tự so mã với danh sách máy chủ gửi về — tức là máy chủ phải
+   gửi mã đăng nhập của TẤT CẢ nhân viên cho bất kỳ ai hỏi. Nay hỏi thẳng máy
+   chủ (dn=1), máy chủ chỉ trả lời đúng/sai + tên.
+   MẤT MẠNG VẪN VÀO ĐƯỢC: mỗi lần máy chủ xác nhận đúng, máy nhớ một "dấu vân
+   tay" của tên + mã (không phải mã gốc). Lần sau không hỏi được máy chủ thì
+   so với dấu này — bán tiếp như cũ, có mạng lại đơn tự gửi lên. Máy chủ bản
+   cũ (chưa có dn=1) thì rơi về cách dò cũ trong danh sách nhân viên. */
+function vanTay_(ten,key){
+  var s='zaka|'+String(ten).trim().toLowerCase()+'|'+String(key), h1=0xdeadbeef, h2=0x41c6ce57;
+  for(var i=0;i<s.length;i++){ var c=s.charCodeAt(i);
+    h1=Math.imul(h1^c,2654435761); h2=Math.imul(h2^c,1597334677) }
+  h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);
+  h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);
+  return (h2>>>0).toString(36)+(h1>>>0).toString(36);
+}
+function nhoDnOff_(ten,may,key){
+  var ds=(get('dnoff',[])||[]).filter(function(x){return x.ten!==ten});
+  ds.push({ten:ten,ma:may,h:vanTay_(ten,key)}); set('dnoff',ds);
+}
+function timDnOff_(may,key){
+  var ds=get('dnoff',[])||[], ok=ds.filter(function(x){return x.h===vanTay_(x.ten,key)});
+  return ok.find(function(x){return x.ma===may})||ok[0]||null;
+}
+function timNvdsCu_(may,key){
+  var nv=get('nvds',null)||[];
+  var co=function(v){return v.key!=null&&String(v.key)===key};
+  return nv.find(function(v){return v.ma===may&&co(v)})||nv.find(co)||null;
+}
+/* Trả {ok,ten} | {sai} | {khoa,loi} | {khongHoiDuoc}. */
+async function dnMayChu_(may,key){
+  var url=CFG.url||URL_DRIVE; if(!url||!navigator.onLine) return {khongHoiDuoc:true};
+  var ac=(typeof AbortController!=='undefined')?new AbortController():null;
+  var hen=setTimeout(function(){ if(ac) ac.abort() },15000);
+  try{
+    var r=await fetch(url+'?dn=1&may='+encodeURIComponent(may)+'&mk='+encodeURIComponent(key),ac?{signal:ac.signal}:{});
+    var j; try{ j=JSON.parse(await r.text()) }catch(e){ return {khongHoiDuoc:true} }  // máy chủ bản cũ
+    if(j.ok&&j.ten) return {ok:true,ten:j.ten};
+    if(j.khoa) return {khoa:true,loi:j.loi};
+    if(j.sai) return {sai:true};
+    return {khongHoiDuoc:true};
+  }catch(e){ return {khongHoiDuoc:true} }
+  finally{ clearTimeout(hen) }
+}
+async function dangNhap(){
+  if(DANG_DN) return;
   var may=($('sMayChon')&&$('sMayChon').value)||'';
   if(!maMayHopLe_(may)) may=(typeof MA_MAY!=='undefined'&&MA_MAY)||CFG.ma||'NV01';
   var key=$('sKey').value.trim();
   if(!key){bao('sErr','Chưa nhập mã đăng nhập.','er');return}
-  // Tim nhan vien theo ma may + key
-  var nv=get('nvds',null)||[];
-  var x=nv.find?nv.find(function(v){return v.ma===may&&String(v.key)===key}):null;
-  if(!x){
-    // Thu tim theo key thoi (truong hop 1 may 1 nguoi)
-    x=nv.find?nv.find(function(v){return String(v.key)===key}):null;
-  }
-  if(!x){bao('sErr','Mã không đúng hoặc chưa được duyệt. Thử lại.','er');$('sKey').value='';$('sKey').focus();return}
-  CFG.ten=x.ten; CFG.ma=may; CFG.url=CFG.url||URL_DRIVE; set('cfg',CFG);
-  $('sKey').value=''; $('sErr').innerHTML=''; $('setup').classList.add('hide'); vaoApp();
+  DANG_DN=true; bao('sErr','Đang kiểm tra mã…','wa');
+  try{
+    var kq=await dnMayChu_(may,key), x=null;
+    if(kq.ok){
+      x={ten:kq.ten}; nhoDnOff_(kq.ten,may,key);
+      // máy chủ đã kiểm được thì thôi giữ mã của người khác trong máy
+      set('nvds',(get('nvds',null)||[]).map(function(v){return {ten:v.ten,ma:v.ma,maNV:v.maNV}}));
+    } else if(!kq.sai){
+      x=timDnOff_(may,key)||timNvdsCu_(may,key);
+      if(!x && kq.khoa){ bao('sErr',esc(kq.loi||'Máy đang tạm khoá.'),'er'); return }
+      // Máy chủ bản cũ vẫn gửi mã về → dò được mà không khớp thì đúng là sai mã
+      var coMaCu=(get('nvds',null)||[]).some(function(v){return v.key!=null});
+      if(!x && coMaCu && navigator.onLine){ bao('sErr','Mã không đúng hoặc chưa được duyệt. Thử lại.','er');$('sKey').value='';$('sKey').focus(); return }
+      if(!x){ bao('sErr','Chưa hỏi được máy chủ, và máy này chưa từng đăng nhập bằng mã này. Kiểm tra mạng rồi thử lại.','er'); return }
+    }
+    if(!x){bao('sErr','Mã không đúng hoặc chưa được duyệt. Thử lại.','er');$('sKey').value='';$('sKey').focus();return}
+    MK_PHIEN=key;
+    CFG.ten=x.ten; CFG.ma=may; CFG.url=CFG.url||URL_DRIVE; set('cfg',CFG);
+    $('sKey').value=''; $('sErr').innerHTML=''; $('setup').classList.add('hide'); vaoApp();
+  } finally { DANG_DN=false }
+}
+/* Máy chủ báo mã không còn hợp lệ (chủ đổi mã / cho ngưng / hết phiên) →
+   quay về màn đăng nhập. Đơn, giỏ hàng, danh bạ trong máy giữ nguyên. */
+function dangNhapLai_(loi){
+  if(!MK_PHIEN) return;
+  MK_PHIEN='';
+  $('app').classList.add('hide'); $('setup').classList.remove('hide');
+  bao('sErr',esc(loi||'Cần đăng nhập lại.')+'<br>Dữ liệu trong máy vẫn giữ nguyên.','er');
+  var k=$('sKey'); if(k){ k.value=''; k.focus() }
 }
 
 /* ══ ĐĂNG KÝ NHÂN VIÊN MỚI ══
@@ -1326,7 +1401,7 @@ async function guiDangKy(){
 }
 function doiNguoi(){
   if(!confirm('Đổi người dùng máy này?\n\nGiỏ hàng đang gõ dở vẫn được giữ nguyên.'))return;
-  CFG.ten=''; set('cfg',CFG);
+  CFG.ten=''; set('cfg',CFG); MK_PHIEN='';
   $('app').classList.add('hide'); $('setup').classList.remove('hide');
   veChonNV(); $('sErr').innerHTML=''; $('sKey').value=''; $('sKey').focus();
 }
@@ -1422,11 +1497,15 @@ function chuaDay(){ return DON.filter(function(d){return !d.day||d.suaSauDay}) }
 /* Gửi một gói lên Sheet và ĐỌC CHO ĐƯỢC câu trả lời.
    Nếu trình duyệt chặn không đọc được thì gửi chế độ mù và nói rõ là mù. */
 async function guiGoi(url,goi){
+  // Chưa đăng nhập: trả về dạng "bị từ chối" để nơi gọi GIỮ NGUYÊN hàng đợi.
+  // Không được đi tiếp xuống nhánh gửi mù (no-cors) — nhánh đó coi như đã gửi.
+  if(!MK_PHIEN) return {doc:true,j:{ok:false,loi:'Chưa đăng nhập — dữ liệu vẫn giữ trên máy, đăng nhập xong sẽ tự gửi.'}};
+  goi.mk=MK_PHIEN;
   try{
     var r=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify(goi)});
     var t=await r.text();
-    try{ return {doc:true,j:JSON.parse(t)} }
+    try{ var jg=JSON.parse(t); if(jg&&jg.canDN) dangNhapLai_(jg.loi); return {doc:true,j:jg} }
     catch(e){ return {doc:true,j:{ok:false,loi:'Sheet trả về thứ không đọc được: '+t.slice(0,120)}} }
   }catch(e1){
     if(!navigator.onLine) return {mang:false};
@@ -1437,7 +1516,7 @@ async function guiGoi(url,goi){
 }
 
 async function dayLen(im,lanHai){
-  if(DANGDAY) return;
+  if(DANGDAY||!MK_PHIEN) return;
   var ds=chuaDay(); if(!ds.length){ if(im)bao('outMsg','Không có đơn nào đang chờ đẩy.','wa'); return }
   var url=CFG.url||URL_DRIVE; if(!url){ if(im)bao('outMsg','Chưa có link điểm nhận đơn. Vào Cài đặt dán link.','er'); return }
   DANGDAY=true;
@@ -1555,12 +1634,12 @@ async function taiTaiKhoan(){
 }
 async function dongBo(im){
   if(DANGDB) return; 
-  var url=CFG.url||URL_DRIVE; if(!url||!CFG.ma) return;
+  var url=CFG.url||URL_DRIVE; if(!url||!CFG.ma||!MK_PHIEN) return;
   DANGDB=true;
   try{
-    var r=await fetch(url+'?tt=1&may='+encodeURIComponent(CFG.ma));
+    var r=await fetch(url+'?tt=1&may='+encodeURIComponent(CFG.ma)+'&nv='+encodeURIComponent(CFG.ten||'')+'&mk='+encodeURIComponent(MK_PHIEN));
     var j=JSON.parse(await r.text());
-    if(!j.ok){ if(im)bao('cfgMsg','Máy chủ từ chối: '+esc(j.loi||''),'er'); return }
+    if(!j.ok){ if(j.canDN) dangNhapLai_(j.loi); if(im)bao('cfgMsg','Máy chủ từ chối: '+esc(j.loi||''),'er'); return }
     var v=j.ver||{}, doi=[];
 
     if(v.kt && v.kt!==VER.kt && VER.kt){ await nhanKhaiTruong(v.kt); return }
@@ -1625,8 +1704,12 @@ function thuLaiDongBoSauLoi(){
 
 async function hoi(tham){
   var url=CFG.url||URL_DRIVE;
-  var r=await fetch(url+'?'+tham+'&may='+encodeURIComponent(CFG.ma)+'&nv='+encodeURIComponent(CFG.ten||''));
-  return JSON.parse(await r.text());
+  // nv=1 (danh sách để dựng ô chọn máy) là lượt duy nhất được hỏi khi chưa đăng nhập
+  if(!MK_PHIEN && tham.indexOf('nv=1')!==0) return {ok:false,loi:'Chưa đăng nhập'};
+  var r=await fetch(url+'?'+tham+'&may='+encodeURIComponent(CFG.ma)+'&nv='+encodeURIComponent(CFG.ten||'')+'&mk='+encodeURIComponent(MK_PHIEN));
+  var j=JSON.parse(await r.text());
+  if(j&&j.canDN) dangNhapLai_(j.loi);
+  return j;
 }
 
 async function taiNV(ver){
@@ -1639,12 +1722,12 @@ async function taiNV(ver){
      dò đăng nhập theo (mã máy + mã đăng nhập) không còn khớp nên phải rơi xuống
      nhánh dự phòng dò theo mã đăng nhập không thôi. Nay giữ đúng mã máy đọc từ
      cột A trang NHAN_VIEN, khớp y hệt lúc khởi động (xem chỗ set('nvds') ở trên). */
-  var ds=(j.ds||[]).map(function(x){return {ten:x.ten,ma:x.ma,key:String(x.key),maNV:x.ma}});
+  var ds=(j.ds||[]).map(function(x){return {ten:x.ten,ma:x.ma,key:x.key!=null?String(x.key):undefined,maNV:x.ma}});
   set('nvds',ds); VER.nv=ver||j.ver||''; veChonNV();
   // người đang đăng nhập bị chủ cho ngưng → đá ra ngay
   if(CFG.ten && !ds.some(function(x){return x.ten===CFG.ten})){
     alert('Tài khoản "'+CFG.ten+'" đã bị chủ ngưng.\n\nMáy sẽ quay về màn hình đăng nhập.');
-    CFG.ten=''; set('cfg',CFG);
+    CFG.ten=''; set('cfg',CFG); MK_PHIEN='';
     $('app').classList.add('hide'); $('setup').classList.remove('hide'); veChonNV();
   }
   return true;
@@ -4034,12 +4117,12 @@ function veChiPhi(){
     }).join('');
 }
 async function dayChiPhi(im){
-  var url=CFG.url||URL_DRIVE; if(!url) return;
+  var url=CFG.url||URL_DRIVE; if(!url||!MK_PHIEN) return;
   var chuaGui=CHIPHI.filter(function(x){return !x.day});
   if(!chuaGui.length){ if(im) bao('cpMsg','Không có khoản nào chờ gửi.','wa'); return }
   try{
     var r=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({may:CFG.ma,nv:CFG.ten,hanhdong:'chiphi',
+      body:JSON.stringify({may:CFG.ma,nv:CFG.ten,mk:MK_PHIEN,hanhdong:'chiphi',
         chiphi:chuaGui.map(function(x){return {ma:x.ma,ngay:x.ngay,iso:x.iso,may:x.may,nv:x.nv,muc:x.muc,tien:x.tien,gc:x.gc||''}})})});
     var j=JSON.parse(await r.text());
     if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
@@ -4630,6 +4713,13 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260911f', ngay:'11/09/2026', ten:'Máy chủ kiểm mã đăng nhập',
+  vaPhieu:[],
+  muc:[
+   ['sua','<b>Đóng lỗ hổng bảo mật:</b> trước đây người ngoài có link là đọc được đơn, danh bạ khách và huỷ được đơn. Nay mọi thao tác phải có mã đăng nhập đúng.'],
+   ['moi','Bấm <b>Vào làm việc</b> là máy hỏi thẳng máy chủ mã có đúng không. Mất mạng vẫn vào được bằng mã đã từng dùng trên máy này.'],
+   ['moi','Chủ đổi mã hay cho ngưng một người thì máy người đó <b>tự quay về màn đăng nhập</b>. Đơn và giỏ hàng trong máy giữ nguyên.'],
+  ]},
  {ban:'20260911e', ngay:'11/09/2026', ten:'Báo khi có bản mới, thay vì tự tải lại lặng lẽ',
   vaPhieu:[],
   muc:[
