@@ -841,16 +841,11 @@ body.ks-chi *{cursor:crosshair!important}
   <button class="dlgX" onclick="dongAnh()" title="Đóng">✕</button>
   <h2 style="margin:0 0 2px">Ảnh đơn gửi quản lý</h2>
   <div class="sm" id="anhPhu" style="margin-bottom:10px"></div>
-  <!-- THÊM 12/09/2026 theo yêu cầu của chủ: gõ một dòng ghi chú là gắn LUÔN VÀO
-       ẢNH — không phải chỉ hiện trên hộp thoại. Bắt buộc phải gắn vào ảnh vì Chép
-       ảnh/Chia sẻ chỉ mang đi đúng tấm ảnh, chữ ngoài ảnh sẽ bị rớt lại, sếp không
-       thấy được. Một ghi chú áp dụng cho MỌI ảnh đang xem trong hộp thoại này. -->
-  <div style="margin-bottom:10px">
-    <label for="anhGhiChu">Ghi chú gửi kèm (gắn thẳng vào ảnh, không bắt buộc)</label>
-    <textarea id="anhGhiChu" rows="2" placeholder="Ví dụ: giao buổi chiều, khách hẹn 3h…"
-      oninput="ganGhiChuAnh_()" style="font:inherit;font-size:14px;width:100%;padding:9px 11px;
-      border-radius:10px;border:1px solid var(--line);background:var(--c2);color:var(--tx);resize:vertical"></textarea>
-  </div>
+  <!-- SỬA 12/09/2026: MỖI ẢNH một ô ghi chú RIÊNG (không phải một ô chung cho cả
+       loạt) — chụp nhiều đơn thì mỗi đơn một chuyện khác nhau, dùng chung một dòng
+       ghi chú cho tất cả là sai. Ô ghi chú nằm NGAY TRONG từng khối ảnh dưới đây
+       (xem veAnhXem_). Ghi chú gắn THẲNG VÀO ẢNH bằng canvas — Chép/Chia sẻ chỉ
+       mang đi đúng tấm ảnh, chữ ngoài ảnh sẽ bị rớt lại, sếp không thấy được. -->
   <div id="anhXem" style="max-height:56vh;overflow:auto;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:14px"></div>
   <div id="anhMsg"></div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
@@ -939,7 +934,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260912f';
+var APP_VER='20260912g';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -3202,7 +3197,7 @@ function vePG(epVe){
         '<input type="checkbox" class="ckin" value="'+d.ma+'" onchange="demIn()" '+
           'onclick="event.stopPropagation()">'+
         '<div class="dg-giua">'+
-          '<div class="dg-ten">'+esc(d.khach||'KHÁCH LẺ')+
+          '<div class="dg-ten">'+esc(d.khach||'KHÁCH LẺ')+huyHieuHTML_(d.sdt,DON)+
             '<span class="dg-sdt">'+esc(d.sdt||'')+'</span></div>'+
           '<div class="dg-phu">'+maHTML(d.ma)+' · '+esc(d.ngay)+' · '+mon+' món</div>'+
           '<div class="dg-chip">'+
@@ -4659,8 +4654,9 @@ async function chupNhieu(mas){
    Mỗi phần tử giữ CẢ HAI: blobGoc (ảnh gốc, không đổi) và blob (bản đang hiện —
    có thể đã gắn thêm ghi chú). Chép/Lưu/Chia sẻ luôn dùng .blob. */
 function moAnh_(items){
-  ANH_LIST=items.map(function(it){ return {blobGoc:it.blob, blob:it.blob, ten:it.ten, nhan:it.nhan} });
-  $('anhGhiChu').value='';
+  Object.keys(ANH_HEN_GC).forEach(function(k){ clearTimeout(ANH_HEN_GC[k]) });
+  ANH_HEN_GC={}; ANH_GEN_GC={};   // phòng khi lượt chụp trước chưa dongAnh() sạch sẽ
+  ANH_LIST=items.map(function(it){ return {blobGoc:it.blob, blob:it.blob, ten:it.ten, nhan:it.nhan, ghiChu:''} });
   veAnhXem_();
   $('anhMsg').innerHTML='';
 
@@ -4680,63 +4676,91 @@ function veAnhXem_(){
   });
   $('anhXem').innerHTML=items.map(function(it,i){
     var u=URL.createObjectURL(it.blob);
+    // MỖI ẢNH một ô ghi chú RIÊNG — sửa 12/09/2026: chụp nhiều đơn thì mỗi đơn
+    // một chuyện khác nhau (đơn này giao chiều, đơn kia thiếu địa chỉ...), dùng
+    // chung một dòng ghi chú cho cả loạt là sai. value lấy từ it.ghiChu để giữ
+    // đúng nội dung đang gõ dở khi vẽ lại khung (đổi ảnh khác không mất chữ).
     return '<div class="anh-1">'+
       (nhieu?'<div class="anh-nhan">'+esc(it.nhan)+' · '+Math.max(1,Math.round(it.blob.size/1024))+' KB</div>':'')+
       '<img src="'+u+'" style="width:100%;display:block;border-radius:8px">'+
+      '<textarea rows="2" placeholder="Ghi chú riêng cho ảnh này (không bắt buộc)…" '+
+        'oninput="ganGhiChuAnh_('+i+',this.value)" style="font:inherit;font-size:13.5px;width:100%;'+
+        'margin-top:8px;padding:8px 10px;border-radius:9px;border:1px solid var(--line);'+
+        'background:var(--c2);color:var(--tx);resize:vertical">'+esc(it.ghiChu||'')+'</textarea>'+
       (nhieu?'<div class="anh-nut1">'+
         '<button class="btn-nho" onclick="chepAnh('+i+')">Chép ảnh này</button>'+
         '<button class="btn-nho" onclick="luuAnh('+i+')">Lưu ảnh này</button>'+
       '</div>':'')+
     '</div>';
   }).join('');
-  var tongKB=items.reduce(function(a,x){ return a+x.blob.size },0);
-  $('anhPhu').innerHTML = nhieu
-    ? '<b>'+items.length+' ảnh riêng biệt</b> (không gộp chung) · tổng '+Math.max(1,Math.round(tongKB/1024))+' KB · chưa gửi đi đâu'
-    : esc(items[0].nhan)+' · '+Math.max(1,Math.round(items[0].blob.size/1024))+' KB · ảnh nằm trong máy, chưa gửi đi đâu';
+  veAnhPhu_();
   // Nút "Chép" GỘP chỉ có nghĩa khi đúng MỘT ảnh — bộ nhớ tạm của trình duyệt
   // không nhận nhiều ảnh cùng lúc. Từ 2 ảnh trở lên, mỗi ảnh có nút Chép riêng.
   var coChep=!!(navigator.clipboard&&navigator.clipboard.write);
   $('anhChep').classList.toggle('hide', nhieu||!coChep);
   if(!nhieu&&!coChep) bao('anhMsg','Máy này không cho chép ảnh thẳng — bấm <b>Lưu về máy</b> rồi đính kèm như ảnh thường.','wa');
 }
+function veAnhPhu_(){
+  var items=ANH_LIST, nhieu=items.length>1;
+  var tongKB=items.reduce(function(a,x){ return a+x.blob.size },0);
+  $('anhPhu').innerHTML = nhieu
+    ? '<b>'+items.length+' ảnh riêng biệt</b> (không gộp chung) · tổng '+Math.max(1,Math.round(tongKB/1024))+' KB · chưa gửi đi đâu'
+    : esc(items[0].nhan)+' · '+Math.max(1,Math.round(items[0].blob.size/1024))+' KB · ảnh nằm trong máy, chưa gửi đi đâu';
+}
+/* Cập nhật ĐÚNG MỘT ảnh sau khi ghi chú của riêng nó vẽ xong — KHÔNG vẽ lại cả
+   khung như veAnhXem_(). Nếu vẽ lại cả khung thì đúng lúc ảnh A vừa xong, ô ghi
+   chú của ảnh B (mà nhân viên đang gõ dở) bị thay bằng phần tử DOM mới, con trỏ
+   và tiêu điểm gõ chữ bị văng ra ngoài — rất khó chịu khi phải gõ ghi chú cho
+   nhiều đơn liên tiếp. */
+function capNhatMotAnh_(i){
+  var it=ANH_LIST[i]; if(!it) return;
+  var khoi=$('anhXem').children[i]; if(!khoi) return;
+  var im=khoi.querySelector('img');
+  if(im){ if(im.src.indexOf('blob:')===0) URL.revokeObjectURL(im.src); im.src=URL.createObjectURL(it.blob) }
+  var nhan=khoi.querySelector('.anh-nhan');
+  if(nhan) nhan.textContent=it.nhan+' · '+Math.max(1,Math.round(it.blob.size/1024))+' KB';
+  veAnhPhu_();
+}
 function dongAnh(){
   $('dlgAnh').close();
   [].slice.call($('anhXem').querySelectorAll('img')).forEach(function(im){
     if(im.src.indexOf('blob:')===0) URL.revokeObjectURL(im.src);
   });
-  $('anhXem').innerHTML=''; ANH_LIST=[]; ANH_HEN_GC=null;
+  $('anhXem').innerHTML=''; ANH_LIST=[];
+  Object.keys(ANH_HEN_GC).forEach(function(k){ clearTimeout(ANH_HEN_GC[k]) });
+  ANH_HEN_GC={}; ANH_GEN_GC={};
 }
 
-/* GHI CHÚ GỬI KÈM — thêm 12/09/2026 theo yêu cầu của chủ. Vẽ THẲNG lên ảnh
-   (không phải chỉ hiện trong hộp thoại) — Chép ảnh/Chia sẻ chỉ mang đi đúng
-   tấm ảnh, chữ ngoài ảnh sẽ bị rớt lại, quản lý không thấy được. Luôn vẽ từ
-   blobGoc (không vẽ chồng lên bản đã có ghi chú) để gõ lại không bị lặp dòng. */
-/* SỐ THỨ TỰ PHIÊN — chống việc gõ nhanh làm bản CŨ vẽ xong SAU và đè mất bản
-   MỚI. Vẽ ảnh (đọc file, canvas, encode PNG) không nhanh bằng gõ phím, nên
-   không được coi lượt gõ nào cũng vẽ xong đúng thứ tự đã bắt đầu — chỉ commit
-   kết quả nếu vẫn còn là lượt MỚI NHẤT tại thời điểm vẽ xong. */
-var ANH_HEN_GC=null, ANH_GEN_GC=0;
-function ganGhiChuAnh_(){
-  clearTimeout(ANH_HEN_GC);
-  var phien=++ANH_GEN_GC;
-  ANH_HEN_GC=setTimeout(function(){ apDungGhiChuAnh_(phien) },350);   // gõ xong mới vẽ lại, đỡ giật khi gõ nhanh
+/* GHI CHÚ GỬI KÈM — thêm 12/09/2026, SỬA LẠI NGAY SAU ĐÓ theo góp ý của chủ:
+   chụp NHIỀU đơn thì mỗi đơn một chuyện khác nhau (đơn này giao chiều, đơn kia
+   thiếu địa chỉ...) — dùng CHUNG một dòng ghi chú cho cả loạt là sai. Nay MỖI
+   ẢNH một ô ghi chú riêng, theo dõi TỪNG CHỈ SỐ ẢNH độc lập (ANH_HEN_GC/ANH_GEN_GC
+   là object theo index, không phải một biến chung nữa).
+   Vẽ THẲNG lên ảnh (không phải chỉ hiện trong hộp thoại) — Chép ảnh/Chia sẻ chỉ
+   mang đi đúng tấm ảnh, chữ ngoài ảnh sẽ bị rớt lại. Luôn vẽ từ blobGoc (không
+   vẽ chồng lên bản đã có ghi chú) để gõ lại không bị lặp dòng.
+   SỐ THỨ TỰ PHIÊN theo từng ảnh — chống việc gõ nhanh vào MỘT ảnh làm bản CŨ vẽ
+   xong SAU và đè mất bản MỚI của CHÍNH ảnh đó (đã bắt được lỗi này khi test). */
+var ANH_HEN_GC={}, ANH_GEN_GC={};
+function ganGhiChuAnh_(i, gia){
+  var it=ANH_LIST[i]; if(!it) return;
+  it.ghiChu=gia;   // giữ chữ đang gõ ngay lập tức, không đợi debounce mới lưu
+  clearTimeout(ANH_HEN_GC[i]);
+  var phien=(ANH_GEN_GC[i]=(ANH_GEN_GC[i]||0)+1);
+  ANH_HEN_GC[i]=setTimeout(function(){ apDungGhiChuAnh_(i,phien) },350);   // gõ xong mới vẽ lại, đỡ giật khi gõ nhanh
 }
-async function apDungGhiChuAnh_(phien){
-  var gc=$('anhGhiChu').value.trim();
-  // Vẽ SONG SONG mọi ảnh (không đợi lần lượt) — chụp nhiều đơn (tới 12 ảnh) mà vẽ
-  // tuần tự thì gõ xong phải đợi rất lâu mới thấy đủ. Mỗi ảnh độc lập, không ảnh
-  // hưởng nhau nên song song hoàn toàn an toàn.
+async function apDungGhiChuAnh_(i, phien){
+  var it=ANH_LIST[i]; if(!it) return;
+  var gc=String(it.ghiChu||'').trim();
   try{
-    var ds=await Promise.all(ANH_LIST.map(function(it){
-      return gc ? themGhiChuVaoAnh_(it.blobGoc,gc) : Promise.resolve(it.blobGoc);
-    }));
-    if(phien!==ANH_GEN_GC) return;   // đã có lượt gõ mới hơn — bỏ kết quả cũ này
-    ANH_LIST.forEach(function(it,i){ it.blob=ds[i] });
+    var b = gc ? await themGhiChuVaoAnh_(it.blobGoc,gc) : it.blobGoc;
+    if(phien!==ANH_GEN_GC[i]) return;   // ảnh này đã có lượt gõ mới hơn — bỏ kết quả cũ
+    it.blob=b;
   }catch(e){
-    if(phien===ANH_GEN_GC) bao('anhMsg','Chưa gắn được ghi chú vào ảnh: '+esc(e.message),'er');
+    if(phien===ANH_GEN_GC[i]) bao('anhMsg','Chưa gắn được ghi chú vào ảnh: '+esc(e.message),'er');
     return;
   }
-  veAnhXem_();
+  capNhatMotAnh_(i);
 }
 /* Vẽ thêm một dải ghi chú vào ĐÁY ảnh đã chụp — không cần đọc lại đơn/DOM gốc
    (lúc này đơn có thể đã được thu gọn lại), chỉ ghép thêm vào canvas. */
@@ -5175,6 +5199,12 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260912g', ngay:'12/09/2026', ten:'Mỗi ảnh một ghi chú riêng · Huy hiệu ở Phiếu giao hàng',
+  vaPhieu:[],
+  muc:[
+   ['sua','Chụp nhiều đơn thì <b>mỗi ảnh có ô ghi chú riêng</b> của chính nó, không dùng chung một dòng cho cả loạt như bản trước nữa.'],
+   ['moi','Huy hiệu khách (Khách mới/Khách quen/VIP/Sỉ/Breeder) giờ hiện thêm ở <b>tab Phiếu giao hàng</b>, ngay cạnh tên khách.'],
+  ]},
  {ban:'20260912f', ngay:'12/09/2026', ten:'Ghi chú gửi kèm ảnh đơn',
   vaPhieu:[],
   muc:[
