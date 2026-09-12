@@ -271,10 +271,21 @@ h2{font-size:15px;margin:0 0 10px}
 .fabin.hien{transform:translate(-50%,0)}
 .fabin .fabx{background:rgba(0,0,0,.16);color:inherit;font-weight:700;padding:4px 9px;
   border-radius:999px;font-size:12px;line-height:1}
+/* Nút thứ hai trên thanh nổi: in phiếu gửi nhà xe cho ĐÚNG những đơn đang tích —
+   thêm 12/09/2026. Nền đậm hơn nút ✕ để tách hẳn ra là một việc khác, không phải
+   nút phụ của "In N phiếu". */
+.fabin .fabnx{background:rgba(0,0,0,.28);color:inherit;font-weight:700;padding:6px 11px;
+  border-radius:999px;font-size:12.5px;line-height:1}
+.fabin .fabnx:hover{background:rgba(0,0,0,.4)}
 .total .go{background:var(--ok);color:#04241a;font-weight:700;padding:12px 18px}
 .total .go:disabled{background:var(--line);color:var(--tx2)}
 .khbox{background:var(--c2);border-radius:10px;padding:10px 12px;margin-top:9px;font-size:13px}
 .khbox b{color:var(--acc)}
+/* Địa chỉ giao ở ĐẦU khung chi tiết đơn (tab Lịch sử) — thêm 12/09/2026 */
+.ct-dc{margin-top:8px;padding:9px 11px;border-radius:12px;background:var(--c2);
+  border-left:3px solid var(--acc);font-size:14px;line-height:1.45}
+.ct-dc b{color:var(--tx2);font-weight:600;font-size:12.5px;display:block;margin-bottom:1px}
+.ct-dc.thieu{border-left-color:var(--warn);color:var(--warn)}
 .ls{margin-top:9px;background:#1b1730;border:1px solid #2f2750;border-radius:10px;padding:10px;font-size:12.5px}
 .ls .lsr{padding:5px 0;border-bottom:1px solid #2f2750;color:var(--pur)}
 .ls .lsr:last-child{border:0}
@@ -592,6 +603,7 @@ body.ks-chi *{cursor:crosshair!important}
   <div id="dsPG"></div>
   <div class="fabin" id="fabIn" onclick="inDaChon()">
     <span id="fabInTxt">In 0 phiếu</span>
+    <span class="fabnx" onclick="event.stopPropagation();inGuiDaChon()" title="In phiếu gửi nhà xe cho các đơn đang chọn">🚚 Phiếu nhà xe</span>
     <span class="fabx" onclick="event.stopPropagation();chonHetIn(0)">✕ bỏ chọn</span>
   </div>
 </section>
@@ -625,6 +637,7 @@ body.ks-chi *{cursor:crosshair!important}
   <div id="dsDon"></div>
   <div class="fabin" id="fabInLS" onclick="inPhieu(dsChonInLS(),$('moiTrangLS').value)">
     <span id="fabInLSTxt">In 0 phiếu</span>
+    <span class="fabnx" onclick="event.stopPropagation();moKienHang(dsChonInLS(),$('moiTrangLS').value)" title="In phiếu gửi nhà xe cho các đơn đang chọn">🚚 Phiếu nhà xe</span>
     <span class="fabx" onclick="event.stopPropagation();chonHetInLS(0)">✕ bỏ chọn</span>
   </div>
 </section>
@@ -879,7 +892,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260911f';
+var APP_VER='20260912a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -3295,7 +3308,14 @@ function chiTiet(ma){
   var box=$('ct_'+ma); if(!box)return;
   if(!box.classList.contains('hide')){box.classList.add('hide');return}
   var d=DON.filter(function(x){return x.ma===ma})[0];
-  box.innerHTML='<table style="margin-top:8px"><tr><th>Sản phẩm</th><th>ĐV</th><th class="r">SL</th><th class="r">Đơn giá</th><th class="r">Thành tiền</th></tr>'+
+  /* SỬA 12/09/2026 theo yêu cầu của chủ: ĐỊA CHỈ LÊN ĐẦU.
+     Trước đây địa chỉ nằm tuốt dưới bảng hàng, nhân viên phải kéo qua cả bảng
+     mới thấy giao đi đâu — trong khi đó là thứ cần nhìn đầu tiên lúc gói hàng.
+     Nay đặt ngay đầu khung, sát mã đơn. Không đổi dữ liệu, chỉ đổi chỗ hiện. */
+  box.innerHTML=
+    (d.dc?'<div class="ct-dc"><b>Giao tới:</b> '+esc(d.dc)+'</div>'
+         :'<div class="ct-dc thieu">⚠ Đơn này chưa có địa chỉ giao</div>')+
+    '<table style="margin-top:8px"><tr><th>Sản phẩm</th><th>ĐV</th><th class="r">SL</th><th class="r">Đơn giá</th><th class="r">Thành tiền</th></tr>'+
     d.dong.map(function(x){return '<tr><td>'+(x.brand?'<span style="color:var(--pur);font-size:11px">'+esc(x.brand)+'</span> ':'')+esc(x.ten)+
       '</td><td>'+esc(x.dv)+(x.hs>1?' <span class="sm">(='+x.hs+')</span>':'')+'</td><td class="r">'+x.sl+
       '</td><td class="r">'+tien(x.gia)+'</td><td class="r">'+tien(x.thanhTien)+'</td></tr>'}).join('')+
@@ -3303,7 +3323,6 @@ function chiTiet(ma){
     (d.ship?'<tr><td colspan="4" class="r">Ship</td><td class="r">'+tien(d.ship)+'</td></tr>':'')+
     (d.giam?'<tr><td colspan="4" class="r">Giảm giá</td><td class="r">−'+tien(d.giam)+'</td></tr>':'')+
     '<tr><td colspan="4" class="r"><b>TỔNG</b></td><td class="r"><b style="color:var(--ok)">'+tien(d.tong)+'</b></td></tr></table>'+
-    (d.dc?'<div class="sm" style="margin-top:6px"><b style="color:var(--tx)">Giao tới:</b> '+esc(d.dc)+'</div>':'')+
     (d.ghichu?'<div class="sm">Ghi chú: '+esc(d.ghichu)+'</div>':'')+
     ((d.lichSu&&d.lichSu.length)?'<div class="ls">'+
       d.lichSu.map(function(h){return '<div class="lsr"><b>Lần '+h.lan+'</b> — '+esc(h.luc)+' · '+esc(h.nguoi)+
@@ -3311,6 +3330,10 @@ function chiTiet(ma){
     '<div style="display:flex;gap:7px;margin-top:9px;flex-wrap:wrap">'+
       '<button onclick="suaTaiCho(\''+ma+'\')" style="background:var(--c2);color:var(--acc);padding:7px 13px;font-size:12.5px">Sửa đơn</button>'+
       '<button onclick="inPhieu([\''+ma+'\'],1)" style="background:var(--c2);color:var(--tx2);padding:7px 13px;font-size:12.5px">In phiếu</button>'+
+      /* THÊM 12/09/2026 theo yêu cầu của chủ: in phiếu gửi nhà xe ngay cạnh In phiếu.
+         Dùng lại đúng đường cũ moKienHang() (hỏi số kiện rồi in phiếu gửi) như nút ở
+         tab Phiếu giao hàng — không có phiếu mới, không đổi mẫu in nào. */
+      '<button onclick="moKienHang([\''+ma+'\'],1)" style="background:var(--purBg);color:var(--pur);padding:7px 13px;font-size:12.5px">In phiếu gửi nhà xe</button>'+
       (d.iso===today()
         ?'<button onclick="xoaDon(\''+ma+'\')" style="background:var(--c2);color:var(--bad);padding:7px 13px;font-size:12.5px">Xoá đơn</button>'
         :'<span class="sm" style="align-self:center">Đơn ngày trước — chỉ chủ xoá được</span>')+
@@ -4713,6 +4736,13 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260912a', ngay:'12/09/2026', ten:'Địa chỉ lên đầu đơn · In phiếu nhà xe ngay tại đơn',
+  vaPhieu:[],
+  muc:[
+   ['sua','Mở một đơn ở tab Lịch sử là <b>thấy địa chỉ giao ngay dòng đầu</b>, không phải kéo qua hết bảng hàng mới thấy. Đơn chưa có địa chỉ thì báo vàng ngay chỗ đó.'],
+   ['moi','Tích chọn đơn để in thì thanh nổi dưới màn hình có thêm nút <b>🚚 Phiếu nhà xe</b> — in phiếu gửi nhà xe cho đúng những đơn đang tích. Có ở cả tab Phiếu giao hàng lẫn Lịch sử.'],
+   ['moi','Mở một đơn ở tab Lịch sử cũng có nút <b>In phiếu gửi nhà xe</b> nằm cạnh nút In phiếu.'],
+  ]},
  {ban:'20260911f', ngay:'11/09/2026', ten:'Máy chủ kiểm mã đăng nhập',
   vaPhieu:[],
   muc:[
