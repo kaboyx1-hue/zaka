@@ -118,6 +118,29 @@ tr.canhbao td{background:var(--badBg)}
 .tag.w{background:var(--warnBg);color:var(--warn)}.tag.p{background:var(--purBg);color:var(--pur)}
 .tag.g{background:var(--okBg);color:var(--ok)}
 .tag.i{background:var(--infoBg);color:var(--info)}
+/* HUY HIỆU KHÁCH — thêm 12/09/2026. Namespace riêng ".badge" (không phải
+   ".tag") để khớp đúng cách đặt tên với index.html — cùng một cách tính,
+   dùng chung tên lớp CSS để không phải nhớ hai bộ tên khác nhau. */
+.badge{display:inline-flex;align-items:center;font-size:9.5px;font-weight:800;letter-spacing:.02em;
+  padding:2px 7px;border-radius:999px;text-transform:uppercase;vertical-align:middle;margin-left:4px}
+.badge.moi{background:var(--infoBg);color:var(--info)}
+.badge.vip{background:linear-gradient(120deg,#f4d58d,#c9973a);color:#3a2a05}
+.badge.vvip{background:linear-gradient(120deg,#caa8f5,#7c4fd1);color:#fff}
+.badge.quen{background:var(--okBg);color:var(--ok)}
+.badge.si{background:var(--purBg);color:var(--pur)}
+.badge.breeder{background:#20361c;color:#8fd66a}
+body.sang .badge.breeder{background:#e9f3e0;color:#5c8a3a}
+
+/* IN PHIẾU CÔNG NỢ — thêm 12/09/2026. Quanly.html trước đây CHƯA có cơ chế
+   in gì cả (khác index.html đã có #inKhung cho phiếu giao hàng). Copy đúng
+   nguyên tắc bên đó: ẩn cả trang, chỉ hiện đúng khung in, ép trắng đen vì
+   máy quản lý mặc định nền tối — in nền tối ra là tốn mực và khó đọc. */
+#inCongNoKhung{display:none}
+@media print{
+  html,body{background:#fff!important;margin:0!important;padding:0!important}
+  body>*{display:none!important}
+  #inCongNoKhung{display:block!important}
+}
 dialog{border:1px solid var(--line);border-radius:20px;background:var(--card);color:var(--tx);padding:18px;max-width:460px;width:92%;box-shadow:var(--shadow)}
 dialog::backdrop{background:rgba(20,25,40,.55)}
 .mini{padding:5px 10px;font-size:12px;border-radius:10px;background:var(--c2);color:var(--acc)}
@@ -323,6 +346,7 @@ body.ks-chi *{cursor:crosshair!important}
 </section>
 
 <section id="pg-bc" class="hide"><div id="bc"></div></section>
+<div id="inCongNoKhung"></div>
 
 <section id="pg-so" class="hide">
   <div id="soMsg"></div>
@@ -656,7 +680,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260911e';
+var APP_VER='20260912a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -753,6 +777,7 @@ var KY='thangnay';   // kỳ báo cáo đang xem
    máy vẫn y như lúc để. */
 var THU_GON_BC=get('thugonbc',{kenh:1,nv:1,brand:1,sp:1,shipper:1,htt:1,tk:1});
 var HIEN_CHI_PHI_BC=false;   // co dang mo bang chi tiet chi phi trong Bao cao khong
+var HIEN_CONGNO_BC=false;    // co dang mo bang cong no theo khach trong Bao cao khong
 var KYS_CHUNG=[['homnay','Hôm nay'],['homqua','Hôm qua'],['thangnay','Tháng này'],['thangtruoc','Tháng trước'],
   ['quynay','Quý này'],['quytruoc','Quý trước'],['namnay','Năm nay'],['tatca','Toàn bộ']];
   // ^ Dùng chung cho cả tab Báo cáo lẫn Sổ cái — chọn kỳ ở tab nào cũng áp dụng cho cả hai.
@@ -819,6 +844,44 @@ function veGhiNhan(){
 }
 function $(i){return document.getElementById(i)}
 function tien(n){return (Math.round(n)||0).toLocaleString('vi-VN')+' đ'}
+
+/* ═══════════════════════════════════════════════════════════════
+   HUY HIỆU KHÁCH — thêm 12/09/2026. ĐÚNG BẢN SAO của hàm cùng tên trong
+   index.html (luật chốt sau 2 lần sửa, xem ghi chú đầy đủ ở đó) — cố tình
+   viết giống hệt để hai app luôn ra CÙNG kết quả cho cùng một khách. Khác
+   duy nhất: gọi với SO (đơn quản lý) thay vì DON (đơn nhân viên) — quản lý
+   không tải KHACH_HANG nên không đọc field "Kênh" trên danh bạ, phải suy
+   kênh từ chính lịch sử đơn, y hệt cách index.html đang làm. SỬA GÌ Ở ĐÂY
+   THÌ NHỚ SỬA CẢ BÊN index.html, KHÔNG THÌ HAI APP RA HUY HIỆU KHÁC NHAU. */
+var NGUONG_QUEN_=3000000, NGUONG_VIP_=10000000, NGUONG_VVIP_BREEDER_=NGUONG_VIP_*4;
+/* So khớp SĐT CHỊU ĐƯỢC lỗi mất số 0 đầu — ĐÚNG BẢN SAO của chuanSdt_ bên
+   index.html, xem ghi chú đầy đủ ở đó (liên quan "Việc 3" trong CLAUDE.md). */
+function chuanSdt_(s){ return String(s||'').trim().replace(/\D/g,'').replace(/^0+/,'') }
+function huyHieuKhach_(sdt, ds){
+  sdt=String(sdt||'').trim();
+  if(!sdt) return {mang:[],soDon:0,tongChi:0,kenh:''};
+  var chuan=chuanSdt_(sdt);
+  var cua=(ds||[]).filter(function(d){return chuanSdt_(d.sdt)===chuan && !d.huy});
+  var tongChiK=0, dem={};
+  cua.forEach(function(d){ tongChiK+=Number(d.tong)||0; var k=d.kenh||'?'; dem[k]=(dem[k]||0)+1 });
+  var kenh='', max=0;
+  Object.keys(dem).forEach(function(k){ if(dem[k]>max){ max=dem[k]; kenh=k } });
+  var mang=[];
+  if(cua.length<=1) mang.push({loai:'moi',nhan:'Khách mới'});
+  if(kenh==='Sỉ'){
+    mang.push({loai:'si',nhan:'Sỉ'});
+  } else if(kenh==='Breeder'){
+    mang.push({loai:'breeder',nhan:'Breeder'});
+    if(tongChiK>=NGUONG_VVIP_BREEDER_) mang.push({loai:'vvip',nhan:'VVIP'});
+  } else {
+    if(tongChiK>=NGUONG_VIP_) mang.push({loai:'vip',nhan:'VIP'});
+    else if(tongChiK>=NGUONG_QUEN_) mang.push({loai:'quen',nhan:'Khách quen'});
+  }
+  return {mang:mang,soDon:cua.length,tongChi:tongChiK,kenh:kenh};
+}
+function huyHieuHTML_(sdt, ds){
+  return huyHieuKhach_(sdt,ds).mang.map(function(b){return '<span class="badge '+b.loai+'">'+esc(b.nhan)+'</span>'}).join('');
+}
 /* Công thức tính lãi DÙNG CHUNG cho mọi nơi trong file — trước đây lặp lại 5 lần
    độc lập, mỗi lần thêm khoản trừ mới (như phí giao chành) phải sửa cả 5 chỗ,
    dễ sót. Giờ chỉ sửa đúng MỘT nơi. `von` truyền vào là tổng giá vốn đã tính sẵn
@@ -1443,6 +1506,26 @@ function veLam(){
         '</div></div>';
     }).join(''):'')+
     (so?'':'<div class="card"><div class="empty">Không có việc gấp nào. Sổ sách đang ổn.</div></div>')+
+    /* ═══ KHÁCH LÂU KHÔNG QUAY LẠI — thêm 12/09/2026 theo yêu cầu của chủ ═══
+       KHÁC hẳn mục "Cần hỏi thăm" đã có sẵn bên App NHÂN VIÊN (tab Khách hàng,
+       NHAC_NGAY=21 ngày, áp dụng chung mọi khách, để nhân viên chủ động hỏi
+       thăm hằng ngày) — mục này riêng cho chủ/quản lý, chỉ nhắm khách LỚN
+       (Sỉ/Breeder/Thú y) với ngưỡng ngày dài hơn hẳn và đòi hỏi đã mua ổn định
+       (từ 3 đơn trở lên) mới tính, để không trùng việc với mục bên kia. */
+    (function(){
+      var ds=khachRoiBo_(); if(!ds.length) return '';
+      return '<div class="card" style="border-left:4px solid var(--info)">'+
+        '<h2 style="margin-bottom:4px">'+ds.length+' khách lâu không quay lại</h2>'+
+        '<div class="sm" style="margin-bottom:10px">Từng mua từ 3 đơn trở lên, im lặng đã lâu hơn hẳn nhịp thường thấy — nên đích thân hỏi thăm trước khi mất hẳn.</div>'+
+        '<table><tr><th>Khách</th><th>Kênh</th><th>Mua gần nhất</th><th class="r">Im lặng</th><th class="r">Từng mua</th></tr>'+
+        ds.slice(0,20).map(function(x){
+          return '<tr><td>'+esc(x.ten||x.sdt)+huyHieuHTML_(x.sdt,SO)+'</td><td>'+esc(x.kenh||'')+'</td>'+
+            '<td>'+esc(x.lanCuoi)+'</td><td class="r" style="color:var(--warn);font-weight:700">'+x.ngay+' ngày</td>'+
+            '<td class="r">'+tien(x.tong)+'</td></tr>';
+        }).join('')+'</table>'+
+        (ds.length>20?'<div class="sm mt">… và '+(ds.length-20)+' khách nữa.</div>':'')+
+      '</div>';
+    })()+
     (NHAT_KY_GOM.length?'<div class="card"><h2>Vừa làm xong</h2>'+
       NHAT_KY_GOM.slice().reverse().map(function(g,i){
         var vt=NHAT_KY_GOM.length-1-i;
@@ -2578,9 +2661,67 @@ function veBC(){
         '</td><td class="r" style="color:var(--bad)">'+tien(Number(x.tien)||0)+'</td></tr>'}).join('')+
       '</table></div>';
   }
+  /* ═══ CÔNG NỢ THEO KHÁCH — thêm 12/09/2026 theo yêu cầu của chủ ═══
+     Gom "còn phải thu" (conThuDon, y hệt cách Sổ cái đang tính) theo TỪNG
+     KHÁCH trong đúng kỳ đang xem ở trên, thay vì chỉ xem được từng đơn lẻ.
+     Dùng lại đúng bộ lọc trongKy() — không có khái niệm kỳ riêng thứ hai. */
+  CONGNO_LIST=congNoTheoKy_();
+  (function(){
+    var tongNo=CONGNO_LIST.reduce(function(a,x){return a+x.tong},0);
+    h+='<div class="card"><h2 style="margin-bottom:4px">Công nợ theo khách'+
+      (CONGNO_LIST.length?' <a href="#" class="lnk" style="font-size:13px;font-weight:400" '+
+        'onclick="toggleCongNoBC();return false">'+(HIEN_CONGNO_BC?'Thu gọn':'Xem danh sách')+'</a>':'')+'</h2>'+
+      '<div class="sm" style="margin-bottom:8px">Gom còn phải thu theo từng khách trong kỳ đang xem ở trên — khác Sổ cái chỉ xem được từng đơn riêng lẻ.</div>'+
+      (CONGNO_LIST.length
+        ? '<div class="kpi" style="grid-template-columns:1fr 1fr">'+
+            '<div><small>Số khách còn nợ</small><b>'+CONGNO_LIST.length+'</b></div>'+
+            '<div><small>Tổng còn phải thu</small><b style="color:var(--warn)">'+tien(tongNo)+'</b></div></div>'
+        : '<div class="empty">Không có khách nào còn nợ trong kỳ này.</div>')+
+      (HIEN_CONGNO_BC&&CONGNO_LIST.length
+        ? '<table class="mt"><tr><th>Khách</th><th>Kênh</th><th class="r">Số đơn nợ</th><th class="r">Còn phải thu</th><th></th></tr>'+
+          CONGNO_LIST.map(function(n,i){
+            return '<tr><td>'+esc(n.ten||n.sdt)+huyHieuHTML_(n.sdt,SO)+'</td><td>'+esc(n.kenh||'')+'</td>'+
+              '<td class="r">'+n.soDon+'</td><td class="r" style="color:var(--warn);font-weight:700">'+tien(n.tong)+'</td>'+
+              '<td class="r"><button class="mini" onclick="inCongNo('+i+')">In</button></td></tr>'
+          }).join('')+'</table>'
+        : '')+
+    '</div>';
+  })();
   $('bc').innerHTML=h;
 }
 function toggleChiPhiBC(){ HIEN_CHI_PHI_BC=!HIEN_CHI_PHI_BC; veBC(); }
+function toggleCongNoBC(){ HIEN_CONGNO_BC=!HIEN_CONGNO_BC; veBC(); }
+function congNoTheoKy_(){
+  var theo={};
+  SO.filter(trongKy).forEach(function(d){
+    var no=conThuDon(d); if(!no) return;
+    var sdt=String(d.sdt||'').trim(); if(!sdt) return;
+    var o=theo[sdt]||(theo[sdt]={sdt:sdt,ten:d.khach,kenh:d.kenh,soDon:0,tong:0,ds:[]});
+    o.soDon++; o.tong+=no; o.ten=d.khach||o.ten; o.kenh=d.kenh||o.kenh;
+    o.ds.push({ma:d.ma,iso:d.iso,ngay:d.ngay,no:no});
+  });
+  return Object.keys(theo).map(function(s){return theo[s]}).sort(function(a,b){return b.tong-a.tong});
+}
+var CONGNO_LIST=[];
+function inCongNo(i){
+  var n=CONGNO_LIST[i]; if(!n) return;
+  var hang=n.ds.slice().sort(function(a,b){return String(a.iso).localeCompare(String(b.iso))})
+    .map(function(x){return '<tr><td style="padding:4px;border-bottom:1px solid #e4d9c2">'+esc(x.ma)+
+      '</td><td style="padding:4px;border-bottom:1px solid #e4d9c2">'+esc(x.ngay||x.iso)+
+      '</td><td style="padding:4px;border-bottom:1px solid #e4d9c2;text-align:right">'+tien(x.no)+'</td></tr>'}).join('');
+  $('inCongNoKhung').innerHTML=
+    '<div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:#1a1208;background:#fff;padding:18px;max-width:440px">'+
+    '<h2 style="margin:0 0 2px;font-size:17px">Bảng công nợ — '+esc(n.ten||n.sdt)+'</h2>'+
+    '<div style="font-size:12px;color:#7a6a52;margin-bottom:10px">'+esc(n.sdt)+(n.kenh?' · '+esc(n.kenh):'')+' · in lúc '+esc(nowStr())+'</div>'+
+    '<table style="width:100%;border-collapse:collapse;font-size:13px">'+
+    '<tr><th style="text-align:left;padding:4px;border-bottom:1px solid #1a1208">Mã đơn</th>'+
+    '<th style="text-align:left;padding:4px;border-bottom:1px solid #1a1208">Ngày</th>'+
+    '<th style="text-align:right;padding:4px;border-bottom:1px solid #1a1208">Còn nợ</th></tr>'+hang+
+    '<tr><td colspan="2" style="font-weight:700;padding-top:6px;border-top:2px solid #1a1208">Tổng còn nợ</td>'+
+    '<td style="text-align:right;font-weight:700;padding-top:6px;border-top:2px solid #1a1208">'+tien(n.tong)+'</td></tr>'+
+    '</table></div>';
+  setTimeout(function(){ window.print() },80);
+}
 
 /* ── SỔ CÁI + SỬA GIÁ VỐN ── */
 function xemNhom(loai){
@@ -2833,7 +2974,7 @@ function veSo(){
         (d.sualan?' <span class="tag p">NV sửa '+d.sualan+'×</span>':'')+
         (d.suaVon?' <span class="tag p">vốn sửa tay</span>':'')+'</td>'+
         '<td>'+esc(d.ngay)+'</td><td>'+esc(d.kenh)+'</td>'+
-        '<td>'+esc(d.khach)+(d.dc?'<div class="sm">'+esc(String(d.dc).slice(0,42))+'</div>':'')+'</td>'+
+        '<td>'+esc(d.khach)+huyHieuHTML_(d.sdt,SO)+(d.dc?'<div class="sm">'+esc(String(d.dc).slice(0,42))+'</div>':'')+'</td>'+
         '<td class="r">'+tien(d.tienHang)+'</td><td class="r">'+(d.huy?'—':tien(d.von))+
         '</td><td class="r" style="color:'+(d.huy?'var(--tx2)':'var(--ok)')+'">'+(d.huy?'không tính':tien(d.lai))+'</td>'+
         '<td class="r">'+(d.huy?'<span class="sm">'+esc(String(d.huyBoi||''))+'</span>'
@@ -3889,6 +4030,33 @@ function soNgay(iso){
   var a=new Date(iso+'T00:00:00'), b=new Date(new Date().toISOString().slice(0,10)+'T00:00:00');
   return Math.max(0,Math.round((b-a)/86400000));
 }
+
+/* KHÁCH ĐÃ RỜI BỎ — thêm 12/09/2026. Ngưỡng ngày CỐ ĐỊNH theo kênh (không phải
+   thuật toán dự đoán chu kỳ mua — đó là ý riêng, còn chờ thiết kế). Chỉ tính
+   khách đã có TỪ 3 ĐƠN TRỞ LÊN — mua 1-2 lần rồi thôi chưa chắc là "khách quen
+   bỏ đi", có thể chỉ là khách vãng lai. */
+var NGUONG_ROIBO_KENH_={'Sỉ':30,'Breeder':30,'Thú y':30}, NGUONG_ROIBO_MACDINH_=45;
+function khachRoiBo_(){
+  var theo={};
+  SO.forEach(function(d){
+    if(d.huy) return;
+    var sdt=String(d.sdt||'').trim(); if(!sdt) return;
+    var o=theo[sdt]||(theo[sdt]={sdt:sdt,ten:d.khach,tong:0,soDon:0,dem:{},lanCuoiIso:''});
+    o.soDon++; o.tong+=Number(d.tong)||0; o.ten=d.khach||o.ten;
+    var k=d.kenh||'?'; o.dem[k]=(o.dem[k]||0)+1;
+    if(String(d.iso||'')>o.lanCuoiIso){ o.lanCuoiIso=d.iso; o.lanCuoi=d.ngay }
+  });
+  var ra=[];
+  Object.keys(theo).forEach(function(sdt){
+    var o=theo[sdt]; if(o.soDon<3) return;
+    var kenh='',max=0; Object.keys(o.dem).forEach(function(k){ if(o.dem[k]>max){max=o.dem[k];kenh=k} });
+    var muc=NGUONG_ROIBO_KENH_[kenh]||NGUONG_ROIBO_MACDINH_;
+    var ngay=soNgay(o.lanCuoiIso);
+    if(ngay>=muc) ra.push({sdt:sdt,ten:o.ten,kenh:kenh,lanCuoi:o.lanCuoi||o.lanCuoiIso,ngay:ngay,tong:o.tong,muc:muc});
+  });
+  ra.sort(function(a,b){return b.ngay-a.ngay});
+  return ra;
+}
 function demCB(){
   var q=SO.filter(function(d){return d.thieuVon});
   var doQua=SO.filter(function(d){return !d.huy&&tgGiaoCua(d)==='MOT_PHAN'&&soNgay(d.iso)>HAN_GIAO}).length;
@@ -4711,6 +4879,13 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260912a', ngay:'12/09/2026', ten:'Huy hiệu khách · Công nợ theo khách · Khách lâu không quay lại',
+  vaPhieu:[],
+  muc:[
+   ['moi','Sổ cái hiện thêm <b>huy hiệu khách</b> cạnh tên: Khách mới, Khách quen/VIP, Sỉ, Breeder (vượt mốc thì đổi thành VVIP) — đúng cách tính như bên máy nhân viên.'],
+   ['moi','Tab Báo cáo có thêm khối <b>Công nợ theo khách</b>: gom "còn phải thu" theo từng khách trong đúng kỳ đang xem, in ra được để đi đòi.'],
+   ['moi','Tab Cần làm có thêm mục <b>Khách lâu không quay lại</b>: khách Sỉ/Breeder/Thú y đã mua ổn định (từ 3 đơn) nhưng im lặng lâu hơn hẳn bình thường.'],
+  ]},
  {ban:'20260911e', ngay:'11/09/2026', ten:'Báo khi có bản mới, thay vì tự tải lại lặng lẽ',
   vaPhieu:[],
   muc:[

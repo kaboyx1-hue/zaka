@@ -256,6 +256,17 @@ h2{font-size:15px;margin:0 0 10px}
 .tag.kh{background:#2a2440;color:var(--pur)}
 .tag.qd{background:var(--okBg);color:var(--ok)}
 .tag.moi{background:var(--warnBg);color:var(--warn)}
+/* HUY HIỆU KHÁCH — thêm 12/09/2026. Namespace riêng ".badge" (không phải
+   ".tag") để không đụng .tag.moi ở trên (nghĩa khác hẳn — SP mới thêm). */
+.badge{display:inline-flex;align-items:center;font-size:9.5px;font-weight:800;letter-spacing:.02em;
+  padding:2px 7px;border-radius:999px;text-transform:uppercase;vertical-align:middle;margin-left:4px}
+.badge.moi{background:var(--infoBg);color:var(--info)}
+.badge.vip{background:linear-gradient(120deg,#f4d58d,#c9973a);color:#3a2a05}
+.badge.vvip{background:linear-gradient(120deg,#caa8f5,#7c4fd1);color:#fff}
+.badge.quen{background:var(--okBg);color:var(--ok)}
+.badge.si{background:var(--purBg);color:var(--pur)}
+.badge.breeder{background:#20361c;color:#8fd66a}
+body.sang .badge.breeder{background:#e9f3e0;color:#5c8a3a}
 .total{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);padding:10px 13px;z-index:30}
 .total .in{max-width:900px;margin:0 auto;display:flex;align-items:center;gap:9px}
 .total .sum{flex:1;min-width:0}.total .sum small{color:var(--tx2);font-size:11.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -830,6 +841,16 @@ body.ks-chi *{cursor:crosshair!important}
   <button class="dlgX" onclick="dongAnh()" title="Đóng">✕</button>
   <h2 style="margin:0 0 2px">Ảnh đơn gửi quản lý</h2>
   <div class="sm" id="anhPhu" style="margin-bottom:10px"></div>
+  <!-- THÊM 12/09/2026 theo yêu cầu của chủ: gõ một dòng ghi chú là gắn LUÔN VÀO
+       ẢNH — không phải chỉ hiện trên hộp thoại. Bắt buộc phải gắn vào ảnh vì Chép
+       ảnh/Chia sẻ chỉ mang đi đúng tấm ảnh, chữ ngoài ảnh sẽ bị rớt lại, sếp không
+       thấy được. Một ghi chú áp dụng cho MỌI ảnh đang xem trong hộp thoại này. -->
+  <div style="margin-bottom:10px">
+    <label for="anhGhiChu">Ghi chú gửi kèm (gắn thẳng vào ảnh, không bắt buộc)</label>
+    <textarea id="anhGhiChu" rows="2" placeholder="Ví dụ: giao buổi chiều, khách hẹn 3h…"
+      oninput="ganGhiChuAnh_()" style="font:inherit;font-size:14px;width:100%;padding:9px 11px;
+      border-radius:10px;border:1px solid var(--line);background:var(--c2);color:var(--tx);resize:vertical"></textarea>
+  </div>
   <div id="anhXem" style="max-height:56vh;overflow:auto;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:14px"></div>
   <div id="anhMsg"></div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
@@ -918,7 +939,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260912d';
+var APP_VER='20260912f';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -2394,7 +2415,7 @@ $('sdt').addEventListener('input',function(){
     var gr=Object.keys(k.gia||{}).filter(function(x){return k.gia[x].het>=today()});
     var n=soLan(s);
     $('dc').value=k.dc||'';
-    $('khInfo').innerHTML='<div class="khbox">'+
+    $('khInfo').innerHTML='<div class="khbox">'+huyHieuHTML_(s,DON)+
       (n?'Khách cũ · <a href="#" class="lnk" onclick="lichSuKH(\''+s+'\');return false">'+n+' lần mua</a>'
         :'<span style="color:var(--tx2)">Chưa mua lần nào tại đây</span>')+
       (n?' · <b>'+tien(tongChi(s))+'</b>':'')+
@@ -2406,6 +2427,59 @@ $('sdt').addEventListener('input',function(){
 function soLan(sdt){return DON.filter(function(d){return d.sdt===sdt}).length}
 function tongChi(sdt){return DON.filter(function(d){return d.sdt===sdt}).reduce(function(a,d){return a+d.tong},0)}
 function khHienTai(){ return KH[$('sdt').value.replace(/\D/g,'')] }
+
+/* ═══════════════════════════════════════════════════════════════
+   HUY HIỆU KHÁCH — thêm 12/09/2026 theo yêu cầu của chủ, LUẬT CHỐT SAU 2 LẦN SỬA:
+   ═══════════════════════════════════════════════════════════════
+   - Khách mới: tổng số đơn hợp lệ (không huỷ) của khách ≤ 1 — vừa đúng cho
+     lúc đang gõ đơn ĐẦU TIÊN (0 đơn cũ) lẫn lúc xem lại chính đơn đó sau khi
+     đã lưu (1 đơn, chính nó).
+   - Kênh Sỉ: CHỈ hiện huy hiệu "Sỉ", KHÔNG xét Khách quen/VIP theo tiền nữa —
+     doanh số Sỉ vốn luôn cao, xét chung thang với khách lẻ vô nghĩa.
+   - Kênh Breeder: luôn hiện "Breeder"; vượt mốc CAO HƠN khách lẻ 3-5 lần thì
+     đổi hẳn sang nhãn "VVIP" (không dùng chữ VIP thường cho Breeder). Đang để
+     mốc = 4 lần (40 triệu) — CHỜ CHỦ CHỐT LẠI đúng bội số 3, 4 hay 5.
+   - Kênh khác (Lẻ/Thú y): Khách quen ≥ 3 triệu, VIP ≥ 10 triệu.
+   Kênh của khách lấy theo kênh XUẤT HIỆN NHIỀU NHẤT trong lịch sử đơn của
+   chính khách đó — KHÔNG dùng field "Kênh" trên danh bạ (KH[sdt].kenh), vì
+   máy quản lý không tải danh bạ khách (không có KHACH_HANG ở đó), nên nếu ba
+   chỗ hiển thị (Lên đơn, Khách hàng, Sổ cái bên quản lý) mỗi nơi đọc một
+   nguồn khác nhau thì DỄ RA HUY HIỆU KHÁC NHAU cho cùng một khách. Truyền
+   thẳng mảng đơn (DON ở đây, SO bên quanly.html) để hai file dùng chung
+   ĐÚNG một hàm, chỉ khác chỗ gọi. */
+var NGUONG_QUEN_=3000000, NGUONG_VIP_=10000000, NGUONG_VVIP_BREEDER_=NGUONG_VIP_*4;
+/* So khớp SĐT CHỊU ĐƯỢC lỗi mất số 0 đầu (bug đã biết ở KHACH_HANG — xem "Việc 3"
+   trong CLAUDE.md: luuKhach_ ghi SĐT không có dấu nháy nên Sheets tự đổi thành số).
+   DON_HANG thì KHÔNG bị lỗi này (ghiDon_ đã ghi "'"+sdt), nên KH và DON có thể
+   lệch nhau đúng ở số 0 đầu. Đây KHÔNG phải sửa tận gốc (không đụng gì tới cách
+   lưu/đồng bộ SĐT ở nơi khác) — chỉ làm phép SO SÁNH ở đúng hàm mới này chịu được
+   lỗi cũ, để huy hiệu hiện đúng ngay cả khi Việc 3 chưa được sửa. */
+function chuanSdt_(s){ return String(s||'').trim().replace(/\D/g,'').replace(/^0+/,'') }
+function huyHieuKhach_(sdt, ds){
+  sdt=String(sdt||'').trim();
+  if(!sdt) return {mang:[],soDon:0,tongChi:0,kenh:''};
+  var chuan=chuanSdt_(sdt);
+  var cua=(ds||[]).filter(function(d){return chuanSdt_(d.sdt)===chuan && !d.huy});
+  var tongChiK=0, dem={};
+  cua.forEach(function(d){ tongChiK+=Number(d.tong)||0; var k=d.kenh||'?'; dem[k]=(dem[k]||0)+1 });
+  var kenh='', max=0;
+  Object.keys(dem).forEach(function(k){ if(dem[k]>max){ max=dem[k]; kenh=k } });
+  var mang=[];
+  if(cua.length<=1) mang.push({loai:'moi',nhan:'Khách mới'});
+  if(kenh==='Sỉ'){
+    mang.push({loai:'si',nhan:'Sỉ'});
+  } else if(kenh==='Breeder'){
+    mang.push({loai:'breeder',nhan:'Breeder'});
+    if(tongChiK>=NGUONG_VVIP_BREEDER_) mang.push({loai:'vvip',nhan:'VVIP'});
+  } else {
+    if(tongChiK>=NGUONG_VIP_) mang.push({loai:'vip',nhan:'VIP'});
+    else if(tongChiK>=NGUONG_QUEN_) mang.push({loai:'quen',nhan:'Khách quen'});
+  }
+  return {mang:mang,soDon:cua.length,tongChi:tongChiK,kenh:kenh};
+}
+function huyHieuHTML_(sdt, ds){
+  return huyHieuKhach_(sdt,ds).mang.map(function(b){return '<span class="badge '+b.loai+'">'+esc(b.nhan)+'</span>'}).join('');
+}
 
 function lichSuKH(sdt){
   var k=KH[sdt]||{ten:'Khách lẻ',sdt:sdt};
@@ -3224,6 +3298,28 @@ function suaTaiCho(ma,tuPG){
   ED.tuPG=!!tuPG;
   if(tuPG){vePG(true)} veEdit();
 }
+/* ĐẶT LẠI Y HỆT ĐƠN TRƯỚC — thêm 12/09/2026 theo yêu cầu của chủ.
+   Khách sỉ/breeder thường mua lại đúng một tổ hợp hàng. Copy đơn cũ thành
+   MỘT TAB NHÁP MỚI trong Lên đơn — KHÔNG phải sửa đơn cũ (khác hẳn suaTaiCho
+   ở trên: không đụng ED/SUA, đơn gốc trên Sheet giữ nguyên 100%). Nhân viên
+   chỉ cần chỉnh số lượng rồi Lưu đơn như tạo đơn tay bình thường. */
+function datLaiDon(ma){
+  var d=DON.filter(function(x){return x.ma===ma})[0];
+  if(!d){ bao('listMsg','Không tìm thấy đơn để đặt lại.','er'); return }
+  if(SUA){ alert('Đang sửa đơn '+SUA+'. Bấm "Huỷ sửa" trước khi đặt lại đơn khác.'); return }
+  luuGio();   // chốt lại tab đang gõ dở trước khi mở tab mới, khỏi mất dở dang
+  var g=d.dong.map(function(x){
+    // tuCu:true — coi như "giá lấy từ lịch sử": nếu bán lại đúng giá này thì
+    // luu() sẽ tự gia hạn thêm giá riêng cho khách 90 ngày, giống hệt hành vi
+    // khi nhân viên tự gõ lại đúng SĐT + món cũ (xem them()).
+    return {sku:x.sku,ten:x.ten,brand:x.brand||'',dv:x.dv,hs:x.hs||1,gia:x.gia,goc:x.gia,sl:x.sl,riêng:false,tuCu:true};
+  });
+  NHAP.push({tenTab:'Lại '+ma,g:g,ship:0,giam:0,phiChanh:0,
+    sdt:d.sdt||'',khten:d.khach||'',dc:d.dc||'',kenh:d.kenh||'',gc:''});
+  napNhap(NHAP.length-1);
+  tab('new');
+  bao('newMsg','Đã tạo đơn nháp mới từ đơn <b>'+esc(ma)+'</b> — <b>'+g.length+' dòng hàng</b>. Kiểm lại số lượng rồi Lưu đơn.','ok');
+}
 function edLai(){ try{if(document.activeElement&&document.activeElement.blur)document.activeElement.blur()}catch(e){}
   setTimeout(veEdit,0) }
 /* Tìm ĐÚNG ô chứa form sửa. Phải làm vậy vì tab Lịch sử và tab Phiếu giao hàng
@@ -3355,6 +3451,9 @@ function chiTiet(ma){
       d.lichSu.map(function(h){return '<div class="lsr"><b>Lần '+h.lan+'</b> — '+esc(h.luc)+' · '+esc(h.nguoi)+
         h.td.map(function(t){return '<div class="lsi">• '+esc(t)+'</div>'}).join('')+'</div>'}).join('')+'</div>':'')+
     '<div style="display:flex;gap:7px;margin-top:9px;flex-wrap:wrap">'+
+      /* THÊM 12/09/2026 theo yêu cầu của chủ: đặt lại y hệt đơn cũ thành đơn nháp mới.
+         Đứng đầu hàng nút vì đây là thao tác hay dùng nhất với khách sỉ/breeder mua lại. */
+      '<button onclick="datLaiDon(\''+ma+'\')" style="background:var(--okBg);color:var(--ok);font-weight:700;padding:7px 13px;font-size:12.5px">↻ Đặt lại đơn này</button>'+
       '<button onclick="suaTaiCho(\''+ma+'\')" style="background:var(--c2);color:var(--acc);padding:7px 13px;font-size:12.5px">Sửa đơn</button>'+
       '<button onclick="inPhieu([\''+ma+'\'],1)" style="background:var(--c2);color:var(--tx2);padding:7px 13px;font-size:12.5px">In phiếu</button>'+
       /* THÊM 12/09/2026 theo yêu cầu của chủ: in phiếu gửi nhà xe ngay cạnh In phiếu.
@@ -3899,7 +3998,7 @@ function veKH(){
     ds.map(function(k){
       var g=Object.keys(k.gia||{}).filter(function(x){return k.gia[x].het>=today()}).length;
       var n=soLan(k.sdt), l=linkLH(k.sdt), st=soThu(k.thu);
-      return '<tr><td><a href="#" class="lnk" onclick="lichSuKH(\''+k.sdt+'\');return false">'+esc(k.ten)+'</a></td>'+
+      return '<tr><td><a href="#" class="lnk" onclick="lichSuKH(\''+k.sdt+'\');return false">'+esc(k.ten)+'</a>'+huyHieuHTML_(k.sdt,DON)+'</td>'+
         '<td>'+esc(k.sdt)+'</td><td>'+esc(k.kenh||'')+'</td>'+
         '<td>'+(st?esc(k.thu):'<span class="sm">—</span>')+'</td>'+
         '<td class="r">'+(n||'—')+
@@ -4556,10 +4655,29 @@ async function chupNhieu(mas){
 }
 
 /* Bảng xem trước — LUÔN nhận một MẢNG ảnh (dù chỉ một đơn cũng là mảng 1 phần
-   tử), để một chỗ code lo cả hai trường hợp thay vì tách hai đường xử lý. */
+   tử), để một chỗ code lo cả hai trường hợp thay vì tách hai đường xử lý.
+   Mỗi phần tử giữ CẢ HAI: blobGoc (ảnh gốc, không đổi) và blob (bản đang hiện —
+   có thể đã gắn thêm ghi chú). Chép/Lưu/Chia sẻ luôn dùng .blob. */
 function moAnh_(items){
-  ANH_LIST=items;
-  var nhieu=items.length>1;
+  ANH_LIST=items.map(function(it){ return {blobGoc:it.blob, blob:it.blob, ten:it.ten, nhan:it.nhan} });
+  $('anhGhiChu').value='';
+  veAnhXem_();
+  $('anhMsg').innerHTML='';
+
+  var nhieu=ANH_LIST.length>1;
+  var coChiaSe=!!(navigator.canShare&&navigator.share);
+  $('anhChiaSe').classList.toggle('hide', !coChiaSe);
+  $('anhChiaSe').textContent = nhieu ? 'Chia sẻ '+ANH_LIST.length+' ảnh…' : 'Chia sẻ…';
+  $('anhLuu').textContent = nhieu ? 'Lưu tất cả ('+ANH_LIST.length+' ảnh)' : 'Lưu về máy';
+  $('dlgAnh').showModal();
+}
+/* Vẽ lại KHUNG XEM TRƯỚC từ ANH_LIST hiện tại — gọi lại mỗi khi .blob của một
+   ảnh nào đó đổi (sau khi gắn/gỡ ghi chú), không viết trùng code với moAnh_. */
+function veAnhXem_(){
+  var items=ANH_LIST, nhieu=items.length>1;
+  [].slice.call($('anhXem').querySelectorAll('img')).forEach(function(im){
+    if(im.src.indexOf('blob:')===0) URL.revokeObjectURL(im.src);
+  });
   $('anhXem').innerHTML=items.map(function(it,i){
     var u=URL.createObjectURL(it.blob);
     return '<div class="anh-1">'+
@@ -4575,27 +4693,84 @@ function moAnh_(items){
   $('anhPhu').innerHTML = nhieu
     ? '<b>'+items.length+' ảnh riêng biệt</b> (không gộp chung) · tổng '+Math.max(1,Math.round(tongKB/1024))+' KB · chưa gửi đi đâu'
     : esc(items[0].nhan)+' · '+Math.max(1,Math.round(items[0].blob.size/1024))+' KB · ảnh nằm trong máy, chưa gửi đi đâu';
-  $('anhMsg').innerHTML='';
-
   // Nút "Chép" GỘP chỉ có nghĩa khi đúng MỘT ảnh — bộ nhớ tạm của trình duyệt
   // không nhận nhiều ảnh cùng lúc. Từ 2 ảnh trở lên, mỗi ảnh có nút Chép riêng.
   var coChep=!!(navigator.clipboard&&navigator.clipboard.write);
   $('anhChep').classList.toggle('hide', nhieu||!coChep);
   if(!nhieu&&!coChep) bao('anhMsg','Máy này không cho chép ảnh thẳng — bấm <b>Lưu về máy</b> rồi đính kèm như ảnh thường.','wa');
-
-  var coChiaSe=!!(navigator.canShare&&navigator.share);
-  $('anhChiaSe').classList.toggle('hide', !coChiaSe);
-  $('anhChiaSe').textContent = nhieu ? 'Chia sẻ '+items.length+' ảnh…' : 'Chia sẻ…';
-
-  $('anhLuu').textContent = nhieu ? 'Lưu tất cả ('+items.length+' ảnh)' : 'Lưu về máy';
-  $('dlgAnh').showModal();
 }
 function dongAnh(){
   $('dlgAnh').close();
   [].slice.call($('anhXem').querySelectorAll('img')).forEach(function(im){
     if(im.src.indexOf('blob:')===0) URL.revokeObjectURL(im.src);
   });
-  $('anhXem').innerHTML=''; ANH_LIST=[];
+  $('anhXem').innerHTML=''; ANH_LIST=[]; ANH_HEN_GC=null;
+}
+
+/* GHI CHÚ GỬI KÈM — thêm 12/09/2026 theo yêu cầu của chủ. Vẽ THẲNG lên ảnh
+   (không phải chỉ hiện trong hộp thoại) — Chép ảnh/Chia sẻ chỉ mang đi đúng
+   tấm ảnh, chữ ngoài ảnh sẽ bị rớt lại, quản lý không thấy được. Luôn vẽ từ
+   blobGoc (không vẽ chồng lên bản đã có ghi chú) để gõ lại không bị lặp dòng. */
+/* SỐ THỨ TỰ PHIÊN — chống việc gõ nhanh làm bản CŨ vẽ xong SAU và đè mất bản
+   MỚI. Vẽ ảnh (đọc file, canvas, encode PNG) không nhanh bằng gõ phím, nên
+   không được coi lượt gõ nào cũng vẽ xong đúng thứ tự đã bắt đầu — chỉ commit
+   kết quả nếu vẫn còn là lượt MỚI NHẤT tại thời điểm vẽ xong. */
+var ANH_HEN_GC=null, ANH_GEN_GC=0;
+function ganGhiChuAnh_(){
+  clearTimeout(ANH_HEN_GC);
+  var phien=++ANH_GEN_GC;
+  ANH_HEN_GC=setTimeout(function(){ apDungGhiChuAnh_(phien) },350);   // gõ xong mới vẽ lại, đỡ giật khi gõ nhanh
+}
+async function apDungGhiChuAnh_(phien){
+  var gc=$('anhGhiChu').value.trim();
+  // Vẽ SONG SONG mọi ảnh (không đợi lần lượt) — chụp nhiều đơn (tới 12 ảnh) mà vẽ
+  // tuần tự thì gõ xong phải đợi rất lâu mới thấy đủ. Mỗi ảnh độc lập, không ảnh
+  // hưởng nhau nên song song hoàn toàn an toàn.
+  try{
+    var ds=await Promise.all(ANH_LIST.map(function(it){
+      return gc ? themGhiChuVaoAnh_(it.blobGoc,gc) : Promise.resolve(it.blobGoc);
+    }));
+    if(phien!==ANH_GEN_GC) return;   // đã có lượt gõ mới hơn — bỏ kết quả cũ này
+    ANH_LIST.forEach(function(it,i){ it.blob=ds[i] });
+  }catch(e){
+    if(phien===ANH_GEN_GC) bao('anhMsg','Chưa gắn được ghi chú vào ảnh: '+esc(e.message),'er');
+    return;
+  }
+  veAnhXem_();
+}
+/* Vẽ thêm một dải ghi chú vào ĐÁY ảnh đã chụp — không cần đọc lại đơn/DOM gốc
+   (lúc này đơn có thể đã được thu gọn lại), chỉ ghép thêm vào canvas. */
+async function themGhiChuVaoAnh_(blobGoc, ghiChu){
+  var ty=2, rong=760;
+  var img=new Image(), u=URL.createObjectURL(blobGoc);
+  try{
+    await new Promise(function(ok,loi){ img.onload=ok; img.onerror=function(){ loi(new Error('không đọc được ảnh gốc')) }; img.src=u });
+    var caoAnh=img.naturalHeight/ty;
+    var cs=getComputedStyle(document.body);
+    var pad=14, maxW=rong-pad*2, lh=19;
+    var do_=document.createElement('canvas').getContext('2d');
+    do_.font='600 13.5px -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif';
+    var dongs=[], dong='';
+    ghiChu.split(/\s+/).forEach(function(w){
+      var thu=dong?dong+' '+w:w;
+      if(do_.measureText(thu).width>maxW && dong){ dongs.push(dong); dong=w } else dong=thu;
+    });
+    if(dong) dongs.push(dong);
+    var caoGC=30+dongs.length*lh+12;
+    var cv=document.createElement('canvas');
+    cv.width=rong*ty; cv.height=(caoAnh+caoGC)*ty;
+    var g=cv.getContext('2d');
+    g.scale(ty,ty);
+    g.drawImage(img,0,0,rong,caoAnh);
+    g.fillStyle=cs.getPropertyValue('--infoBg').trim()||'#152C3C'; g.fillRect(0,caoAnh,rong,caoGC);
+    g.fillStyle=cs.getPropertyValue('--info').trim()||'#6FA9DE';
+    g.font='800 11px -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif';
+    g.fillText('📝 GHI CHÚ GỬI KÈM', pad, caoAnh+20);
+    g.fillStyle=cs.getPropertyValue('--tx').trim()||'#E4EFE8';
+    g.font='600 13.5px -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif';
+    dongs.forEach(function(d,i){ g.fillText(d,pad,caoAnh+38+i*lh) });
+    return await new Promise(function(r){ cv.toBlob(r,'image/png') });
+  } finally { URL.revokeObjectURL(u) }
 }
 async function chepAnh(i){
   var it=ANH_LIST[i||0]; if(!it) return;
@@ -5000,6 +5175,17 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260912f', ngay:'12/09/2026', ten:'Ghi chú gửi kèm ảnh đơn',
+  vaPhieu:[],
+  muc:[
+   ['moi','Hộp thoại Ảnh đơn có thêm ô <b>Ghi chú gửi kèm</b>: gõ vào là dòng chữ được gắn thẳng vào đáy ảnh, sếp xem ảnh là thấy luôn ghi chú, không mất khi Chép/Chia sẻ/Lưu.'],
+  ]},
+ {ban:'20260912e', ngay:'12/09/2026', ten:'Đặt lại đơn cũ · Huy hiệu khách',
+  vaPhieu:[],
+  muc:[
+   ['moi','Mở một đơn ở tab Lịch sử có thêm nút <b>↻ Đặt lại đơn này</b> — tạo ngay một đơn nháp mới trong Lên đơn với đúng khách và đúng hàng hoá, chỉ cần chỉnh số lượng rồi Lưu đơn. Đơn gốc không đổi gì.'],
+   ['moi','Gõ số điện thoại lúc lên đơn, và trong tab Khách hàng, giờ hiện thêm <b>huy hiệu khách</b>: Khách mới, Khách quen/VIP, Sỉ, Breeder — có thể ra nhiều huy hiệu cùng lúc.'],
+  ]},
  {ban:'20260912d', ngay:'12/09/2026', ten:'Chụp nhiều đơn ra nhiều ảnh riêng',
   vaPhieu:[],
   muc:[
