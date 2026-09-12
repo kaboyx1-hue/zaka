@@ -913,7 +913,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260912b';
+var APP_VER='20260912c';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -4582,16 +4582,43 @@ function luuAnh(){
   setTimeout(function(){ URL.revokeObjectURL(u) },4000);
   bao('anhMsg','Đã lưu <b>'+esc(ANH_TEN)+'</b> vào thư mục Tải xuống.','ok');
 }
+/* CHIA SẺ — sửa 12/09/2026 sau khi nhân viên gặp lỗi thật:
+   "An earlier share has not yet completed".
+   Trình duyệt chỉ cho MỘT lần chia sẻ chạy tại một thời điểm. Bấm hai lần
+   liên tiếp (rất dễ trên điện thoại), hoặc vuốt tắt bảng chia sẻ lần trước
+   mà trình duyệt chưa kịp biết, là lần sau bị chặn.
+   Nay: đang chia sẻ thì khoá nút lại, không cho gọi chồng; gặp đúng lỗi này
+   thì nói rõ phải làm gì chứ không đổ ra câu tiếng Anh khó hiểu. Cờ tự mở
+   lại sau 30 giây phòng khi trình duyệt không bao giờ trả lời — nếu không
+   nút sẽ khoá cứng tới lúc tải lại trang. */
+var DANG_CHIA_SE=false, HEN_CHIA_SE=null;
+function khoaChiaSe_(khoa){
+  DANG_CHIA_SE=khoa;
+  var n=$('anhChiaSe'); if(n) n.disabled=khoa;
+  if(HEN_CHIA_SE){ clearTimeout(HEN_CHIA_SE); HEN_CHIA_SE=null }
+  if(khoa) HEN_CHIA_SE=setTimeout(function(){ khoaChiaSe_(false) },30000);
+}
 async function chiaSeAnh(){
   if(!ANH_BLOB) return;
+  if(DANG_CHIA_SE){
+    bao('anhMsg','Bảng chia sẻ đang mở — chọn Zalo hoặc đóng bảng đó rồi hãy bấm lại.','wa');
+    return;
+  }
+  khoaChiaSe_(true);
   try{
     var f=new File([ANH_BLOB], ANH_TEN, {type:'image/png'});
-    if(navigator.canShare&&!navigator.canShare({files:[f]})) throw new Error('máy không chia sẻ được ảnh');
+    if(navigator.canShare&&!navigator.canShare({files:[f]})) throw new Error('máy này không gửi được ảnh qua nút chia sẻ');
     await navigator.share({files:[f], title:ANH_TEN});
   }catch(e){
-    if(e&&e.name==='AbortError') return;              // người dùng tự đóng bảng chia sẻ
-    bao('anhMsg','Chưa chia sẻ được: '+esc(e.message)+'. Dùng <b>Lưu về máy</b> rồi gửi như ảnh thường.','wa');
+    var loi=(e&&e.message)||'';
+    if(e&&e.name==='AbortError'){ }                    // người dùng tự đóng bảng chia sẻ — im lặng
+    else if(/earlier share|not yet completed/i.test(loi))
+      bao('anhMsg','<b>Bảng chia sẻ lần trước chưa đóng hẳn.</b> Đợi vài giây rồi bấm lại. '+
+        'Nếu vẫn vậy thì bấm <b>Lưu về máy</b> gửi như ảnh thường, hoặc tải lại trang.','wa');
+    else
+      bao('anhMsg','Chưa chia sẻ được: '+esc(loi)+'. Dùng <b>Lưu về máy</b> rồi gửi như ảnh thường.','wa');
   }
+  finally{ khoaChiaSe_(false) }
 }
 
 function inPhieu(mas,moiTrang){
@@ -4926,6 +4953,11 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260912c', ngay:'12/09/2026', ten:'Sửa lỗi nút Chia sẻ ảnh',
+  vaPhieu:[],
+  muc:[
+   ['sua','Bấm <b>Chia sẻ</b> hai lần liên tiếp không còn báo lỗi tiếng Anh khó hiểu. Đang mở bảng chia sẻ thì nút tạm khoá, và máy nói rõ phải đóng bảng cũ rồi bấm lại.'],
+  ]},
  {ban:'20260912b', ngay:'12/09/2026', ten:'Chụp ảnh đơn gửi quản lý bằng một nút',
   vaPhieu:[],
   muc:[
