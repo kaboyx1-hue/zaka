@@ -354,6 +354,11 @@ h2{font-size:15px;margin:0 0 10px}
    việc nhân viên làm cho MỌI đơn chốt xong (thêm 12/09/2026). */
 .na-anh{background:var(--info);color:#04121d;border-color:transparent;font-weight:700;
   padding:8px 14px;font-size:13px;border-radius:10px;border:1px solid transparent}
+/* Mỗi ảnh trong bảng xem trước — thêm 12/09/2026 khi đổi sang XUẤT ẢNH RỜI
+   (trước đây gộp nhiều đơn vào một ảnh dài, chủ yêu cầu tách file riêng). */
+.anh-1{border:1px solid var(--line);border-radius:12px;padding:8px;background:var(--card)}
+.anh-nhan{font-size:12.5px;color:var(--tx2);margin-bottom:6px;font-weight:600}
+.anh-nut1{display:flex;gap:6px;margin-top:8px}
 .pga-them{padding-top:0;border-top:1px dashed var(--line);margin:0 15px;padding-left:0;padding-right:0}
 @media(max-width:520px){
   .dgon{padding:12px 12px;gap:9px}
@@ -825,12 +830,12 @@ body.ks-chi *{cursor:crosshair!important}
   <button class="dlgX" onclick="dongAnh()" title="Đóng">✕</button>
   <h2 style="margin:0 0 2px">Ảnh đơn gửi quản lý</h2>
   <div class="sm" id="anhPhu" style="margin-bottom:10px"></div>
-  <div id="anhXem" style="max-height:52vh;overflow:auto;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:8px"></div>
+  <div id="anhXem" style="max-height:56vh;overflow:auto;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:14px"></div>
   <div id="anhMsg"></div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
-    <button id="anhChep" onclick="chepAnh()" style="background:var(--acc);color:#03121f;font-weight:600;padding:9px 16px">Chép ảnh (rồi Ctrl+V)</button>
+    <button id="anhChep" onclick="chepAnh(0)" style="background:var(--acc);color:#03121f;font-weight:600;padding:9px 16px">Chép ảnh (rồi Ctrl+V)</button>
     <button id="anhChiaSe" onclick="chiaSeAnh()" class="hide" style="background:var(--infoBg);color:var(--info);font-weight:600;padding:9px 16px">Chia sẻ…</button>
-    <button onclick="luuAnh()" class="btn-nho" style="padding:9px 14px">Lưu về máy</button>
+    <button id="anhLuu" onclick="luuAnh()" class="btn-nho" style="padding:9px 14px">Lưu về máy</button>
     <button onclick="dongAnh()" class="btn-nho" style="padding:9px 14px;margin-left:auto">Đóng</button>
   </div>
 </dialog>
@@ -913,7 +918,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260912c';
+var APP_VER='20260912d';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -4446,7 +4451,7 @@ function inChung(ds,moiTrang,veHTML,nhan){
    3. Đơn đang thu gọn thì ảnh chỉ có một dòng tóm tắt, chủ không thấy
       hàng hoá và địa chỉ. Nên tự bung đơn ra trước khi chụp, chụp xong
       trả lại đúng trạng thái cũ. */
-var ANH_BLOB=null, ANH_TEN='';
+var ANH_LIST=[];   // [{blob, ten, nhan}] — mỗi phần tử là MỘT ảnh rời
 var BIEN_ANH=['--bg','--bg2','--card','--c2','--line','--tx','--tx2','--acc','--acc2','--brand','--brandTx',
   '--ok','--warn','--bad','--pur','--info','--okBg','--badBg','--warnBg','--purBg','--infoBg','--vien'];
 
@@ -4524,63 +4529,102 @@ async function chupDon(ma){
   if(!m||!m.el){ bao('pgMsg','Không tìm thấy đơn để chụp.','er'); return }
   try{
     var blob=await veAnhTu_([m.el]);
-    moAnh_(blob, 'DON_'+ma+'.png', 'Đơn '+ma);
+    moAnh_([{blob:blob, ten:'DON_'+ma+'.png', nhan:'Đơn '+ma}]);
   }catch(e){ bao('pgMsg','Chưa chụp được ảnh: '+esc(e.message),'er') }
   finally{ m.tra() }
 }
 
+/* SỬA 12/09/2026 theo yêu cầu của chủ: MỖI ĐƠN một file ảnh RIÊNG, không gộp
+   chung thành một ảnh dài như bản đầu — gộp thì dễ bị Zalo nén nhỏ khó đọc,
+   và chủ muốn tách ra để xem/lưu từng đơn độc lập. */
 async function chupNhieu(mas){
   if(!mas||!mas.length){ bao('pgMsg','Chưa tích chọn đơn nào.','wa'); return }
-  if(mas.length>12 && !confirm('Đang chọn '+mas.length+' đơn. Ảnh sẽ rất dài, gửi qua Zalo có thể bị thu nhỏ khó đọc.\n\nVẫn chụp?')) return;
-  var els=[], tra=[];
+  if(mas.length>12 && !confirm('Đang chọn '+mas.length+' đơn — sẽ ra '+mas.length+' ảnh riêng biệt.\n\nVẫn chụp?')) return;
+  var items=[], boQua=0;
   for(var i=0;i<mas.length;i++){
     var m=await bungDon_(mas[i]);
-    if(m&&m.el){ els.push(m.el); tra.push(m.tra) }
+    if(!m||!m.el){ boQua++; continue }
+    try{
+      var blob=await veAnhTu_([m.el]);
+      items.push({blob:blob, ten:'DON_'+mas[i]+'.png', nhan:'Đơn '+mas[i]});
+    }catch(e){ boQua++ }
+    finally{ m.tra() }
   }
-  try{
-    if(!els.length){ bao('pgMsg','Không tìm thấy đơn nào đang hiện để chụp.','er'); return }
-    var blob=await veAnhTu_(els);
-    moAnh_(blob, 'DON_'+els.length+'don_'+today()+'.png', els.length+' đơn đã chọn');
-  }catch(e){ bao('pgMsg','Chưa chụp được ảnh: '+esc(e.message),'er') }
-  finally{ tra.forEach(function(f){ try{ f() }catch(e){} }) }
+  if(!items.length){ bao('pgMsg','Không chụp được đơn nào.','er'); return }
+  moAnh_(items);
+  if(boQua) bao('pgMsg','Đã chụp '+items.length+' ảnh, bỏ qua '+boQua+' đơn không tìm thấy trên màn hình.','wa');
 }
 
-function moAnh_(blob, ten, nhan){
-  ANH_BLOB=blob; ANH_TEN=ten;
-  var u=URL.createObjectURL(blob);
-  $('anhXem').innerHTML='<img src="'+u+'" style="width:100%;display:block;border-radius:8px">';
-  $('anhPhu').innerHTML=esc(nhan)+' · '+Math.max(1,Math.round(blob.size/1024))+' KB'+
-    ' · ảnh nằm trong máy, chưa gửi đi đâu';
+/* Bảng xem trước — LUÔN nhận một MẢNG ảnh (dù chỉ một đơn cũng là mảng 1 phần
+   tử), để một chỗ code lo cả hai trường hợp thay vì tách hai đường xử lý. */
+function moAnh_(items){
+  ANH_LIST=items;
+  var nhieu=items.length>1;
+  $('anhXem').innerHTML=items.map(function(it,i){
+    var u=URL.createObjectURL(it.blob);
+    return '<div class="anh-1">'+
+      (nhieu?'<div class="anh-nhan">'+esc(it.nhan)+' · '+Math.max(1,Math.round(it.blob.size/1024))+' KB</div>':'')+
+      '<img src="'+u+'" style="width:100%;display:block;border-radius:8px">'+
+      (nhieu?'<div class="anh-nut1">'+
+        '<button class="btn-nho" onclick="chepAnh('+i+')">Chép ảnh này</button>'+
+        '<button class="btn-nho" onclick="luuAnh('+i+')">Lưu ảnh này</button>'+
+      '</div>':'')+
+    '</div>';
+  }).join('');
+  var tongKB=items.reduce(function(a,x){ return a+x.blob.size },0);
+  $('anhPhu').innerHTML = nhieu
+    ? '<b>'+items.length+' ảnh riêng biệt</b> (không gộp chung) · tổng '+Math.max(1,Math.round(tongKB/1024))+' KB · chưa gửi đi đâu'
+    : esc(items[0].nhan)+' · '+Math.max(1,Math.round(items[0].blob.size/1024))+' KB · ảnh nằm trong máy, chưa gửi đi đâu';
   $('anhMsg').innerHTML='';
-  var co=!!(navigator.canShare&&navigator.share);
-  $('anhChiaSe').classList.toggle('hide', !co);
-  if(!(navigator.clipboard&&navigator.clipboard.write)){
-    $('anhChep').classList.add('hide');
-    bao('anhMsg','Máy này không cho chép ảnh thẳng — bấm <b>Lưu về máy</b> rồi đính kèm như ảnh thường.','wa');
-  } else $('anhChep').classList.remove('hide');
+
+  // Nút "Chép" GỘP chỉ có nghĩa khi đúng MỘT ảnh — bộ nhớ tạm của trình duyệt
+  // không nhận nhiều ảnh cùng lúc. Từ 2 ảnh trở lên, mỗi ảnh có nút Chép riêng.
+  var coChep=!!(navigator.clipboard&&navigator.clipboard.write);
+  $('anhChep').classList.toggle('hide', nhieu||!coChep);
+  if(!nhieu&&!coChep) bao('anhMsg','Máy này không cho chép ảnh thẳng — bấm <b>Lưu về máy</b> rồi đính kèm như ảnh thường.','wa');
+
+  var coChiaSe=!!(navigator.canShare&&navigator.share);
+  $('anhChiaSe').classList.toggle('hide', !coChiaSe);
+  $('anhChiaSe').textContent = nhieu ? 'Chia sẻ '+items.length+' ảnh…' : 'Chia sẻ…';
+
+  $('anhLuu').textContent = nhieu ? 'Lưu tất cả ('+items.length+' ảnh)' : 'Lưu về máy';
   $('dlgAnh').showModal();
 }
 function dongAnh(){
   $('dlgAnh').close();
-  var im=$('anhXem').querySelector('img');
-  if(im&&im.src.indexOf('blob:')===0) URL.revokeObjectURL(im.src);
-  $('anhXem').innerHTML=''; ANH_BLOB=null;
+  [].slice.call($('anhXem').querySelectorAll('img')).forEach(function(im){
+    if(im.src.indexOf('blob:')===0) URL.revokeObjectURL(im.src);
+  });
+  $('anhXem').innerHTML=''; ANH_LIST=[];
 }
-async function chepAnh(){
-  if(!ANH_BLOB) return;
+async function chepAnh(i){
+  var it=ANH_LIST[i||0]; if(!it) return;
   try{
-    await navigator.clipboard.write([new ClipboardItem({'image/png':ANH_BLOB})]);
+    await navigator.clipboard.write([new ClipboardItem({'image/png':it.blob})]);
     bao('anhMsg','<b>Đã chép ảnh.</b> Mở Zalo, bấm vào ô nhắn rồi <b>Ctrl+V</b> là ảnh hiện ra.','ok');
   }catch(e){
-    bao('anhMsg','Máy không cho chép ảnh ('+esc(e.message)+'). Bấm <b>Lưu về máy</b> rồi đính kèm.','er');
+    bao('anhMsg','Máy không cho chép ảnh ('+esc(e.message)+'). Bấm <b>Lưu</b> rồi đính kèm.','er');
   }
 }
-function luuAnh(){
-  if(!ANH_BLOB) return;
-  var u=URL.createObjectURL(ANH_BLOB), a=document.createElement('a');
-  a.href=u; a.download=ANH_TEN; a.click();
+function luu1_(it){
+  var u=URL.createObjectURL(it.blob), a=document.createElement('a');
+  a.href=u; a.download=it.ten; a.click();
   setTimeout(function(){ URL.revokeObjectURL(u) },4000);
-  bao('anhMsg','Đã lưu <b>'+esc(ANH_TEN)+'</b> vào thư mục Tải xuống.','ok');
+}
+/* Không truyền i = lưu TẤT CẢ ảnh trong bảng, mỗi ảnh một file. Cách nhau
+   400ms vì Chrome/Edge coi nhiều lượt tải xuống bấm liên tiếp là khả nghi và
+   hỏi "Cho phép trang này tải nhiều tập tin?" — báo trước cho nhân viên khỏi
+   hoảng. Không có cách nào gộp thành một lượt mà vẫn ra file rời từng đơn. */
+function luuAnh(i){
+  if(i===undefined){
+    if(!ANH_LIST.length) return;
+    ANH_LIST.forEach(function(it,idx){ setTimeout(function(){ luu1_(it) }, idx*400) });
+    bao('anhMsg','Đang lưu <b>'+ANH_LIST.length+' ảnh</b> — nếu trình duyệt hỏi "Cho phép tải nhiều tập tin", bấm <b>Cho phép</b>.','ok');
+    return;
+  }
+  var it=ANH_LIST[i]; if(!it) return;
+  luu1_(it);
+  bao('anhMsg','Đã lưu <b>'+esc(it.ten)+'</b> vào thư mục Tải xuống.','ok');
 }
 /* CHIA SẺ — sửa 12/09/2026 sau khi nhân viên gặp lỗi thật:
    "An earlier share has not yet completed".
@@ -4590,7 +4634,9 @@ function luuAnh(){
    Nay: đang chia sẻ thì khoá nút lại, không cho gọi chồng; gặp đúng lỗi này
    thì nói rõ phải làm gì chứ không đổ ra câu tiếng Anh khó hiểu. Cờ tự mở
    lại sau 30 giây phòng khi trình duyệt không bao giờ trả lời — nếu không
-   nút sẽ khoá cứng tới lúc tải lại trang. */
+   nút sẽ khoá cứng tới lúc tải lại trang.
+   GỬI NHIỀU ẢNH: navigator.share nhận thẳng một MẢNG file — Zalo/Messenger
+   trên điện thoại nhận được đúng NHIỀU ảnh rời, không phải một ảnh ghép. */
 var DANG_CHIA_SE=false, HEN_CHIA_SE=null;
 function khoaChiaSe_(khoa){
   DANG_CHIA_SE=khoa;
@@ -4599,16 +4645,17 @@ function khoaChiaSe_(khoa){
   if(khoa) HEN_CHIA_SE=setTimeout(function(){ khoaChiaSe_(false) },30000);
 }
 async function chiaSeAnh(){
-  if(!ANH_BLOB) return;
+  if(!ANH_LIST.length) return;
   if(DANG_CHIA_SE){
     bao('anhMsg','Bảng chia sẻ đang mở — chọn Zalo hoặc đóng bảng đó rồi hãy bấm lại.','wa');
     return;
   }
   khoaChiaSe_(true);
   try{
-    var f=new File([ANH_BLOB], ANH_TEN, {type:'image/png'});
-    if(navigator.canShare&&!navigator.canShare({files:[f]})) throw new Error('máy này không gửi được ảnh qua nút chia sẻ');
-    await navigator.share({files:[f], title:ANH_TEN});
+    var files=ANH_LIST.map(function(it){ return new File([it.blob], it.ten, {type:'image/png'}) });
+    if(navigator.canShare&&!navigator.canShare({files:files}))
+      throw new Error(files.length>1?'máy này không gửi được nhiều ảnh cùng lúc':'máy này không gửi được ảnh qua nút chia sẻ');
+    await navigator.share({files:files, title: files.length>1?(files.length+' đơn hàng ZAKA'):files[0].name});
   }catch(e){
     var loi=(e&&e.message)||'';
     if(e&&e.name==='AbortError'){ }                    // người dùng tự đóng bảng chia sẻ — im lặng
@@ -4953,6 +5000,12 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260912d', ngay:'12/09/2026', ten:'Chụp nhiều đơn ra nhiều ảnh riêng',
+  vaPhieu:[],
+  muc:[
+   ['sua','Chụp nhiều đơn cùng lúc giờ ra <b>từng ảnh riêng cho mỗi đơn</b>, không gộp chung thành một ảnh dài nữa.'],
+   ['moi','Mỗi ảnh có nút <b>Chép</b> và <b>Lưu</b> riêng; có thêm nút <b>Lưu tất cả</b> và <b>Chia sẻ nhiều ảnh</b> (Zalo nhận đúng từng ảnh, không phải một ảnh ghép).'],
+  ]},
  {ban:'20260912c', ngay:'12/09/2026', ten:'Sửa lỗi nút Chia sẻ ảnh',
   vaPhieu:[],
   muc:[
