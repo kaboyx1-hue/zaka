@@ -350,6 +350,10 @@ h2{font-size:15px;margin:0 0 10px}
     border-radius:9px;border:1px solid var(--line)}
 .na-chinh{background:var(--acc);color:#03121f;border-color:transparent}
 .na-them{margin-left:auto}
+/* Nút chụp ảnh gửi quản lý — để màu đặc cho nổi hẳn giữa hàng nút xám, vì đây là
+   việc nhân viên làm cho MỌI đơn chốt xong (thêm 12/09/2026). */
+.na-anh{background:var(--info);color:#04121d;border-color:transparent;font-weight:700;
+  padding:8px 14px;font-size:13px;border-radius:10px;border:1px solid transparent}
 .pga-them{padding-top:0;border-top:1px dashed var(--line);margin:0 15px;padding-left:0;padding-right:0}
 @media(max-width:520px){
   .dgon{padding:12px 12px;gap:9px}
@@ -604,6 +608,7 @@ body.ks-chi *{cursor:crosshair!important}
   <div class="fabin" id="fabIn" onclick="inDaChon()">
     <span id="fabInTxt">In 0 phiếu</span>
     <span class="fabnx" onclick="event.stopPropagation();inGuiDaChon()" title="In phiếu gửi nhà xe cho các đơn đang chọn">🚚 Phiếu nhà xe</span>
+    <span class="fabnx" onclick="event.stopPropagation();chupNhieu(dsChonIn())" title="Chụp ảnh các đơn đang chọn thành một hình">📷 Ảnh gửi sếp</span>
     <span class="fabx" onclick="event.stopPropagation();chonHetIn(0)">✕ bỏ chọn</span>
   </div>
 </section>
@@ -638,6 +643,7 @@ body.ks-chi *{cursor:crosshair!important}
   <div class="fabin" id="fabInLS" onclick="inPhieu(dsChonInLS(),$('moiTrangLS').value)">
     <span id="fabInLSTxt">In 0 phiếu</span>
     <span class="fabnx" onclick="event.stopPropagation();moKienHang(dsChonInLS(),$('moiTrangLS').value)" title="In phiếu gửi nhà xe cho các đơn đang chọn">🚚 Phiếu nhà xe</span>
+    <span class="fabnx" onclick="event.stopPropagation();chupNhieu(dsChonInLS())" title="Chụp ảnh các đơn đang chọn thành một hình">📷 Ảnh gửi sếp</span>
     <span class="fabx" onclick="event.stopPropagation();chonHetInLS(0)">✕ bỏ chọn</span>
   </div>
 </section>
@@ -814,6 +820,21 @@ body.ks-chi *{cursor:crosshair!important}
   </div>
 </dialog>
 
+<!-- ẢNH ĐƠN GỬI QUẢN LÝ — thêm 12/09/2026. Xem trước rồi chọn cách gửi. -->
+<dialog id="dlgAnh">
+  <button class="dlgX" onclick="dongAnh()" title="Đóng">✕</button>
+  <h2 style="margin:0 0 2px">Ảnh đơn gửi quản lý</h2>
+  <div class="sm" id="anhPhu" style="margin-bottom:10px"></div>
+  <div id="anhXem" style="max-height:52vh;overflow:auto;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:8px"></div>
+  <div id="anhMsg"></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+    <button id="anhChep" onclick="chepAnh()" style="background:var(--acc);color:#03121f;font-weight:600;padding:9px 16px">Chép ảnh (rồi Ctrl+V)</button>
+    <button id="anhChiaSe" onclick="chiaSeAnh()" class="hide" style="background:var(--infoBg);color:var(--info);font-weight:600;padding:9px 16px">Chia sẻ…</button>
+    <button onclick="luuAnh()" class="btn-nho" style="padding:9px 14px">Lưu về máy</button>
+    <button onclick="dongAnh()" class="btn-nho" style="padding:9px 14px;margin-left:auto">Đóng</button>
+  </div>
+</dialog>
+
 <dialog id="dlgXem">
   <h2 id="dlgTitle" style="margin-bottom:10px"></h2>
   <div id="dlgBody"></div>
@@ -892,7 +913,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260912a';
+var APP_VER='20260912b';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -3155,6 +3176,7 @@ function vePG(epVe){
       /* Ba nút hay dùng nhất đứng ngoài; phần còn lại nằm sau nút Thêm */
       '<div class="pga">'+
       '<button onclick="inPhieu([\''+d.ma+'\'],1)" class="na na-chinh">In phiếu giao</button>'+
+      '<button onclick="chupDon(\''+d.ma+'\')" class="na na-anh">📷 Ảnh gửi sếp</button>'+
       '<button onclick="suaTaiCho(\''+d.ma+'\',1)" class="na">Sửa đơn</button>'+
       '<button onclick="doiTT(\''+d.ma+'\')" class="na" style="color:'+(d.tt==='DA'?'var(--ok)':'var(--warn)')+'">'+
         (d.tt==='DA'?'Bỏ đã thu':'Đánh dấu ĐÃ THU')+'</button>'+
@@ -3334,6 +3356,7 @@ function chiTiet(ma){
          Dùng lại đúng đường cũ moKienHang() (hỏi số kiện rồi in phiếu gửi) như nút ở
          tab Phiếu giao hàng — không có phiếu mới, không đổi mẫu in nào. */
       '<button onclick="moKienHang([\''+ma+'\'],1)" style="background:var(--purBg);color:var(--pur);padding:7px 13px;font-size:12.5px">In phiếu gửi nhà xe</button>'+
+      '<button onclick="chupDon(\''+ma+'\')" class="na-anh" style="padding:7px 13px;font-size:12.5px">📷 Ảnh gửi sếp</button>'+
       (d.iso===today()
         ?'<button onclick="xoaDon(\''+ma+'\')" style="background:var(--c2);color:var(--bad);padding:7px 13px;font-size:12.5px">Xoá đơn</button>'
         :'<span class="sm" style="align-self:center">Đơn ngày trước — chỉ chủ xoá được</span>')+
@@ -4404,6 +4427,173 @@ function inChung(ds,moiTrang,veHTML,nhan){
   setTimeout(function(){ window.print(); vePG(); veDon() },90);
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   CHỤP ẢNH ĐƠN GỬI QUẢN LÝ — thêm 12/09/2026
+   ═══════════════════════════════════════════════════════════════
+   Trước đây mỗi lần chốt đơn, nhân viên phải Shift+Windows+S khoanh tay
+   vùng đơn rồi mới gửi được cho chủ xem hướng giao. Nay bấm một nút.
+
+   CÁCH LÀM: không dùng thư viện ngoài — máy nhân viên phải chạy được cả
+   khi mất mạng, tải thư viện từ Internet là hỏng đúng lúc cần. Thay vào
+   đó gói chính thẻ đơn đang hiện vào một ảnh SVG (foreignObject) rồi vẽ
+   sang canvas. Kèm luôn bảng CSS của app nên ảnh ra giống hệt màn hình.
+
+   BA LƯU Ý ĐÃ VẤP KHI LÀM:
+   1. XMLSerializer TỰ thêm xmlns cho thẻ HTML — thêm tay lần nữa là XML
+      có hai thuộc tính trùng, ảnh không dựng được và KHÔNG báo lỗi rõ.
+   2. Biến màu (--bg, --tx…) khai ở :root/body nên trong SVG không có.
+      Phải đọc giá trị thật rồi gán thẳng vào thẻ bọc.
+   3. Đơn đang thu gọn thì ảnh chỉ có một dòng tóm tắt, chủ không thấy
+      hàng hoá và địa chỉ. Nên tự bung đơn ra trước khi chụp, chụp xong
+      trả lại đúng trạng thái cũ. */
+var ANH_BLOB=null, ANH_TEN='';
+var BIEN_ANH=['--bg','--bg2','--card','--c2','--line','--tx','--tx2','--acc','--acc2','--brand','--brandTx',
+  '--ok','--warn','--bad','--pur','--info','--okBg','--badBg','--warnBg','--purBg','--infoBg','--vien'];
+
+/* Dựng ảnh từ một hoặc nhiều thẻ đơn đang có trên màn hình. */
+async function veAnhTu_(dsEl, rong){
+  rong=rong||760;
+  var cs=getComputedStyle(document.body);
+  var hop=document.createElement('div');
+  hop.setAttribute('style',
+    BIEN_ANH.map(function(b){ return b+':'+cs.getPropertyValue(b).trim() }).join(';')+
+    ';width:'+rong+'px;padding:14px;box-sizing:border-box;display:flex;flex-direction:column;gap:12px'+
+    ';background:'+cs.getPropertyValue('--bg').trim()+';color:'+cs.getPropertyValue('--tx').trim()+
+    ';font:15px/1.55 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif');
+  var st=document.createElement('style'); st.textContent=document.querySelector('style').textContent;
+  hop.appendChild(st);
+  dsEl.forEach(function(el){
+    var ban=el.cloneNode(true);
+    // bỏ những thứ chỉ có nghĩa khi bấm được: ô tích, nút, mũi tên bung/thu
+    [].slice.call(ban.querySelectorAll('button,input,select,.dg-mui,.pga,.na,.fabin')).forEach(function(n){ n.remove() });
+    ban.style.margin='0';
+    hop.appendChild(ban);
+  });
+  // đo chiều cao thật bằng cách dựng ngoài màn hình
+  var do_=hop.cloneNode(true);
+  do_.style.position='fixed'; do_.style.left='-99999px'; do_.style.top='0';
+  document.body.appendChild(do_);
+  var cao=Math.ceil(do_.getBoundingClientRect().height);
+  document.body.removeChild(do_);
+  var xml=new XMLSerializer().serializeToString(hop);   // đã tự kèm xmlns, KHÔNG thêm nữa
+  var svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+rong+'" height="'+cao+'">'+
+    '<foreignObject width="100%" height="100%">'+xml+'</foreignObject></svg>';
+  var img=new Image();
+  await new Promise(function(ok,loi){
+    img.onload=ok; img.onerror=function(){ loi(new Error('trình duyệt không dựng được ảnh')) };
+    img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+  });
+  var ty=2, cv=document.createElement('canvas');
+  cv.width=rong*ty; cv.height=cao*ty;
+  var g=cv.getContext('2d');
+  g.fillStyle=cs.getPropertyValue('--bg').trim()||'#fff'; g.fillRect(0,0,cv.width,cv.height);
+  g.scale(ty,ty); g.drawImage(img,0,0);
+  return await new Promise(function(r){ cv.toBlob(r,'image/png') });
+}
+
+/* Tìm thẻ đơn đang hiện trên tab đang mở. Hai tab dùng CHUNG id pgw_<mã>
+   nên phải tìm trong đúng phần đang hiện, không dùng getElementById. */
+function theDon_(ma){
+  var ds=[].slice.call(document.querySelectorAll('[id="pgw_'+CSS.escape(ma)+'"]'));
+  for(var i=0;i<ds.length;i++){ if(ds[i].offsetParent) return ds[i] }
+  return ds[0]||null;
+}
+/* Bung đơn ra nếu đang thu gọn; trả về hàm đưa lại như cũ. */
+async function bungDon_(ma){
+  var el=theDon_(ma); if(!el) return null;
+  var cho=function(){ return new Promise(function(r){ setTimeout(r,70) }) };
+  /* Hai tab đều đặt lớp "gon" cho thẻ đang thu, nhưng bung bằng hàm KHÁC nhau:
+     tab Phiếu giao hàng vẽ cả thẻ lại (toggleChiTiet), tab Lịch sử mở khung
+     chi tiết riêng (chiTietGon). Nhận dạng theo lớp .pgc / .don chứ không dựa
+     vào "gon", nếu không sẽ bung nhầm và ảnh thiếu bảng hàng. */
+  if(el.classList.contains('pgc')){                        // tab Phiếu giao hàng
+    if(!el.classList.contains('gon')) return {el:el, tra:function(){}};
+    toggleChiTiet(ma); await cho();
+    return {el:theDon_(ma)||el, tra:function(){ toggleChiTiet(ma) }};
+  }
+  // tab Lịch sử
+  var moLai=false;
+  if(el.classList.contains('gon')){ chiTietGon(ma); await cho(); moLai=true; el=theDon_(ma)||el }
+  var ct=el.querySelector('[id^="ct_"]');
+  if(ct && ct.classList.contains('hide')){ chiTiet(ma); await cho(); el=theDon_(ma)||el; moLai=true }
+  return {el:el, tra:function(){ if(moLai) chiTietGon(ma) }};
+}
+
+async function chupDon(ma){
+  var m=await bungDon_(ma);
+  if(!m||!m.el){ bao('pgMsg','Không tìm thấy đơn để chụp.','er'); return }
+  try{
+    var blob=await veAnhTu_([m.el]);
+    moAnh_(blob, 'DON_'+ma+'.png', 'Đơn '+ma);
+  }catch(e){ bao('pgMsg','Chưa chụp được ảnh: '+esc(e.message),'er') }
+  finally{ m.tra() }
+}
+
+async function chupNhieu(mas){
+  if(!mas||!mas.length){ bao('pgMsg','Chưa tích chọn đơn nào.','wa'); return }
+  if(mas.length>12 && !confirm('Đang chọn '+mas.length+' đơn. Ảnh sẽ rất dài, gửi qua Zalo có thể bị thu nhỏ khó đọc.\n\nVẫn chụp?')) return;
+  var els=[], tra=[];
+  for(var i=0;i<mas.length;i++){
+    var m=await bungDon_(mas[i]);
+    if(m&&m.el){ els.push(m.el); tra.push(m.tra) }
+  }
+  try{
+    if(!els.length){ bao('pgMsg','Không tìm thấy đơn nào đang hiện để chụp.','er'); return }
+    var blob=await veAnhTu_(els);
+    moAnh_(blob, 'DON_'+els.length+'don_'+today()+'.png', els.length+' đơn đã chọn');
+  }catch(e){ bao('pgMsg','Chưa chụp được ảnh: '+esc(e.message),'er') }
+  finally{ tra.forEach(function(f){ try{ f() }catch(e){} }) }
+}
+
+function moAnh_(blob, ten, nhan){
+  ANH_BLOB=blob; ANH_TEN=ten;
+  var u=URL.createObjectURL(blob);
+  $('anhXem').innerHTML='<img src="'+u+'" style="width:100%;display:block;border-radius:8px">';
+  $('anhPhu').innerHTML=esc(nhan)+' · '+Math.max(1,Math.round(blob.size/1024))+' KB'+
+    ' · ảnh nằm trong máy, chưa gửi đi đâu';
+  $('anhMsg').innerHTML='';
+  var co=!!(navigator.canShare&&navigator.share);
+  $('anhChiaSe').classList.toggle('hide', !co);
+  if(!(navigator.clipboard&&navigator.clipboard.write)){
+    $('anhChep').classList.add('hide');
+    bao('anhMsg','Máy này không cho chép ảnh thẳng — bấm <b>Lưu về máy</b> rồi đính kèm như ảnh thường.','wa');
+  } else $('anhChep').classList.remove('hide');
+  $('dlgAnh').showModal();
+}
+function dongAnh(){
+  $('dlgAnh').close();
+  var im=$('anhXem').querySelector('img');
+  if(im&&im.src.indexOf('blob:')===0) URL.revokeObjectURL(im.src);
+  $('anhXem').innerHTML=''; ANH_BLOB=null;
+}
+async function chepAnh(){
+  if(!ANH_BLOB) return;
+  try{
+    await navigator.clipboard.write([new ClipboardItem({'image/png':ANH_BLOB})]);
+    bao('anhMsg','<b>Đã chép ảnh.</b> Mở Zalo, bấm vào ô nhắn rồi <b>Ctrl+V</b> là ảnh hiện ra.','ok');
+  }catch(e){
+    bao('anhMsg','Máy không cho chép ảnh ('+esc(e.message)+'). Bấm <b>Lưu về máy</b> rồi đính kèm.','er');
+  }
+}
+function luuAnh(){
+  if(!ANH_BLOB) return;
+  var u=URL.createObjectURL(ANH_BLOB), a=document.createElement('a');
+  a.href=u; a.download=ANH_TEN; a.click();
+  setTimeout(function(){ URL.revokeObjectURL(u) },4000);
+  bao('anhMsg','Đã lưu <b>'+esc(ANH_TEN)+'</b> vào thư mục Tải xuống.','ok');
+}
+async function chiaSeAnh(){
+  if(!ANH_BLOB) return;
+  try{
+    var f=new File([ANH_BLOB], ANH_TEN, {type:'image/png'});
+    if(navigator.canShare&&!navigator.canShare({files:[f]})) throw new Error('máy không chia sẻ được ảnh');
+    await navigator.share({files:[f], title:ANH_TEN});
+  }catch(e){
+    if(e&&e.name==='AbortError') return;              // người dùng tự đóng bảng chia sẻ
+    bao('anhMsg','Chưa chia sẻ được: '+esc(e.message)+'. Dùng <b>Lưu về máy</b> rồi gửi như ảnh thường.','wa');
+  }
+}
+
 function inPhieu(mas,moiTrang){
   var ds=mas.map(getDon).filter(Boolean);
   if(!ds.length){alert('Không tìm thấy đơn để in.');return}
@@ -4736,6 +4926,14 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260912b', ngay:'12/09/2026', ten:'Chụp ảnh đơn gửi quản lý bằng một nút',
+  vaPhieu:[],
+  muc:[
+   ['moi','Nút <b>📷 Ảnh đơn</b> ngay trong đơn: máy tự chụp đúng đơn đó thành ảnh. Khỏi phải Shift+Windows+S khoanh tay nữa.'],
+   ['moi','Chụp xong chọn <b>Chép ảnh</b> rồi sang Zalo bấm Ctrl+V là dán được ngay; hoặc <b>Lưu về máy</b>; trên điện thoại có thêm <b>Chia sẻ</b> để gửi thẳng sang Zalo.'],
+   ['moi','Tích chọn nhiều đơn rồi bấm <b>📷 Ảnh đơn</b> trên thanh nổi: gom hết vào MỘT tấm ảnh, gửi một lần cho chủ.'],
+   ['dep','Đơn đang thu gọn thì máy tự bung ra cho ảnh có đủ hàng hoá và địa chỉ, chụp xong thu lại như cũ.'],
+  ]},
  {ban:'20260912a', ngay:'12/09/2026', ten:'Địa chỉ lên đầu đơn · In phiếu nhà xe ngay tại đơn',
   vaPhieu:[],
   muc:[
