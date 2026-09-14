@@ -596,6 +596,7 @@ body.ks-chi *{cursor:crosshair!important}
   <div id="pgMsg"></div>
   <div class="card"><input id="fpg" placeholder="Tìm mã đơn, tên khách, số điện thoại…" oninput="vePG()">
     <select id="locTT" onchange="vePG()" style="margin-top:8px"></select>
+    <select id="locNVpg" onchange="vePG()" style="margin-top:8px"></select>
     <div class="hangloc">
       <label class="sm oloc"><input type="checkbox" id="locChuaIn" onchange="vePG()">Chỉ đơn chưa in</label>
       <span class="sm" id="tongThu"></span>
@@ -936,7 +937,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260913a';
+var APP_VER='20260914a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1135,7 +1136,7 @@ function maHTML(ma){
   if(!may) return esc(ma);
   var mau=mauMay(may), phanSau=String(ma).slice(may.length);
   return '<span class="mtag" style="background:'+mau+'26;color:'+mau+';border-color:'+mau+'66">'+esc(may)+'</span>'+
-    '<span style="opacity:.7">'+esc(phanSau)+'</span>';
+    '<span style="color:var(--tx);font-weight:600">'+esc(phanSau)+'</span>';
 }
 /* So khớp tên "lỏng" — bỏ dấu, bỏ dấu câu, bỏ vài từ nối, sắp xếp lại từ trước khi
    so — để "Cát tắm thơm hamster 1kg (mix mùi)" và "Cát tấm thơm CHO hamster 1kg
@@ -3049,29 +3050,34 @@ function getDon(ma){ return DON.filter(function(x){return x.ma===ma})[0] }
 /* ══ CẤP MÃ ĐƠN ══
    Bộ đếm nằm trên đĩa và CHỈ TĂNG. Xoá đơn, huỷ đơn, xoá trình duyệt
    đều không làm nó lùi lại. Cấp xong còn dò lại một lượt cho chắc.
-   SỬA 09/09/2026: số thứ tự (3 số cuối) trước đây tính riêng theo TỪNG NGÀY
-   (khoá bộ đếm = pre = mã máy+ngày) nên mỗi ngày mới lại chạy lại từ 001 —
-   khiến nhân viên/quản lý nhìn "008" hôm qua và "008" hôm nay tưởng trùng
-   đơn, dù mã đầy đủ (có kèm ngày) vẫn khác nhau. Giờ đổi khoá bộ đếm sang
-   CHỈ THEO MÃ MÁY (bỏ phần ngày) để số này chạy liên tục xuyên ngày, không
-   reset — vẫn giữ NGUYÊN định dạng mã đơn hiển thị "MÁY-NGÀY-SỐ" như cũ,
-   không đổi gì ở cách Sheet/máy quản lý đọc mã, chỉ đổi cách TÍNH số kế tiếp. */
+   SỬA 13/09/2026 (chủ yêu cầu): số thứ tự (3 số cuối) trước đây đếm RIÊNG
+   theo từng máy nhân viên (NV01 và NV02 mỗi bên tự chạy 001,002,003…) khiến
+   nhiều đơn khác người lại trùng số, khó soát. Giờ đổi sang đếm CHUNG một
+   dãy xuyên suốt cả 3 máy — NV01 đang tới 087 thì đơn kế tiếp của BẤT KỲ
+   máy nào cũng là 088. Tiền tố mã máy (NV01/NV02/NV03) GIỮ NGUYÊN, không đổi
+   gì ở định dạng "MÁY-NGÀY-SỐ" hay cách Sheet/máy quản lý đọc mã — chỉ đổi
+   cách TÍNH số kế tiếp, và chỉ áp dụng cho đơn MỚI từ giờ trở đi, đơn cũ
+   không bị đụng tới (hàm này không viết ngược lại mã của đơn đã có).
+   Đánh đổi đã chấp nhận: nếu 2 máy CÙNG đang mất mạng (offline) và cùng tạo
+   đơn trong lúc chưa kịp đồng bộ chéo, hai đơn đó có thể trùng SỐ (khác
+   tiền tố nên vẫn là 2 mã đơn riêng biệt, không ghi đè, không mất dữ liệu) —
+   xác suất thấp trong vận hành thực tế, đổi lại đúng cái chủ cần: số không
+   lặp lại giữa các nhân viên khi máy đã đồng bộ bình thường. */
 function capMa(pre,epNhay){
-  var may=pre.split('-')[0]; // tiền tố mã máy — dùng làm khoá bộ đếm, KHÔNG kèm ngày nữa
+  var may=pre.split('-')[0]; // tiền tố mã máy — vẫn giữ để phân biệt ai lên đơn, KHÔNG còn dùng làm khoá đếm
   var dem=get('demma',{});
-  var n=dem[may]||0;
-  // dò lại toàn bộ đơn của ĐÚNG MÁY NÀY (mọi ngày, kể cả đơn kéo từ Sheet về) để
-  // không bao giờ tụt — trước đây chỉ dò theo đúng ngày hôm nay nên không "thấy"
-  // được số cao nhất của các ngày trước, giờ dò xuyên ngày.
+  var n=dem.chung||0;
+  // dò lại TOÀN BỘ đơn của MỌI máy (không lọc theo tiền tố nữa) để lấy đúng
+  // số cao nhất đang có trong toàn hệ thống — đảm bảo tiếp diễn dù đây là
+  // lần đầu máy này chạy bộ đếm chung, hay có máy khác vừa lên đơn cao hơn.
   var max=0;
   DON.forEach(function(d){
-    if(d.ma.indexOf(may+'-')!==0) return;
     var x=parseInt(d.ma.slice(d.ma.lastIndexOf('-')+1),10)||0; if(x>max) max=x;
   });
   if(max>n) n=max;
   var ma;
   do { n++; ma=pre+'-'+('00'+n).slice(-3) } while(DON.some(function(d){return d.ma===ma}));
-  dem[may]=n; set('demma',dem);
+  dem.chung=n; set('demma',dem);
   return ma;
 }
 function xoaDon(ma,tuPG){
@@ -3116,6 +3122,21 @@ function veLocTT(){
       return '<option value="'+esc(h)+'">Đã TT — '+esc(h)+' ('+n+')</option>'}).join('');
   if([].slice.call(e.options).some(function(o){return o.value===giu})) e.value=giu;
 }
+/* Lọc theo người lên đơn — thêm 14/09/2026 theo yêu cầu chủ: tab Phiếu giao
+   hàng trước đây không lọc được ai lên đơn, gây khó khi một nhân viên muốn
+   in riêng đúng đơn của mình. Bản sao của veLocNV() (tab Lịch sử, id="locNV")
+   — tên hàm/id khác đi ("...Pg") để không đụng cái đã có, cùng cách lọc theo
+   tên NV (d.nv) cho nhất quán với tab Lịch sử. */
+function veLocNVpg(){
+  var e=$('locNVpg'); if(!e) return;
+  var dem={};
+  DON.forEach(function(d){ var t=d.nv||'(không rõ)'; dem[t]=(dem[t]||0)+1 });
+  var ten=Object.keys(dem).sort(function(a,b){return a.localeCompare(b,'vi')});
+  var giu=e.value;
+  e.innerHTML='<option value="">Tất cả nhân viên</option>'+
+    ten.map(function(t){return '<option value="'+esc(t)+'">'+esc(t)+' ('+dem[t]+')</option>'}).join('');
+  if([].slice.call(e.options).some(function(o){return o.value===giu})) e.value=giu;
+}
 /* ═══ TINH GỌN DANH SÁCH ĐƠN — 10/09/2026, phiếu 32 & 33 của chủ ═══
    Trước đây mỗi đơn dàn hết ra: bảng hàng, ô người giao, 6 nút thao tác — ba
    đơn là hết một màn hình, mà nhìn vào không biết bấm đâu để xem chi tiết.
@@ -3157,12 +3178,15 @@ function vePG(epVe){
      từng đơn một. */
   var dangChonIn=dsChonIn();
   veLocTT();
+  veLocNVpg();
   veShipperList();
   var q=kd(($('fpg')&&$('fpg').value||'').trim());
   var chiChua=$('locChuaIn')&&$('locChuaIn').checked;
+  var locNV=$('locNVpg')&&$('locNVpg').value;
   var ds=DON.filter(function(d){
     if(chiChua&&d.inLan) return false;
     if(!locTT(d)) return false;
+    if(locNV&&(d.nv||'(không rõ)')!==locNV) return false;
     return !q||kd(d.ma+' '+d.khach+' '+d.sdt+' '+(d.dc||'')).indexOf(q)>=0});
   var ci=chuaIn().length;
   var bc=$('btnChuaIn'); if(bc) bc.textContent='Chọn đơn chưa in ('+ci+')';
@@ -3175,15 +3199,19 @@ function vePG(epVe){
     var lyDo=[];
     if(q) lyDo.push('từ khoá "'+esc(q)+'"');
     if($('locTT')&&$('locTT').value) lyDo.push('trạng thái "'+esc($('locTT').options[$('locTT').selectedIndex].textContent.replace(/\s*\(\d+\)$/,''))+'"');
+    if(locNV) lyDo.push('nhân viên "'+esc(locNV)+'"');
     if(chiChua) lyDo.push('chỉ hiện chưa in');
     $('dsPG').innerHTML='<div class="card"><div class="empty">'+
       (lyDo.length
         ? 'Không có đơn nào khớp <b>tất cả</b> điều kiện đang lọc: '+lyDo.join(' + ')+
           '.<br><span class="sm">Có thể một điều kiện khác (không phải cái vừa chọn) đang chặn — bấm '+
           (chiChua?'<a href="#" class="lnk" onclick="document.getElementById(\'locChuaIn\').checked=false;vePG();return false">bỏ "chỉ chưa in"</a>':'')+
-          (chiChua&&($('locTT')&&$('locTT').value||q)?' hoặc ':'')+
+          (chiChua&&($('locTT')&&$('locTT').value||locNV||q)?' hoặc ':'')+
           (($('locTT')&&$('locTT').value)?'<a href="#" class="lnk" onclick="document.getElementById(\'locTT\').value=\'\';vePG();return false">bỏ lọc trạng thái</a>':'')+
-          (q?' hoặc xoá ô tìm kiếm':'')+' để xem lại.</span>'
+          ($('locTT')&&$('locTT').value&&(locNV||q)?' hoặc ':'')+
+          (locNV?'<a href="#" class="lnk" onclick="document.getElementById(\'locNVpg\').value=\'\';vePG();return false">bỏ lọc nhân viên</a>':'')+
+          (locNV&&q?' hoặc ':'')+
+          (q?'xoá ô tìm kiếm':'')+' để xem lại.</span>'
         : (chiChua?'Không còn đơn nào chưa in. Sạch rồi.':'Chưa có đơn nào'))+
       '</div></div>';demIn();return}
   $('dsPG').innerHTML=ds.map(function(d){
@@ -3225,7 +3253,7 @@ function vePG(epVe){
         '<div class="dg-chip" style="margin-top:6px">'+nhanGiao(d)+nhanDongBo(d)+
           (d.inLan?'<span class="sm" style="opacity:.7">in lúc '+esc(d.inLuc||'')+'</span>':'')+
         '</div>'+
-        (d.ghichu?'<div class="gc">Ghi chú: '+esc(d.ghichu)+'</div>':'')+
+        (d.ghichu?'<div class="gc">Ghi chú: <b>'+esc(d.ghichu)+'</b></div>':'')+
       '</div>'+
       '<div class="pgb"><table><tr><th>Sản phẩm</th><th style="text-align:center">SL</th>'+
       (tgGiaoCua(d)==='DU'?'':'<th style="text-align:center">Đã giao</th>')+
@@ -3443,7 +3471,7 @@ function chiTiet(ma){
     (d.ship?'<tr><td colspan="4" class="r">Ship</td><td class="r">'+tien(d.ship)+'</td></tr>':'')+
     (d.giam?'<tr><td colspan="4" class="r">Giảm giá</td><td class="r">−'+tien(d.giam)+'</td></tr>':'')+
     '<tr><td colspan="4" class="r"><b>TỔNG</b></td><td class="r"><b style="color:var(--ok)">'+tien(d.tong)+'</b></td></tr></table>'+
-    (d.ghichu?'<div class="sm">Ghi chú: '+esc(d.ghichu)+'</div>':'')+
+    (d.ghichu?'<div class="sm">Ghi chú: <b>'+esc(d.ghichu)+'</b></div>':'')+
     ((d.lichSu&&d.lichSu.length)?'<div class="ls">'+
       d.lichSu.map(function(h){return '<div class="lsr"><b>Lần '+h.lan+'</b> — '+esc(h.luc)+' · '+esc(h.nguoi)+
         h.td.map(function(t){return '<div class="lsi">• '+esc(t)+'</div>'}).join('')+'</div>'}).join('')+'</div>':'')+
@@ -4110,7 +4138,7 @@ function phieuHTML(d,cu){
       }
       return '<div class="ph-cod"><span>THU HỘ (COD)</span><b>'+pTien(d.tong)+' đ</b></div>';
     })()+
-    (d.ghichu?'<div class="ph-gc">Ghi chú: '+esc(d.ghichu)+'</div>':'')+
+    (d.ghichu?'<div class="ph-gc">Ghi chú: <b>'+esc(d.ghichu)+'</b></div>':'')+
     '<div class="ph-ft"><div>NV lên đơn: '+esc(d.nv||'')+' · '+esc(d.may||'')+'</div>'+
       (d.nguoiGiao?'<div style="font-size:1.2em">Người giao: <b>'+esc(d.nguoiGiao)+'</b></div>'
         :'<div>Người nhận ký: ______________</div>')+'</div>'+
@@ -4418,7 +4446,7 @@ function phieuGuiHTML(d,cu){
     (dot?'<div class="pg-so">ĐỢT '+dot.n+' · GIAO LẦN NÀY '+L.sl+
         ' · ĐÃ GIAO '+tongDaGiao(d)+'/'+tongDat(d)+
         ' · CÒN LẠI '+(tongDat(d)-tongDaGiao(d))+'</div>':'')+
-    (d.ghichu?'<div class="ph-gc">Ghi chú: '+esc(d.ghichu)+'</div>':'')+
+    (d.ghichu?'<div class="ph-gc">Ghi chú: <b>'+esc(d.ghichu)+'</b></div>':'')+
     '<div class="pg-ky">'+
       '<div><div class="pg-kt">NGƯỜI GỬI</div><div class="pg-line"></div>'+
         '<div class="pg-nn">'+esc(sTen)+' · '+esc(sDt)+'<br>'+esc(d.nv||'')+'</div></div>'+
@@ -5216,6 +5244,14 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260914a', ngay:'14/09/2026', ten:'Mã đơn liên tục giữa các máy · Lọc theo NV · Ghi chú/mã đơn dễ nhìn hơn',
+  vaPhieu:[],
+  muc:[
+   ['sua','Số thứ tự trong mã đơn (3 số cuối) giờ chạy CHUNG một dãy giữa cả 3 máy nhân viên — không còn mỗi máy tự đếm riêng, dễ soát hơn. Tiền tố mã máy (NV01/NV02/NV03) vẫn giữ nguyên.'],
+   ['moi','Tab <b>Phiếu giao hàng</b> có thêm ô lọc theo nhân viên lên đơn.'],
+   ['sua','Phần ngày-số trong mã đơn (vd -260914-088) hiện sáng rõ hơn, không còn mờ.'],
+   ['sua','Ghi chú đơn hiện in đậm ở mọi nơi hiển thị, dễ thấy hơn.'],
+  ]},
  {ban:'20260913a', ngay:'13/09/2026', ten:'Đánh dấu đã thu tiền hàng loạt',
   vaPhieu:[],
   muc:[

@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tính giá bán — Shopee / TikTok</title>
+<style>
+:root{
+  --ink:#16211C; --ink-2:#5A6660; --ink-3:#8A938E;
+  --page:#F0F2F0; --card:#FFFFFF; --line:#DDE2DE; --line-2:#C3CAC5;
+  --accent:#D2432A; --accent-tt:#101315; --accent-soft:#FBE8E4;
+  --loss:#A32D2D; --loss-soft:#FBEBEB;
+  --r:12px; --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:20px 14px 60px;background:var(--page);color:var(--ink);
+  font:400 15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:640px;margin:0 auto}
+h1{font-size:19px;font-weight:600;margin:0 0 16px}
+.seg{display:flex;border:1px solid var(--line-2);border-radius:10px;overflow:hidden;margin-bottom:16px}
+.seg button{flex:1;height:44px;border:0;background:#fff;color:var(--ink-2);font:600 14px inherit;cursor:pointer}
+.seg button:first-child{border-right:1px solid var(--line-2)}
+.seg button[aria-pressed="true"].sp{background:var(--accent);color:#fff}
+.seg button[aria-pressed="true"].tt{background:var(--accent-tt);color:#fff}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:14px}
+label{display:block;font-size:13px;color:var(--ink-2);margin-bottom:5px}
+input,select{width:100%;height:44px;padding:0 12px;border:1px solid var(--line-2);border-radius:8px;
+  background:#fff;color:var(--ink);font:600 17px var(--mono)}
+input:focus,select:focus{outline:none;border-color:var(--accent)}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pair+.pair{margin-top:10px}
+.out-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px}
+.out{border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.out.hero{grid-column:1/-1;background:var(--ink);border-color:var(--ink)}
+.out.hero.bad{background:var(--loss)}
+.out .k{font-size:12px;color:var(--ink-2)}
+.out.hero .k{color:#cfd3d1}
+.out .v{font:700 24px/1.3 var(--mono);margin-top:4px}
+.out.hero .v{color:#fff;font-size:30px}
+.note{font-size:13px;padding:10px 13px;border-radius:8px;margin-top:10px;line-height:1.5}
+.note.ok{background:#E7F0EA;color:#0E4A2E}
+.note.bad{background:var(--loss-soft);color:#7A2222}
+.toggle{background:none;border:1px dashed var(--line-2);border-radius:8px;width:100%;height:40px;
+  color:var(--ink-2);font:500 13px inherit;cursor:pointer;margin-top:2px}
+.toggle:hover{border-color:var(--ink-2)}
+.adv{display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.adv.open{display:block}
+.adv .card{background:var(--page)}
+.hint{font-size:12px;color:var(--ink-3);margin-top:4px;line-height:1.4}
+.row-toggle{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.row-toggle input{width:16px;height:16px}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px}
+td{padding:6px 4px;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:0}
+.num{text-align:right;font-family:var(--mono);white-space:nowrap}
+.neg{color:var(--loss)}
+.total td{border-top:2px solid var(--ink);font-weight:700;padding-top:9px}
+h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-2);margin:0 0 12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Tính giá bán sản phẩm</h1>
+
+<div class="seg">
+  <button id="btnSp" class="sp" aria-pressed="true">Shopee</button>
+  <button id="btnTt" class="tt" aria-pressed="false">TikTok Shop</button>
+</div>
+
+<div class="card">
+  <label for="timSp">Tìm sản phẩm đang bán (tự điền vốn + giá lẻ)</label>
+  <input id="timSp" list="dsSp" placeholder="Gõ tên hoặc SKU...">
+  <datalist id="dsSp"></datalist>
+  <div class="hint" id="hintSp">Chưa có dữ liệu sản phẩm — mở tool này từ tab quản lý để tự nạp.</div>
+  <div class="hint" id="giaLeInfo"></div>
+</div>
+
+<div class="card">
+  <div class="pair">
+    <div><label for="vonSp">Giá vốn (₫)</label><input type="number" id="vonSp" value="85000" step="1000" min="0"></div>
+    <div><label for="niemYet">Giá bán trên sàn (₫)</label><input type="number" id="niemYet" value="159000" step="1000" min="0"></div>
+  </div>
+</div>
+
+<div class="out-grid">
+  <div class="out hero" id="oLaiBox"><div class="k">Lợi nhuận mỗi đơn</div><div class="v" id="oLai">—</div></div>
+  <div class="out"><div class="k">Giá hòa vốn</div><div class="v" id="oHoaVon" style="font-size:18px">—</div></div>
+  <div class="out"><div class="k">Biên lợi nhuận</div><div class="v" id="oBien" style="font-size:18px">—</div></div>
+</div>
+<div class="note" id="noteGia"></div>
+
+<button class="toggle" id="btnAdv">▾ Tuỳ chỉnh nâng cao (thuế, phí dịch vụ, vận chuyển)</button>
+
+<div class="adv" id="adv">
+
+  <div class="card">
+    <h3>Pháp nhân &amp; thuế</h3>
+    <div class="pair">
+      <div>
+        <label for="phapNhanSel">Loại hình</label>
+        <select id="phapNhanSel">
+          <option value="dn" selected>Doanh nghiệp</option>
+          <option value="hkd">Hộ kinh doanh / cá nhân</option>
+        </select>
+      </div>
+      <div id="boxMST">
+        <label for="daXacMinh">Đã xác minh MST tổ chức?</label>
+        <select id="daXacMinh">
+          <option value="1" selected>Đã xác minh</option>
+          <option value="0">Chưa xác minh</option>
+        </select>
+      </div>
+    </div>
+    <div class="pair" id="rowDN">
+      <div><label for="vat">VAT đầu ra (%)</label><input type="number" id="vat" value="8" step="0.5" min="0"></div>
+      <div><label for="tndn">Thuế TNDN (%)</label><input type="number" id="tndn" value="20" step="1" min="0"></div>
+    </div>
+    <div class="pair" id="rowHKD" style="display:none">
+      <div><label for="thueKhoan">Thuế sàn khấu trừ (%)</label><input type="number" id="thueKhoan" value="1.5" step="0.1" min="0"></div>
+      <div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Phí sàn cố định</h3>
+    <div class="pair">
+      <div><label for="hoaHong">Hoa hồng (%)</label><input type="number" id="hoaHong" step="0.1" min="0"></div>
+      <div><label for="giaoDich">Phí giao dịch (%)</label><input type="number" id="giaoDich" step="0.1" min="0"></div>
+    </div>
+    <div class="pair">
+      <div id="boxPhiCoDinh"><label id="lblPhiCoDinh" for="phiCoDinh">Phí/đơn (₫)</label><input type="number" id="phiCoDinh" step="500" min="0"></div>
+      <div id="boxPiShip"><label for="piShip">Phí PiShip (₫)</label><input type="number" id="piShip" step="100" min="0"></div>
+    </div>
+  </div>
+
+  <div class="card" id="cardDichVu">
+    <h3 id="lblDichVu">Phí dịch vụ tuỳ chọn</h3>
+    <div id="dichVuBox"></div>
+  </div>
+
+  <div class="card">
+    <h3>Vận chuyển (SPX Express)</h3>
+    <div class="pair">
+      <div><label for="klThuc">Cân nặng (kg)</label><input type="number" id="klThuc" value="3.7" step="0.1" min="0"></div>
+      <div><label for="khuVuc">Khu vực</label>
+        <select id="khuVuc"><option value="gan" selected>Nội tỉnh/vùng</option><option value="xa">Liên vùng</option></select>
+      </div>
+    </div>
+    <div class="pair">
+      <div><label for="shipSanTro">Sàn/khách trả cước (₫)</label><input type="number" id="shipSanTro" value="0" step="1000" min="0"></div>
+      <div><label for="tyLeHoanDon">Tỷ lệ đơn hoàn (%)</label><input type="number" id="tyLeHoanDon" value="3" step="0.5" min="0"></div>
+    </div>
+    <div class="hint" id="hintShip"></div>
+  </div>
+
+  <button class="toggle" id="btnChiTiet">▾ Xem bảng chi tiết từng khoản phí</button>
+  <div id="chiTietBox" style="display:none">
+    <div class="card">
+      <table><tbody id="tbodyChiTiet"></tbody></table>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+var $ = function(id){ return document.getElementById(id); };
+function n(id){ var v = parseFloat($(id).value); return isNaN(v) ? 0 : v; }
+function vnd(x){ return Math.round(x).toLocaleString('vi-VN') + 'đ'; }
+function pct(x){ return (x*100).toFixed(1).replace('.', ',') + '%'; }
+
+var SAN = 'sp'; // 'sp' | 'tt'
+
+// ---- SPX Express, dùng chung cả 2 sàn (hiệu lực 02/12/2025)
+function cuocSPX(kg, xa){
+  if (kg <= 1) return 13000;
+  if (kg <= 2) return 17000;
+  if (kg <= 3) return 17000;
+  if (kg <= 4) return 18000;
+  if (kg <= 5) return 19000;
+  if (kg <= 10) return 33000;
+  return 33000 + Math.ceil(kg - 10) * (xa ? 6000 : 5000);
+}
+
+// ---- Mặc định phí cố định theo sàn (đè lên khi đổi sàn, người dùng vẫn sửa được)
+var MAC_DINH = {
+  sp: { hoaHong: 14, giaoDich: 6, phiCoDinh: 3000, piShip: 2700 },
+  tt: { hoaHong: 12.5, giaoDich: 6, phiCoDinh: 3000 }
+};
+
+// ---- Phí dịch vụ tuỳ chọn — khác thuật toán thật sự giữa 2 sàn, không gộp chung 1 hàm
+var DICH_VU_SP = [
+  { id:'vxtra', ten:'Voucher Xtra', r:5.5, c:50000 },
+  { id:'fs', ten:'Freeship Xtra', r:7, c:40000 },
+  { id:'ct', ten:'Content Xtra', r:3, c:50000 },
+  { id:'aff', ten:'Affiliate/KOC', r:10, c:0 }
+];
+var BAC_VXP = { 0:[0,0], 1:[1.5,30000], 2:[2,40000], 3:[2.5,50000], 4:[3,60000], 5:[4,100000] };
+var VXP_CO_BAN_R = 5, VXP_CO_BAN_C = 50000;
+
+function veDichVu(){
+  var box = $('dichVuBox');
+  if (SAN === 'sp'){
+    $('lblDichVu').textContent = 'Phí dịch vụ tuỳ chọn';
+    var html = '';
+    DICH_VU_SP.forEach(function(d){
+      html += '<div class="row-toggle"><input type="checkbox" id="dv_'+d.id+'"><label for="dv_'+d.id+'" style="margin:0">'+d.ten+'</label></div>'
+        + '<div class="pair" style="margin-bottom:10px">'
+        + '<input type="number" id="dvR_'+d.id+'" value="'+d.r+'" step="0.5" min="0" disabled>'
+        + (d.c > 0 ? '<input type="number" id="dvC_'+d.id+'" value="'+d.c+'" step="1000" min="0" disabled>' : '<div></div>')
+        + '</div>';
+    });
+    box.innerHTML = html;
+    DICH_VU_SP.forEach(function(d){
+      $('dv_'+d.id).addEventListener('change', function(){
+        $('dvR_'+d.id).disabled = !this.checked;
+        if ($('dvC_'+d.id)) $('dvC_'+d.id).disabled = !this.checked;
+        render();
+      });
+      $('dvR_'+d.id).addEventListener('input', render);
+      if ($('dvC_'+d.id)) $('dvC_'+d.id).addEventListener('input', render);
+    });
+  } else {
+    $('lblDichVu').textContent = 'Voucher Extra Program (VXP+) — 5 bậc';
+    box.innerHTML =
+      '<div class="row-toggle"><input type="checkbox" id="dv_vxp"><label for="dv_vxp" style="margin:0">Tham gia VXP</label></div>'
+      + '<select id="bacVXP" disabled style="margin-bottom:10px">'
+      + '<option value="0" selected>Chỉ gói cơ bản (5,0%)</option>'
+      + '<option value="1">Bậc 1 (6,5%)</option><option value="2">Bậc 2 (7,0%)</option>'
+      + '<option value="3">Bậc 3 (7,5%)</option><option value="4">Bậc 4 (8,0%)</option>'
+      + '<option value="5">Bậc 5 (9,0%)</option></select>'
+      + '<div class="row-toggle"><input type="checkbox" id="dv_fs"><label for="dv_fs" style="margin:0">Freeship Extra</label></div>'
+      + '<input type="number" id="dvR_fs" value="5" step="0.5" min="0" disabled style="margin-bottom:10px">'
+      + '<div class="row-toggle"><input type="checkbox" id="dv_aff"><label for="dv_aff" style="margin:0">Affiliate/KOC</label></div>'
+      + '<input type="number" id="dvR_aff" value="15" step="0.5" min="0" disabled>';
+    $('dv_vxp').addEventListener('change', function(){ $('bacVXP').disabled = !this.checked; render(); });
+    $('bacVXP').addEventListener('change', render);
+    $('dv_fs').addEventListener('change', function(){ $('dvR_fs').disabled = !this.checked; render(); });
+    $('dvR_fs').addEventListener('input', render);
+    $('dv_aff').addEventListener('change', function(){ $('dvR_aff').disabled = !this.checked; render(); });
+    $('dvR_aff').addEventListener('input', render);
+  }
+}
+
+function thamSoChung(){
+  var dn = $('phapNhanSel').value === 'dn';
+  return {
+    von: n('vonSp'),
+    vat: dn ? n('vat')/100 : 0,
+    thueDT: dn ? 0 : n('thueKhoan')/100,
+    tndn: dn ? n('tndn')/100 : 0,
+    daXacMinh: dn ? ($('daXacMinh').value === '1') : false,
+    hoaHong: n('hoaHong')/100,
+    giaoDich: n('giaoDich')/100,
+    shipShop: n('shipSanTro'),
+    tyLeHoan: n('tyLeHoanDon')/100
+  };
+}
+
+// ---- Tính lãi Shopee
+function bocShopee(P, p){
+  var extra = 0, rows = [];
+  DICH_VU_SP.forEach(function(d){
+    var cb = $('dv_'+d.id);
+    if (cb && cb.checked){
+      var r = parseFloat($('dvR_'+d.id).value)/100 || 0;
+      var c = $('dvC_'+d.id) ? parseFloat($('dvC_'+d.id).value)||0 : 0;
+      var v = c > 0 ? Math.min(P*r, c) : P*r;
+      extra += v; rows.push([d.ten, v]);
+    }
+  });
+  var hh = P*p.hoaHong, gd = P*p.giaoDich, coDinh = n('phiCoDinh'), piShip = n('piShip');
+  var phiSanTong = hh + gd + coDinh + piShip + extra + p.shipShop;
+  return ketQua(P, p, phiSanTong, rows, [
+    ['Phí cố định (hoa hồng)', -hh], ['Phí xử lý giao dịch', -gd],
+    ['Phí hạ tầng', -coDinh], ['Phí PiShip', -piShip]
+  ]);
+}
+
+// ---- Tính lãi TikTok
+function bocTiktok(P, p){
+  var extra = 0, rows = [];
+  if ($('dv_vxp') && $('dv_vxp').checked){
+    var bac = parseInt($('bacVXP').value, 10);
+    var coBan = Math.min(P*VXP_CO_BAN_R/100, VXP_CO_BAN_C);
+    var them = BAC_VXP[bac];
+    var phanThem = them[1] > 0 ? Math.min(P*them[0]/100, them[1]) : P*them[0]/100;
+    var vVXP = coBan + phanThem;
+    extra += vVXP; rows.push(['Voucher Extra Program', vVXP]);
+  }
+  if ($('dv_fs') && $('dv_fs').checked){
+    var vFs = P * (parseFloat($('dvR_fs').value)/100 || 0);
+    extra += vFs; rows.push(['Freeship Extra', vFs]);
+  }
+  if ($('dv_aff') && $('dv_aff').checked){
+    var vAff = P * (parseFloat($('dvR_aff').value)/100 || 0);
+    extra += vAff; rows.push(['Affiliate/KOC', vAff]);
+  }
+  var hh = P*p.hoaHong, gd = P*p.giaoDich, coDinh = n('phiCoDinh');
+  var phiSanTong = hh + gd + coDinh + extra + p.shipShop;
+  return ketQua(P, p, phiSanTong, rows, [
+    ['Hoa hồng nền tảng', -hh], ['Phí giao dịch', -gd], ['Phí xử lý đơn hàng', -coDinh]
+  ]);
+}
+
+function ketQua(P, p, phiSanTong, rowsDichVu, rowsCoDinh){
+  var phiSanThuc = p.daXacMinh ? phiSanTong/(1+p.vat) : phiSanTong;
+  var vonThuc = p.von/(1+p.vat);
+  var thueDT = P*p.thueDT;
+  var doanhThu = P/(1+p.vat);
+  var matDoHoan = p.tyLeHoan*phiSanThuc;
+  var lai = doanhThu - vonThuc - phiSanThuc - thueDT - matDoHoan;
+  var laiSauThue = lai > 0 ? lai*(1-p.tndn) : lai;
+  var rows = [['Giá bán', P, 1]].concat(rowsCoDinh.map(function(r){return [r[0], r[1], 0]}))
+    .concat(rowsDichVu.map(function(r){return [r[0], -r[1], 0]}));
+  rows.push(['Cước ship shop gánh', -p.shipShop, 0]);
+  if (p.tndn > 0 || $('phapNhanSel').value === 'dn'){
+    rows.push(['VAT khấu trừ trên phí sàn', phiSanTong - phiSanThuc, 0]);
+    rows.push(['VAT đầu ra phải nộp', -(P - doanhThu), 0]);
+    rows.push(['VAT đầu vào giá vốn', p.von - vonThuc, 0]);
+  } else {
+    rows.push(['Thuế sàn khấu trừ', -thueDT, 0]);
+  }
+  rows.push(['Phí mất trên đơn hoàn', -matDoHoan, 0]);
+  rows.push(['Giá vốn', -p.von, 0]);
+  return { lai:lai, laiSauThue:laiSauThue, bien: P>0?lai/P:0, rows:rows };
+}
+
+function boc(P, p){ return SAN === 'sp' ? bocShopee(P,p) : bocTiktok(P,p); }
+
+function hoaVon(p){
+  var lo = 0, hi = Math.max(p.von*60, 20000000);
+  for (var i=0;i<80;i++){ var mid=(lo+hi)/2; if (boc(mid,p).lai < 0) lo=mid; else hi=mid; }
+  return hi;
+}
+
+function render(){
+  var p = thamSoChung();
+  var P = n('niemYet');
+  var hv = hoaVon(p);
+  var b = boc(P, p);
+  var laiHienThi = $('phapNhanSel').value === 'dn' ? b.laiSauThue : b.lai;
+
+  $('oLai').textContent = vnd(laiHienThi);
+  $('oLaiBox').className = 'out hero' + (laiHienThi < 0 ? ' bad' : '');
+  $('oBien').textContent = pct(P>0 ? laiHienThi/P : 0);
+  $('oHoaVon').textContent = vnd(hv);
+
+  if (P < hv){
+    $('noteGia').className = 'note bad';
+    $('noteGia').innerHTML = '<b>Dưới điểm hòa vốn ' + vnd(hv-P) + '.</b> Mỗi đơn bán ra là một đơn lỗ.';
+  } else {
+    $('noteGia').className = 'note ok';
+    $('noteGia').innerHTML = '<b>Cao hơn hòa vốn ' + vnd(P-hv) + '.</b> Dư địa cho khuyến mãi/quảng cáo.';
+  }
+
+  var kg = n('klThuc'), xa = $('khuVuc').value === 'xa', cuoc = cuocSPX(kg, xa);
+  $('hintShip').innerHTML = 'Cước SPX tại ' + kg.toFixed(1).replace('.',',') + 'kg = <b>' + vnd(cuoc) + '</b>. Sàn/khách trả ít hơn thì shop gánh phần còn lại.';
+
+  var html = '';
+  b.rows.forEach(function(row){
+    var val = row[1];
+    if (Math.abs(val) < 0.5 && !row[2]) return;
+    var col = val < 0 ? ' neg' : '';
+    html += '<tr><td>'+row[0]+'</td><td class="num'+col+'">'+(val>0&&!row[2]?'+':'')+vnd(val)+'</td></tr>';
+  });
+  html += '<tr class="total"><td>Lợi nhuận trước thuế</td><td class="num'+(b.lai<0?' neg':'')+'">'+vnd(b.lai)+'</td></tr>';
+  $('tbodyChiTiet').innerHTML = html;
+}
+
+function apDungMacDinh(){
+  var m = MAC_DINH[SAN];
+  $('hoaHong').value = m.hoaHong;
+  $('giaoDich').value = m.giaoDich;
+  $('phiCoDinh').value = m.phiCoDinh;
+  $('piShip').value = m.piShip || 0;
+  $('lblPhiCoDinh').textContent = SAN === 'sp' ? 'Phí hạ tầng (₫)' : 'Phí xử lý đơn (₫)';
+  $('boxPiShip').style.display = SAN === 'sp' ? '' : 'none';
+  veDichVu();
+}
+
+$('btnSp').addEventListener('click', function(){ SAN='sp'; $('btnSp').setAttribute('aria-pressed','true'); $('btnTt').setAttribute('aria-pressed','false'); apDungMacDinh(); render(); });
+$('btnTt').addEventListener('click', function(){ SAN='tt'; $('btnTt').setAttribute('aria-pressed','true'); $('btnSp').setAttribute('aria-pressed','false'); apDungMacDinh(); render(); });
+
+$('phapNhanSel').addEventListener('change', function(){
+  var dn = this.value === 'dn';
+  $('rowDN').style.display = dn ? '' : 'none';
+  $('rowHKD').style.display = dn ? 'none' : '';
+  $('boxMST').style.display = dn ? '' : 'none';
+  render();
+});
+
+$('btnAdv').addEventListener('click', function(){
+  var open = $('adv').classList.toggle('open');
+  this.textContent = (open?'▴':'▾') + ' Tuỳ chỉnh nâng cao (thuế, phí dịch vụ, vận chuyển)';
+});
+$('btnChiTiet').addEventListener('click', function(){
+  var box = $('chiTietBox');
+  var show = box.style.display === 'none';
+  box.style.display = show ? '' : 'none';
+  this.textContent = (show?'▴':'▾') + ' Xem bảng chi tiết từng khoản phí';
+});
+
+['vonSp','niemYet','vat','tndn','thueKhoan','daXacMinh','hoaHong','giaoDich','phiCoDinh','piShip',
+ 'klThuc','khuVuc','shipSanTro','tyLeHoanDon'].forEach(function(id){
+  $(id).addEventListener('input', render);
+  $(id).addEventListener('change', render);
+});
+
+apDungMacDinh();
+render();
+
+// ---- Nạp danh mục sản phẩm đang bán từ trang quản lý (postMessage) — mở lẻ
+// file này thì không có gì nạp, ô tìm vẫn hoạt động nhưng không gợi ý được.
+var CATALOG_MAP = {};
+window.addEventListener('message', function(e){
+  var d = e.data;
+  if (!d || d.type !== 'catalog' || !Array.isArray(d.items)) return;
+  CATALOG_MAP = {};
+  var dl = $('dsSp'); dl.innerHTML = '';
+  d.items.forEach(function(p){
+    var label = p.sku + ' — ' + p.ten;
+    CATALOG_MAP[label] = p;
+    var o = document.createElement('option'); o.value = label; dl.appendChild(o);
+  });
+  $('hintSp').textContent = d.items.length.toLocaleString('vi-VN') + ' sản phẩm đang bán đã nạp từ hệ thống.';
+});
+// Báo cho trang cha (quanly.html) biết đã sẵn sàng nhận catalog — tránh việc
+// trang cha gửi postMessage trước khi listener ở đây kịp gắn (mất tin, không
+// có cách "gửi lại"). Không có trang cha (mở file lẻ) thì bỏ qua, không lỗi.
+try { window.parent.postMessage({type:'ts-ready'}, '*'); } catch(e){}
+$('timSp').addEventListener('input', function(){
+  var p = CATALOG_MAP[this.value];
+  if (!p) { $('giaLeInfo').textContent = ''; return; }
+  $('vonSp').value = p.von || 0;
+  $('niemYet').value = '';
+  $('giaLeInfo').innerHTML = p.gb
+    ? 'Giá bán lẻ tại cửa hàng: <b>' + vnd(p.gb) + '</b>' + (p.brand ? ' · ' + p.brand : '')
+    : '<span style="color:var(--loss)">Sản phẩm này chưa có giá bán lẻ trong hệ thống.</span>';
+  render();
+});
+
+// ================================================================
+// Tự kiểm tra biên (console only — không phơi ra UI cho người dùng)
+// ================================================================
+(function selfTest(){
+  var fail = 0;
+  function eq(ten, thuc, kyVong, sai){
+    sai = sai || 1;
+    if (Math.abs(thuc-kyVong) > sai){ fail++; console.error('LỖI tự kiểm: ' + ten + ' thực=' + thuc + ' kỳ vọng=' + kyVong); }
+  }
+  // Shopee: không phí, giá=vốn -> lãi=0
+  var oldSan = SAN; SAN = 'sp';
+  eq('SP không phí giá=vốn -> lãi 0', ketQua(100000, {von:100000,vat:0,thueDT:0,tndn:0,daXacMinh:true,hoaHong:0,giaoDich:0,shipShop:0,tyLeHoan:0}, 0, [], []).lai, 0, 0.01);
+  // TikTok VXP bậc 5 = cơ bản(5%,trần50k) + bậc5(4%,trần100k) tại giá 100k
+  var kyVongVXP5 = Math.min(100000*0.05,50000) + Math.min(100000*0.04,100000);
+  SAN = 'tt';
+  var r = bocTiktokTest(100000, 5);
+  eq('TT VXP bậc5 đúng công thức', r, kyVongVXP5, 1);
+  function bocTiktokTest(P, bac){
+    var coBan = Math.min(P*0.05,50000);
+    var them = BAC_VXP[bac];
+    return coBan + (them[1]>0 ? Math.min(P*them[0]/100, them[1]) : P*them[0]/100);
+  }
+  SAN = oldSan;
+  console.log(fail === 0 ? 'Tự kiểm tra: OK (2/2)' : ('Tự kiểm tra: ' + fail + ' lỗi'));
+})();
+</script>
+</body>
+</html>

@@ -74,12 +74,11 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right;
    sau sidebar, không phụ thuộc bề rộng màn hình. */
 main:has(> #pg-gia:not(.hide)){max-width:none}
 #pg-gia{padding:0 16px}
-#dsGia table{table-layout:auto}
+#dsGia table{table-layout:fixed}
 #dsGia thead th,#dsGia tr:first-child th{position:sticky;top:0;z-index:5;background:var(--card)}
-#dsGia td:nth-child(2){min-width:min(46vw,560px)}
 #dsGia input.ten{width:100%}
-.qd{display:flex;flex-direction:column;gap:3px;min-width:210px}
-.qd .cau{display:flex;align-items:center;gap:5px;white-space:nowrap;font-size:12.5px;color:var(--tx2)}
+.qd{display:flex;flex-direction:column;gap:3px}
+.qd .cau{display:flex;align-items:center;gap:5px;flex-wrap:wrap;font-size:12.5px;color:var(--tx2)}
 .qd .suyra{font-size:11.5px}
 .qd .tot{color:var(--ok)}.qd .xau{color:var(--bad);font-weight:600}
 .qd input.so{width:58px;padding:4px;text-align:center}
@@ -303,6 +302,7 @@ body.ks-chi *{cursor:crosshair!important}
     <button id="tb-bc" onclick="tab('bc')">Báo cáo</button>
     <button id="tb-so" onclick="tab('so')">Sổ cái</button>
     <button id="tb-gia" onclick="tab('gia')">Bảng giá</button>
+    <button id="tb-ts" onclick="tab('ts')">Tính giá sàn</button>
     <button id="tb-in" onclick="tab('in')">Nạp đơn</button>
     <button id="tb-cb" onclick="tab('cb')">Cảnh báo <span id="cbSo"></span></button>
     <button id="tb-vh" onclick="tab('vh')">Vận hành <span id="vhSo"></span></button>
@@ -417,6 +417,10 @@ body.ks-chi *{cursor:crosshair!important}
     </div>
     <div class="sm">Sửa giá bán hay giá vốn ở đây <b>không đụng tới đơn đã bán</b> — mỗi đơn giữ giá của chính ngày bán.</div>
   </div>
+</section>
+
+<section id="pg-ts" class="hide" style="height:calc(100vh - 140px)">
+  <iframe id="ifTs" src="tinh_gia.html" style="width:100%;height:100%;border:0;border-radius:12px"></iframe>
 </section>
 
 <section id="pg-cb" class="hide"><div id="cb"></div></section>
@@ -2385,7 +2389,7 @@ function tab(t){
      nhịp: đổi tab hiện ra NGAY, rồi nhường cho trình duyệt vẽ xong màn hình,
      xong mới tính nội dung. Tổng thời gian y như cũ nhưng cảm giác nhanh hẳn
      vì tab phản hồi tức thì và có chữ "Đang tính…" trong lúc chờ. */
-  ['lam','in','bc','so','gia','cb','vh'].forEach(function(x){
+  ['lam','in','bc','so','gia','ts','cb','vh'].forEach(function(x){
     $('pg-'+x).classList.toggle('hide',x!==t);$('tb-'+x).classList.toggle('on',x===t)});
   var oCho={lam:'lamDs',bc:'bc',so:'dsSo',cb:'cb'}[t];
   if(oCho && $(oCho) && !$(oCho).innerHTML) $(oCho).innerHTML='<div class="card"><div class="empty">Đang tính…</div></div>';
@@ -2394,8 +2398,25 @@ function tab(t){
 function veTab_(t){
   if(t==='lam')veLam();
   if(t==='bc')veBC(); if(t==='so')veSo(); if(t==='gia'){veGia();vePhat()} if(t==='cb')veCB();
+  if(t==='ts')guiCatalogChoTs();
   if(t==='vh'){veNV();veMayGui();veNhatKy();veKhaiTruong();nhacSaoLuu();veNvXemLS()}
 }
+/* Gửi danh mục sản phẩm đang bán (SKU/tên/giá lẻ/giá vốn) cho tool tính giá
+   sàn (tinh_gia.html, chạy trong iframe riêng) qua postMessage — không viết
+   thẳng biến vào iframe vì file đó có thể mở lẻ ngoài quanly.html. */
+function guiCatalogChoTs(){
+  var f = $('ifTs'); if(!f||!f.contentWindow) return;
+  var items = Object.keys(GIA).filter(function(k){return !GIA[k].ngung}).map(function(k){
+    var p=GIA[k]; return {sku:p.sku, ten:p.ten, brand:p.brand||'', gb:p.gb||0, von:p.von||0};
+  });
+  f.contentWindow.postMessage({type:'catalog', items:items}, '*');
+}
+// tinh_gia.html tự báo "ts-ready" ngay khi gắn xong listener của nó — tránh
+// việc gửi catalog trước khi bên kia kịp lắng nghe (postMessage gửi sớm quá
+// sẽ mất tin, không có cách gửi lại).
+window.addEventListener('message', function(e){
+  if (e.data && e.data.type === 'ts-ready') guiCatalogChoTs();
+});
 function trongKy(d){
   var iso=String(d.iso||''); if(!iso) return true;
   var n=new Date(), y=n.getFullYear(), m=n.getMonth();
@@ -3447,7 +3468,10 @@ function veGia(){
     (thieu?' · <span style="color:var(--warn)"><b>'+thieu+'</b> chưa có giá vốn</span>':'');
   if(!ds.length){$('dsGia').innerHTML='<div class="empty">Không tìm thấy'+(nh?' trong nhóm <b>'+esc(nh)+'</b>':'')+'.'+
     (nh?'<br><button class="btn2" style="margin-top:8px" onclick="document.getElementById(\'gn\').value=\'\';giaReset()">Tìm trong tất cả nhóm</button>':'')+'</div>';return}
-  $('dsGia').innerHTML='<table><tr><th>SKU</th><th>Sản phẩm</th><th>Bán lẻ</th><th class="r">Giá lẻ</th>'+
+  $('dsGia').innerHTML='<table><colgroup><col style="width:11%"><col style="width:27%"><col style="width:7%">'+
+    '<col style="width:9%"><col style="width:14%"><col style="width:11%"><col style="width:7%">'+
+    '<col style="width:6%"><col style="width:8%"></colgroup>'+
+    '<tr><th>SKU</th><th>Sản phẩm</th><th>Bán lẻ</th><th class="r">Giá lẻ</th>'+
     '<th>Bán sỉ</th><th class="r">Giá vốn</th><th class="r">VAT %</th><th class="r">Biên</th><th></th></tr>'+
     ds.slice(0,GLIM).map(function(p){
       var b=(p.gb&&p.von)?((p.gb-p.von)/p.gb*100).toFixed(1)+'%':'—';
