@@ -684,7 +684,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260912a';
+var APP_VER='20260914a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -4903,6 +4903,12 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260914a', ngay:'14/09/2026', ten:'Tab Tính giá sàn · Sửa cột bảng giá',
+  vaPhieu:[],
+  muc:[
+   ['moi','Thêm tab <b>Tính giá sàn</b>: tính lời/lỗ bán trên Shopee/TikTok, tự điền giá vốn khi gõ tên/SKU đúng sản phẩm đang bán.'],
+   ['sua','Tab Bảng giá: cột SKU rộng hơn, hết khoảng trống thừa trước cột Giá vốn.'],
+  ]},
  {ban:'20260912a', ngay:'12/09/2026', ten:'Huy hiệu khách · Công nợ theo khách · Khách lâu không quay lại',
   vaPhieu:[],
   muc:[
