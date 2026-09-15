@@ -561,7 +561,7 @@ body.ks-chi *{cursor:crosshair!important}
       <div id="ttPhu" class="hide" style="margin-top:8px">
         <div class="row">
           <div><label>Hình thức</label><select id="ttHt" onchange="veTkNhan()">
-            <option>COD</option><option>Chuyển khoản</option><option>Tiền mặt</option></select>
+            <option>COD</option><option>CK HKD</option><option>CK Cty</option><option>Tiền mặt</option></select>
             <select id="ttHtTK" class="hide" style="margin-top:6px"></select></div>
           <div id="ttCocO" class="hide"><label>Số tiền đã trả</label>
             <input id="ttDaTra" inputmode="numeric" value="0" oninput="dinhDangTien(this)" onchange="veGio()"></div>
@@ -768,7 +768,7 @@ body.ks-chi *{cursor:crosshair!important}
   <div id="ttdPhu" class="hide mt">
     <div class="row">
       <div><label>Hình thức</label><select id="ttdHt" onchange="veTkNhanD()">
-        <option>COD</option><option>Chuyển khoản</option><option>Tiền mặt</option></select>
+        <option>COD</option><option>CK HKD</option><option>CK Cty</option><option>Tiền mặt</option></select>
         <select id="ttdHtTK" class="hide" style="margin-top:6px"></select></div>
       <div id="ttdCocO" class="hide"><label>Số tiền đã trả</label>
         <input id="ttdDaTra" inputmode="numeric" value="0" oninput="dinhDangTien(this)"></div>
@@ -787,7 +787,7 @@ body.ks-chi *{cursor:crosshair!important}
     <button onclick="document.getElementById('dlgThuTien').close()" style="background:var(--c2);color:var(--tx2);padding:6px 12px">Đóng</button>
   </div>
   <div class="mt"><label>Đã thu bằng hình thức nào?</label>
-    <select id="ttNhanhHt"><option>Tiền mặt</option><option>Chuyển khoản</option></select>
+    <select id="ttNhanhHt"><option>Tiền mặt</option><option>CK HKD</option><option>CK Cty</option></select>
   </div>
   <button class="btn mt" onclick="xacNhanThuTienNhanh()" style="background:var(--acc);color:#03121f;font-weight:600">Xác nhận đã thu</button>
 </dialog>
@@ -937,7 +937,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260914a';
+var APP_VER='20260915c';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -2302,7 +2302,7 @@ function veKetCa(){
     '</div>'+
     '<button class="btn-nho" style="margin-top:12px;width:100%;padding:11px;background:var(--acc);color:#03121f;font-weight:600" '+
       'onclick="inKetCa()">In phiếu kết ca</button>'+
-    '<div class="sm" style="margin-top:6px">Hiện tổng đơn hôm nay, chia theo Tiền mặt/Chuyển khoản/Chưa thu, '+
+    '<div class="sm" style="margin-top:6px">Hiện tổng đơn hôm nay, chia theo Tiền mặt/CK HKD/CK Cty/Chưa thu, '+
     'kèm số shipper còn phải nộp lại — để đối tiền, cộng sổ, check đơn.</div>';
 }
 
@@ -2406,22 +2406,49 @@ async function taiLaiToanBo(){
   bao('newMsg','Đã đồng bộ lại xong — hiện có '+DON.length+' đơn trên máy này.','ok');
 }
 
-/* ── KHÁCH ── */
+/* ── KHÁCH ──
+   CHI NHÁNH — thêm 15/09/2026 theo yêu cầu chủ: một SĐT (thường là khách Sỉ/
+   Breeder/Thú y) có thể giao tới NHIỀU địa chỉ khác nhau. KHÔNG thêm cột Sheet
+   mới (tránh đụng schema KHACH_HANG) — tận dụng đúng ô "Địa chỉ" đang có, quy
+   ước: nếu ô này có ≥2 dòng và MỖI dòng đều dạng "[Tên chi nhánh] địa chỉ" thì
+   coi là nhiều chi nhánh; còn lại (1 dòng, hoặc nhiều dòng tự do không đúng
+   khuôn) vẫn là địa chỉ thường như trước — khách chỉ có 1 địa chỉ thì KHÔNG
+   thấy gì khác, hoàn toàn ngược tương thích. */
+function dsChiNhanh_(dc){
+  if(!dc) return null;
+  var dong=String(dc).split('\n').map(function(x){return x.trim()}).filter(Boolean);
+  if(dong.length<2) return null;
+  var ds=dong.map(function(l){ var m=/^\[([^\]]{1,24})\]\s*(.+)$/.exec(l); return m?{nhan:m[1],dc:m[2]}:null; });
+  return ds.some(function(x){return !x}) ? null : ds;
+}
+function ghepChiNhanh_(ds){ return ds.map(function(c){return '['+c.nhan+'] '+c.dc}).join('\n') }
 $('sdt').addEventListener('input',function(){
   var s=this.value.replace(/\D/g,''); var k=KH[s];
   if(k){ $('khten').value=k.ten; $('kenh').value=k.kenh||'Lẻ';
     var gr=Object.keys(k.gia||{}).filter(function(x){return k.gia[x].het>=today()});
     var n=soLan(s);
-    $('dc').value=k.dc||'';
+    var dsCN=dsChiNhanh_(k.dc);
+    $('dc').value=dsCN?'':(k.dc||'');
     $('khInfo').innerHTML='<div class="khbox">'+huyHieuHTML_(s,DON)+
       (n?'Khách cũ · <a href="#" class="lnk" onclick="lichSuKH(\''+s+'\');return false">'+n+' lần mua</a>'
         :'<span style="color:var(--tx2)">Chưa mua lần nào tại đây</span>')+
       (n?' · <b>'+tien(tongChi(s))+'</b>':'')+
       (gr.length?' · <span style="color:var(--pur)">'+gr.length+' sản phẩm có giá riêng</span>':'')+
-      (k.dc?'<div class="sm" style="margin-top:4px">'+esc(k.dc)+'</div>':'')+'</div>';
-  } else { if(!KH[s])$('dc').value=''; $('khInfo').innerHTML=s.length>=9?'<div class="khbox" style="color:var(--warn)">Khách mới — gõ tên và địa chỉ, lưu đơn xong hệ thống tự thêm vào danh sách</div>':''; }
+      (dsCN?'':(k.dc?'<div class="sm" style="margin-top:4px">'+esc(k.dc)+'</div>':''))+
+      (dsCN?'<div class="sm" style="margin-top:6px">Khách có '+dsCN.length+' chi nhánh — bấm đúng nơi giao lần này:</div>'+
+        '<div style="margin-top:4px">'+dsCN.map(function(c,i){
+          return '<span class="mtag" style="cursor:pointer;margin-right:6px" title="'+esc(c.dc)+'" onclick="chonChiNhanh_('+i+')">'+esc(c.nhan)+'</span>';
+        }).join('')+'</div>':'')+
+      '</div>';
+    CHI_NHANH_DS=dsCN;
+  } else { if(!KH[s])$('dc').value=''; CHI_NHANH_DS=null; $('khInfo').innerHTML=s.length>=9?'<div class="khbox" style="color:var(--warn)">Khách mới — gõ tên và địa chỉ, lưu đơn xong hệ thống tự thêm vào danh sách</div>':''; }
   veGio();   // KHÔNG dùng veLai() — nó nhả con trỏ, gõ số bị đứt sau mỗi chữ
 });
+var CHI_NHANH_DS=null;
+function chonChiNhanh_(i){
+  if(!CHI_NHANH_DS||!CHI_NHANH_DS[i])return;
+  $('dc').value=CHI_NHANH_DS[i].dc; veGio();
+}
 function soLan(sdt){return DON.filter(function(d){return d.sdt===sdt}).length}
 function tongChi(sdt){return DON.filter(function(d){return d.sdt===sdt}).reduce(function(a,d){return a+d.tong},0)}
 function khHienTai(){ return KH[$('sdt').value.replace(/\D/g,'')] }
@@ -2487,12 +2514,19 @@ function lichSuKH(sdt){
   ds.forEach(function(d){d.dong.forEach(function(x){
     sp[x.ten]=sp[x.ten]||{sl:0,tien:0}; sp[x.ten].sl+=x.sl; sp[x.ten].tien+=x.thanhTien})});
   var top=Object.keys(sp).sort(function(a,b){return sp[b].tien-sp[a].tien}).slice(0,3);
-  $('kTom').innerHTML=esc(sdt)+(k.dc?' · '+esc(k.dc):'')+
+  var dsCN=dsChiNhanh_(k.dc);
+  $('kTom').innerHTML=esc(sdt)+(dsCN?'':(k.dc?' · '+esc(k.dc):''))+
     '<br><b style="color:var(--tx)">'+ds.length+' đơn</b> · tổng chi <b style="color:var(--ok)">'+tien(tongChi(sdt))+'</b>'+
-    (top.length?'<br>Hay mua: '+top.map(function(t){return esc(t)+' ('+sp[t].sl+')'}).join(' · '):'');
+    (top.length?'<br>Hay mua: '+top.map(function(t){return esc(t)+' ('+sp[t].sl+')'}).join(' · '):'')+
+    (dsCN?'<div class="sm" style="margin-top:6px"><b>'+dsCN.length+' chi nhánh:</b>'+
+      dsCN.map(function(c){return '<div>· <b>'+esc(c.nhan)+'</b> — '+esc(c.dc)+'</div>'}).join('')+'</div>':'');
   var mn=mocNhac(sdt), l=linkLH(sdt);
   THU_TAM=docThu(k.thu);
+  var dsCN1=dsChiNhanh_(k.dc);
+  CN_TAM=dsCN1?dsCN1.map(function(c){return {nhan:c.nhan,dc:c.dc}}):null;
+  DC_DON=dsCN1?'':(k.dc||'');
   $('kHoSo').innerHTML=
+    '<div class="hd"><b style="color:var(--acc)">Địa chỉ giao hàng</b><div id="kDCbox"></div></div>'+
     '<div class="hd"><b style="color:var(--acc)">Thú cưng của nhà này</b>'+
       '<div class="sm" style="margin:3px 0 7px">Chỉ cần số lượng và độ tuổi. '+
       'Nhà vừa có con lớn vừa có con nhỏ thì bấm <b>Thêm dòng</b>.</div>'+
@@ -2513,6 +2547,7 @@ function lichSuKH(sdt){
         (canNhac(sdt)?' — <b style="color:var(--warn)">đến hạn rồi</b>':'')+'</span>':'')+
       (canNhac(sdt)?'<button class="btn-nho" onclick="daHoiTham(\''+sdt+'\')">Đã hỏi thăm</button>':'')+
     '</div><div id="kHsMsg"></div>';
+  veDiaChiBlock_(sdt);
   veThuTam(sdt);
   var gr=Object.keys(k.gia||{}).filter(function(x){return k.gia[x].het>=today()});
   $('kDs').innerHTML=(gr.length?'<div class="hd" style="background:#2a2440"><b style="color:var(--pur)">Giá riêng đang có hiệu lực</b>'+
@@ -2974,7 +3009,7 @@ function luu(){
     else if(daTra===tongDon){ ttLuu='DA' }
   }
   DON.unshift({tt:ttLuu,ttHt:(ttLuu==='CHUA'?'':$('ttHt').value),
-    tkNhan:(ttLuu!=='CHUA'&&$('ttHt').value==='Chuyển khoản')?($('ttHtTK').value||''):'',
+    tkNhan:(ttLuu!=='CHUA'&&laCK_($('ttHt').value))?($('ttHtTK').value||''):'',
     daTra:daTra,
     ma:ma,ngay:nowStr(),iso:today(),kenh:kenh,sdt:sdt,khach:ten,nv:CFG.ten,may:CFG.ma,
     sl:ts,tienHang:hang,ship:ship,giam:giam,phiChanh:phiChanh,tong:hang+ship-giam,dc:dc,ghichu:$('ghichu').value.trim(),
@@ -2986,7 +3021,25 @@ function luu(){
   if(sdt){
     khMoi=!KH[sdt];
     if(khMoi) KH[sdt]={sdt:sdt,ten:ten,kenh:kenh,dc:dc,gia:{}};
-    var k=KH[sdt]; k.ten=ten||k.ten; k.kenh=kenh; if(dc)k.dc=dc; k.gia=k.gia||{}; k.canDay=true;
+    var k=KH[sdt]; k.ten=ten||k.ten; k.kenh=kenh; k.gia=k.gia||{}; k.canDay=true;
+    /* Chi nhánh: KHÔNG ghi đè thẳng k.dc như trước (từng làm mất chi nhánh
+       khác của khách nếu đơn này giao chỗ khác). Địa chỉ trùng chi nhánh đã
+       biết -> không cần đổi gì. Địa chỉ MỚI khác hẳn -> hỏi có lưu thành chi
+       nhánh riêng không (mặc định KHÔNG mất dữ liệu cũ nếu bấm Huỷ). */
+    if(dc){
+      var dsCu=dsChiNhanh_(k.dc);
+      var daBiet=dsCu?dsCu.some(function(c){return c.dc===dc}):(k.dc===dc);
+      if(!daBiet){
+        if(!k.dc){ k.dc=dc }
+        else if(confirm('Địa chỉ giao đơn này khác với địa chỉ đã lưu cho '+ten+':\n"'+k.dc.replace(/\n/g,' · ')+'"\n\n'+
+          'Lưu thành CHI NHÁNH RIÊNG (giữ cả địa chỉ cũ, lần sau bấm chọn nhanh) cho khách này?\n\n'+
+          'Bấm Huỷ nếu chỉ giao đúng lần này, không lưu vào danh bạ.')){
+          var ds=dsCu||[{nhan:'CN1',dc:k.dc}];
+          ds.push({nhan:'CN'+(ds.length+1),dc:dc});
+          k.dc=ghepChiNhanh_(ds);
+        }
+      }
+    }
     GIO.forEach(function(g){
       if(g.hs>1) return;
       /* GHI ĐÈ giá riêng mỗi khi bán — sửa 10/09/2026 theo yêu cầu của chủ:
@@ -3083,12 +3136,13 @@ function capMa(pre,epNhay){
 function xoaDon(ma,tuPG){
   var d=getDon(ma); if(!d)return;
   var o=tuPG?'pgMsg':'listMsg';
-  if(d.iso!==today()){
-    alert('Đơn '+ma+' là đơn ngày '+d.iso.split('-').reverse().join('/')+', không phải hôm nay.\n\n'+
-      'Nhân viên chỉ xoá được đơn trong ngày. Đơn cũ phải báo chủ xoá ở máy quản lý.');
-    return;
-  }
-  var ly=prompt('XOÁ ĐƠN '+ma+'\n'+(d.khach||'')+' — '+tien(d.tong)+'\n\n'+
+  // SỬA 15/09/2026 (chủ yêu cầu): trước đây CHẶN HẲN xoá đơn cũ, bắt báo chủ
+  // xử lý ở máy quản lý. Nay cho xoá luôn, kể cả đơn cũ — vẫn bắt buộc ghi lý
+  // do y hệt đơn hôm nay (hiện trong Sheet cho chủ xem), chỉ thêm dòng CẢNH
+  // BÁO NGÀY ngay đầu hộp thoại để nhân viên không bấm nhầm đơn cũ.
+  var cu=d.iso!==today();
+  var ly=prompt((cu?'⚠ ĐÂY LÀ ĐƠN CŨ NGÀY '+d.iso.split('-').reverse().join('/')+', KHÔNG PHẢI HÔM NAY.\n\n':'')+
+    'XOÁ ĐƠN '+ma+'\n'+(d.khach||'')+' — '+tien(d.tong)+'\n\n'+
     'Ghi lý do xoá (bắt buộc, sẽ hiện trong Sheet của chủ):','');
   if(ly===null)return;
   ly=ly.trim();
@@ -3677,6 +3731,32 @@ function demInLS(){
   var b=$('btnInNhieuLS'); if(b) b.textContent='In '+n+' phiếu đã chọn';
   var f=$('fabInLS'), t=$('fabInLSTxt');
   if(f){ f.classList.toggle('hien',n>0); if(t) t.textContent='In '+n+' phiếu đã chọn' }
+  capNhatMenuNhanh_('.ckinls',0);
+}
+/* MENU NHANH — thêm 15/09/2026 theo yêu cầu chủ (giống Sapo): tích ĐÚNG 1 đơn
+   là nổi ngay 4 nút thao tác hay dùng nhất cho riêng đơn đó, khỏi phải bung
+   chi tiết đi tìm nút. Tích từ 2 đơn trở lên thì đây là đang CHỌN HÀNG LOẠT
+   (in/huỷ nhiều đơn cùng lúc, thanh nổi #fabIn/#fabInLS lo việc đó) — ẩn menu
+   để khỏi lẫn 2 việc khác nhau. Dùng lại NGUYÊN các hàm đã có (suaTaiCho,
+   xoaDon, inPhieu, doiTT), không viết logic mới. */
+function menuNhanhHTML_(ma,tuPG){
+  var d=getDon(ma); if(!d) return '';
+  return '<div class="menuNhanh" onclick="event.stopPropagation()" style="margin:0 0 8px;padding:8px;'+
+    'background:var(--c2);border-radius:14px;display:grid;grid-template-columns:1fr 1fr;gap:8px">'+
+    '<button class="na" onclick="suaTaiCho(\''+ma+'\''+(tuPG?',1':'')+')">✎ Sửa đơn</button>'+
+    '<button class="na" style="color:var(--bad)" onclick="xoaDon(\''+ma+'\''+(tuPG?',1':'')+')">✕ Huỷ đơn</button>'+
+    '<button class="na" onclick="inPhieu([\''+ma+'\'],1)">🖶 In phiếu</button>'+
+    '<button class="na" style="color:'+(d.tt==='DA'?'var(--ok)':'var(--warn)')+'" onclick="doiTT(\''+ma+'\')">'+
+      (d.tt==='DA'?'Bỏ đã thu':'💰 Đánh dấu ĐÃ THU')+'</button>'+
+  '</div>';
+}
+function capNhatMenuNhanh_(cls,tuPG){
+  [].slice.call(document.querySelectorAll('.menuNhanh')).forEach(function(e){e.remove()});
+  var ds=[].slice.call(document.querySelectorAll(cls+':checked'));
+  if(ds.length!==1) return;
+  var ma=ds[0].value, wrap=document.getElementById('pgw_'+ma); if(!wrap) return;
+  var dgon=wrap.querySelector('.dgon'); if(!dgon) return;
+  dgon.insertAdjacentHTML('afterend', menuNhanhHTML_(ma,tuPG));
 }
 function chonHetInLS(v){ [].slice.call(document.querySelectorAll('.ckinls')).forEach(function(c){c.checked=!!v}); demInLS() }
 function chonHetDon(v){ [].slice.call(document.querySelectorAll('.ckdon')).forEach(function(c){c.checked=!!v}); demHuy() }
@@ -3746,9 +3826,27 @@ function moSuaTT(ma){
   $('ttdTen').textContent='Sửa thanh toán — đơn '+ma;
   $('ttdDaTra').value=so(d.daTra||0).toLocaleString('vi-VN');
   chonTTd(d.tt||'CHUA');
-  $('ttdHt').value=(d.ttHt&&['COD','Chuyển khoản','Tiền mặt'].indexOf(d.ttHt)>=0)?d.ttHt:'COD';
+  var dsHT=['COD','CK HKD','CK Cty','Tiền mặt'];
+  if(d.ttHt && dsHT.indexOf(d.ttHt)<0){
+    // Hình thức cũ (vd "Chuyển khoản" ghi trước 15/09/2026) không còn trong
+    // danh sách mới — thêm tạm vào đầu để giữ đúng giá trị cũ, không bị âm
+    // thầm đổi thành COD chỉ vì mở lên xem/sửa chỗ khác.
+    var opt=document.createElement('option'); opt.textContent=d.ttHt;
+    $('ttdHt').insertBefore(opt,$('ttdHt').firstChild);
+  }
+  $('ttdHt').value=d.ttHt||'COD';
   veTkNhanD();
-  if(d.ttHt==='Chuyển khoản'&&d.tkNhan) $('ttdHtTK').value=d.tkNhan;
+  if(laCK_(d.ttHt)&&d.tkNhan){
+    // Tài khoản cũ của đơn này có thể không còn trong danh sách TK_CHINH hiện
+    // tại (chủ đổi/gỡ tài khoản, hoặc đơn ghi trước khi có TK_CHINH) — chèn
+    // tạm vào đầu để KHÔNG bị rớt về ô trống rồi lỡ tay xoá mất khi bấm Lưu
+    // mà không đổi gì (bug thật đã bắt được lúc test tính năng CK HKD/CK Cty).
+    var eTk=$('ttdHtTK');
+    if([].slice.call(eTk.options).every(function(o){return o.value!==d.tkNhan})){
+      var o2=document.createElement('option'); o2.textContent=d.tkNhan; eTk.insertBefore(o2,eTk.firstChild);
+    }
+    eTk.value=d.tkNhan;
+  }
   $('dlgTT').showModal();
 }
 function chonTTd(v){
@@ -3759,7 +3857,7 @@ function chonTTd(v){
 }
 function veTkNhanD(){
   var eHt=$('ttdHt'), eTk=$('ttdHtTK'); if(!eHt||!eTk) return;
-  var laCK=eHt.value==='Chuyển khoản';
+  var laCK=laCK_(eHt.value);
   eTk.classList.toggle('hide',!laCK);
   if(!laCK) return;
   eTk.innerHTML = TK_CHINH.length
@@ -3771,7 +3869,7 @@ function luuSuaTT(){
   var ttMoi=document.querySelector('#ttdChon .ttb.on');
   ttMoi=ttMoi?ttMoi.getAttribute('data-tt'):'CHUA';
   var httMoi=ttMoi==='CHUA'?'':$('ttdHt').value;
-  var tkMoi=(ttMoi!=='CHUA'&&httMoi==='Chuyển khoản')?($('ttdHtTK').value||''):'';
+  var tkMoi=(ttMoi!=='CHUA'&&laCK_(httMoi))?($('ttdHtTK').value||''):'';
   var daTraMoi=ttMoi==='DA'?d.tong:(ttMoi==='COC'?so($('ttdDaTra').value):0);
 
   var td=[];
@@ -3974,6 +4072,36 @@ function linkLH(sdt){
 }
 function moLH(sdt){ var l=linkLH(sdt); if(l) window.open(l.url,'_blank') }
 
+/* ── Hộp sửa chi nhánh, nằm trong hồ sơ khách — thêm 15/09/2026.
+   CN_TAM=null: khách đang ở chế độ 1 địa chỉ thường (sửa qua ô DC_DON).
+   CN_TAM=[{nhan,dc}...]: đang ở chế độ nhiều chi nhánh, sửa/xoá/thêm từng dòng. */
+var CN_TAM=null, DC_DON='';
+function veDiaChiBlock_(sdt){
+  var html;
+  if(CN_TAM===null){
+    html='<div class="sm" style="margin:3px 0 7px">Khách chỉ có 1 địa chỉ. Bấm "+ Thêm chi nhánh" nếu khách này giao nhiều nơi khác nhau.</div>'+
+      '<input id="kDC" value="'+esc(DC_DON)+'" oninput="DC_DON=this.value" placeholder="Địa chỉ giao hàng">'+
+      '<button class="btn-nho" style="margin-top:6px" onclick="batNhieuChiNhanh_(\''+sdt+'\')">+ Thêm chi nhánh</button>';
+  } else {
+    html='<div class="sm" style="margin:3px 0 7px">Khách có nhiều chi nhánh — đặt tên ngắn để chọn nhanh lúc lên đơn.</div>'+
+      CN_TAM.map(function(c,i){
+        return '<div style="display:flex;gap:6px;margin-bottom:6px">'+
+          '<input value="'+esc(c.nhan)+'" style="width:90px" oninput="CN_TAM['+i+'].nhan=this.value.trim()" placeholder="Tên CN">'+
+          '<input value="'+esc(c.dc)+'" style="flex:1" oninput="CN_TAM['+i+'].dc=this.value" placeholder="Địa chỉ">'+
+          '<button class="btn-nho" onclick="boChiNhanh_('+i+',\''+sdt+'\')" style="background:var(--badBg);color:var(--bad)">Bỏ</button></div>';
+      }).join('')+
+      '<button class="btn-nho" onclick="themChiNhanh_(\''+sdt+'\')">+ Thêm chi nhánh</button>';
+  }
+  $('kDCbox').innerHTML=html;
+}
+function batNhieuChiNhanh_(sdt){ CN_TAM=[{nhan:'CN1',dc:DC_DON||''}]; veDiaChiBlock_(sdt) }
+function themChiNhanh_(sdt){ CN_TAM.push({nhan:'CN'+(CN_TAM.length+1),dc:''}); veDiaChiBlock_(sdt) }
+function boChiNhanh_(i,sdt){
+  CN_TAM.splice(i,1);
+  if(CN_TAM.length<=1){ DC_DON=CN_TAM.length?CN_TAM[0].dc:''; CN_TAM=null }
+  veDiaChiBlock_(sdt);
+}
+
 /* ── Hộp sửa thú cưng + liên hệ, nằm trong hồ sơ khách ── */
 var THU_TAM=[];
 function veThuTam(sdt){
@@ -3993,6 +4121,11 @@ function luuHoSo(sdt){
   var k=KH[sdt]; if(!k) return;
   k.thu=chuoiThu(THU_TAM);
   k.lh=$('kLH').value.trim();
+  if(CN_TAM===null){ k.dc=(DC_DON||'').trim() }
+  else {
+    var sach=CN_TAM.filter(function(c){return c.dc&&c.dc.trim()&&c.nhan&&c.nhan.trim()});
+    k.dc = sach.length>=2 ? ghepChiNhanh_(sach) : (sach.length===1?sach[0].dc:'');
+  }
   k.canDay=true; set('kh',KH); veKH();
   if(CFG.url||URL_DRIVE) dayKhach();
   $('kHsMsg').innerHTML='<div class="msg ok">Đã lưu hồ sơ khách. Máy chủ sẽ nhận ở lần đồng bộ tới.</div>';
@@ -4023,7 +4156,9 @@ function veKH(){
     ds.map(function(k){
       var g=Object.keys(k.gia||{}).filter(function(x){return k.gia[x].het>=today()}).length;
       var n=soLan(k.sdt), l=linkLH(k.sdt), st=soThu(k.thu);
-      return '<tr><td><a href="#" class="lnk" onclick="lichSuKH(\''+k.sdt+'\');return false">'+esc(k.ten)+'</a>'+huyHieuHTML_(k.sdt,DON)+'</td>'+
+      var dsCN=dsChiNhanh_(k.dc);
+      return '<tr><td><a href="#" class="lnk" onclick="lichSuKH(\''+k.sdt+'\');return false">'+esc(k.ten)+'</a>'+huyHieuHTML_(k.sdt,DON)+
+        (dsCN?' <span class="sm" style="color:var(--pur)">'+dsCN.length+' chi nhánh</span>':'')+'</td>'+
         '<td>'+esc(k.sdt)+'</td><td>'+esc(k.kenh||'')+'</td>'+
         '<td>'+(st?esc(k.thu):'<span class="sm">—</span>')+'</td>'+
         '<td class="r">'+(n||'—')+
@@ -4234,14 +4369,22 @@ function veShipperList(){
   var gop=SHIP_CHINH.concat(ganDay.filter(function(t){return SHIP_CHINH.indexOf(t)<0}));
   e.innerHTML=gop.map(function(t){return '<option value="'+esc(t)+'">'}).join('');
 }
+/* CK HKD / CK Cty — thêm 15/09/2026 theo yêu cầu chủ: trước chỉ có 1 hình
+   thức "Chuyển khoản" chung, không tách được doanh thu bên hộ kinh doanh với
+   bên công ty. Tách thành 2 hình thức riêng NGAY Ở CẤP `ttHt` (không phải
+   thêm 1 tầng lựa chọn con) vì mọi chỗ gộp báo cáo (nhomKetCa(), veLocTT(),
+   Báo cáo bên quanly.html) đã tự gộp theo đúng giá trị `ttHt` — đổi ở đây là
+   tự động chia đúng mục theo hình thức tại mọi chỗ đó, không phải sửa thêm.
+   Đơn cũ ghi "Chuyển khoản" (trước 15/09) giữ nguyên y hệt, không viết lại. */
+function laCK_(v){ return v==='CK HKD'||v==='CK Cty'||v==='Chuyển khoản' }
 function veHinhThucTT(){
-  // #ttHt giờ CỐ ĐỊNH 3 lựa chọn (COD/Chuyển khoản/Tiền mặt) — không tự dựng nữa.
+  // #ttHt giờ CỐ ĐỊNH lựa chọn (COD/CK HKD/CK Cty/Tiền mặt) — không tự dựng nữa.
   // Chỉ cần vẽ lại DANH SÁCH TÀI KHOẢN cho #ttHtTK, phòng khi TK_CHINH vừa cập nhật.
   veTkNhan();
 }
 function veTkNhan(){
   var eHt=$('ttHt'), eTk=$('ttHtTK'); if(!eHt||!eTk) return;
-  var laCK = eHt.value==='Chuyển khoản';
+  var laCK = laCK_(eHt.value);
   eTk.classList.toggle('hide', !laCK);
   if(!laCK) return;
   var giu=eTk.value;
@@ -4924,6 +5067,7 @@ function demIn(){
   var b=$('btnInNhieu'); if(b) b.textContent='In '+n+' phiếu đã chọn';
   var f=$('fabIn'), t=$('fabInTxt');
   if(f){ f.classList.toggle('hien',n>0); if(t) t.textContent='In '+n+' phiếu đã chọn' }
+  capNhatMenuNhanh_('.ckin',1);
 }
 function chonHetIn(v){ [].slice.call(document.querySelectorAll('.ckin')).forEach(function(c){c.checked=!!v}); demIn() }
 function chonChuaIn(){
@@ -5244,6 +5388,24 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260915c', ngay:'15/09/2026', ten:'Menu thao tác nhanh khi tích 1 đơn',
+  vaPhieu:[],
+  muc:[
+   ['moi','Tích chọn ĐÚNG 1 đơn (ở Phiếu giao hàng hoặc Lịch sử) nổi ngay menu 4 nút: Sửa đơn · Huỷ đơn · In phiếu · Đánh dấu ĐÃ THU — khỏi bung chi tiết đi tìm nút. Tích từ 2 đơn trở lên vẫn là chọn hàng loạt như cũ.'],
+   ['sua','<b>Huỷ đơn giờ áp dụng được cho cả đơn cũ</b> (trước đây chỉ huỷ được đơn trong ngày) — vẫn bắt buộc ghi lý do, có cảnh báo rõ khi đơn không phải hôm nay.'],
+  ]},
+ {ban:'20260915b', ngay:'15/09/2026', ten:'Tách CK HKD / CK Cty',
+  vaPhieu:[],
+  muc:[
+   ['moi','Hình thức thanh toán "Chuyển khoản" tách thành <b>CK HKD</b> và <b>CK Cty</b> — chọn đúng bên nhận tiền, báo cáo tự chia theo đúng 2 mục này.'],
+  ]},
+ {ban:'20260915a', ngay:'15/09/2026', ten:'Khách nhiều chi nhánh',
+  vaPhieu:[],
+  muc:[
+   ['moi','Khách cùng một SĐT nhưng giao nhiều địa chỉ khác nhau (vd phòng khám/tiệm có nhiều chi nhánh) — gõ SĐT hiện nút bấm chọn đúng chi nhánh, khỏi gõ lại địa chỉ mỗi lần.'],
+   ['moi','Giao đơn ở địa chỉ mới cho khách đã có sẵn địa chỉ khác — hệ thống hỏi có lưu thành chi nhánh riêng không, không tự ý ghi đè mất địa chỉ cũ như trước.'],
+   ['moi','Mở hồ sơ khách (tab Khách hàng) sửa/xoá/đổi tên từng chi nhánh trực tiếp, hoặc bấm "+ Thêm chi nhánh" để tự thêm mà không cần lên đơn trước.'],
+  ]},
  {ban:'20260914a', ngay:'14/09/2026', ten:'Mã đơn liên tục giữa các máy · Lọc theo NV · Ghi chú/mã đơn dễ nhìn hơn',
   vaPhieu:[],
   muc:[

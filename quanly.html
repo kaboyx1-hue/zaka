@@ -494,7 +494,7 @@ body.ks-chi *{cursor:crosshair!important}
   </div>
 
   <div class="card"><h2>Tài khoản nhận chuyển khoản</h2>
-    <div class="sm" style="margin-bottom:8px">Tách "Chuyển khoản" thành từng số tài khoản cụ thể — nhân viên chọn đúng
+    <div class="sm" style="margin-bottom:8px">Tách "CK HKD"/"CK Cty" thành từng số tài khoản cụ thể — nhân viên chọn đúng
     tài khoản khi ghi nhận đã thu tiền, biết tiền vào đâu. Chỉ máy quản lý sửa được.</div>
     <div id="tkMsg"></div>
     <div class="row">
@@ -684,7 +684,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260914a';
+var APP_VER='20260915a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -4903,6 +4903,11 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260915a', ngay:'15/09/2026', ten:'Tách CK HKD / CK Cty',
+  vaPhieu:[],
+  muc:[
+   ['moi','Nhân viên giờ ghi nhận thu tiền theo <b>CK HKD</b> hoặc <b>CK Cty</b> thay vì "Chuyển khoản" chung — Báo cáo tự chia theo đúng 2 mục. Đơn cũ ghi "Chuyển khoản" vẫn giữ nguyên.'],
+  ]},
  {ban:'20260914a', ngay:'14/09/2026', ten:'Tab Tính giá sàn · Sửa cột bảng giá',
   vaPhieu:[],
   muc:[
