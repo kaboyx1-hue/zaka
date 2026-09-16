@@ -73,6 +73,17 @@ th{color:var(--tx2);font-weight:500;font-size:11.5px}td.r,th.r{text-align:right;
    main tự bỏ max-width khi tab Bảng giá đang mở — luôn thẳng lề theo đúng phần còn lại
    sau sidebar, không phụ thuộc bề rộng màn hình. */
 main:has(> #pg-gia:not(.hide)){max-width:none}
+/* SỬA 16/09/2026 — tab "Tính giá sàn" (iframe tinh_gia.html) bị lọt thỏm
+   thành 1 thẻ nhỏ xíu giữa khoảng trắng mênh mông, dù main có max-width:1060.
+   Nguyên nhân: main là flex item trong .main-col (display:flex cột dọc), mà
+   CSS gốc để margin:0 auto để tự căn giữa — margin auto trên trục ngang của
+   flex item làm nó CO VỀ ĐÚNG KÍCH THƯỚC NỘI DUNG thay vì giãn hết cỡ, và một
+   <iframe> không có width/height cố định thì trình duyệt lấy kích thước mặc
+   định ~300px làm "nội dung", nên main co theo đúng ~300px đó. Các tab khác
+   không dính lỗi này vì nội dung (bảng/form) tự nhiên đã rộng sẵn. Ép hẳn
+   width:100%;margin:0 khi tab này đang mở để main giãn hết bề ngang thật,
+   không phụ thuộc kích thước mặc định của iframe. */
+main:has(> #pg-ts:not(.hide)){max-width:none;width:100%;margin:0}
 #pg-gia{padding:0 16px}
 #dsGia table{table-layout:fixed}
 #dsGia thead th,#dsGia tr:first-child th{position:sticky;top:0;z-index:5;background:var(--card)}
@@ -684,7 +695,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260915a';
+var APP_VER='20260916a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -4903,6 +4914,11 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260916a', ngay:'16/09/2026', ten:'Sửa giao diện tab Tính giá sàn bị co nhỏ',
+  vaPhieu:[],
+  muc:[
+   ['sua','Tab <b>Tính giá sàn</b> trước đó bị co lại thành khung nhỏ xíu giữa màn hình trống — lỗi CSS, nay đã full bề ngang và chia 2 cột trên màn hình rộng.'],
+  ]},
  {ban:'20260915a', ngay:'15/09/2026', ten:'Tách CK HKD / CK Cty',
   vaPhieu:[],
   muc:[
