@@ -733,7 +733,10 @@ function veSiKetQua_(){
   });
   $('siKetQuaTable').innerHTML = html;
   $('siKetQuaTable').querySelectorAll('[data-si-gia]').forEach(function(el){
-    el.addEventListener('input', function(){
+    // "change" (bấm ra ngoài/Enter), KHÔNG PHẢI "input" (mỗi ký tự) — veSiKetQua_() vẽ lại
+    // toàn bộ bảng kể cả chính ô này, nên nếu bắt theo từng ký tự thì gõ số thứ 2 trở đi
+    // sẽ mất focus, rơi vào ô mới vừa vẽ lại, nhìn như "gõ 1 lần rồi đứng yên không nhảy".
+    el.addEventListener('change', function(){
       var key = this.getAttribute('data-si-gia');
       if (this.value === '') { delete SI.gia[key]; } else { SI.gia[key] = parseFloat(this.value) || 0; }
       luuSi_(); veSiKetQua_();
