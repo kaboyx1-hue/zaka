@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Việc cần làm — ZAKA</title>
+<style>
+:root{
+  --bg:#F6F3EC; --surface:#FFFFFF; --surface-2:#EFEAE0;
+  --line:#E1D9C7; --line-strong:#CFC3A8;
+  --ink:#2A251E; --ink-2:#7D745F; --ink-3:#A69C84;
+  --accent:#2B5D63; --accent-strong:#1C4247; --accent-soft:#DDEAE8;
+  --good:#3E8A5C; --good-soft:#DFF1E4;
+  --warn:#B87F22; --warn-soft:#F8EAD2;
+  --danger:#B33F32; --danger-soft:#F7E1DC;
+  --todo:#8A8272; --todo-soft:#EDE8DB;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --shadow:0 1px 2px rgba(42,37,30,.06), 0 8px 22px -10px rgba(42,37,30,.16);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 14.5px/1.55 var(--sans);padding:22px 16px 60px}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.app{max-width:1180px;margin:0 auto}
+
+header.top{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px;margin-bottom:16px}
+header.top .eyebrow{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);font-weight:700;display:block;margin-bottom:4px}
+header.top h1{font-family:var(--sans);font-size:24px;font-weight:800;margin:0}
+header.top p{margin:5px 0 0;color:var(--ink-2);font-size:13px;max-width:52ch}
+.btn-add{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:11px 18px;
+  font:700 13.5px var(--sans);cursor:pointer;box-shadow:var(--shadow);white-space:nowrap}
+.btn-add:hover{background:var(--accent-strong)}
+
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 16px;min-width:110px;box-shadow:var(--shadow)}
+.stat .n{font:700 22px var(--mono)}
+.stat .l{font-size:11px;color:var(--ink-2);margin-top:2px}
+.stat.danger .n{color:var(--danger)}
+.stat.warn .n{color:var(--warn)}
+.stat.good .n{color:var(--good)}
+
+.filterbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:18px}
+.filterbar input[type=search], .filterbar select{
+  font:500 13px var(--sans);padding:8px 12px;border-radius:9px;
+  border:1px solid var(--line-strong);background:var(--surface);color:var(--ink)}
+.filterbar input[type=search]{min-width:200px;flex:1}
+.chip-toggle{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-2);cursor:pointer;user-select:none}
+.chip-toggle input{width:15px;height:15px}
+
+.board{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start}
+@media (max-width:880px){ .board{grid-template-columns:1fr} }
+.col{background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:12px;min-height:80px}
+.col-head{display:flex;justify-content:space-between;align-items:center;padding:4px 6px 10px}
+.col-head .name{font-weight:800;font-size:13.5px;display:flex;align-items:center;gap:7px}
+.col-head .dot{width:9px;height:9px;border-radius:50%}
+.col[data-status="todo"] .dot{background:var(--todo)}
+.col[data-status="doing"] .dot{background:var(--warn)}
+.col[data-status="done"] .dot{background:var(--good)}
+.col-head .count{font:600 12px var(--mono);color:var(--ink-2);background:var(--surface);
+  border-radius:999px;padding:2px 8px;border:1px solid var(--line)}
+.cards{display:flex;flex-direction:column;gap:9px}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 13px;
+  cursor:pointer;box-shadow:var(--shadow);border-left:4px solid var(--todo)}
+.card.p-cao{border-left-color:var(--danger)}
+.card.p-vua{border-left-color:var(--warn)}
+.card.p-thap{border-left-color:var(--todo)}
+.card:hover{border-color:var(--line-strong)}
+.card .title{font-weight:700;font-size:13.5px;margin-bottom:5px}
+.card .desc{color:var(--ink-2);font-size:12px;margin-bottom:9px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card .progress-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.pbar{flex:1;height:6px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.pbar > i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.pnum{font:600 11px var(--mono);color:var(--ink-2);white-space:nowrap}
+.card .meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tag{font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px;display:inline-flex;align-items:center;gap:4px}
+.tag.assignee{background:var(--accent-soft);color:var(--accent-strong)}
+.tag.due{background:var(--surface-2);color:var(--ink-2);font-family:var(--mono)}
+.tag.due.overdue{background:var(--danger-soft);color:var(--danger);font-weight:700}
+.tag.due.soon{background:var(--warn-soft);color:var(--warn)}
+.empty-col{color:var(--ink-3);font-size:12px;text-align:center;padding:18px 6px}
+
+.overlay[hidden]{display:none}
+.overlay{position:fixed;inset:0;background:rgba(20,18,14,.45);display:flex;align-items:flex-start;
+  justify-content:center;padding:26px 14px;overflow-y:auto;z-index:20}
+.modal{background:var(--surface);border-radius:16px;max-width:560px;width:100%;padding:22px 22px 20px;
+  box-shadow:0 20px 50px -14px rgba(0,0,0,.35);margin-top:10px}
+.modal h2{font-size:18px;margin:0 0 14px}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:11.5px;color:var(--ink-2);font-weight:600;margin-bottom:4px;letter-spacing:.02em}
+.field input[type=text], .field input[type=date], .field select, .field textarea{
+  width:100%;font:500 13.5px var(--sans);padding:9px 11px;border-radius:9px;
+  border:1px solid var(--line-strong);background:var(--surface);color:var(--ink)}
+.field textarea{resize:vertical;min-height:60px;font-family:inherit}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.check-list{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+.check-item{display:flex;align-items:center;gap:8px;background:var(--surface-2);border-radius:8px;padding:7px 9px}
+.check-item input[type=checkbox]{width:16px;height:16px;flex-shrink:0}
+.check-item span{flex:1;font-size:13px}
+.check-item span.done{text-decoration:line-through;color:var(--ink-3)}
+.check-item button{background:none;border:0;color:var(--ink-3);cursor:pointer;font-size:14px;padding:2px 4px}
+.check-item button:hover{color:var(--danger)}
+.add-check{display:flex;gap:6px}
+.add-check input{flex:1}
+.add-check button{background:var(--surface-2);border:1px dashed var(--line-strong);border-radius:8px;
+  padding:0 12px;color:var(--ink-2);font:600 12.5px inherit;cursor:pointer}
+.modal-actions{display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:10px}
+.btn{font:700 13px var(--sans);border-radius:9px;padding:9px 16px;cursor:pointer;border:1px solid transparent}
+.btn.primary{background:var(--accent);color:#fff}
+.btn.primary:hover{background:var(--accent-strong)}
+.btn.ghost{background:none;border-color:var(--line-strong);color:var(--ink-2)}
+.btn.ghost:hover{border-color:var(--ink-2);color:var(--ink)}
+.btn.danger-text{background:none;border:0;color:var(--danger);font:600 12.5px inherit;cursor:pointer;padding:6px 0}
+
+.note{font-size:11.5px;color:var(--ink-3);margin-top:18px;text-align:center}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div>
+      <span class="eyebrow">Khánh Hoàng · Nội bộ</span>
+      <h1>Việc cần làm</h1>
+      <p>Điền việc, tách checklist con, theo dõi tiến độ — kiểu Notion, gọn trong 1 tab.</p>
+    </div>
+    <button class="btn-add" id="btnNew">+ Thêm việc</button>
+  </header>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="filterbar">
+    <input type="search" id="fSearch" placeholder="Tìm theo tên việc...">
+    <select id="fNguoi"><option value="">Tất cả người phụ trách</option></select>
+    <label class="chip-toggle"><input type="checkbox" id="fQuaHan"> Chỉ xem quá hạn</label>
+  </div>
+
+  <div class="board" id="board"></div>
+
+  <div class="note">Dữ liệu lưu trên đúng máy/trình duyệt này (localStorage) — mở bằng máy khác sẽ KHÔNG thấy việc đã thêm ở đây. Chưa nối vào Sheet/Apps Script.</div>
+</div>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="modal">
+    <h2 id="modalTitle">Thêm việc</h2>
+    <div class="field">
+      <label for="fTitle">Tên việc</label>
+      <input type="text" id="fTitle" placeholder="Vd: Chốt tên trang tính lưu lịch sử tính giá">
+    </div>
+    <div class="field">
+      <label for="fDesc">Mô tả / ghi chú</label>
+      <textarea id="fDesc" placeholder="Chi tiết, bối cảnh, đường link liên quan..."></textarea>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label for="fStatus">Trạng thái</label>
+        <select id="fStatus">
+          <option value="todo">Chưa làm</option>
+          <option value="doing">Đang làm</option>
+          <option value="done">Xong</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="fPriority">Ưu tiên</label>
+        <select id="fPriority">
+          <option value="cao">Cao</option>
+          <option value="vua" selected>Vừa</option>
+          <option value="thap">Thấp</option>
+        </select>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label for="fNguoiPhuTrach">Người phụ trách</label>
+        <input type="text" id="fNguoiPhuTrach" list="dsNguoi" placeholder="Vd: Chủ, Vợ chủ, NV kho...">
+        <datalist id="dsNguoi"></datalist>
+      </div>
+      <div class="field">
+        <label for="fDue">Hạn chót</label>
+        <input type="date" id="fDue">
+      </div>
+    </div>
+    <div class="field">
+      <label>Checklist con</label>
+      <div class="check-list" id="checkList"></div>
+      <div class="add-check">
+        <input type="text" id="fNewCheck" placeholder="Thêm một mục nhỏ rồi Enter...">
+        <button type="button" id="btnAddCheck">Thêm</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn danger-text" id="btnDelete">Xoá việc này</button>
+      <div style="display:flex;gap:8px">
+        <button type="button" class="btn ghost" id="btnCancel">Huỷ</button>
+        <button type="button" class="btn primary" id="btnSave">Lưu</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var KHOA = 'zaka_viec_can_lam';
+  var COLS = [
+    {key:'todo', label:'Chưa làm'},
+    {key:'doing', label:'Đang làm'},
+    {key:'done', label:'Xong'}
+  ];
+
+  // Gieo vài việc mẫu lấy từ backlog thật (17/09/2026) để lần đầu mở không
+  // thấy bảng trắng — sửa/xoá thoải mái, đây không phải dữ liệu khoá cứng.
+  function seed(){
+    var today = new Date();
+    function d(offset){ var x = new Date(today); x.setDate(x.getDate()+offset); return x.toISOString().slice(0,10); }
+    return [
+      { id:'t1', title:'Chốt tên trang tính + cột lưu lịch sử tính giá lên Sheet', status:'doing', priority:'cao',
+        assignee:'Chủ', due:d(2),
+        desc:'Đang chờ chốt tên trang tính TINH_GIA_LUU và các cột trước khi đụng Apps Script.',
+        checklist:[
+          {id:'c1',text:'Chốt tên trang tính + tên cột',done:true},
+          {id:'c2',text:'Viết 2 hành động Apps Script (lưu/đọc)',done:false},
+          {id:'c3',text:'Nối postMessage giữa tinh_gia.html và quanly.html',done:false},
+          {id:'c4',text:'Bỏ hẳn localStorage sau khi chạy được',done:false}
+        ]},
+      { id:'t2', title:'Chốt bội số Breeder → VVIP (x3, x4 hay x5?)', status:'todo', priority:'vua',
+        assignee:'Chủ', due:d(6),
+        desc:'Demo huy hiệu khách đang để tạm x4 (40 triệu). Cần chốt trước khi code thật huy hiệu khách khi lên đơn.',
+        checklist:[
+          {id:'c1',text:'Xem lại số liệu doanh thu Breeder 3 tháng gần nhất',done:false},
+          {id:'c2',text:'Chốt bội số cuối cùng',done:false}
+        ]},
+      { id:'t3', title:'Đổi mã đăng nhập tất cả nhân viên', status:'todo', priority:'cao',
+        assignee:'Vợ chủ', due:d(-1),
+        desc:'Mã cũ từng lộ công khai qua nv=1 trước khi vá lỗ hổng xác thực — nên đổi hết mã NV cho chắc.',
+        checklist:[
+          {id:'c1',text:'Lập danh sách NV cần đổi mã',done:true},
+          {id:'c2',text:'Đổi cột C trang NHAN_VIEN từng người',done:false},
+          {id:'c3',text:'Báo NV mã mới qua Zalo',done:false}
+        ]},
+      { id:'t4', title:'Kiểm kê tài sản tháng 9', status:'todo', priority:'thap',
+        assignee:'Vợ chủ', due:d(10),
+        desc:'Theo lịch hàng tháng đã chốt — chủ chọn ngày trước, nhắc popup 1-2 ngày trước khi tới hạn.',
+        checklist:[]},
+      { id:'t5', title:'Việc 3 — sửa SĐT khách mất số 0 đầu', status:'doing', priority:'vua',
+        assignee:'Chủ', due:d(14),
+        desc:'381/514 khách trong KH0 chưa có trên Sheet KHACH_HANG. Theo đúng 4 bước đã ghi trong CLAUDE.md.',
+        checklist:[
+          {id:'c1',text:'Sửa luuKhach_ ghi SĐT có dấu nháy đơn',done:true},
+          {id:'c2',text:'Chuẩn hoá so khớp SĐT 9-10 số',done:false},
+          {id:'c3',text:'Đẩy khách thiếu lên Sheet',done:false},
+          {id:'c4',text:'Gỡ KH0 khỏi seed_nv.js',done:false}
+        ]},
+      { id:'t6', title:'Thêm nút đổi mã NV ngay trong quanly.html', status:'done', priority:'vua',
+        assignee:'Chủ', due:d(-6),
+        desc:'Server (duyetnv) đã nhận key từ trước — chỉ thiếu nút ở giao diện quản lý.',
+        checklist:[
+          {id:'c1',text:'Thêm nút trong tab Nhân viên',done:true},
+          {id:'c2',text:'Test đổi mã + đăng nhập lại',done:true}
+        ]}
+    ];
+  }
+
+  function load(){
+    try { var v = JSON.parse(localStorage.getItem(KHOA)); if (v && v.length) return v; } catch(e){}
+    return seed();
+  }
+  var TASKS = load();
+  function save(){ try { localStorage.setItem(KHOA, JSON.stringify(TASKS)); } catch(e){} }
+
+  var editingId = null;
+  var draftChecklist = [];
+
+  function tienDo(t){
+    if (!t.checklist.length) return null;
+    var done = t.checklist.filter(function(c){ return c.done; }).length;
+    return { done:done, total:t.checklist.length, pct: done/t.checklist.length };
+  }
+  function dueInfo(due, status){
+    if (!due) return null;
+    var today = new Date().toISOString().slice(0,10);
+    var overdue = due < today && status !== 'done';
+    var soon = !overdue && due <= new Date(Date.now()+2*86400000).toISOString().slice(0,10) && status !== 'done';
+    var d = new Date(due+'T00:00:00');
+    var label = d.toLocaleDateString('vi-VN', {day:'2-digit', month:'2-digit'});
+    return { overdue:overdue, soon:soon, label:label };
+  }
+  function esc(s){ var d = document.createElement('div'); d.textContent = s||''; return d.innerHTML; }
+
+  function render(){
+    var q = $('fSearch').value.trim().toLowerCase();
+    var nguoi = $('fNguoi').value;
+    var chiQuaHan = $('fQuaHan').checked;
+
+    var nguoiSet = {};
+    TASKS.forEach(function(t){ if (t.assignee) nguoiSet[t.assignee] = true; });
+    var nguoiHienTai = $('fNguoi').value;
+    $('fNguoi').innerHTML = '<option value="">Tất cả người phụ trách</option>' +
+      Object.keys(nguoiSet).sort().map(function(n){ return '<option value="'+esc(n)+'"'+(n===nguoiHienTai?' selected':'')+'>'+esc(n)+'</option>'; }).join('');
+    $('dsNguoi').innerHTML = Object.keys(nguoiSet).sort().map(function(n){ return '<option value="'+esc(n)+'">'; }).join('');
+
+    var visible = TASKS.filter(function(t){
+      if (q && t.title.toLowerCase().indexOf(q) === -1 && (t.desc||'').toLowerCase().indexOf(q) === -1) return false;
+      if (nguoi && t.assignee !== nguoi) return false;
+      if (chiQuaHan){ var di = dueInfo(t.due, t.status); if (!di || !di.overdue) return false; }
+      return true;
+    });
+
+    var tong = TASKS.length;
+    var dangLam = TASKS.filter(function(t){ return t.status === 'doing'; }).length;
+    var quaHan = TASKS.filter(function(t){ var di = dueInfo(t.due, t.status); return di && di.overdue; }).length;
+    var xong = TASKS.filter(function(t){ return t.status === 'done'; }).length;
+    $('stats').innerHTML =
+      '<div class="stat"><div class="n mono">'+tong+'</div><div class="l">Tổng việc</div></div>' +
+      '<div class="stat warn"><div class="n mono">'+dangLam+'</div><div class="l">Đang làm</div></div>' +
+      '<div class="stat danger"><div class="n mono">'+quaHan+'</div><div class="l">Quá hạn</div></div>' +
+      '<div class="stat good"><div class="n mono">'+xong+'</div><div class="l">Đã xong</div></div>';
+
+    var html = '';
+    COLS.forEach(function(col){
+      var items = visible.filter(function(t){ return t.status === col.key; })
+        .sort(function(a,b){ return (a.due||'9999').localeCompare(b.due||'9999'); });
+      html += '<div class="col" data-status="'+col.key+'">' +
+        '<div class="col-head"><span class="name"><span class="dot"></span>'+col.label+'</span>' +
+        '<span class="count mono">'+items.length+'</span></div><div class="cards">';
+      if (!items.length){
+        html += '<div class="empty-col">Không có việc nào</div>';
+      }
+      items.forEach(function(t){
+        var td = tienDo(t);
+        var di = dueInfo(t.due, t.status);
+        html += '<div class="card p-'+t.priority+'" data-id="'+t.id+'">' +
+          '<div class="title">'+esc(t.title)+'</div>';
+        if (t.desc) html += '<div class="desc">'+esc(t.desc)+'</div>';
+        if (td) html += '<div class="progress-row"><div class="pbar"><i style="width:'+(td.pct*100).toFixed(0)+'%"></i></div>' +
+          '<span class="pnum">'+td.done+'/'+td.total+'</span></div>';
+        html += '<div class="meta">';
+        if (t.assignee) html += '<span class="tag assignee">👤 '+esc(t.assignee)+'</span>';
+        if (di) html += '<span class="tag due'+(di.overdue?' overdue':(di.soon?' soon':''))+'">'+(di.overdue?'Quá hạn ':'')+di.label+'</span>';
+        html += '</div></div>';
+      });
+      html += '</div></div>';
+    });
+    $('board').innerHTML = html;
+
+    document.querySelectorAll('.card').forEach(function(el){
+      el.addEventListener('click', function(){ openModal(el.getAttribute('data-id')); });
+    });
+  }
+
+  function openModal(id){
+    editingId = id || null;
+    var t = id ? TASKS.find(function(x){ return x.id === id; }) : null;
+    draftChecklist = t ? JSON.parse(JSON.stringify(t.checklist)) : [];
+    $('modalTitle').textContent = t ? 'Sửa việc' : 'Thêm việc';
+    $('fTitle').value = t ? t.title : '';
+    $('fDesc').value = t ? t.desc : '';
+    $('fStatus').value = t ? t.status : 'todo';
+    $('fPriority').value = t ? t.priority : 'vua';
+    $('fNguoiPhuTrach').value = t ? t.assignee : '';
+    $('fDue').value = t ? t.due : '';
+    $('btnDelete').style.display = t ? '' : 'none';
+    renderChecklistEditor();
+    $('overlay').hidden = false;
+    $('fTitle').focus();
+  }
+  function closeModal(){ $('overlay').hidden = true; }
+
+  function renderChecklistEditor(){
+    $('checkList').innerHTML = draftChecklist.map(function(c, i){
+      return '<div class="check-item"><input type="checkbox" data-i="'+i+'" '+(c.done?'checked':'')+'>' +
+        '<span class="'+(c.done?'done':'')+'">'+esc(c.text)+'</span>' +
+        '<button type="button" data-x="'+i+'" title="Xoá mục">✕</button></div>';
+    }).join('') || '<div style="font-size:12px;color:var(--ink-3)">Chưa có mục nhỏ nào.</div>';
+    $('checkList').querySelectorAll('input[type=checkbox]').forEach(function(el){
+      el.addEventListener('change', function(){
+        draftChecklist[+this.getAttribute('data-i')].done = this.checked;
+        renderChecklistEditor();
+      });
+    });
+    $('checkList').querySelectorAll('button[data-x]').forEach(function(el){
+      el.addEventListener('click', function(){
+        draftChecklist.splice(+this.getAttribute('data-x'), 1);
+        renderChecklistEditor();
+      });
+    });
+  }
+  function themCheckTuOTo(){
+    var v = $('fNewCheck').value.trim();
+    if (!v) return;
+    draftChecklist.push({ id:'c'+Date.now(), text:v, done:false });
+    $('fNewCheck').value = '';
+    renderChecklistEditor();
+  }
+  $('btnAddCheck').addEventListener('click', themCheckTuOTo);
+  $('fNewCheck').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); themCheckTuOTo(); } });
+
+  $('btnNew').addEventListener('click', function(){ openModal(null); });
+  $('btnCancel').addEventListener('click', closeModal);
+  $('overlay').addEventListener('click', function(e){ if (e.target === $('overlay')) closeModal(); });
+
+  $('btnSave').addEventListener('click', function(){
+    var title = $('fTitle').value.trim();
+    if (!title){ $('fTitle').focus(); return; }
+    var data = {
+      title: title,
+      desc: $('fDesc').value.trim(),
+      status: $('fStatus').value,
+      priority: $('fPriority').value,
+      assignee: $('fNguoiPhuTrach').value.trim(),
+      due: $('fDue').value,
+      checklist: draftChecklist
+    };
+    if (editingId){
+      var t = TASKS.find(function(x){ return x.id === editingId; });
+      Object.assign(t, data);
+    } else {
+      data.id = 't' + Date.now();
+      TASKS.push(data);
+    }
+    save(); closeModal(); render();
+  });
+  $('btnDelete').addEventListener('click', function(){
+    if (!editingId) return;
+    TASKS = TASKS.filter(function(x){ return x.id !== editingId; });
+    save(); closeModal(); render();
+  });
+
+  ['fSearch','fNguoi','fQuaHan'].forEach(function(id){
+    $(id).addEventListener('input', render);
+    $(id).addEventListener('change', render);
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

@@ -84,6 +84,7 @@ main:has(> #pg-gia:not(.hide)){max-width:none}
    width:100%;margin:0 khi tab này đang mở để main giãn hết bề ngang thật,
    không phụ thuộc kích thước mặc định của iframe. */
 main:has(> #pg-ts:not(.hide)){max-width:none;width:100%;margin:0}
+main:has(> #pg-vc:not(.hide)){max-width:none;width:100%;margin:0}
 #pg-gia{padding:0 16px}
 #dsGia table{table-layout:fixed}
 #dsGia thead th,#dsGia tr:first-child th{position:sticky;top:0;z-index:5;background:var(--card)}
@@ -314,6 +315,7 @@ body.ks-chi *{cursor:crosshair!important}
     <button id="tb-so" onclick="tab('so')">Sổ cái</button>
     <button id="tb-gia" onclick="tab('gia')">Bảng giá</button>
     <button id="tb-ts" onclick="tab('ts')">Tính giá sàn</button>
+    <button id="tb-vc" onclick="tab('vc')">✅ Việc cần làm</button>
     <button id="tb-in" onclick="tab('in')">Nạp đơn</button>
     <button id="tb-cb" onclick="tab('cb')">Cảnh báo <span id="cbSo"></span></button>
     <button id="tb-vh" onclick="tab('vh')">Vận hành <span id="vhSo"></span></button>
@@ -432,6 +434,10 @@ body.ks-chi *{cursor:crosshair!important}
 
 <section id="pg-ts" class="hide" style="height:calc(100vh - 140px)">
   <iframe id="ifTs" src="tinh_gia.html" style="width:100%;height:100%;border:0;border-radius:12px"></iframe>
+</section>
+
+<section id="pg-vc" class="hide" style="height:calc(100vh - 140px)">
+  <iframe id="ifVc" src="viec_can_lam.html" style="width:100%;height:100%;border:0;border-radius:12px"></iframe>
 </section>
 
 <section id="pg-cb" class="hide"><div id="cb"></div></section>
@@ -695,7 +701,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260916a';
+var APP_VER='20260917a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -2400,7 +2406,7 @@ function tab(t){
      nhịp: đổi tab hiện ra NGAY, rồi nhường cho trình duyệt vẽ xong màn hình,
      xong mới tính nội dung. Tổng thời gian y như cũ nhưng cảm giác nhanh hẳn
      vì tab phản hồi tức thì và có chữ "Đang tính…" trong lúc chờ. */
-  ['lam','in','bc','so','gia','ts','cb','vh'].forEach(function(x){
+  ['lam','in','bc','so','gia','ts','vc','cb','vh'].forEach(function(x){
     $('pg-'+x).classList.toggle('hide',x!==t);$('tb-'+x).classList.toggle('on',x===t)});
   var oCho={lam:'lamDs',bc:'bc',so:'dsSo',cb:'cb'}[t];
   if(oCho && $(oCho) && !$(oCho).innerHTML) $(oCho).innerHTML='<div class="card"><div class="empty">Đang tính…</div></div>';
@@ -4914,6 +4920,11 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260917a', ngay:'17/09/2026', ten:'Thêm tab Việc cần làm',
+  vaPhieu:[],
+  muc:[
+   ['moi','Thêm tab <b>✅ Việc cần làm</b>: quản lý công việc kiểu Notion — tự thêm việc, checklist con, tiến độ, hạn chót, người phụ trách, chia theo 3 cột Chưa làm/Đang làm/Xong. Dữ liệu đang lưu trên đúng máy/trình duyệt đang mở (chưa nối Sheet) — thêm ở máy nào chỉ thấy ở máy đó.'],
+  ]},
  {ban:'20260916a', ngay:'16/09/2026', ten:'Sửa giao diện tab Tính giá sàn bị co nhỏ',
   vaPhieu:[],
   muc:[
