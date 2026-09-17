@@ -178,6 +178,58 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
   </div>
 
   <div class="card">
+    <h3>Vận chuyển / logistics theo số lượng</h3>
+    <div class="hint">Tự chọn xe theo số thùng đặt — xe máy/xe bán tải công ty ưu tiên, thuê xe ngoài khi quá xa hoặc vượt tải. SPX/Lalamove không dùng ở đây, chỉ dùng cho khách lẻ ở 2 tab Shopee/TikTok. Chi phí tính ra tự cộng thêm vào ô "Chi phí giao/đóng gói" ở trên, không đè lên số bạn đã gõ ở đó.</div>
+    <div class="pair">
+      <div><label for="siCapXeMay">1 xe máy chở tối đa (thùng/chuyến)</label><input type="number" id="siCapXeMay" value="10" step="1" min="0"></div>
+      <div><label for="siCapBanTai">Xe bán tải chở tối đa (thùng/chuyến)</label><input type="number" id="siCapBanTai" value="150" step="10" min="0"></div>
+    </div>
+    <div class="pair">
+      <div><label for="siThreshBanTai">Chuyển bán tải từ (thùng)</label><input type="number" id="siThreshBanTai" value="30" step="5" min="0"></div>
+      <div><label for="siSoThung">Số thùng đặt (tham chiếu để tính)</label><input type="number" id="siSoThung" value="15" step="1" min="0"></div>
+    </div>
+    <div class="pair">
+      <div><label for="siCpXeMay">Chi phí/chuyến — xe máy (₫)</label><input type="number" id="siCpXeMay" value="70000" step="10000" min="0"></div>
+      <div><label for="siCpBanTai">Chi phí/chuyến — xe bán tải (₫)</label><input type="number" id="siCpBanTai" value="450000" step="50000" min="0"></div>
+    </div>
+    <div class="pair">
+      <div><label for="siCpThueXe">Phí thuê xe ngoài/chuyến (₫)</label><input type="number" id="siCpThueXe" value="900000" step="50000" min="0"></div>
+      <div></div>
+    </div>
+    <div class="pair">
+      <div><label for="siKhuVuc">Khu vực giao</label>
+        <select id="siKhuVuc">
+          <option value="10">Nội thành / cận trung tâm (~10km)</option>
+          <option value="20" selected>Ngoại thành / vùng ven (~20km)</option>
+          <option value="40">Giáp ranh tỉnh lân cận (~40km)</option>
+          <option value="100">Xa (~100km+) — chỉ xe bán tải/thuê xe</option>
+        </select>
+      </div>
+      <div></div>
+    </div>
+    <div class="note" id="siXeKQ"></div>
+  </div>
+
+  <div class="card">
+    <h3>Chính sách khách sỉ (tham khảo báo giá/hợp đồng)</h3>
+    <div class="hint">Chỉ để tham khảo khi báo giá/soạn hợp đồng đại lý — không tự động trừ vào bảng giá đề xuất bên dưới.</div>
+    <div class="pair">
+      <div><label for="siWpFreeship">Freeship từ (đơn vị/đơn)</label><input type="number" id="siWpFreeship" value="100" step="10" min="0"></div>
+      <div><label for="siWpEarlyPct">CK thanh toán sớm (%)</label><input type="number" id="siWpEarlyPct" value="2" step="0.5" min="0"></div>
+    </div>
+    <div class="pair">
+      <div><label for="siWpEarlyDays">— nếu trả trong (ngày)</label><input type="number" id="siWpEarlyDays" value="7" step="1" min="0"></div>
+      <div><label for="siWpCredit">Công nợ tối đa (ngày)</label><input type="number" id="siWpCredit" value="30" step="5" min="0"></div>
+    </div>
+    <div class="pair">
+      <div><label for="siWpDeposit">Đặt cọc đơn đầu (%)</label><input type="number" id="siWpDeposit" value="30" step="5" min="0"></div>
+      <div><label for="siWpRebate">Rebate tích luỹ quý (%)</label><input type="number" id="siWpRebate" value="3" step="0.5" min="0"></div>
+    </div>
+    <div class="note" id="siWpKQ"></div>
+    <div class="hint">Rebate trừ thẳng vào giá tính thuế GTGT phải đăng ký chương trình khuyến mại với Sở Công Thương trước (NĐ 181/2025 Đ.6 khoản 2) — trả sau bằng tiền/hàng riêng thì không vướng quy định này.</div>
+  </div>
+
+  <div class="card">
     <h3>Bảng giá đề xuất</h3>
     <div class="hint">Giá bán ở mỗi ô là <strong>đề xuất theo margin</strong> — gõ đè số khác vào đúng ô đó bất kỳ lúc nào, xoá trắng ô để tính lại theo margin. Không có ô nào bị khoá cứng.</div>
     <div style="overflow-x:auto"><table class="si-table" id="siKetQuaTable"></table></div>
@@ -475,19 +527,27 @@ var KHOA_SI = 'zaka_tinhgia_si';
 var SI = (function(){
   try { return JSON.parse(localStorage.getItem(KHOA_SI)) } catch(e){ return null }
 })() || {
-  sp: [{ ten:'', von:0, vat:8 }],
+  sp: [{ ten:'', von:0, vat:8, bao:1 }],
   bac: [{ ten:'Sỉ', margin:15 }, { ten:'Phân phối', margin:10 }],
-  gia: {} // override giá bán, khoá "spIdx_bacIdx"
+  gia: {}, // override giá bán, khoá "spIdx_bacIdx"
+  xe: { capXeMay:10, capBanTai:150, threshBanTai:30, cpXeMay:70000, cpBanTai:450000, cpThueXe:900000, soThung:15, khuVuc:'20' },
+  wp: { freeship:100, earlyPct:2, earlyDays:7, credit:30, deposit:30, rebate:3 }
 };
+// Dữ liệu lưu từ bản cũ (trước 17/09/2026) chưa có field xe/wp/bao — điền mặc định, không mất gì đã lưu.
+if (!SI.xe) SI.xe = { capXeMay:10, capBanTai:150, threshBanTai:30, cpXeMay:70000, cpBanTai:450000, cpThueXe:900000, soThung:15, khuVuc:'20' };
+if (SI.xe.capBanTai === undefined) SI.xe.capBanTai = 150;
+if (!SI.wp) SI.wp = { freeship:100, earlyPct:2, earlyDays:7, credit:30, deposit:30, rebate:3 };
+SI.sp.forEach(function(r){ if (r.bao === undefined) r.bao = 1 });
 function luuSi_(){ try { localStorage.setItem(KHOA_SI, JSON.stringify(SI)) } catch(e){} }
 
 function veSiSpTable_(){
-  var html = '<tr><th>Tên sản phẩm</th><th>Giá vốn (₫)</th><th>VAT (%)</th><th></th></tr>';
+  var html = '<tr><th>Tên sản phẩm</th><th>Giá vốn (₫)</th><th>VAT (%)</th><th>Bao/thùng</th><th></th></tr>';
   SI.sp.forEach(function(r, i){
     html += '<tr>'
       + '<td><input type="text" data-si-sp="ten" data-i="'+i+'" value="'+esc_(r.ten)+'" placeholder="Tên sản phẩm"></td>'
       + '<td><input type="number" data-si-sp="von" data-i="'+i+'" value="'+r.von+'" step="1000" min="0"></td>'
       + '<td><input type="number" data-si-sp="vat" data-i="'+i+'" value="'+r.vat+'" step="0.5" min="0"></td>'
+      + '<td><input type="number" data-si-sp="bao" data-i="'+i+'" value="'+(r.bao||1)+'" step="1" min="1" title="Mấy đơn vị lẻ gộp thành 1 thùng — dùng để chia đều chi phí logistics"></td>'
       + '<td><button type="button" class="si-x" data-si-sp-x="'+i+'" title="Xoá sản phẩm">✕</button></td>'
       + '</tr>';
   });
@@ -532,26 +592,64 @@ function veSiBacTable_(){
     });
   });
 }
+// Tự chọn xe theo số thùng đặt (chỉ dùng cho Sỉ/Phân phối — SPX/Lalamove tính
+// riêng ở 2 tab Shopee/TikTok, chỉ dùng cho khách lẻ). Trả về chi phí logistics
+// cho ĐÚNG 1 thùng — veSiKetQua_ chia tiếp theo "bao/thùng" của từng sản phẩm.
+function veSiXe_(){
+  var x = SI.xe;
+  var soThung = x.soThung||0, capXM = x.capXeMay||0, thresh = x.threshBanTai||0, capBT = x.capBanTai||0;
+  var kmKhu = parseFloat(x.khuVuc)||0;
+  var xaChoXeMay = kmKhu >= 40, xaChoBanTai = kmKhu >= 100;
+  var xe, soChuyen, cpChuyen, canhBao = '';
+  if (!xaChoXeMay && soThung <= capXM && soThung < thresh){
+    xe = '🛵 Xe máy'; soChuyen = Math.ceil(soThung/(capXM||1)); cpChuyen = x.cpXeMay||0;
+  } else if (!xaChoBanTai){
+    xe = '🚚 Xe bán tải'; soChuyen = Math.ceil(soThung/(capBT||1)); cpChuyen = x.cpBanTai||0;
+    if (xaChoXeMay && soThung < capXM) canhBao = ' (vượt khoảng cách an toàn cho xe máy — tự chuyển bán tải)';
+  } else {
+    xe = '🚛 Thuê xe ngoài'; soChuyen = 1; cpChuyen = x.cpThueXe||0;
+    canhBao = ' (quá xa cho xe công ty tự chạy)';
+  }
+  var tongCp = soChuyen * cpChuyen;
+  var cpMoiThung = tongCp / (soThung || 1);
+  if ($('siXeKQ')){
+    $('siXeKQ').className = 'note ' + (canhBao ? 'bad' : 'ok');
+    $('siXeKQ').innerHTML = 'Với <b>'+soThung+' thùng</b>: tự chọn <b>'+xe+'</b>'+canhBao+' — '+soChuyen+' chuyến × '+vnd(cpChuyen)+
+      ' = <b>'+vnd(tongCp)+'</b> ≈ <b>'+vnd(cpMoiThung)+'</b>/thùng.';
+  }
+  return cpMoiThung;
+}
+function veSiChinhSach_(){
+  var w = SI.wp;
+  if (!$('siWpKQ')) return;
+  $('siWpKQ').innerHTML = 'Freeship từ <b>'+w.freeship+' đơn vị/đơn</b> · Chiết khấu trả sớm <b>'+w.earlyPct+'%</b> nếu trả trong <b>'+
+    w.earlyDays+' ngày</b> · Công nợ tối đa <b>'+w.credit+' ngày</b> · Đặt cọc đơn đầu <b>'+w.deposit+'%</b> · Rebate tích luỹ quý <b>'+w.rebate+'%</b>.';
+}
 function veSiKetQua_(){
-  var basis = $('siBasis').value, chiPhi = n('siChiPhi');
+  var basis = $('siBasis').value, chiPhiTay = n('siChiPhi');
+  var cpMoiThung = veSiXe_();
   var html = '<tr><th>Sản phẩm</th>';
   SI.bac.forEach(function(b){ html += '<th>'+esc_(b.ten || '(chưa đặt tên)')+' — '+b.margin+'%</th>'; });
   html += '</tr>';
   SI.sp.forEach(function(sp, i){
-    html += '<tr><td><b>'+esc_(sp.ten || '(chưa đặt tên)')+'</b><div class="si-cell-sub">vốn '+vnd(sp.von)+' · VAT '+sp.vat+'%</div></td>';
+    var cpLogistics = cpMoiThung / (sp.bao || 1);
+    var chiPhi = chiPhiTay + cpLogistics;
+    html += '<tr><td><b>'+esc_(sp.ten || '(chưa đặt tên)')+'</b><div class="si-cell-sub">vốn '+vnd(sp.von)+' · VAT '+sp.vat+'% · logistics '+vnd(cpLogistics)+'/đơn vị (tự tính)</div></td>';
     SI.bac.forEach(function(bac, j){
       var key = i + '_' + j;
-      var gia = SI.gia[key];
-      if (gia === undefined || gia === null || gia === ''){
-        gia = giaTheoMargin_(sp.von, sp.vat, bac.margin, chiPhi, basis);
-      }
+      var daGhiDe = SI.gia[key] !== undefined && SI.gia[key] !== null && SI.gia[key] !== '';
+      var gia = daGhiDe ? SI.gia[key] : giaTheoMargin_(sp.von, sp.vat, bac.margin, chiPhi, basis);
       if (gia === null){
         html += '<td><input type="number" data-si-gia="'+key+'" placeholder="không khả thi"><div class="si-cell-sub neg">Margin quá cao so với vốn+thuế</div></td>';
       } else {
         var b = ketQuaSi_(gia, sp.von, sp.vat, chiPhi);
         var lai = basis === 'net' ? b.laiSauThue : b.lai;
         html += '<td><input type="number" data-si-gia="'+key+'" value="'+Math.round(gia)+'" step="500">'
-          + '<div class="si-cell-sub'+(lai<0?' neg':'')+'">lời '+vnd(lai)+' ('+pct(gia>0?lai/gia:0)+')</div></td>';
+          + '<div class="si-cell-sub'+(lai<0?' neg':'')+'">lời '+vnd(lai)+' ('+pct(gia>0?lai/gia:0)+')</div>'
+          + (daGhiDe
+            ? '<div class="si-cell-sub"><span style="color:var(--loss)">✎ tự đặt tay</span> · <button type="button" class="si-x" style="font-size:11px" data-si-reset="'+key+'">↺ tính lại theo margin</button></div>'
+            : '<div class="si-cell-sub" style="color:var(--accent-si)">tự tính theo margin</div>')
+          + '</td>';
       }
     });
     html += '</tr>';
@@ -564,16 +662,38 @@ function veSiKetQua_(){
       luuSi_(); veSiKetQua_();
     });
   });
+  $('siKetQuaTable').querySelectorAll('[data-si-reset]').forEach(function(el){
+    el.addEventListener('click', function(){
+      delete SI.gia[this.getAttribute('data-si-reset')];
+      luuSi_(); veSiKetQua_();
+    });
+  });
 }
-function veSi(){ veSiSpTable_(); veSiBacTable_(); veSiKetQua_(); }
+function veSi(){ veSiSpTable_(); veSiBacTable_(); veSiKetQua_(); veSiChinhSach_(); }
 $('siSpAdd').addEventListener('click', function(){
-  SI.sp.push({ ten:'', von:0, vat:8 }); luuSi_(); veSiSpTable_(); veSiKetQua_();
+  SI.sp.push({ ten:'', von:0, vat:8, bao:1 }); luuSi_(); veSiSpTable_(); veSiKetQua_();
 });
 $('siBacAdd').addEventListener('click', function(){
   SI.bac.push({ ten:'', margin:10 }); luuSi_(); veSiBacTable_(); veSiKetQua_();
 });
 $('siBasis').addEventListener('change', function(){ luuSi_(); veSiKetQua_(); });
 $('siChiPhi').addEventListener('input', function(){ luuSi_(); veSiKetQua_(); });
+
+// Logistics theo số lượng — mọi ô đều ghi thẳng vào SI.xe rồi tính lại bảng giá.
+['siCapXeMay','siCapBanTai','siThreshBanTai','siCpXeMay','siCpBanTai','siCpThueXe','siSoThung'].forEach(function(id){
+  var k = id.replace(/^si/, ''); k = k.charAt(0).toLowerCase() + k.slice(1);
+  $(id).value = SI.xe[k];
+  $(id).addEventListener('input', function(){ SI.xe[k] = parseFloat(this.value)||0; luuSi_(); veSiKetQua_(); });
+});
+$('siKhuVuc').value = SI.xe.khuVuc;
+$('siKhuVuc').addEventListener('change', function(){ SI.xe.khuVuc = this.value; luuSi_(); veSiKetQua_(); });
+
+// Chính sách khách sỉ — chỉ tham khảo, không đụng công thức giá.
+['siWpFreeship','siWpEarlyPct','siWpEarlyDays','siWpCredit','siWpDeposit','siWpRebate'].forEach(function(id){
+  var k = id.replace(/^siWp/, ''); k = k.charAt(0).toLowerCase() + k.slice(1);
+  $(id).value = SI.wp[k];
+  $(id).addEventListener('input', function(){ SI.wp[k] = parseFloat(this.value)||0; luuSi_(); veSiChinhSach_(); });
+});
 
 function render(){
   var p = thamSoChung();
