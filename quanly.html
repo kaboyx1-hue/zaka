@@ -497,6 +497,17 @@ body.ks-chi *{cursor:crosshair!important}
 
   <div class="card"><h2>Ba máy nhân viên</h2><div id="dsMay"></div></div>
 
+  <div class="card"><h2>Ngưỡng huy hiệu khách</h2>
+    <div class="sm" style="margin-bottom:8px">Chỉnh mức chi tiêu để lên "Khách quen"/"VIP" (kênh Lẻ, Thú y) và "VVIP" (kênh Breeder) — đổi ở đây áp dụng ngay cho Sổ cái, Báo cáo, Cần làm trên MÁY NÀY. Kênh Sỉ cố định chỉ hiện "Sỉ", không xét theo tiền.</div>
+    <div id="nguongHhMsg"></div>
+    <div class="row">
+      <div><label class="sm">Khách quen từ (đ) — Lẻ/Thú y</label><input id="nghhQuen" inputmode="numeric" oninput="dinhDangTien(this)"></div>
+      <div><label class="sm">VIP từ (đ) — Lẻ/Thú y</label><input id="nghhVip" inputmode="numeric" oninput="dinhDangTien(this)"></div>
+      <div><label class="sm">VVIP từ (đ) — Breeder</label><input id="nghhVvip" inputmode="numeric" oninput="dinhDangTien(this)"></div>
+    </div>
+    <button class="btn-nho mt" onclick="luuNguongHuyHieu()">Lưu ngưỡng này</button>
+  </div>
+
   <div class="card"><h2>Danh sách shipper</h2>
     <div class="sm" style="margin-bottom:8px">Tên, lương theo giờ, biển số xe — chỉ máy quản lý sửa được. Nhân viên chỉ xem để chọn khi gán người giao đơn.</div>
     <div id="shipMsg"></div>
@@ -874,7 +885,14 @@ function tien(n){return (Math.round(n)||0).toLocaleString('vi-VN')+' đ'}
    không tải KHACH_HANG nên không đọc field "Kênh" trên danh bạ, phải suy
    kênh từ chính lịch sử đơn, y hệt cách index.html đang làm. SỬA GÌ Ở ĐÂY
    THÌ NHỚ SỬA CẢ BÊN index.html, KHÔNG THÌ HAI APP RA HUY HIỆU KHÁC NHAU. */
-var NGUONG_QUEN_=3000000, NGUONG_VIP_=10000000, NGUONG_VVIP_BREEDER_=NGUONG_VIP_*4;
+/* SỬA 17/09/2026 — chủ muốn tự do chỉnh ngưỡng thay vì hard-code cứng, để
+   linh động theo từng thời kỳ. Nạp từ localStorage nếu đã từng lưu, không
+   thì dùng đúng mặc định cũ. CHỈ chỉnh được trên máy quản lý này — máy
+   nhân viên (index.html) vẫn dùng mặc định cũ cho tới khi đồng bộ qua
+   Apps Script (cần chủ duyệt riêng, xem CLAUDE.md). */
+var NGUONG_HH_MACDINH_={quen:3000000, vip:10000000, vvipBreeder:40000000};
+var NGUONG_HH_=get('nguongHuyHieu', NGUONG_HH_MACDINH_);
+var NGUONG_QUEN_=NGUONG_HH_.quen, NGUONG_VIP_=NGUONG_HH_.vip, NGUONG_VVIP_BREEDER_=NGUONG_HH_.vvipBreeder;
 /* So khớp SĐT CHỊU ĐƯỢC lỗi mất số 0 đầu — ĐÚNG BẢN SAO của chuanSdt_ bên
    index.html, xem ghi chú đầy đủ ở đó (liên quan "Việc 3" trong CLAUDE.md). */
 function chuanSdt_(s){ return String(s||'').trim().replace(/\D/g,'').replace(/^0+/,'') }
@@ -2416,7 +2434,7 @@ function veTab_(t){
   if(t==='lam')veLam();
   if(t==='bc')veBC(); if(t==='so')veSo(); if(t==='gia'){veGia();vePhat()} if(t==='cb')veCB();
   if(t==='ts')guiCatalogChoTs();
-  if(t==='vh'){veNV();veMayGui();veNhatKy();veKhaiTruong();nhacSaoLuu();veNvXemLS()}
+  if(t==='vh'){veNV();veMayGui();veNhatKy();veKhaiTruong();nhacSaoLuu();veNvXemLS();veNguongHuyHieu()}
 }
 /* Gửi danh mục sản phẩm đang bán (SKU/tên/giá lẻ/giá vốn) cho tool tính giá
    sàn (tinh_gia.html, chạy trong iframe riêng) qua postMessage — không viết
@@ -4385,6 +4403,23 @@ async function luuDanhSachNhoLenSheet(loai){
   }catch(e){
     bao(cf.msgId,'Chưa lưu được: '+esc(e.message)+'<br><span class="sm">Danh sách trên máy này vẫn nguyên vẹn.</span>','er');
   }
+}
+/* ══════════════════════ NGƯỠNG HUY HIỆU KHÁCH ══════════════════════
+   Chỉ đổi được trên máy quản lý này (localStorage riêng máy) — xem ghi chú
+   ở chỗ khai báo NGUONG_HH_. */
+function veNguongHuyHieu(){
+  if(!$('nghhQuen')) return;
+  $('nghhQuen').value=NGUONG_QUEN_.toLocaleString('vi-VN');
+  $('nghhVip').value=NGUONG_VIP_.toLocaleString('vi-VN');
+  $('nghhVvip').value=NGUONG_VVIP_BREEDER_.toLocaleString('vi-VN');
+}
+function luuNguongHuyHieu(){
+  var quen=n2($('nghhQuen').value), vip=n2($('nghhVip').value), vvip=n2($('nghhVvip').value);
+  if(vip<=quen){ bao('nguongHhMsg','Mức VIP phải cao hơn mức Khách quen.','er'); return }
+  NGUONG_QUEN_=quen; NGUONG_VIP_=vip; NGUONG_VVIP_BREEDER_=vvip;
+  set('nguongHuyHieu',{quen:quen,vip:vip,vvipBreeder:vvip});
+  veNguongHuyHieu();
+  bao('nguongHhMsg','Đã lưu trên máy này. Bấm lại tab đang xem (Sổ cái/Báo cáo/Cần làm) để huy hiệu cập nhật theo mức mới.','ok');
 }
 /* ══════════════════════ DANH SÁCH SHIPPER ══════════════════════
    Chỉ máy quản lý thêm/sửa/xoá. Lưu đè toàn bộ danh sách lên Sheet mỗi lần bấm Lưu
