@@ -520,6 +520,7 @@ body.ks-chi *{cursor:crosshair!important}
   <nav>
     <button id="tb-new" class="on" onclick="tab('new')">Lên đơn</button>
     <button id="tb-pg" onclick="tab('pg')">Phiếu giao hàng <span id="pgSo"></span></button>
+    <button id="tb-gd" onclick="tab('gd')">🚚 Đơn giao dở <span id="gdTabSo"></span></button>
     <button id="tb-list" onclick="tab('list')">Lịch sử</button>
     <button id="tb-kh" onclick="tab('kh')">Khách hàng</button>
     <button id="tb-out" onclick="tab('out')">Xuất file</button>
@@ -628,6 +629,13 @@ body.ks-chi *{cursor:crosshair!important}
     <span class="fabnx" onclick="event.stopPropagation();chupNhieu(dsChonIn())" title="Chụp ảnh các đơn đang chọn thành một hình">📷 Ảnh gửi sếp</span>
     <span class="fabnx" onclick="event.stopPropagation();thuTienHangLoat(dsChonIn(),'pgMsg')" title="Đánh dấu ĐÃ THU (tiền mặt) cho các đơn đang chọn">💰 Đã thu tiền</span>
     <span class="fabx" onclick="event.stopPropagation();chonHetIn(0)">✕ bỏ chọn</span>
+  </div>
+</section>
+
+<section id="pg-gd" class="hide">
+  <div class="card">
+    <div class="sm" style="opacity:.75;margin-bottom:8px">Đơn đã mở "Giao đợt" ít nhất 1 lần và CHƯA giao đủ — xếp theo lâu nhất chưa giao tiếp lên đầu, để tiện chăm sóc/theo sát. Đơn giao gọn 1 lần thì không nằm ở đây.</div>
+    <div id="dsGiaoDo"></div>
   </div>
 </section>
 
@@ -789,6 +797,10 @@ body.ks-chi *{cursor:crosshair!important}
   <div class="mt"><label>Đã thu bằng hình thức nào?</label>
     <select id="ttNhanhHt"><option>Tiền mặt</option><option>CK HKD</option><option>CK Cty</option></select>
   </div>
+  <div class="mt"><label>Người hoàn tất / giao đơn (không bắt buộc)</label>
+    <input id="ttNhanhShipper" list="dsShip" placeholder="Để trống nếu bạn tự giao">
+    <div class="sm" style="opacity:.7;margin-top:3px" id="ttNhanhShipperHint"></div>
+  </div>
   <button class="btn mt" onclick="xacNhanThuTienNhanh()" style="background:var(--acc);color:#03121f;font-weight:600">Xác nhận đã thu</button>
 </dialog>
 
@@ -798,10 +810,19 @@ body.ks-chi *{cursor:crosshair!important}
     <h2 style="margin:0" id="gdTen"></h2>
     <button onclick="document.getElementById('dlgGD').close()" style="background:var(--c2);color:var(--tx2);padding:6px 12px">Đóng</button>
   </div>
-  <div class="sm" id="gdTom" style="margin:6px 0 10px"></div>
-  <div id="gdBang" style="max-height:46vh;overflow-y:auto"></div>
+  <div class="sm" id="gdTom" style="margin:6px 0 8px"></div>
+  <div class="sm" id="gdTienDoText" style="margin-bottom:4px"></div>
+  <div style="background:var(--c2);border-radius:99px;height:7px;overflow:hidden;margin-bottom:10px">
+    <div id="gdTienDoBar" style="background:var(--acc);height:100%;border-radius:99px;transition:width .2s"></div>
+  </div>
+  <div class="sm" style="opacity:.75;margin-bottom:10px">Chỉ cần chọn từng món khi giao KHÔNG ĐỦ — giao hết luôn thì bấm 1 nút bên dưới, khỏi phải nhập tay từng dòng.</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+    <button type="button" onclick="gdGiaoDu()" style="background:var(--acc);color:#03121f;font-weight:600;padding:9px 14px">✅ Giao đủ phần còn lại</button>
+    <button type="button" onclick="gdToggleTungPhan()" style="background:var(--c2);color:var(--tx);padding:9px 14px" id="gdBtnTungPhan">✏️ Giao từng phần</button>
+  </div>
+  <div id="gdBang" style="max-height:46vh;overflow-y:auto;display:none"></div>
   <div style="margin-top:10px"><input id="gdShipper" list="dsShip" placeholder="Người giao đợt này (shipper) — không bắt buộc">
-    <div class="sm" style="opacity:.7;margin-top:3px">Bỏ trống thì phiếu gửi nhà xe của đợt này dùng "Người giao mặc định" đang ghi ở đầu đơn. Điền vào đây thì đợt này in theo đúng tên điền ở đây, không theo tên mặc định.</div></div>
+    <div class="sm" style="opacity:.7;margin-top:3px" id="gdShipperHint"></div></div>
   <div style="margin-top:8px"><input id="gdGc" placeholder="Ghi chú cho đợt này (không bắt buộc)"></div>
   <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px">
     <div class="sm" id="gdTong"></div>
@@ -937,7 +958,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260915c';
+var APP_VER='20260917a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -2370,6 +2391,8 @@ function dem(){
   veMang();
   var ci=chuaIn().length, e=$('pgSo');
   if(e){ e.textContent=ci?'('+ci+')':''; e.style.color=ci?'var(--warn)':'' }
+  var gdE=$('gdTabSo');
+  if(gdE){ var gdN=dsDonGiaoDo_().length; gdE.textContent=gdN?'('+gdN+')':'' }
   var cd=chuaDay().length;
   var loiGanDay=LOI_DONGBO && (Date.now()-LOI_DONGBO.luc)<5*60000;
   if(loiGanDay){
@@ -3547,10 +3570,10 @@ function chiTiet(ma){
   box.classList.remove('hide');
 }
 /* ── LỊCH SỬ / KHÁCH / XUẤT ── */
-function tab(t){['new','pg','list','kh','out','cfg','cp'].forEach(function(x){
+function tab(t){['new','pg','gd','list','kh','out','cfg','cp'].forEach(function(x){
   $('pg-'+x).classList.toggle('hide',x!==t);$('tb-'+x).classList.toggle('on',x===t)});
   $('thanhToan').classList.toggle('hide',t!=='new');
-  if(t==='pg')vePG(); if(t==='list')veDon(); if(t==='kh')veKH(); if(t==='out')veOut(); if(t==='cp')veChiPhi();
+  if(t==='pg')vePG(); if(t==='gd')veGiaoDoTab_(); if(t==='list')veDon(); if(t==='kh')veKH(); if(t==='out')veOut(); if(t==='cp')veChiPhi();
   // Mo dung 2 tab hay dung de xem/ho tro dong nghiep — hoi Sheet NGAY, khong doi
   // toi chu ky 60s. Chay ngam (khong lam phien), chi ve lai neu THAT SU co gi moi.
   if((t==='pg'||t==='list')&&CFG.ma&&navigator.onLine) dongBo(false);
@@ -3889,10 +3912,59 @@ function luuSuaTT(){
   veDon(); vePG(); dem(); dayLen(false);
   bao('newMsg','Đã cập nhật thanh toán đơn <b>'+esc(MA_DANG_SUA_TT)+'</b>.','ok');
 }
+/* Tab "Đơn giao dở" — gom đơn đã mở Giao đợt ít nhất 1 lần nhưng chưa giao đủ,
+   xếp lâu nhất chưa giao tiếp lên đầu, để dễ theo sát thay vì lẫn trong Phiếu
+   giao hàng/Lịch sử chung. Không thêm field mới — chỉ đọc lại d.dot/d.dong sẵn có. */
+function soNgayChuaGiaoTiep_(d){
+  if(!d.dot||!d.dot.length) return 0;
+  var m=String(d.dot[d.dot.length-1].luc||'').match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  if(!m) return 0;
+  return Math.max(0,Math.round((Date.now()-new Date(+m[3],+m[2]-1,+m[1]).getTime())/86400000));
+}
+function dsDonGiaoDo_(){
+  return DON.filter(function(d){return !d.huy && d.dot && d.dot.length && tongDaGiao(d)<tongDat(d)})
+    .sort(function(a,b){return soNgayChuaGiaoTiep_(b)-soNgayChuaGiaoTiep_(a)});
+}
+function veGiaoDoTab_(){
+  var ds=dsDonGiaoDo_();
+  var gdE=$('gdTabSo'); if(gdE) gdE.textContent=ds.length?'('+ds.length+')':'';
+  if(!ds.length){ $('dsGiaoDo').innerHTML='<div class="sm">Không còn đơn nào đang giao dở.</div>'; return }
+  $('dsGiaoDo').innerHTML=ds.map(function(d){
+    var dat=tongDat(d), giaoXong=tongDaGiao(d), pctG=dat?Math.round(giaoXong/dat*100):0;
+    var soNgay=soNgayChuaGiaoTiep_(d), canhBao=soNgay>=5;
+    var ganNhat=d.dot[d.dot.length-1].luc;
+    return '<div onclick="moGiaoDot(\''+d.ma+'\')" style="cursor:pointer;padding:10px 0;border-bottom:1px solid var(--vien)">'+
+      '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">'+
+        '<div style="flex:1;min-width:0"><b>'+esc(d.ma)+'</b> — '+esc(d.khach||'KHÁCH LẺ')+
+          '<div class="sm">'+giaoXong+'/'+dat+' món · đợt gần nhất '+esc(ganNhat)+'</div></div>'+
+        '<span class="sm" style="white-space:nowrap;padding:3px 8px;border-radius:99px;background:'+(canhBao?'var(--badBg)':'var(--warnBg)')+';color:'+(canhBao?'var(--bad)':'var(--warn)')+'">'+soNgay+' ngày chưa giao tiếp</span>'+
+      '</div>'+
+      '<div style="background:var(--c2);border-radius:99px;height:5px;overflow:hidden;margin-top:6px"><div style="width:'+pctG+'%;height:100%;background:var(--acc)"></div></div>'+
+    '</div>';
+  }).join('');
+}
 function moGiaoDot(ma){
   var d=getDon(ma); if(!d) return;
   GD={ma:ma, sl:d.dong.map(function(x){return conLaiDialog(d,x)}), doi:d.dong.map(function(){return null})};
+  $('gdBang').style.display='none';
+  $('gdBtnTungPhan').textContent='✏️ Giao từng phần';
+  $('gdShipper').value=d.nguoiGiao||'';
+  $('gdShipperHint').textContent=d.nguoiGiao
+    ?'Đơn đã gán sẵn "'+d.nguoiGiao+'" cho cả đơn — để nguyên nếu đợt này vẫn người đó, đổi nếu khác.'
+    :'Bỏ trống thì phiếu gửi nhà xe của đợt này dùng "Người giao mặc định" đang ghi ở đầu đơn. Điền vào đây thì đợt này in theo đúng tên điền ở đây, không theo tên mặc định.';
   veGiaoDot(); $('dlgGD').showModal();
+}
+function gdGiaoDu(){
+  var d=getDon(GD.ma); if(!d) return;
+  GD.sl=d.dong.map(function(x){return conLaiDialog(d,x)});
+  $('gdBang').style.display='none';
+  $('gdBtnTungPhan').textContent='✏️ Giao từng phần';
+  veGiaoDot();
+}
+function gdToggleTungPhan(){
+  var show=$('gdBang').style.display==='none';
+  $('gdBang').style.display=show?'':'none';
+  $('gdBtnTungPhan').textContent=show?'✕ Ẩn bảng chi tiết':'✏️ Giao từng phần';
 }
 function gdSet(i,v){ var d=getDon(GD.ma); GD.sl[i]=Math.max(0,Math.min(conLaiDialog(d,d.dong[i]),parseInt(v)||0)); veGiaoDot() }
 function veGiaoDot(){
@@ -3900,8 +3972,13 @@ function veGiaoDot(){
   var soDot=(d.dot||[]).length+1;
   $('gdTen').textContent='Giao đợt '+soDot+' — đơn '+d.ma;
   $('gdTom').innerHTML=esc(d.khach||'KHÁCH LẺ')+' · '+esc(d.sdt||'')+
-    '<br>Đã giao <b>'+tongDaGiao(d)+'/'+tongDat(d)+'</b> món'+
     (d.daGiao?'':' <span style="color:var(--tx2)">(đơn này chưa mở sổ giao đợt — mặc định coi như giao đủ một lần)</span>');
+  var dat=tongDat(d), giaoXong=tongDaGiao(d), giaoThem=GD.sl.reduce(function(a,b){return a+(b||0)},0);
+  var sau=giaoXong+giaoThem, pctHT=dat?Math.round(giaoXong/dat*100):0, pctSau=dat?Math.round(sau/dat*100):0;
+  $('gdTienDoText').innerHTML = giaoThem
+    ? 'Đang giao <b>'+giaoXong+'/'+dat+'</b> món ('+pctHT+'%) → sau khi lưu: <b>'+sau+'/'+dat+'</b> ('+pctSau+'%)'
+    : 'Đã giao <b>'+giaoXong+'/'+dat+'</b> món ('+pctHT+'%)';
+  $('gdTienDoBar').style.width=pctSau+'%';
   $('gdBang').innerHTML='<table><tr><th>Sản phẩm</th><th class="r">Đặt</th><th class="r">Đã giao</th>'+
     '<th class="r">Giao lần này</th><th class="r">Còn lại</th><th></th></tr>'+
     d.dong.map(function(x,i){
@@ -4494,6 +4571,10 @@ function doiTT(ma){
   MA_DANG_THU_NHANH=ma;
   $('ttNhanhTen').textContent='Đơn '+ma+' — '+(d.khach||'')+' · còn phải thu '+tien(conThuDon(d));
   $('ttNhanhHt').value='Tiền mặt';
+  $('ttNhanhShipper').value=d.nguoiGiao||'';
+  $('ttNhanhShipperHint').textContent=d.nguoiGiao
+    ?'Đơn đã gán sẵn "'+d.nguoiGiao+'" — để nguyên hoặc đổi nếu khác người.'
+    :'Dùng chung danh sách shipper đã khai ở tab Vận hành (máy quản lý).';
   $('dlgThuTien').showModal();
 }
 var MA_DANG_THU_NHANH=null;
@@ -4505,8 +4586,11 @@ function xacNhanThuTienNhanh(){
   if(!d) return;
   d.tt='DA'; d.ttHt=$('ttNhanhHt').value||'Tiền mặt'; d.daTra=d.tong;
   d.ttChuaDay=true; set('don',DON);
+  var shipper=($('ttNhanhShipper').value||'').trim();
+  if(shipper!==(d.nguoiGiao||'')) ganShipper(ma,shipper);
   vePG(); veDon(); dayTT();
-  bao('pgMsg','Đơn <b>'+esc(ma)+'</b> → <b style="color:var(--ok)">ĐÃ THANH TOÁN</b> ('+esc(d.ttHt)+')','ok');
+  bao('pgMsg','Đơn <b>'+esc(ma)+'</b> → <b style="color:var(--ok)">ĐÃ THANH TOÁN</b> ('+esc(d.ttHt)+')'+
+    (shipper?' · Người giao: <b>'+esc(shipper)+'</b>':''),'ok');
 }
 /* ĐÁNH DẤU ĐÃ THU HÀNG LOẠT — thêm 13/09/2026 theo yêu cầu của chủ, để khỏi
    phải mở dropdown từng đơn một lúc thu tiền mặt cuối ca. Mặc định hình thức
@@ -5388,6 +5472,13 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260917a', ngay:'17/09/2026', ten:'Tab Đơn giao dở + cải tiến Giao đợt + chọn người giao khi Đã thu',
+  vaPhieu:[],
+  muc:[
+   ['moi','Tab mới <b>🚚 Đơn giao dở</b>: gom mọi đơn đã mở "Giao đợt" ít nhất 1 lần nhưng CHƯA giao đủ, xếp lâu nhất chưa giao tiếp lên đầu — tiện theo sát thay vì lẫn trong Phiếu giao hàng/Lịch sử.'],
+   ['moi','Hộp thoại "Giao đợt" thêm thanh tiến độ + nút "✅ Giao đủ phần còn lại" (điền 1 chạm, khỏi tính tay từng dòng) — bảng chi tiết từng sản phẩm giờ chỉ hiện khi bấm "✏️ Giao từng phần".'],
+   ['moi','Đánh dấu "Đã thu" giờ có thêm ô chọn người giao/hoàn tất đơn (dùng chung danh sách shipper đã khai ở máy quản lý) — không bắt buộc, để trống nếu tự giao.'],
+  ]},
  {ban:'20260915c', ngay:'15/09/2026', ten:'Menu thao tác nhanh khi tích 1 đơn',
   vaPhieu:[],
   muc:[
