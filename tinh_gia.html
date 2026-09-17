@@ -71,6 +71,17 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
 .vq{background:var(--page);border:1px solid var(--line-2);border-radius:8px;padding:6px 10px;font:500 12.5px inherit;color:var(--ink-2);cursor:pointer}
 .vq:hover{border-color:var(--accent);color:var(--accent)}
 .vq.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.luuBtn{width:100%;height:42px;border:1px solid var(--line-2);border-radius:8px;background:#fff;
+  color:var(--ink);font:600 13.5px inherit;cursor:pointer;margin-top:10px}
+.luuBtn:hover{border-color:var(--accent);color:var(--accent)}
+.luuRow{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+.luuRow:last-child{border-bottom:0}
+.luuRow .tt{flex:1;min-width:0}
+.luuRow .ten{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.luuRow .phu{color:var(--ink-3);font-size:11.5px}
+.luuRow .lai{font-family:var(--mono);font-weight:700;white-space:nowrap}
+.luuRow .lai.am{color:var(--loss)}
+.luuRow button{width:auto;height:30px;padding:0 10px;font-size:12px;flex:none}
 </style>
 </head>
 <body>
@@ -118,7 +129,14 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
   <div class="out"><div class="k">Biên lợi nhuận</div><div class="v" id="oBien" style="font-size:18px">—</div></div>
 </div>
 <div class="note" id="noteGia"></div>
+<button class="luuBtn" id="btnLuu" type="button">💾 Lưu kết quả này</button>
 </div>
+</div>
+
+<div class="card" id="cardDsLuu" style="display:none">
+  <h3>Đã lưu trên máy này</h3>
+  <div class="hint" style="margin:-4px 0 8px">Chỉ xem lại được trên đúng máy/trình duyệt đã lưu — đổi qua máy khác sẽ không thấy.</div>
+  <div id="dsLuu"></div>
 </div>
 
 <button class="toggle" id="btnAdv">▾ Tuỳ chỉnh nâng cao (thuế, phí dịch vụ, vận chuyển)</button>
@@ -481,8 +499,10 @@ window.addEventListener('message', function(e){
 // trang cha gửi postMessage trước khi listener ở đây kịp gắn (mất tin, không
 // có cách "gửi lại"). Không có trang cha (mở file lẻ) thì bỏ qua, không lỗi.
 try { window.parent.postMessage({type:'ts-ready'}, '*'); } catch(e){}
+var SP_DANG_CHON = null;
 $('timSp').addEventListener('input', function(){
   var p = CATALOG_MAP[this.value];
+  SP_DANG_CHON = p || null;
   if (!p) { $('giaLeInfo').textContent = ''; return; }
   $('vonSp').value = p.von || 0;
   $('niemYet').value = '';
@@ -491,6 +511,59 @@ $('timSp').addEventListener('input', function(){
     : '<span style="color:var(--loss)">Sản phẩm này chưa có giá bán lẻ trong hệ thống.</span>';
   render();
 });
+
+// ================================================================
+// LƯU KẾT QUẢ ĐÃ TÍNH — thêm 17/09/2026 theo yêu cầu chủ, để coi lại cho dễ.
+// Lưu localStorage TRÊN MÁY NÀY thôi (không đụng Sheet/Apps Script — chưa
+// xin phép đổi schema) — nói rõ giới hạn này ngay trong giao diện, không
+// giấu. Bấm "Lưu kết quả" mới lưu, KHÔNG tự lưu mỗi lần gõ (gõ số liên tục
+// mà tự lưu thì đầy rác, khó tìm lại đúng bản chốt).
+// ================================================================
+var KHOA_LUU = 'zaka_tinhgia_daluu';
+var LICH_SU = (function(){ try { return JSON.parse(localStorage.getItem(KHOA_LUU)) || [] } catch(e){ return [] } })();
+function luuLichSu_(){ try { localStorage.setItem(KHOA_LUU, JSON.stringify(LICH_SU)) } catch(e){} }
+function luuKetQua(){
+  var p = thamSoChung(); var P = n('niemYet');
+  var b = boc(P, p);
+  var laiHienThi = $('phapNhanSel').value === 'dn' ? b.laiSauThue : b.lai;
+  LICH_SU.unshift({
+    luc: Date.now(),
+    san: SAN,
+    sku: SP_DANG_CHON ? SP_DANG_CHON.sku : '',
+    ten: SP_DANG_CHON ? SP_DANG_CHON.ten : ($('timSp').value.trim() || '(chưa đặt tên)'),
+    von: p.von, gia: P, vat: n('vat'), lai: laiHienThi, bien: P > 0 ? laiHienThi / P : 0
+  });
+  if (LICH_SU.length > 50) LICH_SU.length = 50;
+  luuLichSu_(); veDsLuu();
+  var bt = $('btnLuu'); var cu = bt.textContent;
+  bt.textContent = '✓ Đã lưu'; setTimeout(function(){ bt.textContent = cu }, 1200);
+}
+function xoaLichSu_(i){ LICH_SU.splice(i, 1); luuLichSu_(); veDsLuu(); }
+function xemLaiLichSu_(i){
+  var x = LICH_SU[i]; if (!x) return;
+  (x.san === 'sp' ? $('btnSp') : $('btnTt')).click();
+  SP_DANG_CHON = x.sku ? { sku: x.sku, ten: x.ten } : null;
+  $('timSp').value = x.sku ? (x.sku + ' — ' + x.ten) : '';
+  $('giaLeInfo').textContent = '';
+  $('vonSp').value = x.von; $('niemYet').value = x.gia; $('vat').value = x.vat;
+  veNutVatNhanh_(); render();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function veDsLuu(){
+  $('cardDsLuu').style.display = LICH_SU.length ? '' : 'none';
+  $('dsLuu').innerHTML = LICH_SU.map(function(x, i){
+    var ngay = new Date(x.luc);
+    var gio = ('0'+ngay.getHours()).slice(-2)+':'+('0'+ngay.getMinutes()).slice(-2)+' '+('0'+ngay.getDate()).slice(-2)+'/'+('0'+(ngay.getMonth()+1)).slice(-2);
+    return '<div class="luuRow"><div class="tt"><div class="ten">'+(x.sku?esc_(x.sku)+' — ':'')+esc_(x.ten)+'</div>'+
+      '<div class="phu">'+(x.san==='sp'?'Shopee':'TikTok')+' · vốn '+vnd(x.von)+' · bán '+vnd(x.gia)+' · VAT '+x.vat+'% · '+gio+'</div></div>'+
+      '<div class="lai'+(x.lai<0?' am':'')+'">'+vnd(x.lai)+'</div>'+
+      '<button type="button" onclick="xemLaiLichSu_('+i+')">Xem lại</button>'+
+      '<button type="button" onclick="xoaLichSu_('+i+')" style="color:var(--loss)">Xoá</button></div>';
+  }).join('');
+}
+function esc_(s){ var d = document.createElement('div'); d.textContent = s; return d.innerHTML }
+$('btnLuu').addEventListener('click', luuKetQua);
+veDsLuu();
 
 // ================================================================
 // Tự kiểm tra biên (console only — không phơi ra UI cho người dùng)
