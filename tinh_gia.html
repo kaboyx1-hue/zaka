@@ -683,7 +683,14 @@ function tinhXe_(soThungOverride){
     {k:'bantai', ten:'🚚 Xe bán tải', khaDung:!xaChoBanTai, cap:x.capBanTai||1, soChuyen:Math.ceil(soThung/(x.capBanTai||1)), cpChuyen:cpBanTai1, gioChuyen:kmKhuHoi/(x.tocDoBT||1)},
     {k:'thuexe', ten:'🚛 Thuê xe ngoài', khaDung:true, cap:x.capThueXe||1, soChuyen:Math.ceil(soThung/(x.capThueXe||1)), cpChuyen:cpThueXe1, gioChuyen:x.thoiGianTX||0}
   ];
-  ds.forEach(function(d){ d.tong=d.soChuyen*d.cpChuyen; d.moiThung=d.tong/(soThung||1); d.tongGio=d.soChuyen*d.gioChuyen });
+  // Số thùng đang để trống/0 (đang gõ dở, hoặc chưa điền) thì KHÔNG được để "0 chuyến" —
+  // 0 chuyến × bất kỳ chi phí/thời gian nào cũng ra 0, nhìn như chỉnh gì cũng không nhảy
+  // số (đúng thứ chủ báo). Luôn tính tối thiểu 1 chuyến — bảng vẫn so sánh được đúng chi
+  // phí/thời gian "nếu gửi 1 chuyến" ngay cả khi chưa gõ số thùng.
+  ds.forEach(function(d){
+    d.soChuyen = Math.max(1, d.soChuyen);
+    d.tong=d.soChuyen*d.cpChuyen; d.moiThung=d.tong/(soThung||1); d.tongGio=d.soChuyen*d.gioChuyen;
+  });
   var khaDung=ds.filter(function(d){return d.khaDung});
   var goiY=khaDung.slice().sort(function(a,b){return a.moiThung-b.moiThung})[0];
   return {ds:ds, goiY:goiY};
