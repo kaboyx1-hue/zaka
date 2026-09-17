@@ -8,7 +8,7 @@
 :root{
   --ink:#16211C; --ink-2:#5A6660; --ink-3:#8A938E;
   --page:#F0F2F0; --card:#FFFFFF; --line:#DDE2DE; --line-2:#C3CAC5;
-  --accent:#D2432A; --accent-tt:#101315; --accent-soft:#FBE8E4;
+  --accent:#D2432A; --accent-tt:#101315; --accent-si:#2B6E4F; --accent-soft:#FBE8E4;
   --loss:#A32D2D; --loss-soft:#FBEBEB;
   --r:12px; --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
 }
@@ -30,9 +30,19 @@ body{margin:0;padding:20px 14px 60px;background:var(--page);color:var(--ink);
 h1{font-size:19px;font-weight:600;margin:0 0 16px}
 .seg{display:flex;border:1px solid var(--line-2);border-radius:10px;overflow:hidden;margin-bottom:16px}
 .seg button{flex:1;height:44px;border:0;background:#fff;color:var(--ink-2);font:600 14px inherit;cursor:pointer}
-.seg button:first-child{border-right:1px solid var(--line-2)}
+.seg button+button{border-left:1px solid var(--line-2)}
 .seg button[aria-pressed="true"].sp{background:var(--accent);color:#fff}
 .seg button[aria-pressed="true"].tt{background:var(--accent-tt);color:#fff}
+.seg button[aria-pressed="true"].si{background:var(--accent-si);color:#fff}
+.si-table{width:100%;border-collapse:collapse;font-size:13px}
+.si-table th{text-align:left;font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.02em;padding:0 6px 6px}
+.si-table td{padding:5px 6px;vertical-align:top}
+.si-table input{height:36px;font-size:13.5px;padding:0 8px}
+.si-x{background:none;border:0;color:var(--loss);cursor:pointer;font-size:16px;padding:6px}
+.si-add{background:var(--page);border:1px dashed var(--line-2);border-radius:8px;padding:8px 12px;
+  color:var(--ink-2);font:600 13px inherit;cursor:pointer;margin-top:6px}
+.si-cell-sub{font-size:11px;color:var(--ink-3);margin-top:3px;line-height:1.3}
+.si-cell-sub.neg{color:var(--loss)}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:14px}
 label{display:block;font-size:13px;color:var(--ink-2);margin-bottom:5px}
 input,select{width:100%;height:44px;padding:0 12px;border:1px solid var(--line-2);border-radius:8px;
@@ -91,8 +101,10 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
 <div class="seg">
   <button id="btnSp" class="sp" aria-pressed="true">Shopee</button>
   <button id="btnTt" class="tt" aria-pressed="false">TikTok Shop</button>
+  <button id="btnSi" class="si" aria-pressed="false">🏭 Sỉ / Phân phối</button>
 </div>
 
+<div id="panelSan">
 <div class="topgrid">
 <div>
 <div class="card">
@@ -138,6 +150,39 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
   <div class="hint" style="margin:-4px 0 8px">Chỉ xem lại được trên đúng máy/trình duyệt đã lưu — đổi qua máy khác sẽ không thấy.</div>
   <div id="dsLuu"></div>
 </div>
+</div>
+
+<div id="panelSi" style="display:none">
+  <div class="card">
+    <h3>Sản phẩm sỉ / phân phối</h3>
+    <div class="hint">Tự thêm sản phẩm và giá vốn ở đây — độc lập với ô "Tìm sản phẩm" của tab Shopee/TikTok, vì hàng bán sỉ thường tính theo đơn vị khác (thùng/kiện) chứ không phải đơn lẻ.</div>
+    <table class="si-table" id="siSpTable"></table>
+    <button type="button" class="si-add" id="siSpAdd">+ Thêm sản phẩm</button>
+  </div>
+
+  <div class="card">
+    <h3>Các mức giá (bậc sỉ/phân phối)</h3>
+    <div class="hint">Mỗi bậc là một mức chiết khấu/margin riêng — đặt bao nhiêu bậc, tên gì, margin bao nhiêu đều tự do.</div>
+    <table class="si-table" id="siBacTable"></table>
+    <button type="button" class="si-add" id="siBacAdd">+ Thêm bậc giá</button>
+    <div class="pair" style="margin-top:12px">
+      <div><label for="siBasis">Margin mục tiêu tính trên</label>
+        <select id="siBasis">
+          <option value="pre">Lời trước thuế</option>
+          <option value="net" selected>Lời ròng — sau VAT + TNDN</option>
+        </select>
+      </div>
+      <div><label for="siChiPhi">Chi phí giao/đóng gói mỗi đơn vị (₫)</label><input type="number" id="siChiPhi" value="0" step="1000" min="0"></div>
+    </div>
+    <div class="hint">Dùng chung "Loại hình", "Thuế TNDN" ở khung "Tuỳ chỉnh nâng cao" bên dưới (bấm mở ra nếu cần đổi) — vì đây là hằng số của cả công ty, không phải riêng tab này.</div>
+  </div>
+
+  <div class="card">
+    <h3>Bảng giá đề xuất</h3>
+    <div class="hint">Giá bán ở mỗi ô là <strong>đề xuất theo margin</strong> — gõ đè số khác vào đúng ô đó bất kỳ lúc nào, xoá trắng ô để tính lại theo margin. Không có ô nào bị khoá cứng.</div>
+    <div style="overflow-x:auto"><table class="si-table" id="siKetQuaTable"></table></div>
+  </div>
+</div>
 
 <button class="toggle" id="btnAdv">▾ Tuỳ chỉnh nâng cao (thuế, phí dịch vụ, vận chuyển)</button>
 
@@ -171,7 +216,7 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
     </div>
   </div>
 
-  <div class="card">
+  <div class="card" id="cardPhiSan">
     <h3>Phí sàn cố định</h3>
     <div class="pair">
       <div><label for="hoaHong">Hoa hồng (%)</label><input type="number" id="hoaHong" step="0.1" min="0"></div>
@@ -188,7 +233,7 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
     <div id="dichVuBox"></div>
   </div>
 
-  <div class="card">
+  <div class="card" id="cardVanChuyen">
     <h3>Vận chuyển (SPX Express)</h3>
     <div class="pair">
       <div><label for="klThuc">Cân nặng (kg)</label><input type="number" id="klThuc" value="3.7" step="0.1" min="0"></div>
@@ -205,6 +250,7 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
 
   <button class="toggle" id="btnChiTiet">▾ Xem bảng chi tiết từng khoản phí</button>
   <div id="chiTietBox" style="display:none">
+    <!-- ẩn cùng lúc với các card trên khi ở tab Sỉ/Phân phối (bảng chi tiết chỉ tính cho phí sàn TMĐT) -->
     <div class="card">
       <table><tbody id="tbodyChiTiet"></tbody></table>
       <div class="hint" id="hintChiTiet" style="display:none"></div>
@@ -385,6 +431,150 @@ function hoaVon(p){
   return hi;
 }
 
+// ================================================================
+// TAB "SỈ / PHÂN PHỐI" — thêm 17/09/2026. Dùng LẠI đúng động cơ tính thuế
+// (ketQua()) đã có cho Shopee/TikTok — chỉ khác là không có phí sàn, và giá
+// bán được TÌM NGƯỢC từ margin mục tiêu thay vì nhập tay (dò nhị phân, cùng
+// kiểu với hoaVon() ở trên) thay vì chỉ nhập giá rồi ra lời. Mọi ô số đều
+// sửa tay được, không khoá cứng mức nào.
+// ================================================================
+function thamSoSi_(von, vatPct){
+  var dn = $('phapNhanSel').value === 'dn';
+  return {
+    von: von,
+    vat: dn ? vatPct/100 : 0,
+    thueDT: dn ? 0 : n('thueKhoan')/100,
+    tndn: dn ? n('tndn')/100 : 0,
+    daXacMinh: dn ? ($('daXacMinh').value === '1') : false,
+    hoaHong: 0, giaoDich: 0, shipShop: 0, tyLeHoan: 0
+  };
+}
+function ketQuaSi_(P, von, vatPct, chiPhiKhac){
+  var p = thamSoSi_(von, vatPct);
+  return ketQua(P, p, chiPhiKhac, [], chiPhiKhac > 0 ? [['Chi phí giao/đóng gói', -chiPhiKhac]] : []);
+}
+// Dò nhị phân giá bán sao cho đúng margin mục tiêu — trả về null nếu margin
+// vượt quá mức thuế/chi phí cho phép đạt (giống cảnh báo "vô nghiệm" khi
+// margin ròng đòi hỏi cao hơn cả (1 - thuế) có thể cho).
+function giaTheoMargin_(von, vatPct, marginPct, chiPhiKhac, basis){
+  var m = marginPct / 100;
+  var lo = von, hi = Math.max(von * 50, von + 50000000);
+  for (var i = 0; i < 80; i++){
+    var mid = (lo + hi) / 2;
+    var b = ketQuaSi_(mid, von, vatPct, chiPhiKhac);
+    var cur = basis === 'net' ? b.laiSauThue : b.lai;
+    if (cur / mid < m) lo = mid; else hi = mid;
+  }
+  var bFinal = ketQuaSi_(hi, von, vatPct, chiPhiKhac);
+  var curFinal = basis === 'net' ? bFinal.laiSauThue : bFinal.lai;
+  if (curFinal / hi < m - 0.001) return null;
+  return Math.ceil(hi / 500) * 500;
+}
+
+var KHOA_SI = 'zaka_tinhgia_si';
+var SI = (function(){
+  try { return JSON.parse(localStorage.getItem(KHOA_SI)) } catch(e){ return null }
+})() || {
+  sp: [{ ten:'', von:0, vat:8 }],
+  bac: [{ ten:'Sỉ', margin:15 }, { ten:'Phân phối', margin:10 }],
+  gia: {} // override giá bán, khoá "spIdx_bacIdx"
+};
+function luuSi_(){ try { localStorage.setItem(KHOA_SI, JSON.stringify(SI)) } catch(e){} }
+
+function veSiSpTable_(){
+  var html = '<tr><th>Tên sản phẩm</th><th>Giá vốn (₫)</th><th>VAT (%)</th><th></th></tr>';
+  SI.sp.forEach(function(r, i){
+    html += '<tr>'
+      + '<td><input type="text" data-si-sp="ten" data-i="'+i+'" value="'+esc_(r.ten)+'" placeholder="Tên sản phẩm"></td>'
+      + '<td><input type="number" data-si-sp="von" data-i="'+i+'" value="'+r.von+'" step="1000" min="0"></td>'
+      + '<td><input type="number" data-si-sp="vat" data-i="'+i+'" value="'+r.vat+'" step="0.5" min="0"></td>'
+      + '<td><button type="button" class="si-x" data-si-sp-x="'+i+'" title="Xoá sản phẩm">✕</button></td>'
+      + '</tr>';
+  });
+  $('siSpTable').innerHTML = html;
+  $('siSpTable').querySelectorAll('[data-si-sp]').forEach(function(el){
+    el.addEventListener('input', function(){
+      var i = +this.getAttribute('data-i'), k = this.getAttribute('data-si-sp');
+      SI.sp[i][k] = (k === 'ten') ? this.value : (parseFloat(this.value) || 0);
+      luuSi_(); veSiKetQua_();
+    });
+  });
+  $('siSpTable').querySelectorAll('[data-si-sp-x]').forEach(function(el){
+    el.addEventListener('click', function(){
+      var i = +this.getAttribute('data-si-sp-x');
+      SI.sp.splice(i, 1);
+      luuSi_(); veSiSpTable_(); veSiKetQua_();
+    });
+  });
+}
+function veSiBacTable_(){
+  var html = '<tr><th>Tên bậc</th><th>Margin mục tiêu (%)</th><th></th></tr>';
+  SI.bac.forEach(function(r, i){
+    html += '<tr>'
+      + '<td><input type="text" data-si-bac="ten" data-i="'+i+'" value="'+esc_(r.ten)+'" placeholder="Tên bậc"></td>'
+      + '<td><input type="number" data-si-bac="margin" data-i="'+i+'" value="'+r.margin+'" step="1"></td>'
+      + '<td><button type="button" class="si-x" data-si-bac-x="'+i+'" title="Xoá bậc">✕</button></td>'
+      + '</tr>';
+  });
+  $('siBacTable').innerHTML = html;
+  $('siBacTable').querySelectorAll('[data-si-bac]').forEach(function(el){
+    el.addEventListener('input', function(){
+      var i = +this.getAttribute('data-i'), k = this.getAttribute('data-si-bac');
+      SI.bac[i][k] = (k === 'ten') ? this.value : (parseFloat(this.value) || 0);
+      luuSi_(); veSiKetQua_();
+    });
+  });
+  $('siBacTable').querySelectorAll('[data-si-bac-x]').forEach(function(el){
+    el.addEventListener('click', function(){
+      var i = +this.getAttribute('data-si-bac-x');
+      SI.bac.splice(i, 1);
+      luuSi_(); veSiBacTable_(); veSiKetQua_();
+    });
+  });
+}
+function veSiKetQua_(){
+  var basis = $('siBasis').value, chiPhi = n('siChiPhi');
+  var html = '<tr><th>Sản phẩm</th>';
+  SI.bac.forEach(function(b){ html += '<th>'+esc_(b.ten || '(chưa đặt tên)')+' — '+b.margin+'%</th>'; });
+  html += '</tr>';
+  SI.sp.forEach(function(sp, i){
+    html += '<tr><td><b>'+esc_(sp.ten || '(chưa đặt tên)')+'</b><div class="si-cell-sub">vốn '+vnd(sp.von)+' · VAT '+sp.vat+'%</div></td>';
+    SI.bac.forEach(function(bac, j){
+      var key = i + '_' + j;
+      var gia = SI.gia[key];
+      if (gia === undefined || gia === null || gia === ''){
+        gia = giaTheoMargin_(sp.von, sp.vat, bac.margin, chiPhi, basis);
+      }
+      if (gia === null){
+        html += '<td><input type="number" data-si-gia="'+key+'" placeholder="không khả thi"><div class="si-cell-sub neg">Margin quá cao so với vốn+thuế</div></td>';
+      } else {
+        var b = ketQuaSi_(gia, sp.von, sp.vat, chiPhi);
+        var lai = basis === 'net' ? b.laiSauThue : b.lai;
+        html += '<td><input type="number" data-si-gia="'+key+'" value="'+Math.round(gia)+'" step="500">'
+          + '<div class="si-cell-sub'+(lai<0?' neg':'')+'">lời '+vnd(lai)+' ('+pct(gia>0?lai/gia:0)+')</div></td>';
+      }
+    });
+    html += '</tr>';
+  });
+  $('siKetQuaTable').innerHTML = html;
+  $('siKetQuaTable').querySelectorAll('[data-si-gia]').forEach(function(el){
+    el.addEventListener('input', function(){
+      var key = this.getAttribute('data-si-gia');
+      if (this.value === '') { delete SI.gia[key]; } else { SI.gia[key] = parseFloat(this.value) || 0; }
+      luuSi_(); veSiKetQua_();
+    });
+  });
+}
+function veSi(){ veSiSpTable_(); veSiBacTable_(); veSiKetQua_(); }
+$('siSpAdd').addEventListener('click', function(){
+  SI.sp.push({ ten:'', von:0, vat:8 }); luuSi_(); veSiSpTable_(); veSiKetQua_();
+});
+$('siBacAdd').addEventListener('click', function(){
+  SI.bac.push({ ten:'', margin:10 }); luuSi_(); veSiBacTable_(); veSiKetQua_();
+});
+$('siBasis').addEventListener('change', function(){ luuSi_(); veSiKetQua_(); });
+$('siChiPhi').addEventListener('input', function(){ luuSi_(); veSiKetQua_(); });
+
 function render(){
   var p = thamSoChung();
   var P = n('niemYet');
@@ -442,8 +632,22 @@ function apDungMacDinh(){
   veDichVu();
 }
 
-$('btnSp').addEventListener('click', function(){ SAN='sp'; $('btnSp').setAttribute('aria-pressed','true'); $('btnTt').setAttribute('aria-pressed','false'); apDungMacDinh(); render(); });
-$('btnTt').addEventListener('click', function(){ SAN='tt'; $('btnTt').setAttribute('aria-pressed','true'); $('btnSp').setAttribute('aria-pressed','false'); apDungMacDinh(); render(); });
+function chonSan_(san){
+  SAN = san;
+  $('btnSp').setAttribute('aria-pressed', san === 'sp' ? 'true' : 'false');
+  $('btnTt').setAttribute('aria-pressed', san === 'tt' ? 'true' : 'false');
+  $('btnSi').setAttribute('aria-pressed', san === 'si' ? 'true' : 'false');
+  var laSi = san === 'si';
+  $('panelSan').style.display = laSi ? 'none' : '';
+  $('panelSi').style.display = laSi ? '' : 'none';
+  ['cardPhiSan','cardDichVu','cardVanChuyen'].forEach(function(id){ $(id).style.display = laSi ? 'none' : ''; });
+  $('btnChiTiet').style.display = laSi ? 'none' : '';
+  $('chiTietBox').style.display = laSi ? 'none' : $('chiTietBox').style.display;
+  if (laSi){ veSi(); } else { apDungMacDinh(); render(); }
+}
+$('btnSp').addEventListener('click', function(){ chonSan_('sp'); });
+$('btnTt').addEventListener('click', function(){ chonSan_('tt'); });
+$('btnSi').addEventListener('click', function(){ chonSan_('si'); });
 
 $('phapNhanSel').addEventListener('change', function(){
   var dn = this.value === 'dn';
