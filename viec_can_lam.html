@@ -202,6 +202,16 @@ header.top p{margin:5px 0 0;color:var(--ink-2);font-size:13px;max-width:52ch}
 (function(){
   var $ = function(id){ return document.getElementById(id); };
   var KHOA = 'zaka_viec_can_lam';
+
+  // Danh sách người phụ trách do quanly.html quản lý (tab Vận hành) — gợi ý
+  // đủ tên kể cả người CHƯA từng có việc nào, không chỉ suy từ việc đã tạo.
+  // Cùng khuôn ts-ready/tg-list đã dùng cho tinh_gia.html: tự báo sẵn sàng
+  // ngay khi gắn xong listener, tránh gửi sớm quá bị mất tin.
+  var NGUOI_PT_TU_QL = [];
+  window.addEventListener('message', function(e){
+    if (e.data && e.data.type === 'vc-nguoi'){ NGUOI_PT_TU_QL = e.data.ds || []; render(); }
+  });
+  try { if (window.parent && window.parent !== window) window.parent.postMessage({type:'vc-ready'}, '*'); } catch(e){}
   var COLS = [
     {key:'todo', label:'Chưa làm'},
     {key:'doing', label:'Đang làm'},
@@ -293,6 +303,7 @@ header.top p{margin:5px 0 0;color:var(--ink-2);font-size:13px;max-width:52ch}
     var chiQuaHan = $('fQuaHan').checked;
 
     var nguoiSet = {};
+    NGUOI_PT_TU_QL.forEach(function(n){ if (n) nguoiSet[n] = true; });
     TASKS.forEach(function(t){ if (t.assignee) nguoiSet[t.assignee] = true; });
     var nguoiHienTai = $('fNguoi').value;
     $('fNguoi').innerHTML = '<option value="">Tất cả người phụ trách</option>' +

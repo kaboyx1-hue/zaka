@@ -529,6 +529,16 @@ body.ks-chi *{cursor:crosshair!important}
     <button class="btn mt" onclick="luuShipperLenSheet()" style="color:#fff;font-weight:600">Lưu danh sách lên Sheet</button>
   </div>
 
+  <div class="card"><h2>Danh sách người phụ trách</h2>
+    <div class="sm" style="margin-bottom:8px">Tên hiện trong ô "Người phụ trách" ở tab Việc cần làm. Chỉ lưu trên máy này (Việc cần làm hiện cũng đang lưu cục bộ, chưa nối Sheet), không cần nút Lưu lên Sheet như shipper.</div>
+    <div id="npMsg"></div>
+    <div class="row">
+      <input id="spNpTen" placeholder="Tên người phụ trách (VD: Vợ chủ, Nhân viên kho...)">
+    </div>
+    <button class="btn-nho mt" onclick="themNguoiPhuTrach()">Thêm vào danh sách</button>
+    <div id="dsNguoiPTQL" style="margin-top:10px"></div>
+  </div>
+
   <div class="card"><h2>Tài khoản nhận chuyển khoản</h2>
     <div class="sm" style="margin-bottom:8px">Tách "CK HKD"/"CK Cty" thành từng số tài khoản cụ thể — nhân viên chọn đúng
     tài khoản khi ghi nhận đã thu tiền, biết tiền vào đâu. Chỉ máy quản lý sửa được.</div>
@@ -720,7 +730,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260917b';
+var APP_VER='20260917c';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -2065,6 +2075,7 @@ function luuQCfg(){ QCFG={url:$('qUrl').value.trim(),key:$('qKey').value.trim()}
    vì vượt hạn mức chạy của Apps Script. */
 var VERQL=get('verql',{don:'',von:'',sv:'',nv:'',kt:'',ship:''});
 var SHIP=get('ship',[]);   // danh sách shipper: {ten, luongGio, bienSo, gc}
+var NGUOI_PT=get('nguoiphutrach',['Chủ','Vợ chủ']); // danh sách người phụ trách cho tab Việc cần làm — cục bộ máy này
 var TK=get('tk',[]);       // danh sách tài khoản nhận chuyển khoản: {ten, gc}
 var CHIPHI_QL=get('chiphiql',[]);   // chi phí nhân viên báo lên: {ma,ngay,iso,may,nv,muc,tien,gc}
 var TINHGIA_LUU=get('tinhgialuu',[]);   // lịch sử tính giá đã lưu lên Sheet (tab Tính giá sàn/Sỉ)
@@ -2446,8 +2457,9 @@ function tab(t){
 function veTab_(t){
   if(t==='lam')veLam();
   if(t==='bc')veBC(); if(t==='so')veSo(); if(t==='gia'){veGia();vePhat()} if(t==='cb')veCB();
-  if(t==='ts'){guiCatalogChoTs();guiTinhGiaChoTs()}
-  if(t==='vh'){veNV();veMayGui();veNhatKy();veKhaiTruong();nhacSaoLuu();veNvXemLS();veNguongHuyHieu()}
+  if(t==='ts'){guiCatalogChoTs();guiTinhGiaChoTs();guiLuongShipperChoTs()}
+  if(t==='vc'){guiNguoiPTChoVc()}
+  if(t==='vh'){veNV();veMayGui();veNhatKy();veKhaiTruong();nhacSaoLuu();veNvXemLS();veNguongHuyHieu();veNguoiPhuTrachQL()}
 }
 /* Gửi danh mục sản phẩm đang bán (SKU/tên/giá lẻ/giá vốn) cho tool tính giá
    sàn (tinh_gia.html, chạy trong iframe riêng) qua postMessage — không viết
@@ -2463,9 +2475,19 @@ function guiCatalogChoTs(){
 // việc gửi catalog trước khi bên kia kịp lắng nghe (postMessage gửi sớm quá
 // sẽ mất tin, không có cách gửi lại).
 window.addEventListener('message', function(e){
-  if (e.data && e.data.type === 'ts-ready'){ guiCatalogChoTs(); guiTinhGiaChoTs() }
+  if (e.data && e.data.type === 'ts-ready'){ guiCatalogChoTs(); guiTinhGiaChoTs(); guiLuongShipperChoTs() }
   if (e.data && e.data.type === 'tg-luu') nhanLuuTinhGiaTuTs_(e.data.item);
+  if (e.data && e.data.type === 'vc-ready'){ guiNguoiPTChoVc() }
 });
+/* Lương trung bình đội shipper (chỉ tính người ĐÃ khai lương/giờ > 0) — gửi
+   cho tool tính giá sàn dùng làm gợi ý lương cho logistics tab Sỉ/Phân phối,
+   không tự động ghi đè số bên đó, chỉ gợi ý kèm nút áp dụng. */
+function guiLuongShipperChoTs(){
+  var f=$('ifTs'); if(!f||!f.contentWindow) return;
+  var coLuong=SHIP.filter(function(s){return s.luongGio>0});
+  var luongTB=coLuong.length?Math.round(coLuong.reduce(function(a,s){return a+s.luongGio},0)/coLuong.length):0;
+  f.contentWindow.postMessage({type:'tg-luong-tb', luongTB:luongTB, soNguoi:coLuong.length}, '*');
+}
 
 /* ══════════════════════ LƯU LỊCH SỬ TÍNH GIÁ LÊN SHEET — 17/09/2026 ══════════════════════
    Thay cho localStorage cũ (chỉ xem được đúng máy đã lưu) — chủ yêu cầu mọi dữ liệu
@@ -4485,7 +4507,7 @@ function napVonTuSheet(ds,ver){
    THÊM và HIỆN BẢNG vẫn để riêng cho từng loại, vì cột/ô nhập khác nhau thật,
    gộp sẽ làm code khó đọc hơn lợi ích mang lại. */
 var DS_NHO_CAUHINH = {
-  ship: {tenBien:'SHIP', msgId:'shipMsg', hanhdong:'shipper', nhanXoa:function(x){return x.ten}, veLai:function(){veShipperQL()}},
+  ship: {tenBien:'SHIP', msgId:'shipMsg', hanhdong:'shipper', nhanXoa:function(x){return x.ten}, veLai:function(){veShipperQL();guiLuongShipperChoTs()}},
   tk:   {tenBien:'TK',   msgId:'tkMsg',   hanhdong:'taikhoan', nhanXoa:function(x){return x.ten}, veLai:function(){veTaiKhoanQL()}}
 };
 function xoaDanhSachNho(loai,i){
@@ -4544,7 +4566,7 @@ function themShipper(){
   SHIP.push({ten:ten,luongGio:luongGio,bienSo:bienSo,gc:''});
   set('ship',SHIP);
   $('spShTen').value=''; $('spShLuong').value=''; $('spShBien').value='';
-  veShipperQL();
+  veShipperQL(); guiLuongShipperChoTs();
   bao('shipMsg','Đã thêm <b>'+esc(ten)+'</b> vào danh sách — nhớ bấm <b>Lưu lên Sheet</b> để 3 máy nhân viên thấy.','wa');
 }
 function xoaShipper(i){ xoaDanhSachNho('ship',i) }
@@ -4559,6 +4581,38 @@ function veShipperQL(){
         'oninput="dinhDangTien(this)" onchange="suaDanhSachNho(\'ship\','+i+',\'luongGio\',this.value)"></td>'+
       '<td><input value="'+esc(s.bienSo||'')+'" style="width:100%" onchange="suaDanhSachNho(\'ship\','+i+',\'bienSo\',this.value)"></td>'+
       '<td><button class="btn-nho" style="color:var(--bad)" onclick="xoaShipper('+i+')">Xoá</button></td></tr>'}).join('')+'</table>';
+}
+
+/* ══════════════════════ DANH SÁCH NGƯỜI PHỤ TRÁCH ══════════════════════
+   Nạp cho ô "Người phụ trách" ở tab Việc cần làm (viec_can_lam.html, chạy
+   trong iframe riêng) qua postMessage — cục bộ máy này (KHÔNG lưu Sheet),
+   vì bản thân Việc cần làm hiện cũng đang lưu cục bộ, làm shipper-style đồng
+   bộ Sheet riêng cho đúng mỗi danh sách này sẽ lệch pha, phải đụng Apps Script
+   không cần thiết. */
+function themNguoiPhuTrach(){
+  var ten=$('spNpTen').value.trim();
+  if(!ten){ bao('npMsg','Phải có tên.','er'); return }
+  if(NGUOI_PT.indexOf(ten)>=0){ bao('npMsg','Đã có "'+esc(ten)+'" trong danh sách rồi.','er'); return }
+  NGUOI_PT.push(ten); set('nguoiphutrach',NGUOI_PT);
+  $('spNpTen').value='';
+  veNguoiPhuTrachQL(); guiNguoiPTChoVc();
+  bao('npMsg','Đã thêm <b>'+esc(ten)+'</b> vào danh sách.','ok');
+}
+function xoaNguoiPhuTrach(i){
+  if(!confirm('Xoá "'+esc(NGUOI_PT[i])+'" khỏi danh sách?'))return;
+  NGUOI_PT.splice(i,1); set('nguoiphutrach',NGUOI_PT);
+  veNguoiPhuTrachQL(); guiNguoiPTChoVc();
+}
+function veNguoiPhuTrachQL(){
+  var e=$('dsNguoiPTQL'); if(!e) return;
+  if(!NGUOI_PT.length){ e.innerHTML='<div class="empty">Chưa có ai trong danh sách.</div>'; return }
+  e.innerHTML='<table><tr><th>Tên</th><th></th></tr>'+
+    NGUOI_PT.map(function(n,i){return '<tr><td>'+esc(n)+'</td>'+
+      '<td class="r"><button class="btn-nho" style="color:var(--bad)" onclick="xoaNguoiPhuTrach('+i+')">Xoá</button></td></tr>'}).join('')+'</table>';
+}
+function guiNguoiPTChoVc(){
+  var f=$('ifVc'); if(!f||!f.contentWindow) return;
+  f.contentWindow.postMessage({type:'vc-nguoi', ds:NGUOI_PT}, '*');
 }
 
 /* ══════════════════════ TÀI KHOẢN NHẬN CHUYỂN KHOẢN ══════════════════════
@@ -5068,6 +5122,13 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260917c', ngay:'17/09/2026', ten:'Danh sách người phụ trách, lương shipper nối logistics, Đơn hàng thử',
+  vaPhieu:[],
+  muc:[
+   ['moi','Tab <b>Vận hành</b>: thêm thẻ "Danh sách người phụ trách" (gõ tên → Thêm vào danh sách) — nạp thẳng vào ô "Người phụ trách" ở tab Việc cần làm, gợi ý đủ tên kể cả người chưa từng có việc nào.'],
+   ['moi','Danh sách shipper (đã có lương/giờ) giờ tự tính lương trung bình cả đội, gửi sang tab Tính giá sàn → Sỉ/Phân phối làm gợi ý cho ô Lương logistics — bấm 1 nút mới áp dụng, không tự ghi đè số đã gõ.'],
+   ['moi','Tab Tính giá sàn → Sỉ/Phân phối: thêm mục <b>"Đơn hàng thử"</b> — nhập số thùng thật từng sản phẩm trong 1 đơn, ra thẳng lợi nhuận thật của cả đơn (không chỉ lời/đơn vị lẻ), bảng chi tiết từng khoản, và gợi ý gộp thêm bao nhiêu thùng để lấp đầy chuyến xe. Giá bán mỗi sản phẩm trong đơn thử vẫn gõ đè tay được riêng, không đụng bảng giá chung.'],
+  ]},
  {ban:'20260917b', ngay:'17/09/2026', ten:'Bảng giá: kéo sắp xếp, nhóm hàng, chọn nhiều để xoá/gộp',
   vaPhieu:[],
   muc:[
