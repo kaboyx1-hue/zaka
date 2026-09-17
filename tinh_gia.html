@@ -124,7 +124,7 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
 
 <div>
 <div class="out-grid">
-  <div class="out hero" id="oLaiBox"><div class="k">Lợi nhuận mỗi đơn</div><div class="v" id="oLai">—</div></div>
+  <div class="out hero" id="oLaiBox"><div class="k" id="oLaiK">Lợi nhuận mỗi đơn</div><div class="v" id="oLai">—</div></div>
   <div class="out"><div class="k">Giá hòa vốn</div><div class="v" id="oHoaVon" style="font-size:18px">—</div></div>
   <div class="out"><div class="k">Biên lợi nhuận</div><div class="v" id="oBien" style="font-size:18px">—</div></div>
 </div>
@@ -207,6 +207,7 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
   <div id="chiTietBox" style="display:none">
     <div class="card">
       <table><tbody id="tbodyChiTiet"></tbody></table>
+      <div class="hint" id="hintChiTiet" style="display:none"></div>
     </div>
   </div>
 
@@ -389,8 +390,10 @@ function render(){
   var P = n('niemYet');
   var hv = hoaVon(p);
   var b = boc(P, p);
-  var laiHienThi = $('phapNhanSel').value === 'dn' ? b.laiSauThue : b.lai;
+  var dn2 = $('phapNhanSel').value === 'dn';
+  var laiHienThi = dn2 ? b.laiSauThue : b.lai;
 
+  $('oLaiK').textContent = 'Lợi nhuận mỗi đơn' + (dn2 ? ' (đã trừ thuế TNDN ' + n('tndn') + '%)' : '');
   $('oLai').textContent = vnd(laiHienThi);
   $('oLaiBox').className = 'out hero' + (laiHienThi < 0 ? ' bad' : '');
   $('oBien').textContent = pct(P>0 ? laiHienThi/P : 0);
@@ -414,8 +417,18 @@ function render(){
     var col = val < 0 ? ' neg' : '';
     html += '<tr><td>'+row[0]+'</td><td class="num'+col+'">'+(val>0&&!row[2]?'+':'')+vnd(val)+'</td></tr>';
   });
-  html += '<tr class="total"><td>Lợi nhuận trước thuế</td><td class="num'+(b.lai<0?' neg':'')+'">'+vnd(b.lai)+'</td></tr>';
+  html += '<tr><td>Lợi nhuận trước thuế</td><td class="num'+(b.lai<0?' neg':'')+'">'+vnd(b.lai)+'</td></tr>';
+  if (dn2 && b.lai > 0){
+    html += '<tr><td>Thuế TNDN ('+n('tndn')+'%)</td><td class="num neg">'+vnd(-(b.lai-b.laiSauThue))+'</td></tr>';
+  }
+  html += '<tr class="total"><td>Lợi nhuận'+(dn2?' sau thuế TNDN':' trước thuế')+'</td><td class="num'+(laiHienThi<0?' neg':'')+'">'+vnd(laiHienThi)+'</td></tr>';
   $('tbodyChiTiet').innerHTML = html;
+  if (dn2){
+    $('hintChiTiet').style.display = '';
+    $('hintChiTiet').innerHTML = '<b>Vì sao có 3 dòng VAT ở trên?</b> Sàn xuất hoá đơn hoa hồng/phí có cộng VAT — công ty có MST được khấu trừ lại phần đó ("VAT khấu trừ trên phí sàn"), coi như không mất khoản này. "VAT đầu ra phải nộp" là phần VAT trong giá bán (10%/8%/0% tuỳ sản phẩm) mà công ty phải nộp nhà nước — KHÔNG được giữ lại dù khách trả. "VAT đầu vào giá vốn" là VAT công ty đã trả khi NHẬP hàng, cũng được khấu trừ lại. Tổng 3 dòng này là phần thuế GTGT ra-vào, không phải chi phí thật, nên không trừ vào lợi nhuận — chỉ thuế TNDN (dòng riêng bên dưới) mới thật sự trừ vào lợi nhuận.';
+  } else {
+    $('hintChiTiet').style.display = 'none';
+  }
 }
 
 function apDungMacDinh(){
