@@ -146,8 +146,8 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
 </div>
 
 <div class="card" id="cardDsLuu" style="display:none">
-  <h3>Đã lưu trên máy này</h3>
-  <div class="hint" style="margin:-4px 0 8px">Chỉ xem lại được trên đúng máy/trình duyệt đã lưu — đổi qua máy khác sẽ không thấy.</div>
+  <h3 id="lblCardDsLuu">Đã lưu trên máy này</h3>
+  <div class="hint" id="hintCardDsLuu" style="margin:-4px 0 8px">Chỉ xem lại được trên đúng máy/trình duyệt đã lưu — đổi qua máy khác sẽ không thấy.</div>
   <div id="dsLuu"></div>
 </div>
 </div>
@@ -730,32 +730,65 @@ $('timSp').addEventListener('input', function(){
 });
 
 // ================================================================
-// LƯU KẾT QUẢ ĐÃ TÍNH — thêm 17/09/2026 theo yêu cầu chủ, để coi lại cho dễ.
-// Lưu localStorage TRÊN MÁY NÀY thôi (không đụng Sheet/Apps Script — chưa
-// xin phép đổi schema) — nói rõ giới hạn này ngay trong giao diện, không
-// giấu. Bấm "Lưu kết quả" mới lưu, KHÔNG tự lưu mỗi lần gõ (gõ số liên tục
-// mà tự lưu thì đầy rác, khó tìm lại đúng bản chốt).
+// LƯU KẾT QUẢ ĐÃ TÍNH — thêm 17/09/2026, đổi sang lưu Sheet thật 17/09/2026.
+// Mở BÊN TRONG quanly.html (có window.parent khác chính nó): gửi qua
+// postMessage cho quanly.html — nơi ĐÓ mới thật sự gọi Apps Script (file
+// này cố tình không có sẵn URL/mật khẩu Sheet, mở lẻ không lộ gì). Xem
+// được xuyên mọi máy quản lý (PC/điện thoại) vì dữ liệu nằm trên Sheet.
+// Mở LẺ ngoài quanly.html (test, hoặc chưa nhúng): không có nơi nào để gửi
+// — rơi về lưu tạm bằng localStorage TRÊN MÁY NÀY như bản cũ, để công cụ
+// vẫn dùng được độc lập, không bắt buộc phải luôn mở trong quanly.html.
 // ================================================================
+var TRONG_IFRAME_ = (function(){ try { return window.parent && window.parent !== window } catch(e){ return false } })();
 var KHOA_LUU = 'zaka_tinhgia_daluu';
-var LICH_SU = (function(){ try { return JSON.parse(localStorage.getItem(KHOA_LUU)) || [] } catch(e){ return [] } })();
-function luuLichSu_(){ try { localStorage.setItem(KHOA_LUU, JSON.stringify(LICH_SU)) } catch(e){} }
+var LICH_SU = TRONG_IFRAME_ ? [] :
+  (function(){ try { return JSON.parse(localStorage.getItem(KHOA_LUU)) || [] } catch(e){ return [] } })();
+function luuLichSu_(){ if (TRONG_IFRAME_) return; try { localStorage.setItem(KHOA_LUU, JSON.stringify(LICH_SU)) } catch(e){} }
 function luuKetQua(){
   var p = thamSoChung(); var P = n('niemYet');
   var b = boc(P, p);
   var laiHienThi = $('phapNhanSel').value === 'dn' ? b.laiSauThue : b.lai;
-  LICH_SU.unshift({
+  var muc = {
+    ma: 'TG' + Date.now() + Math.floor(Math.random()*1000),
     luc: Date.now(),
     san: SAN,
     sku: SP_DANG_CHON ? SP_DANG_CHON.sku : '',
     ten: SP_DANG_CHON ? SP_DANG_CHON.ten : ($('timSp').value.trim() || '(chưa đặt tên)'),
     von: p.von, gia: P, vat: n('vat'), lai: laiHienThi, bien: P > 0 ? laiHienThi / P : 0
-  });
+  };
+  if (TRONG_IFRAME_){
+    var bt = $('btnLuu'); bt.disabled = true; bt.textContent = 'Đang lưu lên Sheet…';
+    DANG_LUU_[muc.ma] = muc;
+    window.parent.postMessage({type:'tg-luu', item:muc}, '*');
+    return;
+  }
+  LICH_SU.unshift(muc);
   if (LICH_SU.length > 50) LICH_SU.length = 50;
   luuLichSu_(); veDsLuu();
-  var bt = $('btnLuu'); var cu = bt.textContent;
-  bt.textContent = '✓ Đã lưu'; setTimeout(function(){ bt.textContent = cu }, 1200);
+  var bt2 = $('btnLuu'); var cu = bt2.textContent;
+  bt2.textContent = '✓ Đã lưu'; setTimeout(function(){ bt2.textContent = cu }, 1200);
 }
-function xoaLichSu_(i){ LICH_SU.splice(i, 1); luuLichSu_(); veDsLuu(); }
+var DANG_LUU_ = {}; // ma -> mục đang chờ Sheet trả lời, TRONG_IFRAME_ mới dùng
+window.addEventListener('message', function(e){
+  var d = e.data || {};
+  if (d.type === 'tg-list' && Array.isArray(d.items)){ LICH_SU = d.items; veDsLuu(); }
+  if (d.type === 'tg-luu-ket-qua'){
+    var bt = $('btnLuu'); bt.disabled = false;
+    var muc = DANG_LUU_[d.ma]; delete DANG_LUU_[d.ma];
+    if (d.ok){
+      bt.textContent = '✓ Đã lưu lên Sheet';
+      if (muc && !LICH_SU.some(function(x){return x.ma===d.ma})) { LICH_SU.unshift(muc); veDsLuu(); }
+    } else {
+      bt.textContent = '💾 Lưu kết quả này';
+      alert('Chưa lưu được lên Sheet: ' + (d.loi || 'không rõ lý do') + '\nSố liệu vẫn còn nguyên trên màn hình, bấm Lưu lại được.');
+    }
+    setTimeout(function(){ if(!bt.disabled) bt.textContent = '💾 Lưu kết quả này' }, 1600);
+  }
+});
+function xoaLichSu_(i){
+  if (TRONG_IFRAME_) return; // chưa làm xoá trên Sheet — lịch sử tính giá cố tình chỉ thêm, không xoá (như Chi phí/Nhật ký)
+  LICH_SU.splice(i, 1); luuLichSu_(); veDsLuu();
+}
 function xemLaiLichSu_(i){
   var x = LICH_SU[i]; if (!x) return;
   (x.san === 'sp' ? $('btnSp') : $('btnTt')).click();
@@ -768,14 +801,19 @@ function xemLaiLichSu_(i){
 }
 function veDsLuu(){
   $('cardDsLuu').style.display = LICH_SU.length ? '' : 'none';
+  $('lblCardDsLuu').textContent = TRONG_IFRAME_ ? 'Đã lưu trên Sheet' : 'Đã lưu trên máy này';
+  $('hintCardDsLuu').textContent = TRONG_IFRAME_
+    ? 'Lưu thẳng lên Google Sheet — xem được ở mọi máy quản lý (PC, điện thoại).'
+    : 'Chỉ xem lại được trên đúng máy/trình duyệt đã lưu — đổi qua máy khác sẽ không thấy.';
   $('dsLuu').innerHTML = LICH_SU.map(function(x, i){
-    var ngay = new Date(x.luc);
-    var gio = ('0'+ngay.getHours()).slice(-2)+':'+('0'+ngay.getMinutes()).slice(-2)+' '+('0'+ngay.getDate()).slice(-2)+'/'+('0'+(ngay.getMonth()+1)).slice(-2);
+    var gio = typeof x.luc === 'number'
+      ? (function(d){ return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)+' '+('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2) })(new Date(x.luc))
+      : String(x.luc||'').slice(0,16);
     return '<div class="luuRow"><div class="tt"><div class="ten">'+(x.sku?esc_(x.sku)+' — ':'')+esc_(x.ten)+'</div>'+
       '<div class="phu">'+(x.san==='sp'?'Shopee':'TikTok')+' · vốn '+vnd(x.von)+' · bán '+vnd(x.gia)+' · VAT '+x.vat+'% · '+gio+'</div></div>'+
       '<div class="lai'+(x.lai<0?' am':'')+'">'+vnd(x.lai)+'</div>'+
       '<button type="button" onclick="xemLaiLichSu_('+i+')">Xem lại</button>'+
-      '<button type="button" onclick="xoaLichSu_('+i+')" style="color:var(--loss)">Xoá</button></div>';
+      (TRONG_IFRAME_ ? '' : '<button type="button" onclick="xoaLichSu_('+i+')" style="color:var(--loss)">Xoá</button>')+'</div>';
   }).join('');
 }
 function esc_(s){ var d = document.createElement('div'); d.textContent = s; return d.innerHTML }

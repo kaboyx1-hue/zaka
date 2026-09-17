@@ -2056,6 +2056,7 @@ var VERQL=get('verql',{don:'',von:'',sv:'',nv:'',kt:'',ship:''});
 var SHIP=get('ship',[]);   // danh sách shipper: {ten, luongGio, bienSo, gc}
 var TK=get('tk',[]);       // danh sách tài khoản nhận chuyển khoản: {ten, gc}
 var CHIPHI_QL=get('chiphiql',[]);   // chi phí nhân viên báo lên: {ma,ngay,iso,may,nv,muc,tien,gc}
+var TINHGIA_LUU=get('tinhgialuu',[]);   // lịch sử tính giá đã lưu lên Sheet (tab Tính giá sàn/Sỉ)
 async function hoiNhanh(){
   if(!QCFG.url||!QCFG.key) return;
   try{
@@ -2065,9 +2066,9 @@ async function hoiNhanh(){
     var v=j.ver||{};
     var doi = v.don!==VERQL.don || v.von!==VERQL.von || v.sv!==VERQL.sv ||
               v.nv!==VERQL.nv || v.kt!==VERQL.kt || v.ship!==VERQL.ship || v.tk!==VERQL.tk ||
-              v.cp!==VERQL.cp;
+              v.cp!==VERQL.cp || v.tg!==VERQL.tg;
     if(!doi) return;
-    VERQL={don:v.don||'',von:v.von||'',sv:v.sv||'',nv:v.nv||'',kt:v.kt||'',ship:v.ship||'',tk:v.tk||'',cp:v.cp||''};
+    VERQL={don:v.don||'',von:v.von||'',sv:v.sv||'',nv:v.nv||'',kt:v.kt||'',ship:v.ship||'',tk:v.tk||'',cp:v.cp||'',tg:v.tg||''};
     set('verql',VERQL);
     await keoDon(0);
   }catch(e){
@@ -2086,9 +2087,10 @@ function apDungKeoVe(j, luc){
   if(j.ship) SHIP=j.ship; set('ship',SHIP);
   if(j.tk) TK=j.tk; set('tk',TK);
   if(j.chiPhi) CHIPHI_QL=j.chiPhi; set('chiphiql',CHIPHI_QL);
+  if(j.tinhGia){ TINHGIA_LUU=j.tinhGia.slice().reverse(); set('tinhgialuu',TINHGIA_LUU); guiTinhGiaChoTs() }
   NVS=j.nvs||[]; set('nvs',NVS);
   KTRUONG=j.khaiTruong||''; set('ktruong',KTRUONG);
-  VERQL={don:j.donVer||'',von:j.vonVer||'',sv:j.svVer||'',nv:VERQL.nv,kt:VERQL.kt,ship:j.shipVer||'',tk:j.tkVer||'',cp:j.cpVer||''};
+  VERQL={don:j.donVer||'',von:j.vonVer||'',sv:j.svVer||'',nv:VERQL.nv,kt:VERQL.kt,ship:j.shipVer||'',tk:j.tkVer||'',cp:j.cpVer||'',tg:j.tgVer||''};
   set('verql',VERQL);
   MADK=j.maDK||''; MAYGUI=j.mayGuiCuoi||{}; set('maygui',MAYGUI);
   napDon(j.don||[],'Drive');
@@ -2433,7 +2435,7 @@ function tab(t){
 function veTab_(t){
   if(t==='lam')veLam();
   if(t==='bc')veBC(); if(t==='so')veSo(); if(t==='gia'){veGia();vePhat()} if(t==='cb')veCB();
-  if(t==='ts')guiCatalogChoTs();
+  if(t==='ts'){guiCatalogChoTs();guiTinhGiaChoTs()}
   if(t==='vh'){veNV();veMayGui();veNhatKy();veKhaiTruong();nhacSaoLuu();veNvXemLS();veNguongHuyHieu()}
 }
 /* Gửi danh mục sản phẩm đang bán (SKU/tên/giá lẻ/giá vốn) cho tool tính giá
@@ -2450,8 +2452,34 @@ function guiCatalogChoTs(){
 // việc gửi catalog trước khi bên kia kịp lắng nghe (postMessage gửi sớm quá
 // sẽ mất tin, không có cách gửi lại).
 window.addEventListener('message', function(e){
-  if (e.data && e.data.type === 'ts-ready') guiCatalogChoTs();
+  if (e.data && e.data.type === 'ts-ready'){ guiCatalogChoTs(); guiTinhGiaChoTs() }
+  if (e.data && e.data.type === 'tg-luu') nhanLuuTinhGiaTuTs_(e.data.item);
 });
+
+/* ══════════════════════ LƯU LỊCH SỬ TÍNH GIÁ LÊN SHEET — 17/09/2026 ══════════════════════
+   Thay cho localStorage cũ (chỉ xem được đúng máy đã lưu) — chủ yêu cầu mọi dữ liệu
+   phải nằm trên Sheet để xem xuyên PC/điện thoại. tinh_gia.html KHÔNG có sẵn
+   URL/mật khẩu Sheet (cố tình, để mở lẻ ngoài quanly.html không lộ gì) nên phải đi
+   qua cầu nối postMessage này — quanly.html mới là bên thật sự gọi Apps Script. */
+function guiTinhGiaChoTs(){
+  var f = $('ifTs'); if(!f||!f.contentWindow) return;
+  f.contentWindow.postMessage({type:'tg-list', items:TINHGIA_LUU}, '*');
+}
+async function nhanLuuTinhGiaTuTs_(item){
+  var f = $('ifTs');
+  function traLoi(ok, loi){ if(f&&f.contentWindow) f.contentWindow.postMessage({type:'tg-luu-ket-qua', ma:item&&item.ma, ok:ok, loi:loi}, '*') }
+  if(!item || !item.ma){ traLoi(false,'Thiếu dữ liệu'); return }
+  if(!QCFG.url||!QCFG.key){ traLoi(false,'Cần dán link và mật khẩu quản lý ở tab Nạp đơn trước.'); return }
+  try{
+    var r=await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'tinhgia',tg:item})});
+    var j=JSON.parse(await r.text());
+    if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
+    if(!j.trung){ TINHGIA_LUU.unshift(item); set('tinhgialuu',TINHGIA_LUU) } // trung=true: đã có sẵn (bấm 2 lần), khỏi thêm lại
+    guiTinhGiaChoTs();
+    traLoi(true);
+  }catch(e){ traLoi(false, 'Chưa lưu được: '+e.message) }
+}
 function trongKy(d){
   var iso=String(d.iso||''); if(!iso) return true;
   var n=new Date(), y=n.getFullYear(), m=n.getMonth();
