@@ -218,11 +218,32 @@ header.top p{margin:5px 0 0;color:var(--ink-2);font-size:13px;max-width:52ch}
     if (e.data && e.data.type === 'vc-list'){
       TRONG_QL = true;
       $('dataNote').textContent = 'Dữ liệu đang lưu trên Sheet chung (VIEC_CAN_LAM) — mở ở máy quản lý nào cũng thấy cùng 1 danh sách.';
-      TASKS = (e.data.items || []).map(function(t){
+      var tuSheet = (e.data.items || []).map(function(t){
         var x = Object.assign({}, t);
         try { x.checklist = JSON.parse(t.checklist || '[]'); } catch(e2){ x.checklist = []; }
         return x;
       });
+      /* VÁ 18/09/2026 — chủ báo mất sạch việc cũ ngay sau khi bật đồng bộ Sheet.
+         Nguyên nhân: Sheet mới tạo còn trống, nên lần đầu mở đè TASKS thành
+         rỗng — dữ liệu cũ thật ra VẪN CÒN NGUYÊN trong localStorage của đúng
+         máy này (code không hề gọi save() nữa từ khi TRONG_QL=true), chỉ là
+         không còn được HIỂN THỊ/dùng nữa. Từ nay: Sheet trống + máy này có sẵn
+         việc thật (khác localStorage RỖNG hoặc CHƯA TỪNG LƯU, phân biệt bằng
+         cách đọc thẳng key thay vì qua load() — load() sẽ tự rơi về dữ liệu
+         mẫu giả nếu key trống, không được nhầm dữ liệu mẫu giả này là thật)
+         → ĐẨY LUÔN dữ liệu cũ đó lên Sheet làm bản đầu tiên, không im lặng
+         xoá theo Sheet trống. */
+      if (!tuSheet.length){
+        var cuTrenMay = null;
+        try { var v = JSON.parse(localStorage.getItem(KHOA)); if (v && v.length) cuTrenMay = v; } catch(e3){}
+        if (cuTrenMay){
+          TASKS = cuTrenMay;
+          render();
+          luuLenSheetHoacMay();
+          return;
+        }
+      }
+      TASKS = tuSheet;
       render();
     }
     if (e.data && e.data.type === 'vc-luu-ket-qua'){
