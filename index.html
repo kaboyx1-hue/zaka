@@ -958,7 +958,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260917a';
+var APP_VER='20260918a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1669,16 +1669,33 @@ async function dayLen(im,lanHai){
         '<br><span class="sm">'+ds.length+' đơn vẫn nằm nguyên trong hàng đợi, chưa mất đơn nào.</span>','er');
       tab('out'); dem(); return;
     }
+    if(!kq.doc){
+      /* SỬA 18/09/2026 — bug thật chủ báo: NV Ngọc lên đơn, máy NV Hằng không
+         thấy. Nguyên nhân: gửi "mù" (no-cors, ở guiGoi() khi trình duyệt chặn
+         không đọc được câu trả lời) KHÔNG có cách nào biết Sheet có thật sự
+         nhận hay không — trước đây vẫn cứ đánh dấu d.day=true ở đây, nên nếu
+         gói đó thật ra CHƯA tới Sheet thì đơn coi như đã gửi trên máy Ngọc
+         (không còn nằm trong hàng đợi để tự gửi lại) nhưng chưa hề lên Sheet
+         — Hằng dĩ nhiên không thấy, và trước đây KHÔNG có cảnh báo gì (chỉ
+         hiện khi bấm tay "Đồng bộ ngay", còn lúc tự động gửi sau khi tạo đơn
+         hoặc vòng gửi lại 30s thì lặng im). Nay: KHÔNG đánh dấu day=true khi
+         chưa chắc chắn — cứ để nguyên trong hàng đợi, tự gửi lại an toàn (Sheet
+         tự bỏ qua đúng mã+sualan đã nhận, xem nhanDon_ — gửi lại không tạo đơn
+         đôi), và luôn báo LOI_DONGBO (hiện ở mọi nơi đang đọc biến này) dù là
+         tự động hay bấm tay, không còn im lặng nữa. */
+      LOI_DONGBO={luc:Date.now(),msg:'Gửi '+ds.length+' đơn nhưng không đọc được câu trả lời của Sheet — chưa chắc đã nhận, đơn vẫn còn trong hàng đợi và sẽ tự gửi lại.'};
+      dem();
+      if(im) bao('outMsg','Đã gửi <b>'+ds.length+' đơn</b>, nhưng trình duyệt không đọc được câu trả lời của Sheet.'+
+        '<br><span class="sm">Chưa chắc Sheet đã nhận nên đơn vẫn còn trong hàng đợi, máy sẽ tự gửi lại — mở trang NHAT_KY trong Sheet để kiểm chứng ngay nếu cần chắc chắn.</span>','wa');
+      return;
+    }
     ds.forEach(function(d){d.day=true;d.suaSauDay=false;d.dayLuc=nowStr()});
     set('don',DON); dem(); veOut(); veDon(); vePG();
-    if(kq.doc && kq.j && kq.j.ok){
+    if(kq.j && kq.j.ok){
       var j=kq.j;
       bao('outMsg','Sheet đã nhận: <b>'+(j.them||0)+' đơn mới</b>'+
         ((j.capnhat||0)?', <b>'+j.capnhat+' bản sửa thay bản cũ</b>':'')+
         ((j.boQua||0)?', '+j.boQua+' đơn Sheet đã có nên bỏ qua':'')+'.','ok');
-    } else if(im){
-      bao('outMsg','Đã gửi <b>'+ds.length+' đơn</b>, nhưng trình duyệt không đọc được câu trả lời của Sheet.'+
-        '<br><span class="sm">Mở trang NHAT_KY trong Sheet để kiểm chứng.</span>','wa');
     }
   } finally{ DANGDAY=false }
 }
@@ -2340,6 +2357,16 @@ async function dayHuy(im){
   if(kq.mang===false){ if(im)bao('outMsg','Mất mạng — lệnh huỷ nằm chờ, có mạng sẽ tự gửi.','wa'); return }
   if(kq.doc && kq.j && kq.j.ok===false){
     if(im)bao('outMsg','Sheet từ chối lệnh huỷ: '+esc(kq.j.loi||''),'er'); return }
+  if(!kq.doc){
+    // SỬA 18/09/2026 — cùng lớp bug với dayLen(): gửi mù (no-cors) không biết
+    // Sheet có nhận hay không, KHÔNG được coi như đã huỷ xong. Cứ để nguyên
+    // trong hàng đợi HUY, tự gửi lại an toàn (huyDon_ đóng dấu DA HUY theo mã,
+    // gửi lại nhiều lần vẫn chỉ ra đúng 1 kết quả, không có tác dụng phụ).
+    LOI_DONGBO={luc:Date.now(),msg:'Gửi lệnh huỷ nhưng không đọc được câu trả lời của Sheet — chưa chắc đã huỷ, sẽ tự gửi lại.'};
+    dem();
+    if(im)bao('outMsg','Đã gửi lệnh huỷ nhưng trình duyệt không đọc được câu trả lời của Sheet — chưa chắc chắn, sẽ tự gửi lại.','wa');
+    return;
+  }
   var so=HUY.length; HUY=[]; set('huy',HUY); veOut(); dem();
   if(im) bao('outMsg','Đã báo Sheet đóng dấu ĐÃ HUỶ cho <b>'+so+' đơn</b>.','ok');
 }
@@ -5472,6 +5499,11 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260918a', ngay:'18/09/2026', ten:'Sửa lỗi đơn/lệnh huỷ có thể bị coi là đã gửi dù Sheet chưa chắc nhận',
+  vaPhieu:[],
+  muc:[
+   ['sua','Vá lỗi thật: khi trình duyệt gửi đơn/lệnh huỷ lên Sheet mà KHÔNG đọc được câu trả lời (mạng chập chờn), máy trước đây vẫn cứ đánh dấu là "đã gửi xong" — nếu gói đó thật ra chưa tới Sheet thì đơn coi như mất, máy khác không thấy, mà không hề có cảnh báo (chỉ hiện khi bấm tay "Đồng bộ ngay"). Nay: chưa chắc chắn thì KHÔNG đánh dấu đã gửi, cứ để trong hàng đợi tự gửi lại, và LUÔN báo rõ dù là tự động hay bấm tay.'],
+  ]},
  {ban:'20260917a', ngay:'17/09/2026', ten:'Tab Đơn giao dở + cải tiến Giao đợt + chọn người giao khi Đã thu',
   vaPhieu:[],
   muc:[
