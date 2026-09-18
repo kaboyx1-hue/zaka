@@ -1375,16 +1375,27 @@ var LICH_SU = TRONG_IFRAME_ ? [] :
   (function(){ try { return JSON.parse(localStorage.getItem(KHOA_LUU)) || [] } catch(e){ return [] } })();
 function luuLichSu_(){ if (TRONG_IFRAME_) return; try { localStorage.setItem(KHOA_LUU, JSON.stringify(LICH_SU)) } catch(e){} }
 function luuKetQua(){
-  var p = thamSoChung(); var P = n('niemYet');
-  var b = boc(P, p);
-  var laiHienThi = $('phapNhanSel').value === 'dn' ? b.laiSauThue : b.lai;
+  var P = n('niemYet'), von = n('vonSp'), laiHienThi, bienHienThi;
+  // SỬA 18/09/2026 — "Lưu kết quả" vẫn tính bằng boc()/ketQua() CŨ dù màn hình
+  // Shopee đã đổi sang engine mới (tinhShopeeMoi_) — số lưu lên Sheet sẽ LỆCH
+  // với số đang hiện trên màn hình. Dùng đúng engine đang hiển thị cho từng sàn.
+  if (SAN === 'sp'){
+    var r = tinhShopeeMoi_(thamSoShopeeMoi_());
+    laiHienThi = r.LNST; bienHienThi = P > 0 ? r.LNST / P : 0;
+  } else {
+    var p = thamSoChung();
+    var b = boc(P, p);
+    laiHienThi = $('phapNhanSel').value === 'dn' ? b.laiSauThue : b.lai;
+    bienHienThi = P > 0 ? laiHienThi / P : 0;
+    von = p.von;
+  }
   var muc = {
     ma: 'TG' + Date.now() + Math.floor(Math.random()*1000),
     luc: Date.now(),
     san: SAN,
     sku: SP_DANG_CHON ? SP_DANG_CHON.sku : '',
     ten: SP_DANG_CHON ? SP_DANG_CHON.ten : ($('timSp').value.trim() || '(chưa đặt tên)'),
-    von: p.von, gia: P, vat: n('vat'), lai: laiHienThi, bien: P > 0 ? laiHienThi / P : 0
+    von: von, gia: P, vat: n('vat'), lai: laiHienThi, bien: bienHienThi
   };
   if (TRONG_IFRAME_){
     var bt = $('btnLuu'); bt.disabled = true; bt.textContent = 'Đang lưu lên Sheet…';
