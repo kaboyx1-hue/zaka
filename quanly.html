@@ -730,7 +730,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260917c';
+var APP_VER='20260918a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -2079,6 +2079,7 @@ var NGUOI_PT=get('nguoiphutrach',['Chủ','Vợ chủ']); // danh sách người
 var TK=get('tk',[]);       // danh sách tài khoản nhận chuyển khoản: {ten, gc}
 var CHIPHI_QL=get('chiphiql',[]);   // chi phí nhân viên báo lên: {ma,ngay,iso,may,nv,muc,tien,gc}
 var TINHGIA_LUU=get('tinhgialuu',[]);   // lịch sử tính giá đã lưu lên Sheet (tab Tính giá sàn/Sỉ)
+var VIEC_CL=get('vieccl',[]);   // "Việc cần làm" — nay lưu Sheet (VIEC_CAN_LAM), giữ bản chép cục bộ để mở lại nhanh
 async function hoiNhanh(){
   if(!QCFG.url||!QCFG.key) return;
   try{
@@ -2088,9 +2089,9 @@ async function hoiNhanh(){
     var v=j.ver||{};
     var doi = v.don!==VERQL.don || v.von!==VERQL.von || v.sv!==VERQL.sv ||
               v.nv!==VERQL.nv || v.kt!==VERQL.kt || v.ship!==VERQL.ship || v.tk!==VERQL.tk ||
-              v.cp!==VERQL.cp || v.tg!==VERQL.tg;
+              v.cp!==VERQL.cp || v.tg!==VERQL.tg || v.vc!==VERQL.vc;
     if(!doi) return;
-    VERQL={don:v.don||'',von:v.von||'',sv:v.sv||'',nv:v.nv||'',kt:v.kt||'',ship:v.ship||'',tk:v.tk||'',cp:v.cp||'',tg:v.tg||''};
+    VERQL={don:v.don||'',von:v.von||'',sv:v.sv||'',nv:v.nv||'',kt:v.kt||'',ship:v.ship||'',tk:v.tk||'',cp:v.cp||'',tg:v.tg||'',vc:v.vc||''};
     set('verql',VERQL);
     await keoDon(0);
   }catch(e){
@@ -2110,9 +2111,10 @@ function apDungKeoVe(j, luc){
   if(j.tk) TK=j.tk; set('tk',TK);
   if(j.chiPhi) CHIPHI_QL=j.chiPhi; set('chiphiql',CHIPHI_QL);
   if(j.tinhGia){ TINHGIA_LUU=j.tinhGia.slice().reverse(); set('tinhgialuu',TINHGIA_LUU); guiTinhGiaChoTs() }
+  if(j.viec){ VIEC_CL=j.viec; set('vieccl',VIEC_CL); guiViecChoVc() }
   NVS=j.nvs||[]; set('nvs',NVS);
   KTRUONG=j.khaiTruong||''; set('ktruong',KTRUONG);
-  VERQL={don:j.donVer||'',von:j.vonVer||'',sv:j.svVer||'',nv:VERQL.nv,kt:VERQL.kt,ship:j.shipVer||'',tk:j.tkVer||'',cp:j.cpVer||'',tg:j.tgVer||''};
+  VERQL={don:j.donVer||'',von:j.vonVer||'',sv:j.svVer||'',nv:VERQL.nv,kt:VERQL.kt,ship:j.shipVer||'',tk:j.tkVer||'',cp:j.cpVer||'',tg:j.tgVer||'',vc:j.vcVer||''};
   set('verql',VERQL);
   MADK=j.maDK||''; MAYGUI=j.mayGuiCuoi||{}; set('maygui',MAYGUI);
   napDon(j.don||[],'Drive');
@@ -2458,7 +2460,7 @@ function veTab_(t){
   if(t==='lam')veLam();
   if(t==='bc')veBC(); if(t==='so')veSo(); if(t==='gia'){veGia();vePhat()} if(t==='cb')veCB();
   if(t==='ts'){guiCatalogChoTs();guiTinhGiaChoTs();guiLuongShipperChoTs()}
-  if(t==='vc'){guiNguoiPTChoVc()}
+  if(t==='vc'){guiNguoiPTChoVc();guiViecChoVc()}
   if(t==='vh'){veNV();veMayGui();veNhatKy();veKhaiTruong();nhacSaoLuu();veNvXemLS();veNguongHuyHieu();veNguoiPhuTrachQL()}
 }
 /* Gửi danh mục sản phẩm đang bán (SKU/tên/giá lẻ/giá vốn) cho tool tính giá
@@ -2477,7 +2479,8 @@ function guiCatalogChoTs(){
 window.addEventListener('message', function(e){
   if (e.data && e.data.type === 'ts-ready'){ guiCatalogChoTs(); guiTinhGiaChoTs(); guiLuongShipperChoTs() }
   if (e.data && e.data.type === 'tg-luu') nhanLuuTinhGiaTuTs_(e.data.item);
-  if (e.data && e.data.type === 'vc-ready'){ guiNguoiPTChoVc() }
+  if (e.data && e.data.type === 'vc-ready'){ guiNguoiPTChoVc(); guiViecChoVc() }
+  if (e.data && e.data.type === 'vc-luu') nhanLuuViecTuVc_(e.data.items);
 });
 /* Lương trung bình đội shipper (chỉ tính người ĐÃ khai lương/giờ > 0) — gửi
    cho tool tính giá sàn dùng làm gợi ý lương cho logistics tab Sỉ/Phân phối,
@@ -4614,6 +4617,30 @@ function guiNguoiPTChoVc(){
   var f=$('ifVc'); if(!f||!f.contentWindow) return;
   f.contentWindow.postMessage({type:'vc-nguoi', ds:NGUOI_PT}, '*');
 }
+/* ══════════════════════ VIỆC CẦN LÀM ↔ SHEET ══════════════════════
+   Thêm 18/09/2026 — chủ báo PC/điện thoại không thấy chung 1 danh sách việc
+   (trước đó viec_can_lam.html chỉ lưu localStorage riêng từng máy). Cùng
+   khuôn "tg-luu"/"tg-luu-ket-qua" đã có cho lịch sử tính giá: con gửi TOÀN
+   BỘ danh sách việc mỗi lần Lưu/Xoá, cha ghi đè lên Sheet (hành động 'viec',
+   khuôn DANH_SACH_NHO như shipper/tài khoản), rồi báo lại kết quả cho con. */
+function guiViecChoVc(){
+  var f=$('ifVc'); if(!f||!f.contentWindow) return;
+  f.contentWindow.postMessage({type:'vc-list', items:VIEC_CL}, '*');
+}
+async function nhanLuuViecTuVc_(ds){
+  var f=$('ifVc');
+  function traLoi(ok, loi){ if(f&&f.contentWindow) f.contentWindow.postMessage({type:'vc-luu-ket-qua', ok:ok, loi:loi}, '*') }
+  if(!QCFG.url||!QCFG.key){ traLoi(false,'Cần dán link và mật khẩu quản lý ở tab Nạp đơn trước.'); return }
+  var goi=(ds||[]).map(function(t){ return Object.assign({}, t, {checklist: JSON.stringify(t.checklist||[])}) });
+  try{
+    var r=await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'viec',ds:goi})});
+    var j=JSON.parse(await r.text());
+    if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
+    VIEC_CL=ds||[]; set('vieccl',VIEC_CL);
+    traLoi(true);
+  }catch(e){ traLoi(false, 'Chưa lưu được: '+e.message) }
+}
 
 /* ══════════════════════ TÀI KHOẢN NHẬN CHUYỂN KHOẢN ══════════════════════
    Cùng khuôn với shipper — chỉ máy quản lý sửa, ghi đè toàn bộ danh sách lên
@@ -5122,6 +5149,12 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260918a', ngay:'18/09/2026', ten:'Sửa "Bỏ qua tất cả" phiếu NV; Việc cần làm đồng bộ lên Sheet',
+  vaPhieu:[],
+  muc:[
+   ['sua','Nút <b>"Bỏ qua tất cả"</b> trong hộp "Báo cho kỹ sư" trước đây chỉ nhớ trên đúng máy đang bấm — mở phiên đăng nhập/máy khác thì phiếu hiện lại y nguyên. Nay gửi thẳng lên Sheet giống nút Bỏ qua từng dòng, mọi phiên đều thấy đúng trạng thái.'],
+   ['sua','Tab <b>Việc cần làm</b>: trước chỉ lưu trên đúng máy/trình duyệt đang mở, PC và điện thoại không thấy chung danh sách. Nay lưu lên Sheet thật (trang <b>VIEC_CAN_LAM</b> mới) — mở máy quản lý nào cũng thấy cùng 1 bảng việc, thêm/sửa/xoá ở đâu cũng lên chung ngay.'],
+  ]},
  {ban:'20260917c', ngay:'17/09/2026', ten:'Danh sách người phụ trách, lương shipper nối logistics, Đơn hàng thử',
   vaPhieu:[],
   muc:[
@@ -5651,12 +5684,24 @@ function ksDonDaVa(){
   KS_PHIEU=KS_PHIEU.filter(function(p){ return !p.daVa });
   ksLuu(); ksXemPhieu();
 }
-/* Bỏ qua cả loạt phiếu nhân viên mà không cần lên Sheet từng cái */
-function boQuaHetPhieuNV(){
+/* Bỏ qua cả loạt phiếu nhân viên — GỬI LÊN SHEET 1 LẦN (gộp), không phải chỉ nhớ máy này.
+   Trước đây chỉ ghi cục bộ (localStorage) nên máy/phiên đăng nhập KHÁC vẫn thấy phiếu y nguyên
+   (Sheet vẫn "CHO DUYET") — chủ báo 18/09/2026, đã vá. */
+async function boQuaHetPhieuNV(){
   var ds=phieuNVChoDuyet();
   if(!ds.length) return;
-  if(!confirm('Bỏ qua '+ds.length+' phiếu nhân viên đang chờ?\n\nMáy này sẽ không hỏi lại nữa. '+
-    'Nhân viên không bị làm phiền gì thêm.')) return;
+  if(!confirm('Bỏ qua '+ds.length+' phiếu nhân viên đang chờ?\n\nNhân viên không bị làm phiền gì thêm.')) return;
+  if(!QCFG.url||!QCFG.key){ alert('Cần dán link và mật khẩu quản lý ở tab Nạp đơn trước.'); return }
+  var tatCa=[]; ds.forEach(function(x){ (x.ban||[x]).forEach(function(b){ tatCa.push(b) }) });
+  try{
+    var r=await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'duyetks',
+        ks:tatCa.map(function(b){ return {luc:b.luc,may:b.may,tt:'BO QUA',chuGhi:''} })})});
+    var j=JSON.parse(await r.text());
+    if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
+  }catch(e){ alert('Không gửi lên Sheet được: '+e.message+'\n\nThử lại sau, chưa bỏ qua gì cả.'); return }
+  tatCa.forEach(function(b){ b.tt='BO QUA' });
+  set('phieunv',PHIEU_NV);
   ds.forEach(function(x){ KS_XONG[khoaPhieuNV_(x)]={luc:x.luc||'',noi:x.noi||'',ban:'(chủ bỏ qua)',danhDau:Date.now()} });
   set('ksxong',KS_XONG);
   veLam();

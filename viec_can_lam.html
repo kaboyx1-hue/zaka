@@ -137,7 +137,7 @@ header.top p{margin:5px 0 0;color:var(--ink-2);font-size:13px;max-width:52ch}
 
   <div class="board" id="board"></div>
 
-  <div class="note">Dữ liệu lưu trên đúng máy/trình duyệt này (localStorage) — mở bằng máy khác sẽ KHÔNG thấy việc đã thêm ở đây. Chưa nối vào Sheet/Apps Script.</div>
+  <div class="note" id="dataNote">Dữ liệu lưu trên đúng máy/trình duyệt này (localStorage) — mở bằng máy khác sẽ KHÔNG thấy việc đã thêm ở đây. Chưa nối vào Sheet/Apps Script.</div>
 </div>
 
 <div class="overlay" id="overlay" hidden>
@@ -208,9 +208,31 @@ header.top p{margin:5px 0 0;color:var(--ink-2);font-size:13px;max-width:52ch}
   // Cùng khuôn ts-ready/tg-list đã dùng cho tinh_gia.html: tự báo sẵn sàng
   // ngay khi gắn xong listener, tránh gửi sớm quá bị mất tin.
   var NGUOI_PT_TU_QL = [];
+  // Thêm 18/09/2026: khi mở TRONG quanly.html thì dữ liệu việc lấy từ Sheet
+  // thật (VIEC_CAN_LAM) qua cầu nối postMessage — trước đó chỉ localStorage,
+  // PC/điện thoại không thấy chung. Mở LẺ ngoài quanly.html (test/dự phòng)
+  // vẫn rơi về localStorage cũ như trước, không mất tính năng đứng riêng.
+  var TRONG_QL = false; // bật=true ngay khi nhận được 'vc-list' đầu tiên từ cha
   window.addEventListener('message', function(e){
     if (e.data && e.data.type === 'vc-nguoi'){ NGUOI_PT_TU_QL = e.data.ds || []; render(); }
+    if (e.data && e.data.type === 'vc-list'){
+      TRONG_QL = true;
+      $('dataNote').textContent = 'Dữ liệu đang lưu trên Sheet chung (VIEC_CAN_LAM) — mở ở máy quản lý nào cũng thấy cùng 1 danh sách.';
+      TASKS = (e.data.items || []).map(function(t){
+        var x = Object.assign({}, t);
+        try { x.checklist = JSON.parse(t.checklist || '[]'); } catch(e2){ x.checklist = []; }
+        return x;
+      });
+      render();
+    }
+    if (e.data && e.data.type === 'vc-luu-ket-qua'){
+      if (!e.data.ok) alert('Lưu việc lên Sheet KHÔNG thành công: ' + (e.data.loi||'') + '\n\nThử lại — chưa mất dữ liệu đang gõ, chỉ chưa lên được Sheet.');
+    }
   });
+  function luuLenSheetHoacMay(){
+    if (TRONG_QL){ try { window.parent.postMessage({type:'vc-luu', items:TASKS}, '*'); } catch(e){} }
+    else save();
+  }
   try { if (window.parent && window.parent !== window) window.parent.postMessage({type:'vc-ready'}, '*'); } catch(e){}
   var COLS = [
     {key:'todo', label:'Chưa làm'},
@@ -429,12 +451,12 @@ header.top p{margin:5px 0 0;color:var(--ink-2);font-size:13px;max-width:52ch}
       data.id = 't' + Date.now();
       TASKS.push(data);
     }
-    save(); closeModal(); render();
+    luuLenSheetHoacMay(); closeModal(); render();
   });
   $('btnDelete').addEventListener('click', function(){
     if (!editingId) return;
     TASKS = TASKS.filter(function(x){ return x.id !== editingId; });
-    save(); closeModal(); render();
+    luuLenSheetHoacMay(); closeModal(); render();
   });
 
   ['fSearch','fNguoi','fQuaHan'].forEach(function(id){
