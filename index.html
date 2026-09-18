@@ -958,7 +958,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260918a';
+var APP_VER='20260918b';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -3422,6 +3422,19 @@ function vePG(epVe){
 function suaTaiCho(ma,tuPG){
   var d=DON.filter(function(x){return x.ma===ma})[0]; if(!d)return;
   if(d.xuat&&!confirm('Đơn '+ma+' đã xuất file.\n\nSửa xong sẽ được gửi lại ở lần xuất tới.\nTiếp tục?'))return;
+  /* SỬA 18/09/2026 — bug thật chủ báo: "bổ sung sản phẩm vào đơn đã tạo không
+     được". Nguyên nhân: ô tìm-thêm-sản-phẩm dùng id cố định "edQ"/"edKQ", chỉ
+     ĐÚNG MỘT bộ trong toàn trang tại một thời điểm. Nếu đang sửa dở đơn A (chưa
+     bấm Lưu/Huỷ) mà bấm "Sửa đơn" sang đơn B, form cũ của A vẫn còn nguyên
+     trong DOM — thành 2 ô cùng id="edQ". Trình duyệt luôn đọc ĐÚNG Ô ĐẦU TIÊN
+     trong trang bất kể ô nào đang hiện, nên gõ vào ô B đang thấy có thể lặng
+     lẽ đọc nhầm giá trị (rỗng) của ô A đã ẩn — tìm không ra gì, nhìn như tính
+     năng không cho thêm sản phẩm. Vá tận gốc: dọn sạch form đơn cũ TRƯỚC khi
+     mở form đơn mới, đảm bảo trang luôn chỉ có đúng 1 ô edQ/edKQ tại một lúc. */
+  if(ED && ED.ma!==ma){
+    var boxCu=oFormSua();
+    if(boxCu){boxCu.classList.add('hide');boxCu.innerHTML=''}
+  }
   ED={ma:ma,ship:d.ship||0,giam:d.giam||0,phiChanh:d.phiChanh||0,sdt:d.sdt,ten:d.khach,kenh:d.kenh,dc:d.dc||'',gc:d.ghichu||'',
       dong:d.dong.map(function(x){return {sku:x.sku,ten:x.ten,brand:x.brand,dv:x.dv,hs:x.hs,sl:x.sl,gia:x.gia,goc:x.gia}})};
   ED.tuPG=!!tuPG;
@@ -5499,6 +5512,11 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260918b', ngay:'18/09/2026', ten:'Sửa lỗi không thêm được sản phẩm khi Sửa đơn',
+  vaPhieu:[],
+  muc:[
+   ['sua','Vá lỗi thật: bấm "Sửa đơn" của một đơn mà đang sửa dở đơn KHÁC (chưa Lưu/Huỷ) thì ô "Gõ để thêm sản phẩm" có thể lặng lẽ không nhận, gõ gì cũng không ra kết quả — nhìn như tính năng không cho thêm sản phẩm vào đơn đã tạo. Nay tự dọn sạch form sửa dở trước khi mở đơn khác, đảm bảo ô tìm luôn hoạt động đúng.'],
+  ]},
  {ban:'20260918a', ngay:'18/09/2026', ten:'Sửa lỗi đơn/lệnh huỷ có thể bị coi là đã gửi dù Sheet chưa chắc nhận',
   vaPhieu:[],
   muc:[
