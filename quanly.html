@@ -730,7 +730,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260918a';
+var APP_VER='20260918b';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -3605,7 +3605,7 @@ function veGia(){
         '<td class="r"><input style="width:96px;padding:5px;text-align:right'+(xau?';color:var(--bad)':'')+
           '" value="'+(p.von||'')+'" placeholder="chưa có" onchange="setN(\''+p.sku+'\',\'von\',this.value)"></td>'+
         '<td class="r"><input style="width:56px;padding:5px;text-align:right" '+
-          'value="'+(p.vat||'')+'" placeholder="— " title="Để trống = chưa có hoá đơn đầu vào, không tính VAT" '+
+          'value="'+(p.vat===null||p.vat===undefined?'':p.vat)+'" placeholder="— " title="Để trống = chưa có hoá đơn đầu vào, không tính VAT. Thức ăn tự để 0%." '+
           'onchange="setN(\''+p.sku+'\',\'vat\',this.value)"></td>'+
         '<td class="r"'+(xau?' style="color:var(--bad)"':'')+'>'+b+'</td>'+
         '<td class="r">'+(p.ngung
@@ -4152,7 +4152,14 @@ function taiBangGia(){
     'rồi bấm <b>Nạp bảng giá từ file CSV</b> — máy cho xem trước những gì sắp đổi trước khi ghi.<br>'+
     '<span class="sm">Cột <b>Bien %</b> chỉ để xem. Đừng đổi cột <b>SKU</b> — đó là chứng minh thư của món hàng.</span>','ok');
 }
-function setF(sku,f,v){GIA[sku][f]=String(v).trim();GIA[sku].moi=false;set('gia',GIA);giaLai()}
+function setF(sku,f,v){
+  var p=GIA[sku]; p[f]=String(v).trim(); p.moi=false;
+  // Đổi Nhóm sang THỨC ĂN thì tự hiểu VAT 0% (hàng miễn VAT như thức ăn chăn
+  // nuôi, theo yêu cầu chủ 18/09/2026) — chỉ tự điền khi CHƯA gán VAT gì, gõ
+  // tay đè lại được như thường, không khoá cứng.
+  if(f==='nhom'&&v==='THỨC ĂN'&&(p.vat===null||p.vat===undefined||p.vat==='')) p.vat=0;
+  set('gia',GIA);giaLai()
+}
 function setN(sku,f,v){var p=GIA[sku]; p[f]=n2(v)||null;
   if(f==='von'||f==='qd_von'){p.moi=false;p.suaTay=true;p.vonLuc=nowStr()}
   // Đổi hệ số quy đổi (1 Thùng = mấy lẻ) thì tự gợi ý lại giá sỉ theo cấp số nhân
@@ -4199,7 +4206,8 @@ function luuSP(){
     if(m)n=Math.max(n,parseInt(m[1]))});
   var sku=pre+'-'+('000'+(n+1)).slice(-4);
   GIA[sku]={sku:sku,ten:t,brand:$('spBrand').value.trim(),nhom:$('spNhom').value,
-            dvt:$('spDvt').value.trim()||'Cái',gb:gb,von:n2($('spVon').value)||null};
+            dvt:$('spDvt').value.trim()||'Cái',gb:gb,von:n2($('spVon').value)||null,
+            vat:$('spNhom').value==='THỨC ĂN'?0:null};
   set('gia',GIA); $('dlgSP').close(); $('gq').value=t; veGia();
   bao('giaMsg','Đã thêm <b>'+esc(t)+'</b> — mã <b>'+sku+'</b>','ok');
 }
@@ -4379,7 +4387,8 @@ function goiVon(){
     return {sku:p.sku, nhom:p.nhom||'KHÁC', brand:p.brand||'', ten:p.ten||'',
             dvt:p.dvt||'', gb:p.gb||0, qd_dv:p.qd_dv||'', qd_sl:p.qd_sl||0, qd_gb:p.qd_gb||0,
             von:p.von||0, qd_von:p.qd_von||0, ngung:p.ngung?1:'', moi:p.moi?1:'', soat:p.soat?1:'',
-            suaTay:p.suaTay?1:'', vonLuc:p.vonLuc||'', vonLyDo:p.vonLyDo||'', vat:p.vat||''}});
+            suaTay:p.suaTay?1:'', vonLuc:p.vonLuc||'', vonLyDo:p.vonLyDo||'',
+            vat:(p.vat===null||p.vat===undefined?'':p.vat)}});
 }
 function goiSuaVon(){
   var o=[];
@@ -5149,6 +5158,12 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260918b', ngay:'18/09/2026', ten:'Thức ăn tự hiểu VAT 0%',
+  vaPhieu:[],
+  muc:[
+   ['moi','Tab <b>Bảng giá</b>: đổi Nhóm một món sang <b>Thức ăn</b> (hoặc thêm món mới chọn sẵn nhóm này) thì ô VAT tự điền <b>0%</b> — không cần gõ tay. Chỉ tự điền khi ô đó CHƯA gán VAT gì, gõ tay đè số khác vẫn được như thường.'],
+   ['sua','Vá luôn lỗi hiển thị: VAT = 0% trước đây bị hiện thành ô trống (nhìn như "chưa gán"), và khi Lưu giá vốn lên Sheet cũng bị gửi thành rỗng thay vì đúng số 0 — giờ hiện đúng "0" và lưu đúng 0%.'],
+  ]},
  {ban:'20260918a', ngay:'18/09/2026', ten:'Sửa "Bỏ qua tất cả" phiếu NV; Việc cần làm đồng bộ lên Sheet',
   vaPhieu:[],
   muc:[
