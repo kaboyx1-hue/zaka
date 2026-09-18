@@ -131,6 +131,39 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
     <button type="button" class="vq" data-v="10">10%</button>
   </div>
   <div class="hint">Đổi theo TỪNG sản phẩm — không dùng chung 1 mức cho cả cửa hàng. Thức ăn chăn nuôi (TĂCN) và một số nông sản KHÔNG chịu VAT, bấm nút 0% ở trên.</div>
+  <div class="hint" id="hintVat27" style="display:none;color:var(--loss)">Mức 8% chỉ áp dụng đến hết 31/12/2026 (NQ 204/2025/QH15 + NĐ 174/2025/NĐ-CP). Từ 01/01/2027 VAT quay về 10% — chạy lại với 10% để xem kế hoạch giá năm 2027.</div>
+</div>
+
+<div class="card" id="cardShopeeMoi">
+  <h3>Đồng Tài Trợ voucher (Shopee)</h3>
+  <div class="hint">Shopee tự phát hành mã giảm giá toàn sàn, khách tự áp vào đơn, rồi Shopee tự động cấn trừ một phần vào tiền bán hàng của shop — áp dụng mặc định, không có nút tắt. Để 0 nếu đơn không dính mã.</div>
+  <div class="pair">
+    <div><label for="voucherMenhGia">Mệnh giá mã gốc (₫)</label><input type="number" id="voucherMenhGia" value="0" step="1000" min="0"></div>
+    <div><label for="voucherTyLeChia">Tỷ lệ shop chịu (%)</label><input type="number" id="voucherTyLeChia" value="40" step="1" min="0"></div>
+  </div>
+  <div class="pair" style="margin-top:10px">
+    <div><label for="voucherTyLeDon">Tỷ lệ đơn có dùng mã (%)</label><input type="number" id="voucherTyLeDon" value="0" step="5" min="0" max="100"></div>
+    <div></div>
+  </div>
+  <div class="hint" style="margin-top:6px">Tỷ lệ shop chịu đã tăng 20% (01/10/2025) → 30% (29/12/2025) → 40% (23/05/2026, hiện hành) trong 8 tháng — nên chừa biên chịu được tới 50%. Trần 50.000đ/sản phẩm.</div>
+  <div id="doNhayVoucherBox" style="margin-top:10px"></div>
+
+  <h3 style="margin-top:18px">Đơn hoàn</h3>
+  <div class="hint">Với hàng nặng/cồng kềnh, chi phí một đơn hoàn chủ yếu là <b>cước ship hoàn</b>, không phải phí sàn — nhập trực tiếp thay vì suy ra từ % phí sàn.</div>
+  <div class="pair">
+    <div><label for="tyLeHoanSp">Tỷ lệ hoàn (%)</label><input type="number" id="tyLeHoanSp" value="5" step="0.5" min="0"></div>
+    <div><label for="cpMoiHoanSp">Chi phí mỗi đơn hoàn (₫)</label><input type="number" id="cpMoiHoanSp" value="30000" step="1000" min="0"></div>
+  </div>
+
+  <h3 style="margin-top:18px">Giá vốn đã gồm VAT chưa?</h3>
+  <select id="vonDaGomVat"><option value="1" selected>Có — giá vốn đã gồm VAT đầu vào</option><option value="0">Không — giá vốn là số thuần, chưa gồm VAT</option></select>
+  <div class="hint" style="margin-top:6px">Chọn sai lệch tới vài nghìn đồng/đơn — đừng để mặc định qua loa, hỏi lại kế toán nếu chưa chắc.</div>
+
+  <h3 style="margin-top:18px">Chi phí khác mỗi đơn (đã gồm VAT)</h3>
+  <div class="pair">
+    <div><label for="cpDongGoiSp">Đóng gói (₫)</label><input type="number" id="cpDongGoiSp" value="0" step="500" min="0"></div>
+    <div><label for="cpQuangCaoSp">Quảng cáo đã phân bổ (₫)</label><input type="number" id="cpQuangCaoSp" value="0" step="1000" min="0"></div>
+  </div>
 </div>
 </div>
 
@@ -307,9 +340,16 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
       </div>
     </div>
     <div class="pair" id="rowDN">
-      <div><label for="tndn">Thuế TNDN (%)</label><input type="number" id="tndn" value="20" step="1" min="0"></div>
+      <div><label for="tndn">Thuế TNDN (%)</label>
+        <select id="tndn">
+          <option value="15">15% — doanh thu năm trước liền kề ≤ 3 tỷ</option>
+          <option value="17" selected>17% — doanh thu năm trước liền kề 3–50 tỷ</option>
+          <option value="20">20% — doanh thu năm trước liền kề &gt; 50 tỷ</option>
+        </select>
+      </div>
       <div class="hint" style="margin-top:22px">VAT đã chuyển lên ô "VAT sản phẩm" ở khung nhập chính — sửa theo từng sản phẩm ở đó.</div>
     </div>
+    <div class="hint" style="margin-top:6px">Chọn theo doanh thu năm trước liền kề (Luật Thuế TNDN 67/2025/QH15 Đ.10 + NĐ 320/2025/NĐ-CP Đ.11). Lưu ý: công ty con hoặc có quan hệ liên kết với doanh nghiệp không đủ điều kiện thì MẤT quyền hưởng mức 15%/17% (NĐ 320/2025/NĐ-CP Đ.11).</div>
     <div class="pair" id="rowHKD" style="display:none">
       <div><label for="thueKhoan">Thuế sàn khấu trừ (%)</label><input type="number" id="thueKhoan" value="1.5" step="0.1" min="0"></div>
       <div></div>
@@ -539,6 +579,172 @@ function hoaVon(p){
   var lo = 0, hi = Math.max(p.von*60, 20000000);
   for (var i=0;i<80;i++){ var mid=(lo+hi)/2; if (boc(mid,p).lai < 0) lo=mid; else hi=mid; }
   return hi;
+}
+
+// ================================================================
+// ENGINE SHOPEE MỚI — thêm 18/09/2026 theo đặc tả "HUONG-DAN-SUA-PHAN-MEM-
+// TINH-GIA-SHOPEE.md" (đã đối chiếu đơn hàng thật + văn bản pháp luật). Thay
+// THẲNG cho bocShopee()/ketQua() ở TAB SHOPEE — TikTok/Sỉ KHÔNG đụng, vẫn
+// dùng đúng boc()/ketQua() cũ (đặc tả chỉ nói phạm vi tab Shopee). Đã kiểm
+// đủ 12 test vector + bất biến "giá = giá hoà vốn -> LNTT = 0" bằng node
+// trước khi nhúng vào đây — xem CLAUDE.md mục 18/09/2026 để đối chiếu lại.
+function tinhShopeeMoi_(inp){
+  var gia_ban = inp.gia_ban, gia_von = inp.gia_von;
+  var von_da_gom_vat = inp.von_da_gom_vat;
+  var vat = inp.vat, ts_tndn = inp.ts_tndn;
+  var r_phi_co_dinh = inp.r_phi_co_dinh, r_phi_xu_ly = inp.r_phi_xu_ly;
+  var phi_ha_tang = inp.phi_ha_tang, r_affiliate = inp.r_affiliate || 0;
+  var voucher_menh_gia = inp.voucher_menh_gia||0, voucher_ty_le_chia_se = inp.voucher_ty_le_chia_se||0, voucher_ty_le_don = inp.voucher_ty_le_don||0;
+  var ty_le_hoan = inp.ty_le_hoan||0, chi_phi_moi_don_hoan = inp.chi_phi_moi_don_hoan||0;
+  var chi_phi_dong_goi = inp.chi_phi_dong_goi||0, chi_phi_quang_cao = inp.chi_phi_quang_cao||0;
+
+  // B1-B2
+  var voucher_hieu_dung = voucher_menh_gia * voucher_ty_le_chia_se * voucher_ty_le_don;
+  var base = gia_ban - voucher_hieu_dung;
+  // B3 — làm tròn TỪNG khoản, giống Shopee
+  var phi_co_dinh = Math.round(base * r_phi_co_dinh);
+  var phi_xu_ly = Math.round(base * r_phi_xu_ly);
+  var phi_affiliate = Math.round(base * r_affiliate);
+  var phi_san_gom_vat = phi_co_dinh + phi_xu_ly + phi_ha_tang + phi_affiliate;
+  // B4
+  var doanh_thu_thuan = base / (1+vat);
+  var gia_von_gom_vat = von_da_gom_vat ? gia_von : gia_von*(1+vat);
+  var gia_von_thuan = gia_von_gom_vat / (1+vat);
+  var phi_san_thuan = phi_san_gom_vat / (1+vat);
+  var dong_goi_thuan = chi_phi_dong_goi / (1+vat);
+  var quang_cao_thuan = chi_phi_quang_cao / (1+vat);
+  var chi_phi_hoan = ty_le_hoan * chi_phi_moi_don_hoan; // KHÔNG chia (1+vat) — chủ yếu cước ship, không có VAT đầu vào ổn định
+  // B5
+  var LNTT = doanh_thu_thuan - gia_von_thuan - phi_san_thuan - dong_goi_thuan - quang_cao_thuan - chi_phi_hoan;
+  var thue_tndn = Math.max(0, LNTT) * ts_tndn;
+  var LNST = LNTT - thue_tndn;
+  // B6
+  var vat_dau_ra = base - doanh_thu_thuan;
+  var vat_von = gia_von_gom_vat - gia_von_thuan;
+  var vat_phi_san = phi_san_gom_vat - phi_san_thuan;
+  var vat_dong_goi = chi_phi_dong_goi - dong_goi_thuan;
+  var vat_quang_cao = chi_phi_quang_cao - quang_cao_thuan;
+  var vat_phai_nop = vat_dau_ra - vat_von - vat_phi_san - vat_dong_goi - vat_quang_cao;
+  // B7
+  var r = r_phi_co_dinh + r_phi_xu_ly + r_affiliate;
+  var gia_hoa_von = voucher_hieu_dung
+    + (gia_von_gom_vat + phi_ha_tang + chi_phi_hoan*(1+vat) + chi_phi_dong_goi + chi_phi_quang_cao) / (1-r);
+  var du_dia_giam_gia = gia_ban - gia_hoa_von;
+  var muc_giam_toi_da_pct = gia_ban ? (1 - gia_hoa_von/gia_ban)*100 : 0;
+  var du_dia_quang_cao = Math.max(0, LNTT + quang_cao_thuan) * (1+vat);
+  var roas_hoa_von = du_dia_quang_cao ? gia_ban / du_dia_quang_cao : Infinity;
+  var bien_tren_dt_thuan = doanh_thu_thuan ? LNST/doanh_thu_thuan*100 : 0;
+  var bien_tren_gia_ban = gia_ban ? LNST/gia_ban*100 : 0;
+
+  return {voucher_hieu_dung:voucher_hieu_dung, base:base, phi_co_dinh:phi_co_dinh, phi_xu_ly:phi_xu_ly,
+    phi_affiliate:phi_affiliate, phi_san_gom_vat:phi_san_gom_vat, doanh_thu_thuan:doanh_thu_thuan,
+    gia_von_gom_vat:gia_von_gom_vat, gia_von_thuan:gia_von_thuan, phi_san_thuan:phi_san_thuan,
+    dong_goi_thuan:dong_goi_thuan, quang_cao_thuan:quang_cao_thuan, chi_phi_hoan:chi_phi_hoan,
+    LNTT:LNTT, thue_tndn:thue_tndn, LNST:LNST, vat_dau_ra:vat_dau_ra, vat_von:vat_von,
+    vat_phi_san:vat_phi_san, vat_dong_goi:vat_dong_goi, vat_quang_cao:vat_quang_cao, vat_phai_nop:vat_phai_nop,
+    gia_hoa_von:gia_hoa_von, du_dia_giam_gia:du_dia_giam_gia, muc_giam_toi_da_pct:muc_giam_toi_da_pct,
+    du_dia_quang_cao:du_dia_quang_cao, roas_hoa_von:roas_hoa_von,
+    bien_tren_dt_thuan:bien_tren_dt_thuan, bien_tren_gia_ban:bien_tren_gia_ban};
+}
+function thamSoShopeeMoi_(){
+  return {
+    gia_ban: n('niemYet'), gia_von: n('vonSp'),
+    von_da_gom_vat: $('vonDaGomVat').value === '1',
+    vat: n('vat')/100, ts_tndn: n('tndn')/100,
+    r_phi_co_dinh: n('hoaHong')/100, r_phi_xu_ly: n('giaoDich')/100,
+    phi_ha_tang: n('phiCoDinh'), r_affiliate: 0,
+    voucher_menh_gia: n('voucherMenhGia'), voucher_ty_le_chia_se: n('voucherTyLeChia')/100,
+    voucher_ty_le_don: n('voucherTyLeDon')/100,
+    ty_le_hoan: n('tyLeHoanSp')/100, chi_phi_moi_don_hoan: n('cpMoiHoanSp'),
+    chi_phi_dong_goi: n('cpDongGoiSp'), chi_phi_quang_cao: n('cpQuangCaoSp')
+  };
+}
+function hoaVonShopeeMoi_(inp){
+  var lo = 0, hi = Math.max(inp.gia_von*60, 20000000);
+  for (var i=0;i<80;i++){
+    var mid=(lo+hi)/2, test=Object.assign({}, inp, {gia_ban:mid});
+    if (tinhShopeeMoi_(test).LNTT < 0) lo=mid; else hi=mid;
+  }
+  return hi;
+}
+function renderShopeeMoi_(){
+  var inp = thamSoShopeeMoi_(), r = tinhShopeeMoi_(inp);
+  var hv = hoaVonShopeeMoi_(inp);
+
+  $('oLaiK').textContent = 'Lợi nhuận sau thuế mỗi đơn (chưa trừ nhân sự, kho bãi, chi phí chung)';
+  $('oLai').textContent = vnd(r.LNST);
+  $('oLaiBox').className = 'out hero' + (r.LNST < 0 ? ' bad' : '');
+  $('oHoaVon').textContent = vnd(hv);
+  $('oBien').innerHTML = pct(r.bien_tren_dt_thuan/100) + '<div class="si-cell-sub">trên doanh thu thuần</div>' +
+    '<div style="margin-top:4px">' + pct(r.bien_tren_gia_ban/100) + '</div><div class="si-cell-sub">trên giá bán (đã gồm VAT)</div>';
+
+  $('hintVat27').style.display = (n('vat') === 8) ? '' : 'none';
+
+  var noteHtml = '<b>Dư địa giảm giá:</b> '+vnd(r.du_dia_giam_gia)+' (giảm tối đa '+r.muc_giam_toi_da_pct.toFixed(1).replace('.',',')+'%). '+
+    '<b>Dư địa quảng cáo:</b> '+vnd(r.du_dia_quang_cao)+'/đơn (ROAS hoà vốn ≈ '+r.roas_hoa_von.toFixed(2).replace('.',',')+'). '+
+    '<div class="hint" style="margin-top:6px;color:inherit">Dư địa giảm giá ≠ ngân sách quảng cáo. Giảm giá làm phí sàn giảm theo; chi quảng cáo thì không — dùng nhầm ngân sách giảm giá để chạy hết vào quảng cáo dễ thành lỗ.</div>';
+  $('noteGia').className = r.LNTT < 0 ? 'note bad' : 'note ok';
+  $('noteGia').innerHTML = (r.LNTT < 0
+    ? '<b>Dưới điểm hoà vốn '+vnd(hv-inp.gia_ban)+'.</b> Mỗi đơn bán ra là một đơn lỗ.<br>'
+    : '') + noteHtml;
+
+  // Bảng độ nhạy theo tỷ lệ đơn dùng mã Đồng Tài Trợ — chủ shop thường không biết tỷ lệ thật.
+  var mucDon = [0,10,25,50,100], dnHtml = '<table style="margin-top:0"><tr><td class="hint" style="padding:2px 4px">% đơn dùng mã</td>' +
+    mucDon.map(function(m){return '<td class="num hint" style="padding:2px 4px">'+m+'%</td>'}).join('') + '</tr>' +
+    '<tr><td style="padding:2px 4px">LNST/đơn</td>' + mucDon.map(function(m){
+      var rr = tinhShopeeMoi_(Object.assign({}, inp, {voucher_ty_le_don:m/100}));
+      return '<td class="num'+(rr.LNST<0?' neg':'')+'" style="padding:2px 4px">'+vnd(rr.LNST)+'</td>';
+    }).join('') + '</tr></table>';
+  $('doNhayVoucherBox').innerHTML = inp.voucher_menh_gia > 0
+    ? '<div class="hint">Độ nhạy theo tỷ lệ đơn thực dùng mã (giữ nguyên mệnh giá + tỷ lệ shop chịu):</div>' + dnHtml
+    : '';
+
+  // Bảng chi tiết từng khoản phí — đúng thứ tự B1→B7, khớp bảng đối chiếu mục 1 đặc tả.
+  var rows = [];
+  rows.push(['Giá bán', inp.gia_ban, 1]);
+  if (inp.voucher_menh_gia > 0) rows.push(['Đồng Tài Trợ voucher (Shopee tự trừ)', -r.voucher_hieu_dung, 0]);
+  rows.push(['Phí cố định '+(inp.r_phi_co_dinh*100).toFixed(1).replace(/\.0$/,'')+'%', -r.phi_co_dinh, 0]);
+  rows.push(['Phí xử lý giao dịch '+(inp.r_phi_xu_ly*100).toFixed(1).replace(/\.0$/,'')+'%', -r.phi_xu_ly, 0]);
+  rows.push(['Phí hạ tầng', -inp.phi_ha_tang, 0]);
+  if (r.phi_affiliate) rows.push(['Phí affiliate', -r.phi_affiliate, 0]);
+  if (inp.chi_phi_dong_goi) rows.push(['Chi phí đóng gói', -inp.chi_phi_dong_goi, 0]);
+  if (inp.chi_phi_quang_cao) rows.push(['Chi phí quảng cáo', -inp.chi_phi_quang_cao, 0]);
+  rows.push(['VAT khấu trừ trên phí sàn', r.vat_phi_san, 0]);
+  rows.push(['VAT đầu ra phải nộp', -r.vat_dau_ra, 0]);
+  rows.push(['VAT đầu vào giá vốn', r.vat_von, 0]);
+  rows.push(['Giá vốn', -inp.gia_von, 0]);
+  if (r.chi_phi_hoan) rows.push(['Chi phí đơn hoàn (kỳ vọng, '+(inp.ty_le_hoan*100).toFixed(1).replace(/\.0$/,'')+'%)', -r.chi_phi_hoan, 0]);
+  var html = '';
+  rows.forEach(function(row){
+    var val = row[1], col = val < 0 ? ' neg' : '';
+    html += '<tr><td>'+row[0]+'</td><td class="num'+col+'">'+(val>0&&!row[2]?'+':'')+vnd(val)+'</td></tr>';
+  });
+  html += '<tr class="total"><td>Lợi nhuận trước thuế</td><td class="num'+(r.LNTT<0?' neg':'')+'">'+vnd(r.LNTT)+'</td></tr>';
+  html += '<tr><td>Thuế TNDN ('+n('tndn')+'%)</td><td class="num neg">'+vnd(-r.thue_tndn)+'</td></tr>';
+  html += '<tr class="total"><td>Lợi nhuận sau thuế</td><td class="num'+(r.LNST<0?' neg':'')+'">'+vnd(r.LNST)+'</td></tr>';
+  $('tbodyChiTiet').innerHTML = html;
+  $('hintChiTiet').style.display = '';
+  $('hintChiTiet').innerHTML = 'Vì sao có 3 dòng VAT? Doanh thu và giá vốn ở trên đang để ở dạng <b>đã gồm VAT</b>. Ba dòng VAT có nhiệm vụ quy chúng về số thuần để tính lợi nhuận cho đúng chuẩn kế toán. Tổng ba dòng ('+vnd(r.vat_phi_san)+' '+(r.vat_dau_ra>=0?'−':'+')+' '+vnd(Math.abs(r.vat_dau_ra))+' + '+vnd(r.vat_von)+' = '+vnd(-r.vat_phai_nop)+') chính bằng <b>số thuế GTGT công ty phải nộp nhà nước</b> cho đơn này. Đây là tiền ra thật, nhưng không phải chi phí kinh doanh — nó chỉ là phần thuế thu hộ nằm trong giá bán. Riêng thuế TNDN ở dòng cuối mới là khoản thật sự ăn vào lợi nhuận.';
+
+  // Kiểm tra sức chịu đựng — giảm giá dần 0-40%, dùng ĐÚNG engine mới.
+  var stHtml = '';
+  for (var d=0; d<=40; d+=5){
+    var pp = inp.gia_ban*(1-d/100), rr = tinhShopeeMoi_(Object.assign({}, inp, {gia_ban:pp}));
+    stHtml += '<tr><td>'+d+'%</td><td class="num">'+vnd(pp)+'</td>'+
+      '<td class="num'+(rr.LNTT<0?' neg':'')+'">'+vnd(rr.LNTT)+'</td>'+
+      '<td class="num">'+pct(pp?rr.LNTT/pp:0)+'</td></tr>';
+  }
+  $('tbodySale').innerHTML = stHtml;
+  var ng = null;
+  for (var d2=0; d2<=60; d2+=0.5){
+    if (tinhShopeeMoi_(Object.assign({}, inp, {gia_ban:inp.gia_ban*(1-d2/100)})).LNTT < 0){ ng = d2; break }
+  }
+  $('noteNguong').className = 'note'+(ng===0?' bad':'');
+  $('noteNguong').innerHTML = ng===0 ? '<b>Đang lỗ ngay ở giá bán hiện tại.</b>'
+    : (ng===null ? '<b>Chưa gãy trong dải 60%.</b>'
+      : '<b>Ngưỡng gãy: giảm '+ng.toFixed(1).replace('.',',')+'%.</b> Vượt quá mức này, mỗi đơn thêm là một đơn lỗ.');
+
+  $('noteThuePhapNhan').innerHTML = '<b>Doanh nghiệp:</b> sàn KHÔNG khấu trừ nộp thay. Nghị định 117/2025 chỉ áp cho hộ kinh doanh và cá nhân. Công ty tự kê khai; VAT trên phí sàn lấy lại được nếu đã xác minh mã số thuế tổ chức trên sàn.';
 }
 
 // ================================================================
@@ -955,6 +1161,7 @@ function veLuongTBShipper_(){
 });
 
 function render(){
+  if (SAN === 'sp') return renderShopeeMoi_();
   var p = thamSoChung();
   var P = n('niemYet');
   var hv = hoaVon(p);
@@ -1031,7 +1238,16 @@ function apDungMacDinh(){
   $('phiCoDinh').value = m.phiCoDinh;
   $('piShip').value = m.piShip || 0;
   $('lblPhiCoDinh').textContent = SAN === 'sp' ? 'Phí hạ tầng (₫)' : 'Phí xử lý đơn (₫)';
-  $('boxPiShip').style.display = SAN === 'sp' ? '' : 'none';
+  // Đặc tả 18/09/2026 đối chiếu 2 đơn thật xác nhận Shopee KHÔNG còn tách phí
+  // PiShip riêng (tổng phí cố định = đúng 3.000đ) — ẩn hẳn ô này, không dùng
+  // nữa cho cả 2 sàn (TikTok trước đó cũng chưa từng đọc ô này).
+  $('boxPiShip').style.display = 'none';
+  // Cũng ẩn "Phí dịch vụ tuỳ chọn" (Voucher/Freeship/Content Xtra) ở Shopee —
+  // đặc tả mới không có tham số nào cho các dịch vụ tự nguyện này (chỉ có
+  // r_affiliate trong công thức, không kèm ô bật/tắt riêng theo đặc tả) —
+  // xem báo cáo bàn giao mục "quyết định cần chủ xác nhận".
+  $('cardDichVu').style.display = (SAN === 'sp') ? 'none' : '';
+  $('cardShopeeMoi').style.display = (SAN === 'sp') ? '' : 'none';
   veDichVu();
 }
 
@@ -1044,6 +1260,7 @@ function chonSan_(san){
   $('panelSan').style.display = laSi ? 'none' : '';
   $('panelSi').style.display = laSi ? '' : 'none';
   ['cardPhiSan','cardDichVu','cardVanChuyen'].forEach(function(id){ $(id).style.display = laSi ? 'none' : ''; });
+  $('cardShopeeMoi').style.display = (!laSi && san === 'sp') ? '' : 'none';
   $('btnChiTiet').style.display = laSi ? 'none' : '';
   $('chiTietBox').style.display = laSi ? 'none' : $('chiTietBox').style.display;
   $('btnSucChiuDung').style.display = laSi ? 'none' : '';
@@ -1080,7 +1297,9 @@ $('btnSucChiuDung').addEventListener('click', function(){
 });
 
 ['vonSp','niemYet','vat','tndn','thueKhoan','daXacMinh','hoaHong','giaoDich','phiCoDinh','piShip',
- 'klThuc','khuVuc','shipSanTro','tyLeHoanDon'].forEach(function(id){
+ 'klThuc','khuVuc','shipSanTro','tyLeHoanDon',
+ 'voucherMenhGia','voucherTyLeChia','voucherTyLeDon','tyLeHoanSp','cpMoiHoanSp','vonDaGomVat',
+ 'cpDongGoiSp','cpQuangCaoSp'].forEach(function(id){
   $(id).addEventListener('input', render);
   $(id).addEventListener('change', render);
 });
