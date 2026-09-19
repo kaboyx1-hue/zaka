@@ -25,6 +25,15 @@ body{margin:0;font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,
 .hide{display:none!important}
 button{font:inherit;cursor:pointer;border:0;border-radius:14px;padding:10px 14px;transition:transform .08s,filter .12s}
 button:active{transform:scale(.98)}
+/* SỬA 19/09/2026 — .chip (3 chỗ) và .btn-nho (11 chỗ) không có định nghĩa CSS
+   nào trong file này, luật button{} chỉ đặt border:0 chứ không đặt màu, nên
+   14 nút rơi về màu mặc định trình duyệt (trắng bệch, đặc biệt rõ ở chế độ
+   tối). Không chép nguyên si từ index.html — bản đó tương phản dưới chuẩn. */
+.btn-nho{background:var(--c2);color:var(--tx);border:1px solid var(--line);
+  padding:6px 11px;font-size:12px;border-radius:8px}
+.chip{background:var(--c2);color:var(--tx);border:1px solid var(--line);
+  padding:6px 12px;border-radius:999px;font-size:12.5px;white-space:nowrap}
+.chip.on{background:var(--acc);color:var(--bg);border-color:var(--acc);font-weight:700}
 input,select{font:inherit;width:100%;padding:11px 12px;border-radius:14px;border:1px solid var(--line);background:var(--c2);color:var(--tx)}
 input:focus,select:focus{outline:none;border-color:var(--acc)}
 label{display:block;font-size:12.5px;color:var(--tx2);margin:0 0 6px}
@@ -237,6 +246,14 @@ body.ks-chi *{cursor:crosshair!important}
   display:inline-block;vertical-align:middle;margin-right:8px}
 .thanh i{display:block;height:100%;background:var(--acc);border-radius:99px}
 @media(max-width:640px){.thanh{width:38px}}
+/* SỬA 19/09/2026 — đầu trang (<header>) chiếm ~180px, lặp lại y hệt trên cả
+   6 màn hình con của điện thoại. Đã xác minh trước khi sửa: chỉ đúng 1
+   header, đúng 1 div.div bên trong (dòng "Chỉ chủ dùng...") — thu gọn đúng
+   dòng phụ này, giữ nguyên tên máy + nút đổi sáng/tối. */
+@media(max-width:640px){
+  header > div > div{display:none}
+  header{padding:10px 14px}
+}
 /* SỬA 09/09/2026 — TAB BÁO CÁO BỊ TRÀN NGANG TRÊN ĐIỆN THOẠI.
    Ô chọn ngày nằm trong một hàng co giãn, mà luật chung là input rộng 100%.
    Trong hàng co giãn, "100%" tính theo bề rộng do nội dung đòi, nên hai ô ngày
@@ -401,7 +418,7 @@ body.ks-chi *{cursor:crosshair!important}
     <h2>Phát bảng giá cho 3 máy nhân viên</h2>
     <div id="phatInfo" class="sm"></div>
     <div class="row mt">
-      <button class="btn" onclick="phatGia()" style="flex:2">Phát bảng giá ngay</button>
+      <button class="btn" id="btnPhatGia" onclick="phatGia()" style="flex:2">Phát bảng giá ngay</button>
       <button class="btn2" onclick="xemNhanGia()">Máy nào đã nhận?</button>
     </div>
     <div class="sm" style="margin-top:8px">Bấm là ba máy nhân viên nhận bảng giá mới
@@ -428,7 +445,7 @@ body.ks-chi *{cursor:crosshair!important}
     <div class="row mt">
       <button class="btn" onclick="luuBangGia()">Cập nhật bảng giá</button>
       <button class="btn2" onclick="tinhLai()">Tính lại các đơn đang chờ</button>
-      <button class="btn2" onclick="dayVon(true)" style="color:var(--ok)">Lưu giá vốn lên Sheet</button>
+      <button class="btn2" id="btnDayVon" onclick="dayVon(true)" style="color:var(--ok)">Lưu giá vốn lên Sheet</button>
       <button class="btn2" onclick="moSuaLo()" style="color:var(--pur)">Sửa hàng loạt món đang lọc</button>
       <button class="btn2" onclick="taiBangGia()">Tải bảng giá ra CSV</button>
       <button class="btn2" id="btnNgung" onclick="toggleNgung()">Hàng ngừng bán</button>
@@ -526,7 +543,7 @@ body.ks-chi *{cursor:crosshair!important}
     </div>
     <button class="btn-nho mt" onclick="themShipper()">Thêm vào danh sách</button>
     <div id="dsShipperQL" style="margin-top:10px"></div>
-    <button class="btn mt" onclick="luuShipperLenSheet()" style="color:#fff;font-weight:600">Lưu danh sách lên Sheet</button>
+    <button class="btn mt" id="btnLuuShip" onclick="luuShipperLenSheet()" style="color:#fff;font-weight:600">Lưu danh sách lên Sheet</button>
   </div>
 
   <div class="card"><h2>Danh sách người phụ trách</h2>
@@ -549,7 +566,7 @@ body.ks-chi *{cursor:crosshair!important}
     </div>
     <button class="btn-nho mt" onclick="themTaiKhoan()">Thêm vào danh sách</button>
     <div id="dsTaiKhoanQL" style="margin-top:10px"></div>
-    <button class="btn mt" onclick="luuTaiKhoanLenSheet()" style="color:#fff;font-weight:600">Lưu danh sách lên Sheet</button>
+    <button class="btn mt" id="btnLuuTk" onclick="luuTaiKhoanLenSheet()" style="color:#fff;font-weight:600">Lưu danh sách lên Sheet</button>
   </div>
 
   <div class="card"><h2>Nhật ký nhân viên <a href="#" class="lnk" style="font-size:13px;font-weight:400" id="lnkNhatKy" onclick="THU_GON_NK=!THU_GON_NK;veNhatKy();return false"></a></h2>
@@ -627,7 +644,7 @@ body.ks-chi *{cursor:crosshair!important}
   <div id="sdErr"></div>
   <div class="row mt">
     <button class="btn2" onclick="document.getElementById('dlgSuaDon').close()">Huỷ, không lưu</button>
-    <button class="btn" style="width:auto" onclick="luuSuaDon()">Lưu thay đổi</button>
+    <button class="btn" id="btnLuuSuaDon" style="width:auto" onclick="luuSuaDon()">Lưu thay đổi</button>
   </div>
 </dialog>
 
@@ -643,7 +660,7 @@ body.ks-chi *{cursor:crosshair!important}
   <div id="grErr"></div>
   <div class="row mt">
     <button class="btn2" onclick="document.getElementById('dlgGR').close()">Đóng</button>
-    <button class="btn" onclick="ghiGiaRiengDaChon()">Ghi những dòng đã chọn lên Sheet</button>
+    <button class="btn" id="btnGhiGiaRieng" onclick="ghiGiaRiengDaChon()">Ghi những dòng đã chọn lên Sheet</button>
   </div>
 </dialog>
 <dialog id="dlgGopSP" style="max-width:520px">
@@ -730,7 +747,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260919b';
+var APP_VER='20260919c';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1255,6 +1272,9 @@ async function ghiGiaRiengDaChon(){
     return {sdt:g.sdt,sku:g.sku,ten:(GIA[g.sku]&&GIA[g.sku].ten)||'',gia:g.gia,luc:hn,het:het,nv:'QUAN LY'};
   });
   $('grErr').innerHTML='<div class="msg wa">Đang gửi…</div>';
+  // SỬA 19/09/2026 — nút không khoá trong lúc chờ Sheet, bấm nhanh 2 lần
+  // gửi 2 request ghi giá riêng cùng lúc.
+  var bGR=$('btnGhiGiaRieng'); if(bGR) bGR.disabled=true;
   try{
     var r=await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'giarieng',gr:gr})});
@@ -1264,7 +1284,7 @@ async function ghiGiaRiengDaChon(){
     bao('grMsg','Đã ghi <b>'+((j.them||0)+(j.sua||0))+' giá riêng</b> lên Sheet ('+(j.them||0)+' mới, '+
       (j.sua||0)+' cập nhật), hiệu lực tới <b>'+het.split('-').reverse().join('/')+'</b>. '+
       'Máy nhân viên sẽ nhận ở lần đồng bộ kế tiếp — từ đó đúng khách này là giá tự nhảy ra.','ok');
-  }catch(e){ $('grErr').innerHTML='<div class="msg er">Không ghi được: '+esc(e.message)+'</div>' }
+  }catch(e){ $('grErr').innerHTML='<div class="msg er">Không ghi được: '+esc(e.message)+'</div>' } finally { if(bGR) bGR.disabled=false; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -3136,12 +3156,19 @@ async function huyLoQL(){
   var ly=prompt('Ghi lý do huỷ (bắt buộc):',''); if(ly===null)return;
   ly=String(ly).trim(); if(!ly){alert('Phải ghi lý do.');return}
   if(!QCFG.url||!QCFG.key){bao('inMsg','Cần link và mật khẩu quản lý.','er');return}
-  var r=await baoHuy(ds.map(function(d){return {ma:d.ma,lydo:ly}}));
-  ds.forEach(function(d){ d.huy=true; d.huyBoi='QUẢN LÝ'; d.huyLuc=nowStr(); d.huyLyDo=ly; d.thieuVon=false });
-  set('so',SO); veSo();veBC();veCB();nhanCB();veNhatKy();
-  bao('inMsg', r.ok
-    ? 'Đã huỷ <b>'+ds.length+' đơn</b> — '+tien(tong)+'. Sheet đã đóng dấu ĐÃ HUỶ.'
-    : 'Đã đánh dấu huỷ trong sổ cái, nhưng <b>chưa báo được Sheet</b>: '+esc(r.loi||''), r.ok?'wa':'er');
+  // SỬA 19/09/2026 — nút không hề khoá trong lúc chờ Sheet trả lời, bấm 2 lần
+  // liên tiếp (mạng chậm) gửi 2 request huỷ cùng lúc. KHÔNG lưu/khôi phục lại
+  // đúng chữ cũ — veSo() bên trong sẽ tự gọi demHuyQL() đặt lại đúng số "Huỷ
+  // N đơn đã chọn" mới (về 0 sau khi huỷ xong), khôi phục chữ cũ sẽ đè sai số.
+  var b=$('btnHuyLo2'); if(b) b.disabled=true;
+  try{
+    var r=await baoHuy(ds.map(function(d){return {ma:d.ma,lydo:ly}}));
+    ds.forEach(function(d){ d.huy=true; d.huyBoi='QUẢN LÝ'; d.huyLuc=nowStr(); d.huyLyDo=ly; d.thieuVon=false });
+    set('so',SO); veSo();veBC();veCB();nhanCB();veNhatKy();
+    bao('inMsg', r.ok
+      ? 'Đã huỷ <b>'+ds.length+' đơn</b> — '+tien(tong)+'. Sheet đã đóng dấu ĐÃ HUỶ.'
+      : 'Đã đánh dấu huỷ trong sổ cái, nhưng <b>chưa báo được Sheet</b>: '+esc(r.loi||''), r.ok?'wa':'er');
+  } finally { var b2=$('btnHuyLo2'); if(b2) b2.disabled=false; }
 }
 
 function ctDon(ma){
@@ -3472,6 +3499,9 @@ async function luuSuaDon(){
     dong:EDQL.dong.map(function(x){return {sku:x.sku,ten:x.ten,brand:x.brand||'',dv:x.dv,hs:x.hs||1,sl:x.sl,gia:x.gia,thanhTien:x.sl*x.gia}})};
 
   $('sdErr').innerHTML='<div class="sm">Đang lưu…</div>';
+  // SỬA 19/09/2026 — nút "Lưu thay đổi" không hề khoá trong lúc chờ Sheet,
+  // bấm nhanh 2 lần gửi 2 request sửa cùng lúc.
+  var btnLSD=$('btnLuuSuaDon'); if(btnLSD) btnLSD.disabled=true;
   try{
     var r=await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUẢN LÝ',hanhdong:'gui',don:[goiDon]})});
@@ -3493,7 +3523,7 @@ async function luuSuaDon(){
     }
   }catch(e){
     $('sdErr').innerHTML='<div class="msg er">Không gửi được — mất mạng hoặc Sheet không phản hồi: '+esc(e.message)+'</div>';
-  }
+  } finally { if(btnLSD) btnLSD.disabled=false; }
 }
 
 function csvHoa(rows){
@@ -3761,42 +3791,51 @@ async function phatGia(im){
   if(!QCFG.url||!QCFG.key){ if(!im) bao('giaMsg','Cần dán link và mật khẩu quản lý ở tab Nạp đơn trước.','er'); return }
   var b=goiGia();
   if(!b.length){ if(!im) bao('giaMsg','Bảng giá đang trống, không có gì để phát.','er'); return }
-  // Bo qua kiem xung dot khi im=true (goi tu xoaSP) — dayVon() ngay truoc do da
-  // kiem roi, hoi tiep lan nua cho cung mot thao tac xoa se lam phien nguoi dung.
-  if(!im && !(await kiemXungDot('bg','bảng giá'))){
-    bao('giaMsg','Đã huỷ phát — có người khác vừa phát bảng giá. Vào tab Nạp đơn bấm Tải lại rồi thử lại.','wa');
-    return;
-  }
-  var loi=loiQD();
-  if(loi.length){
-    if(im){
-      bao('giaMsg','Đã xoá xong, nhưng <b>CHƯA phát được cho 3 máy nhân viên</b> vì còn '+loi.length+
-        ' món giá sỉ vô lý trong bảng giá (không liên quan món vừa xoá). '+
-        'Xử lý xong rồi bấm <b>Phát bảng giá ngay</b> tay.','wa');
+  // SỬA 19/09/2026 — nút "Phát bảng giá ngay" không khoá trong lúc chờ, bấm
+  // liên tục gửi nhiều lần phát cùng lúc. BẪY ĐÃ VẤP: khoá ngay TRƯỚC BẤT KỲ
+  // await nào (kể cả kiemXungDot() bên dưới) — nếu khoá SAU await đó thì 2-3
+  // cú bấm dồn dập vẫn lọt qua hết phần đồng bộ trước khi bất kỳ cú nào kịp
+  // khoá nút (đã tự bắt ra khi test bằng click() thật liên tiếp: 3 request
+  // "banggia" cùng lúc dù đã có khoá SAU kiemXungDot). Khoá cả khi im=true
+  // (gọi lặng lẽ từ xoaSP) để tránh đụng cùng lúc với người bấm tay nút hiện
+  // trên màn. Mọi nhánh return sớm bên dưới đều phải tự mở khoá lại.
+  var bPG=$('btnPhatGia'); if(bPG) bPG.disabled=true;
+  try{
+    // Bo qua kiem xung dot khi im=true (goi tu xoaSP) — dayVon() ngay truoc do da
+    // kiem roi, hoi tiep lan nua cho cung mot thao tac xoa se lam phien nguoi dung.
+    if(!im && !(await kiemXungDot('bg','bảng giá'))){
+      bao('giaMsg','Đã huỷ phát — có người khác vừa phát bảng giá. Vào tab Nạp đơn bấm Tải lại rồi thử lại.','wa');
       return;
     }
-    bao('giaMsg','<b>Chưa phát được — '+loi.length+' món có giá sỉ vô lý.</b><br>'+
-      loi.slice(0,6).map(function(p){return '• '+esc(p.ten)+' — 1 '+esc(p.qd_dv)+' = '+(p.qd_sl||0)+' '+esc(p.dvt||'')+
-        ' → '+tien(p.qd_gb||0)}).join('<br>')+
-      (loi.length>6?'<br>… và '+(loi.length-6)+' món nữa':'')+
-      '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">'+
-        '<button class="btn" style="background:#7a1f1f;color:#fff;padding:9px 14px;font-size:13px" '+
-          'onclick="boQDLoat()">Bỏ giá sỉ cho cả '+loi.length+' món</button>'+
-        '<button class="btn2" style="padding:9px 14px;font-size:13px" onclick="xemLoiQD()">Xem danh sách để sửa tay</button>'+
-      '</div>'+
-      '<div class="sm" style="margin-top:8px">Bỏ giá sỉ thì nhân viên <b>chỉ bán lẻ được</b> những món đó — '+
-      'an toàn, không mất gì, sau này điền lại lúc nào cũng được. '+
-      'Chặn ở đây để không ai bán một thùng bằng giá một gói.</div>','er');
-    return;
-  }
-  var thieuGia=b.filter(function(p){return !p.gb}).length;
-  if(!im){
-    if(!confirm('Phát bảng giá cho 3 máy nhân viên?\n\n'+
-      b.length+' mặt hàng đang bán'+(thieuGia?'\n'+thieuGia+' món CHƯA CÓ GIÁ BÁN — nhân viên sẽ thấy giá 0':'')+
-      '\n\nGiá vốn KHÔNG đi theo.\nĐơn đã bán không bị ảnh hưởng.'))return;
-    bao('giaMsg','Đang phát…','wa');
-  }
-  try{
+    var loi=loiQD();
+    if(loi.length){
+      if(im){
+        bao('giaMsg','Đã xoá xong, nhưng <b>CHƯA phát được cho 3 máy nhân viên</b> vì còn '+loi.length+
+          ' món giá sỉ vô lý trong bảng giá (không liên quan món vừa xoá). '+
+          'Xử lý xong rồi bấm <b>Phát bảng giá ngay</b> tay.','wa');
+        return;
+      }
+      bao('giaMsg','<b>Chưa phát được — '+loi.length+' món có giá sỉ vô lý.</b><br>'+
+        loi.slice(0,6).map(function(p){return '• '+esc(p.ten)+' — 1 '+esc(p.qd_dv)+' = '+(p.qd_sl||0)+' '+esc(p.dvt||'')+
+          ' → '+tien(p.qd_gb||0)}).join('<br>')+
+        (loi.length>6?'<br>… và '+(loi.length-6)+' món nữa':'')+
+        '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">'+
+          '<button class="btn" style="background:#7a1f1f;color:#fff;padding:9px 14px;font-size:13px" '+
+            'onclick="boQDLoat()">Bỏ giá sỉ cho cả '+loi.length+' món</button>'+
+          '<button class="btn2" style="padding:9px 14px;font-size:13px" onclick="xemLoiQD()">Xem danh sách để sửa tay</button>'+
+        '</div>'+
+        '<div class="sm" style="margin-top:8px">Bỏ giá sỉ thì nhân viên <b>chỉ bán lẻ được</b> những món đó — '+
+        'an toàn, không mất gì, sau này điền lại lúc nào cũng được. '+
+        'Chặn ở đây để không ai bán một thùng bằng giá một gói.</div>','er');
+      return;
+    }
+    var thieuGia=b.filter(function(p){return !p.gb}).length;
+    if(!im){
+      if(!confirm('Phát bảng giá cho 3 máy nhân viên?\n\n'+
+        b.length+' mặt hàng đang bán'+(thieuGia?'\n'+thieuGia+' món CHƯA CÓ GIÁ BÁN — nhân viên sẽ thấy giá 0':'')+
+        '\n\nGiá vốn KHÔNG đi theo.\nĐơn đã bán không bị ảnh hưởng.'))return;
+      bao('giaMsg','Đang phát…','wa');
+    }
     var r=await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'banggia',bang:b})});
     var j=JSON.parse(await r.text());
@@ -3809,7 +3848,7 @@ async function phatGia(im){
   }catch(e){
     bao('giaMsg','Chưa phát được: '+esc(e.message)+'<br><span class="sm">Kiểm tra mạng, link và mật khẩu. '+
       'Bảng giá trên máy này vẫn nguyên vẹn.</span>','er');
-  }
+  } finally { if(bPG) bPG.disabled=false; }
 }
 async function xemNhanGia(){
   if(!QCFG.url||!QCFG.key){ bao('giaMsg','Cần link và mật khẩu quản lý.','er'); return }
@@ -4477,11 +4516,16 @@ async function dayVon(im){
   if(!QCFG.url||!QCFG.key){ if(im)bao('giaMsg','Cần link và mật khẩu quản lý ở tab Nạp đơn.','er'); return }
   var b=goiVon();
   if(!b.length){ if(im)bao('giaMsg','Chưa có giá vốn nào để lưu.','wa'); return }
-  if(!(await kiemXungDot('von','giá vốn'))){
-    bao('giaMsg','Đã huỷ lưu — có người khác vừa sửa giá vốn. Vào tab Nạp đơn bấm Tải lại rồi thử lại.','wa');
-    return;
-  }
+  // SỬA 19/09/2026 — cùng bẫy vừa bắt được ở phatGia(): khoá nút phải đứng
+  // TRƯỚC await kiemXungDot() bên dưới, không phải sau — nếu khoá sau thì
+  // bấm dồn dập vẫn kịp lọt qua hết đoạn kiemXungDot() (chính nó có 1 await
+  // fetch bên trong) trước khi bất kỳ cú bấm nào kịp khoá được nút.
+  var bDV=im?$('btnDayVon'):null; if(bDV) bDV.disabled=true;
   try{
+    if(!(await kiemXungDot('von','giá vốn'))){
+      bao('giaMsg','Đã huỷ lưu — có người khác vừa sửa giá vốn. Vào tab Nạp đơn bấm Tải lại rồi thử lại.','wa');
+      return;
+    }
     var r=await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'giavon',bang:b})});
     var j=JSON.parse(await r.text());
@@ -4491,7 +4535,7 @@ async function dayVon(im){
       '(trang BANG_GIA_QL, chỉ mở được bằng mật khẩu quản lý).<br>'+
       '<span class="sm">Gồm cả giá bán, giá vốn, hàng ngừng bán. Điện thoại và máy quản lý kia '+
       'sẽ khớp theo trong vòng một phút.</span>','ok');
-  }catch(e){ if(im) bao('giaMsg','Chưa lưu được lên Sheet: '+esc(e.message),'er') }
+  }catch(e){ if(im) bao('giaMsg','Chưa lưu được lên Sheet: '+esc(e.message),'er') } finally { if(bDV) bDV.disabled=false; }
 }
 /* Nhận bản đầy đủ từ máy quản lý kia — giá bán, tên, đơn vị, quy đổi, giá vốn,
    hàng ngừng bán, hàng mới. Tất cả. Đây là chỗ điện thoại và máy bàn khớp nhau. */
@@ -4537,8 +4581,8 @@ function napVonTuSheet(ds,ver){
    THÊM và HIỆN BẢNG vẫn để riêng cho từng loại, vì cột/ô nhập khác nhau thật,
    gộp sẽ làm code khó đọc hơn lợi ích mang lại. */
 var DS_NHO_CAUHINH = {
-  ship: {tenBien:'SHIP', msgId:'shipMsg', hanhdong:'shipper', nhanXoa:function(x){return x.ten}, veLai:function(){veShipperQL();guiLuongShipperChoTs()}},
-  tk:   {tenBien:'TK',   msgId:'tkMsg',   hanhdong:'taikhoan', nhanXoa:function(x){return x.ten}, veLai:function(){veTaiKhoanQL()}}
+  ship: {tenBien:'SHIP', msgId:'shipMsg', hanhdong:'shipper', btnId:'btnLuuShip', nhanXoa:function(x){return x.ten}, veLai:function(){veShipperQL();guiLuongShipperChoTs()}},
+  tk:   {tenBien:'TK',   msgId:'tkMsg',   hanhdong:'taikhoan', btnId:'btnLuuTk',  nhanXoa:function(x){return x.ten}, veLai:function(){veTaiKhoanQL()}}
 };
 function xoaDanhSachNho(loai,i){
   var cf=DS_NHO_CAUHINH[loai], ds=window[cf.tenBien];
@@ -4558,6 +4602,9 @@ async function luuDanhSachNhoLenSheet(loai){
   var cf=DS_NHO_CAUHINH[loai], ds=window[cf.tenBien];
   if(!QCFG.url||!QCFG.key){ bao(cf.msgId,'Cần link và mật khẩu quản lý ở tab Nạp đơn.','er'); return }
   bao(cf.msgId,'Đang lưu…','wa');
+  // SỬA 19/09/2026 — nút không khoá trong lúc chờ Sheet, bấm nhanh 2 lần gửi
+  // 2 request lưu danh sách cùng lúc.
+  var bDS=$(cf.btnId); if(bDS) bDS.disabled=true;
   try{
     var r=await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:cf.hanhdong,ds:ds})});
@@ -4567,7 +4614,7 @@ async function luuDanhSachNhoLenSheet(loai){
     bao(cf.msgId,'Đã lưu <b>'+j.so+' mục</b> lên Sheet — 3 máy nhân viên sẽ tự thấy trong vòng một phút.','ok');
   }catch(e){
     bao(cf.msgId,'Chưa lưu được: '+esc(e.message)+'<br><span class="sm">Danh sách trên máy này vẫn nguyên vẹn.</span>','er');
-  }
+  } finally { if(bDS) bDS.disabled=false; }
 }
 /* ══════════════════════ NGƯỠNG HUY HIỆU KHÁCH ══════════════════════
    Chỉ đổi được trên máy quản lý này (localStorage riêng máy) — xem ghi chú
@@ -5176,6 +5223,13 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260919c', ngay:'19/09/2026', ten:'4 bản vá nhỏ: màu nút chế độ tối, khoá nút khi đang gửi, thu gọn đầu trang điện thoại',
+  vaPhieu:[],
+  muc:[
+   ['sua','14 nút trong <b>chế độ tối</b> (chip lọc kỳ báo cáo, nút nhỏ trong Sổ cái) trước đây trắng bệch, khó đọc — đã có màu đúng theo giao diện.'],
+   ['sua','Các nút gửi lên Sheet (Phát bảng giá, Lưu giá vốn, Huỷ đơn hàng loạt, Lưu sửa đơn, Ghi giá riêng, Lưu danh sách shipper/tài khoản, Bỏ qua tất cả phiếu) giờ tự khoá trong lúc đang gửi — bấm dồn dập không còn gửi trùng nhiều lần nữa.'],
+   ['sua','Đầu trang thu gọn bớt trên điện thoại — bỏ dòng phụ "Chỉ chủ dùng…" lặp lại ở mọi tab, đỡ chiếm màn hình nhỏ.'],
+  ]},
  {ban:'20260919b', ngay:'19/09/2026', ten:'Tính giá sàn: xoá được dòng đã lưu, nhiều tab TikTok',
   vaPhieu:[],
   muc:[
@@ -5476,7 +5530,7 @@ function moPhieuNV(){
   }).join('') : '<div class="empty">Không còn phiếu nào chờ.</div>';
   $('ksErr').innerHTML='';
   $('ksNutDay').innerHTML='<button class="btn2" onclick="document.getElementById(\'dlgKS\').close()">Để đó, lần sau xem</button>'+
-    (ds.length>1?'<button class="btn2" style="color:var(--bad)" onclick="boQuaHetPhieuNV()">Bỏ qua tất cả '+ds.length+' phiếu</button>':'');
+    (ds.length>1?'<button class="btn2" id="btnBoQuaHetPhieuNV" style="color:var(--bad)" onclick="boQuaHetPhieuNV()">Bỏ qua tất cả '+ds.length+' phiếu</button>':'');
   $('dlgKS').showModal();
 }
 async function duyetPhieuNV(i,dung){
@@ -5743,13 +5797,18 @@ async function boQuaHetPhieuNV(){
   if(!confirm('Bỏ qua '+ds.length+' phiếu nhân viên đang chờ?\n\nNhân viên không bị làm phiền gì thêm.')) return;
   if(!QCFG.url||!QCFG.key){ alert('Cần dán link và mật khẩu quản lý ở tab Nạp đơn trước.'); return }
   var tatCa=[]; ds.forEach(function(x){ (x.ban||[x]).forEach(function(b){ tatCa.push(b) }) });
+  // SỬA 19/09/2026 — nút không khoá trong lúc chờ Sheet, bấm 2 lần gửi 2
+  // request "bỏ qua tất cả" cùng lúc. KHÔNG cần bật lại thủ công — moPhieuNV()
+  // ở cuối hàm (khi thành công) vẽ lại toàn bộ hộp thoại nên nút cũ (đang
+  // khoá) bị thay hẳn bằng nút mới (đã mở); nhánh lỗi bên dưới tự mở lại.
+  var bBQ=$('btnBoQuaHetPhieuNV'); if(bBQ) bBQ.disabled=true;
   try{
     var r=await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'duyetks',
         ks:tatCa.map(function(b){ return {luc:b.luc,may:b.may,tt:'BO QUA',chuGhi:''} })})});
     var j=JSON.parse(await r.text());
     if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
-  }catch(e){ alert('Không gửi lên Sheet được: '+e.message+'\n\nThử lại sau, chưa bỏ qua gì cả.'); return }
+  }catch(e){ if(bBQ) bBQ.disabled=false; alert('Không gửi lên Sheet được: '+e.message+'\n\nThử lại sau, chưa bỏ qua gì cả.'); return }
   tatCa.forEach(function(b){ b.tt='BO QUA' });
   set('phieunv',PHIEU_NV);
   ds.forEach(function(x){ KS_XONG[khoaPhieuNV_(x)]={luc:x.luc||'',noi:x.noi||'',ban:'(chủ bỏ qua)',danhDau:Date.now()} });

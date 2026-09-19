@@ -335,6 +335,10 @@ header.top p{margin:5px 0 0;color:var(--ink-2);font-size:13px;max-width:52ch}
     var overdue = due < today && status !== 'done';
     var soon = !overdue && due <= new Date(Date.now()+2*86400000).toISOString().slice(0,10) && status !== 'done';
     var d = new Date(due+'T00:00:00');
+    // SỬA 19/09/2026 — chỉ chặn chuỗi rỗng, giá trị lỡ cỡ (vd "  ") lọt qua
+    // thành Date không hợp lệ, toLocaleDateString in ra đúng chữ "Invalid Date"
+    // lên huy hiệu. Việc "Lập hồ sơ lao động" đang dính đúng lỗi này.
+    if (isNaN(d.getTime())) return null;
     var label = d.toLocaleDateString('vi-VN', {day:'2-digit', month:'2-digit'});
     return { overdue:overdue, soon:soon, label:label };
   }
