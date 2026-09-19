@@ -70,15 +70,6 @@ h1{font-size:19px;font-weight:600;margin:0 0 16px}
 .seg button[aria-pressed="true"].sp{background:var(--accent);color:#fff}
 .seg button[aria-pressed="true"].tt{background:var(--accent-tt);color:#fff}
 .seg button[aria-pressed="true"].si{background:var(--accent-si);color:#fff}
-.si-table{width:100%;border-collapse:collapse;font-size:13px}
-.si-table th{text-align:left;font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.02em;padding:0 6px 6px}
-.si-table td{padding:5px 6px;vertical-align:top}
-.si-table input{height:36px;font-size:13.5px;padding:0 8px}
-.si-x{background:none;border:0;color:var(--loss);cursor:pointer;font-size:16px;padding:6px}
-.si-add{background:var(--page);border:1px dashed var(--line-2);border-radius:8px;padding:8px 12px;
-  color:var(--ink-2);font:600 13px inherit;cursor:pointer;margin-top:6px}
-.si-cell-sub{font-size:11px;color:var(--ink-3);margin-top:3px;line-height:1.3}
-.si-cell-sub.neg{color:var(--loss)}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:14px}
 label{display:block;font-size:13px;color:var(--ink-2);margin-bottom:5px}
 input,select{width:100%;height:44px;padding:0 12px;border:1px solid var(--line-2);border-radius:8px;
@@ -128,6 +119,159 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
 .luuRow .lai{font-family:var(--mono);font-weight:700;white-space:nowrap}
 .luuRow .lai.am{color:var(--loss)}
 .luuRow button{width:auto;height:30px;padding:0 10px;font-size:12px;flex:none}
+
+/* ══════════════════════════════════════════════════════════════════
+   TAB SỈ / PHÂN PHỐI — viết lại 19/09/2026 theo đặc tả
+   HUONG-DAN-SUA-TAB-SI.md + demo si-demo.html đi kèm (chủ chốt "thay hẳn
+   bằng demo 1 sản phẩm", bỏ danh sách nhiều sản phẩm/Đơn hàng thử/so sánh
+   3 xe cũ). MỌI SELECTOR Ở ĐÂY ĐỀU SCOPE DƯỚI #panelSi — không đụng giao
+   diện Shopee/TikTok (kể cả khi trùng tên class như .card/.note/table/
+   input/label, vốn đã dùng cho Shopee/TikTok với style khác hẳn). Token
+   màu khai báo ngay trên #panelSi (không phải :root) nên KHÔNG rò ra
+   ngoài phạm vi tab này. */
+#panelSi{
+  --ground:#EDF1F0; --surface:#fff; --surface-2:#F6F9F8;
+  --si-ink:#10201A; --si-ink-2:#3A4C44; --muted:#697C73;
+  --si-line:#D7E1DC; --si-line-2:#E9F0EC;
+  --si-shadow:0 1px 2px rgba(16,32,26,.05),0 10px 26px -14px rgba(16,32,26,.18);
+  --si-r:12px;
+  --teal:#0B7A8C;   --teal-s:#DBF0F3;
+  --violet:#6D28D9; --violet-s:#EDE7FD;
+  --amber:#B45309;  --amber-s:#FDF0D6;
+  --rose:#BE1D5E;   --rose-s:#FCE4EE;
+  --green:#12734E;  --green-s:#DCF2E6;
+  --blue:#1D4ED8;   --blue-s:#DEE7FD;
+  --good:#12734E; --good-s:#DCF2E6;
+  --warn:#B45309; --warn-s:#FDF0D6;
+  --bad:#B4241C;  --bad-s:#FCE5E3;
+  font-size:14px;line-height:1.5;
+  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){ #panelSi:not([data-theme="light"]){
+  --ground:#0B1311; --surface:#141E1A; --surface-2:#1A2620;
+  --si-ink:#E9F1EC; --si-ink-2:#BBCCC3; --muted:#879A90;
+  --si-line:#28372F; --si-line-2:#1F2D26;
+  --si-shadow:0 1px 2px rgba(0,0,0,.45),0 10px 26px -14px rgba(0,0,0,.7);
+  --teal:#3FC0D4;   --teal-s:#0C2F35;
+  --violet:#A78BFA; --violet-s:#241B44;
+  --amber:#F0B45E;  --amber-s:#3A2A10;
+  --rose:#F58BB0;   --rose-s:#3C1526;
+  --green:#4FC08D;  --green-s:#10321F;
+  --blue:#7EA5FF;   --blue-s:#16244A;
+  --good:#4FC08D; --good-s:#10321F;
+  --warn:#F0B45E; --warn-s:#3A2A10;
+  --bad:#F0837A;  --bad-s:#3A1A18;
+}}
+#panelSi[data-theme="dark"]{
+  --ground:#0B1311; --surface:#141E1A; --surface-2:#1A2620;
+  --si-ink:#E9F1EC; --si-ink-2:#BBCCC3; --muted:#879A90;
+  --si-line:#28372F; --si-line-2:#1F2D26;
+  --si-shadow:0 1px 2px rgba(0,0,0,.45),0 10px 26px -14px rgba(0,0,0,.7);
+  --teal:#3FC0D4;   --teal-s:#0C2F35;
+  --violet:#A78BFA; --violet-s:#241B44;
+  --amber:#F0B45E;  --amber-s:#3A2A10;
+  --rose:#F58BB0;   --rose-s:#3C1526;
+  --green:#4FC08D;  --green-s:#10321F;
+  --blue:#7EA5FF;   --blue-s:#16244A;
+  --good:#4FC08D; --good-s:#10321F;
+  --warn:#F0B45E; --warn-s:#3A2A10;
+  --bad:#F0837A;  --bad-s:#3A1A18;
+}
+#panelSi{background:var(--ground);color:var(--si-ink);padding:16px;border-radius:14px}
+#panelSi .num,#panelSi .money{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+#panelSi .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+#panelSi .kpi{background:var(--surface);border:1px solid var(--si-line);border-radius:var(--si-r);padding:0;
+  overflow:hidden;box-shadow:var(--si-shadow)}
+#panelSi .kpi .bar{height:4px;background:var(--c)}
+#panelSi .kpi .in{padding:12px 15px 14px}
+#panelSi .kpi .lbl{font:600 10.5px/1.2 -apple-system,sans-serif;letter-spacing:.09em;text-transform:uppercase;color:var(--c)}
+#panelSi .kpi .val{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;
+  font-size:23px;font-weight:700;letter-spacing:-.025em;margin-top:6px;line-height:1.08;color:var(--si-ink)}
+#panelSi .kpi .sub{font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.35}
+#panelSi .kpi.k1{--c:var(--green)} #panelSi .kpi.k2{--c:var(--blue)}
+#panelSi .kpi.k3{--c:var(--amber)} #panelSi .kpi.k4{--c:var(--violet)}
+#panelSi .kpi.alert{--c:var(--bad);background:var(--bad-s);border-color:var(--bad)}
+#panelSi .kpi.alert .val{color:var(--bad)}
+#panelSi .cols{display:grid;grid-template-columns:352px minmax(0,1fr);gap:16px;align-items:start}
+#panelSi .rail{display:flex;flex-direction:column;gap:13px;position:sticky;top:12px}
+#panelSi .si-main{display:flex;flex-direction:column;gap:16px;min-width:0}
+#panelSi .si-card{background:var(--surface);border:1px solid var(--si-line);border-radius:var(--si-r);
+  overflow:hidden;box-shadow:var(--si-shadow);border-top:3px solid var(--c)}
+#panelSi .si-card>header{padding:11px 15px;background:var(--c-s);display:flex;align-items:center;
+  justify-content:space-between;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--si-line-2)}
+#panelSi .si-card>header h2{font-size:12.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--c);display:flex;align-items:center;gap:8px;margin:0}
+#panelSi .si-card>header h2::before{content:"";width:9px;height:9px;border-radius:3px;background:var(--c);flex:none}
+#panelSi .si-hint{font-size:11.5px;color:var(--muted);font-weight:400}
+#panelSi .si-body{padding:14px 15px}
+#panelSi .c-teal{--c:var(--teal);--c-s:var(--teal-s)}
+#panelSi .c-violet{--c:var(--violet);--c-s:var(--violet-s)}
+#panelSi .c-amber{--c:var(--amber);--c-s:var(--amber-s)}
+#panelSi .c-rose{--c:var(--rose);--c-s:var(--rose-s)}
+#panelSi .c-green{--c:var(--green);--c-s:var(--green-s)}
+#panelSi .fgrid{display:grid;gap:10px}
+#panelSi .fgrid.two{grid-template-columns:1fr 1fr}
+#panelSi .fgrid.three{grid-template-columns:1fr 1fr 1fr}
+#panelSi label{display:block;font:600 10.5px/1.2 -apple-system,sans-serif;color:var(--muted);margin-bottom:5px;
+  letter-spacing:.06em;text-transform:uppercase}
+#panelSi input,#panelSi select{width:100%;height:auto;padding:8px 10px;border:1px solid var(--si-line);border-radius:8px;
+  background:var(--surface-2);color:var(--si-ink);font:600 13.5px "IBM Plex Mono",monospace;
+  font-variant-numeric:tabular-nums}
+#panelSi select{font-family:-apple-system,sans-serif}
+#panelSi input:focus,#panelSi select:focus{outline:none;border-color:var(--c,var(--green));background:var(--surface)}
+#panelSi .si-note{font-size:11.5px;color:var(--muted);margin:9px 0 0;line-height:1.5}
+#panelSi .si-note b{color:var(--c,var(--si-ink-2))}
+#panelSi .scroll{overflow-x:auto}
+#panelSi table{width:100%;border-collapse:collapse;font-size:13px;margin-top:0}
+#panelSi th{font:700 10.5px/1.3 -apple-system,sans-serif;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--c);background:var(--c-s);text-align:right;padding:9px 12px;
+  border-bottom:1px solid var(--si-line);white-space:nowrap}
+#panelSi th:first-child{text-align:left}
+#panelSi td{padding:10px 12px;border-bottom:1px solid var(--si-line-2);text-align:right;white-space:nowrap}
+#panelSi td:first-child{text-align:left;white-space:normal}
+#panelSi tbody tr:last-child td{border-bottom:0}
+#panelSi tr.opt{background:var(--good-s)}
+#panelSi tr.opt td:first-child{font-weight:600;color:var(--good)}
+#panelSi .pill{display:inline-block;padding:3px 9px;border-radius:99px;font:700 10.5px -apple-system,sans-serif;
+  letter-spacing:.05em;text-transform:uppercase}
+#panelSi .pill.good{background:var(--good);color:#fff}
+#panelSi .pill.warn{background:var(--warn);color:#fff}
+#panelSi .pill.bad{background:var(--bad);color:#fff}
+#panelSi[data-theme="dark"] .pill,#panelSi:not([data-theme="light"]) .pill{color:#0B1311}
+#panelSi .si-tier{display:grid;grid-template-columns:1fr 88px 32px;gap:7px;align-items:end;margin-bottom:8px}
+#panelSi .si-btn{border:1px solid var(--c);background:var(--c-s);color:var(--c);
+  font:700 12px -apple-system,sans-serif;padding:8px 13px;border-radius:8px;cursor:pointer}
+#panelSi .si-btn:hover{background:var(--c);color:#fff}
+#panelSi .si-btn.x{padding:8px 0;width:32px;border-color:var(--si-line);background:var(--surface-2);color:var(--muted)}
+#panelSi .si-btn.x:hover{background:var(--bad);border-color:var(--bad);color:#fff}
+#panelSi .pricecell input{font-size:16px;font-weight:700;text-align:right;border-width:2px}
+#panelSi .pricecell .meta{font-size:11px;color:var(--muted);margin-top:5px;text-align:right}
+#panelSi .pricecell .meta b{font-family:"IBM Plex Mono",monospace;color:var(--si-ink-2);font-weight:600}
+#panelSi .chartwrap{padding:10px 12px 0}
+#panelSi svg{display:block;width:100%;height:auto}
+#panelSi .legend{display:flex;gap:8px;flex-wrap:wrap;padding:10px 15px 14px;font-size:11.5px;color:var(--muted);align-items:center}
+#panelSi .lg{display:flex;align-items:center;gap:6px;padding:3px 9px;border-radius:99px;font-weight:600;font-size:11px}
+#panelSi .lg.g{background:var(--good-s);color:var(--good)}
+#panelSi .lg.w{background:var(--warn-s);color:var(--warn)}
+#panelSi .si-dot{width:9px;height:9px;border-radius:99px;display:inline-block;background:currentColor}
+#panelSi .callout{display:flex;gap:14px;padding:14px 15px;border-radius:10px;align-items:center;
+  margin:0 15px 14px;background:var(--warn-s);border:1px solid var(--warn)}
+#panelSi .callout .k{font:700 26px/1 "IBM Plex Mono",monospace;color:var(--warn);white-space:nowrap;letter-spacing:-.03em}
+#panelSi .callout p{margin:0;font-size:12.5px;line-height:1.5;color:var(--si-ink-2)}
+#panelSi .callout p b{color:var(--si-ink)}
+#panelSi .strong{color:var(--good);font-weight:700}
+#panelSi .weak{color:var(--bad);font-weight:700}
+#panelSi .mid{color:var(--warn);font-weight:700}
+@media (max-width:1080px){
+  #panelSi .cols{grid-template-columns:1fr}
+  #panelSi .rail{position:static}
+  #panelSi .kpis{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:520px){
+  #panelSi .kpis{grid-template-columns:1fr}
+  #panelSi .fgrid.two,#panelSi .fgrid.three{grid-template-columns:1fr}
+  #panelSi .callout{flex-direction:column;align-items:flex-start;gap:8px}
+}
 </style>
 </head>
 <body>
@@ -235,134 +379,113 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
 </div>
 
 <div id="panelSi" style="display:none">
-  <div class="card">
-    <h3>Sản phẩm sỉ / phân phối</h3>
-    <div class="hint">Tự thêm sản phẩm và giá vốn ở đây — độc lập với ô "Tìm sản phẩm" của tab Shopee/TikTok, vì hàng bán sỉ thường tính theo đơn vị khác (thùng/kiện) chứ không phải đơn lẻ.</div>
-    <table class="si-table" id="siSpTable"></table>
-    <button type="button" class="si-add" id="siSpAdd">+ Thêm sản phẩm</button>
+  <div class="kpis">
+    <div class="kpi k1"><div class="bar"></div><div class="in">
+      <div class="lbl">Giá hoà vốn</div><div class="val" id="si-k-hv">—</div><div class="sub" id="si-k-hv-s">—</div></div></div>
+    <div class="kpi k2" id="si-k-min-box"><div class="bar"></div><div class="in">
+      <div class="lbl">Đơn tối thiểu có lãi</div><div class="val" id="si-k-min">—</div><div class="sub" id="si-k-min-s">—</div></div></div>
+    <div class="kpi k3"><div class="bar"></div><div class="in">
+      <div class="lbl">Chi phí giao / đơn vị</div><div class="val" id="si-k-log">—</div><div class="sub" id="si-k-log-s">—</div></div></div>
+    <div class="kpi k4"><div class="bar"></div><div class="in">
+      <div class="lbl">Quy mô đơn tối ưu</div><div class="val" id="si-k-opt">—</div><div class="sub">đơn đầy chuyến, không trả cho chỗ trống</div></div></div>
   </div>
 
-  <div class="card">
-    <h3>Các mức giá (bậc sỉ/phân phối)</h3>
-    <div class="hint">Mỗi bậc là một mức chiết khấu/margin riêng — đặt bao nhiêu bậc, tên gì, margin bao nhiêu đều tự do.</div>
-    <table class="si-table" id="siBacTable"></table>
-    <button type="button" class="si-add" id="siBacAdd">+ Thêm bậc giá</button>
-    <div class="pair" style="margin-top:12px">
-      <div><label for="siBasis">Margin mục tiêu tính trên</label>
-        <select id="siBasis">
-          <option value="pre">Lời trước thuế</option>
-          <option value="net" selected>Lời ròng — sau VAT + TNDN</option>
-        </select>
-      </div>
-      <div><label for="siChiPhi">Chi phí giao/đóng gói mỗi đơn vị (₫)</label><input type="number" id="siChiPhi" value="0" step="1000" min="0"></div>
-    </div>
-    <div class="hint">Dùng chung "Loại hình", "Thuế TNDN" ở khung "Tuỳ chỉnh nâng cao" bên dưới (bấm mở ra nếu cần đổi) — vì đây là hằng số của cả công ty, không phải riêng tab này.</div>
-  </div>
+  <div class="cols">
+    <aside class="rail">
+      <section class="si-card c-teal">
+        <header><h2>Sản phẩm</h2></header>
+        <div class="si-body">
+          <div><label for="siTen">Tên</label><input id="siTen" value="BYS Cát sạn 2kg"></div>
+          <div class="fgrid three" style="margin-top:10px">
+            <div><label for="siVon">Giá vốn ₫</label><input id="siVon" type="number" value="39000" step="500"></div>
+            <div><label for="siVat">VAT %</label><input id="siVat" type="number" value="8" step="1"></div>
+            <div><label for="siBao">Bao/thùng</label><input id="siBao" type="number" value="8" step="1"></div>
+          </div>
+          <div style="margin-top:10px"><label for="siVonVat">Giá vốn nhập trên là</label>
+            <select id="siVonVat"><option value="1" selected>Đã gồm VAT</option><option value="0">Chưa gồm VAT</option></select></div>
+          <p class="si-note">Chọn sai ô này làm lệch lợi nhuận khoảng <b>19,5%</b> mà không có cảnh báo nào.</p>
+        </div>
+      </section>
 
-  <div class="card">
-    <h3>Vận chuyển / logistics theo số lượng</h3>
-    <div class="hint">Bảng so sánh dưới tự tính đủ 3 phương thức theo khu vực + số thùng đã chọn (chi phí/chuyến tự tính từ km, xăng/dầu — không nhập tay số cố định). Tích 1-3 dòng để thu hẹp so sánh/áp dụng — bấm lại dòng đã tích để bỏ. SPX/Lalamove không dùng ở đây, chỉ dùng cho khách lẻ ở 2 tab Shopee/TikTok. Chi phí tính ra tự cộng thêm vào ô "Chi phí giao/đóng gói" ở trên, không đè lên số bạn đã gõ ở đó.</div>
-    <div class="pair">
-      <div><label for="siKhuVuc">Khu vực giao</label>
-        <select id="siKhuVuc">
-          <option value="10">Nội thành / cận trung tâm (~10km)</option>
-          <option value="20" selected>Ngoại thành / vùng ven (~20km)</option>
-          <option value="40">Giáp ranh tỉnh lân cận (~40km)</option>
-          <option value="100">Xa (~100km+) — chỉ xe bán tải/thuê xe</option>
-        </select>
-      </div>
-      <div><label for="siSoThung">Số thùng đặt (tham chiếu để tính)</label><input type="number" id="siSoThung" value="15" step="1" min="0"></div>
-    </div>
-    <div style="overflow-x:auto"><table class="si-table" id="siXeSoSanh"></table></div>
-    <div class="note" id="siXeKQ"></div>
+      <section class="si-card c-violet">
+        <header><h2>Bậc giá</h2></header>
+        <div class="si-body">
+          <div id="siTiers"></div>
+          <button class="si-btn" id="siAddTier" type="button">+ Thêm bậc</button>
+          <div class="fgrid two" style="margin-top:12px">
+            <div><label for="siTndn">Thuế TNDN</label>
+              <select id="siTndn"><option value="15">15% — ≤ 3 tỷ</option><option value="17" selected>17% — 3–50 tỷ</option><option value="20">20% — &gt; 50 tỷ</option></select></div>
+            <div><label for="siDg">Đóng gói ₫/đv</label><input id="siDg" type="number" value="0" step="100"></div>
+          </div>
+          <!-- SỬA 19/09/2026 — mục 2.2 đặc tả: tách "đã xác minh MST" (không liên
+               quan gì tới Sỉ) khỏi chi phí đóng gói. Cờ RIÊNG cho Sỉ, mặc định TẮT
+               (đóng gói KHÔNG có hoá đơn VAT → không chia (1+VAT)). File demo đi
+               kèm THIẾU đúng ô này (luôn chia, không có lựa chọn) — thêm cho đủ. -->
+          <div style="margin-top:10px"><label for="siDgVat">Chi phí đóng gói trên</label>
+            <select id="siDgVat"><option value="0" selected>Không có hoá đơn VAT (mua lẻ, không chia)</option><option value="1">Có hoá đơn VAT (chia (1+VAT) như giá vốn)</option></select></div>
+          <p class="si-note">Margin tính trên <b>lời ròng sau VAT + TNDN</b>, chia cho giá bán đã gồm VAT.</p>
+        </div>
+      </section>
 
-    <button type="button" class="toggle" id="siXeAdvToggle">▾ Chỉnh thông số từng phương thức (giá xăng/dầu, hao, bảo dưỡng, tải xe, thời gian…)</button>
-    <div id="siXeAdvBox" style="display:none;margin-top:10px">
-      <div class="note" id="siLuongTBNote" style="display:none"></div>
-      <div class="hint" style="margin-bottom:6px"><b>🛵 Xe máy</b></div>
-      <div class="pair">
-        <div><label for="siCapXeMay">Sức chở (thùng/chuyến)</label><input type="number" id="siCapXeMay" value="10" step="1" min="0"></div>
-        <div><label for="siGiaXangXM">Giá xăng (₫/lít)</label><input type="number" id="siGiaXangXM" value="24239" step="100" min="0"></div>
-      </div>
-      <div class="pair" style="margin-top:8px">
-        <div><label for="siHaoXangXM">Hao xăng (lít/100km)</label><input type="number" id="siHaoXangXM" value="2" step="0.1" min="0"></div>
-        <div><label for="siBaoDuongXM">Bảo dưỡng (₫/km)</label><input type="number" id="siBaoDuongXM" value="250" step="50" min="0"></div>
-      </div>
-      <div class="pair" style="margin-top:8px">
-        <div><label for="siTocDoXM">Tốc độ hiệu dụng (km/h)</label><input type="number" id="siTocDoXM" value="22" step="1" min="0"></div>
-        <div><label for="siLuongXM">Lương (₫/giờ)</label><input type="number" id="siLuongXM" value="40000" step="5000" min="0"></div>
-      </div>
-      <div class="hint" style="margin:14px 0 6px"><b>🚚 Xe bán tải</b></div>
-      <div class="pair">
-        <div><label for="siCapBanTai">Sức chở (thùng/chuyến)</label><input type="number" id="siCapBanTai" value="150" step="10" min="0"></div>
-        <div><label for="siGiaDauBT">Giá dầu (₫/lít)</label><input type="number" id="siGiaDauBT" value="28485" step="100" min="0"></div>
-      </div>
-      <div class="pair" style="margin-top:8px">
-        <div><label for="siHaoDauBT">Hao dầu (lít/100km)</label><input type="number" id="siHaoDauBT" value="9" step="0.5" min="0"></div>
-        <div><label for="siBaoDuongBT">Bảo dưỡng (₫/km)</label><input type="number" id="siBaoDuongBT" value="2000" step="100" min="0"></div>
-      </div>
-      <div class="pair" style="margin-top:8px">
-        <div><label for="siTocDoBT">Tốc độ hiệu dụng (km/h)</label><input type="number" id="siTocDoBT" value="25" step="1" min="0"></div>
-        <div><label for="siLuongBT">Lương (₫/giờ)</label><input type="number" id="siLuongBT" value="40000" step="5000" min="0"></div>
-      </div>
-      <div class="hint" style="margin:14px 0 6px"><b>🚛 Thuê xe ngoài</b></div>
-      <div class="pair">
-        <div><label for="siCapThueXe">Sức chở (thùng/chuyến)</label><input type="number" id="siCapThueXe" value="80" step="10" min="0"></div>
-        <div><label for="siCpThueXe">Phí thuê/chuyến (₫, báo giá thực tế)</label><input type="number" id="siCpThueXe" value="900000" step="50000" min="0"></div>
-      </div>
-      <div class="pair" style="margin-top:8px">
-        <div><label for="siThoiGianTX">Thời gian ước tính/chuyến (giờ)</label><input type="number" id="siThoiGianTX" value="3" step="0.5" min="0"></div>
-        <div></div>
-      </div>
-    </div>
-  </div>
+      <section class="si-card c-amber">
+        <header><h2>Chuyến giao</h2></header>
+        <div class="si-body">
+          <div class="fgrid two">
+            <div><label for="siKm">Khu vực</label>
+              <select id="siKm"><option value="10" selected>Nội thành ~10km</option><option value="20">Ven đô ~20km</option><option value="40">Ngoại thành ~40km</option><option value="100">Tỉnh ~100km</option></select></div>
+            <div><label for="siCap">Sức chở thùng/chuyến</label><input id="siCap" type="number" value="10" step="1"></div>
+          </div>
+          <div class="fgrid three" style="margin-top:10px">
+            <div><label for="siXang">Xăng ₫/lít</label><input id="siXang" type="number" value="24239" step="100"></div>
+            <div><label for="siHao">Hao L/100km</label><input id="siHao" type="number" value="2" step="0.1"></div>
+            <div><label for="siBd">Bảo dưỡng ₫/km</label><input id="siBd" type="number" value="250" step="10"></div>
+          </div>
+          <div class="fgrid three" style="margin-top:10px">
+            <div><label for="siToc">Tốc độ km/h</label><input id="siToc" type="number" value="22" step="1"></div>
+            <div><label for="siLuong">Lương ₫/giờ</label><input id="siLuong" type="number" value="40000" step="1000"></div>
+            <div><label for="siBoc">Bốc/dỡ phút</label><input id="siBoc" type="number" value="10" step="1"></div>
+          </div>
+          <p class="si-note" id="siMixNote">—</p>
+        </div>
+      </section>
 
-  <div class="card">
-    <h3>Chính sách khách sỉ (tham khảo báo giá/hợp đồng)</h3>
-    <div class="hint">Chỉ để tham khảo khi báo giá/soạn hợp đồng đại lý — không tự động trừ vào bảng giá đề xuất bên dưới.</div>
-    <div class="pair">
-      <div><label for="siWpFreeship">Miễn phí vận chuyển khi mua từ (đơn vị/đơn hàng)</label><input type="number" id="siWpFreeship" value="100" step="10" min="0"></div>
-      <div><label for="siWpEarlyPct">CK thanh toán sớm (%)</label><input type="number" id="siWpEarlyPct" value="2" step="0.5" min="0"></div>
-    </div>
-    <div class="pair">
-      <div><label for="siWpEarlyDays">— nếu trả trong (ngày)</label><input type="number" id="siWpEarlyDays" value="7" step="1" min="0"></div>
-      <div><label for="siWpCredit">Công nợ tối đa (ngày)</label><input type="number" id="siWpCredit" value="30" step="5" min="0"></div>
-    </div>
-    <div class="pair">
-      <div><label for="siWpDeposit">Đặt cọc đơn đầu (%)</label><input type="number" id="siWpDeposit" value="30" step="5" min="0"></div>
-      <div><label for="siWpRebate">Rebate tích luỹ quý (%)</label><input type="number" id="siWpRebate" value="3" step="0.5" min="0"></div>
-    </div>
-    <div class="note" id="siWpKQ"></div>
-    <div class="hint">Rebate trừ thẳng vào giá tính thuế GTGT phải đăng ký chương trình khuyến mại với Sở Công Thương trước (NĐ 181/2025 Đ.6 khoản 2) — trả sau bằng tiền/hàng riêng thì không vướng quy định này.</div>
-  </div>
+      <section class="si-card c-rose">
+        <header><h2>Chính sách đại lý</h2></header>
+        <div class="si-body">
+          <div class="fgrid three">
+            <div><label for="siCk">CK sớm %</label><input id="siCk" type="number" value="2" step="0.5"></div>
+            <div><label for="siRb">Rebate quý %</label><input id="siRb" type="number" value="3" step="0.5"></div>
+            <div><label for="siFs">Freeship từ</label><input id="siFs" type="number" value="1" step="1"></div>
+          </div>
+          <p class="si-note">Rebate trừ thẳng vào giá tính GTGT phải đăng ký khuyến mại với Sở Công Thương trước — <b>NĐ 181/2025 Đ.6 k.2</b>.</p>
+        </div>
+      </section>
+    </aside>
 
-  <div class="card">
-    <h3>Bảng giá đề xuất</h3>
-    <div class="hint">Giá bán ở mỗi ô là <strong>đề xuất theo margin</strong> — gõ đè số khác vào đúng ô đó bất kỳ lúc nào, xoá trắng ô để tính lại theo margin. Không có ô nào bị khoá cứng.</div>
-    <div style="overflow-x:auto"><table class="si-table" id="siKetQuaTable"></table></div>
-  </div>
+    <main class="si-main">
+      <section class="si-card c-green">
+        <header><h2>Bảng giá đề xuất</h2><span class="si-hint">Gõ đè giá bất kỳ lúc nào — nhãn bậc sẽ báo margin thực</span></header>
+        <div class="scroll"><table id="si-t-price"><thead></thead><tbody></tbody></table></div>
+      </section>
 
-  <div class="card">
-    <h3>Đơn hàng thử — lợi nhuận thực tế</h3>
-    <div class="hint">Nhập số thùng THẬT của 1 đơn cụ thể (nhiều sản phẩm cùng lúc) — ra lợi nhuận thật của cả đơn (không phải lời/đơn vị lẻ như bảng trên), có chi tiết từng khoản và gợi ý số thùng tối ưu.</div>
-    <div class="pair" style="margin-top:10px">
-      <div><label for="donBac">Áp giá theo bậc</label><select id="donBac"></select></div>
-      <div></div>
-    </div>
-    <h3 style="margin-top:14px">Số thùng đặt trong đơn này</h3>
-    <div style="overflow-x:auto"><table class="si-table" id="donSpTable"></table></div>
-    <div class="note" id="donTongThung"></div>
+      <section class="si-card c-amber">
+        <header><h2>Kinh tế của một chuyến</h2><span class="si-hint">Dải nền = mỗi chuyến xe</span></header>
+        <div class="chartwrap"><svg id="siChart" viewBox="0 0 900 250" role="img" aria-label="Chi phí giao mỗi đơn vị theo số thùng đặt"></svg></div>
+        <div class="legend">
+          <span class="lg g"><i class="si-dot"></i> Đầy chuyến — rẻ nhất</span>
+          <span class="lg w"><i class="si-dot"></i> Vừa tràn sang chuyến mới — đắt nhất</span>
+          <span style="margin-left:auto">Đơn nhỏ hơn mức khởi điểm còn đắt hơn nữa — xem bảng dưới</span>
+        </div>
+        <div class="callout" id="siTip"></div>
+        <div class="scroll"><table id="si-t-log"><thead><tr><th>Số thùng</th><th>Chuyến</th><th>Tổng chi phí</th><th>Mỗi thùng</th><th>Mỗi đơn vị</th><th>So với tối ưu</th></tr></thead><tbody></tbody></table></div>
+      </section>
 
-    <h3 style="margin-top:16px">Kết quả — lợi nhuận thật của đơn</h3>
-    <div class="out-grid">
-      <div class="out hero" id="donLoiBox"><div class="k">Lợi nhuận đơn (sau thuế TNDN)</div><div class="v" id="donOLai">—</div></div>
-      <div class="out"><div class="k">Doanh thu đơn</div><div class="v" id="donODoanhThu" style="font-size:16px">—</div></div>
-      <div class="out"><div class="k">Biên lợi nhuận</div><div class="v" id="donOBien" style="font-size:16px">—</div></div>
-    </div>
-    <table><tbody id="donTbodyChiTiet"></tbody></table>
-
-    <h3 style="margin-top:16px">Gợi ý tối ưu số thùng</h3>
-    <div class="note" id="donGoiYToiUu"></div>
+      <section class="si-card c-rose">
+        <header><h2>Chiết khấu chồng lên nhau</h2><span class="si-hint">Đại lý giỏi sẽ lấy cả hai — cột cuối là biên thật</span></header>
+        <div class="scroll"><table id="si-t-ck"><thead><tr><th>Bậc</th><th>Giá</th><th>Không lấy CK</th><th>CK sớm</th><th>Rebate</th><th>Lấy cả hai</th></tr></thead><tbody></tbody></table></div>
+        <p class="si-note" style="padding:0 15px 14px">Các khoản này <b style="color:var(--rose)">không</b> được trừ tự động vào bảng giá — cột cuối mới là con số mang đi ký hợp đồng.</p>
+      </section>
+    </main>
   </div>
 </div>
 
@@ -921,417 +1044,194 @@ function renderShopeeMoi_(){
 }
 
 // ================================================================
-// TAB "SỈ / PHÂN PHỐI" — thêm 17/09/2026. Dùng LẠI đúng động cơ tính thuế
-// (ketQua()) đã có cho Shopee/TikTok — chỉ khác là không có phí sàn, và giá
-// bán được TÌM NGƯỢC từ margin mục tiêu thay vì nhập tay (dò nhị phân, cùng
-// kiểu với hoaVon() ở trên) thay vì chỉ nhập giá rồi ra lời. Mọi ô số đều
-// sửa tay được, không khoá cứng mức nào.
+// TAB "SỈ / PHÂN PHỐI" — VIẾT LẠI HOÀN TOÀN 19/09/2026 theo đặc tả
+// HUONG-DAN-SUA-TAB-SI.md + demo si-demo.html đi kèm (chủ chốt "thay hẳn
+// bằng demo 1 sản phẩm" — BỎ danh sách nhiều sản phẩm/Đơn hàng thử/so sánh
+// 3 xe của bản cũ, xem CLAUDE.md mục 19/09/2026 để đối chiếu quyết định).
+// Toàn bộ hàm/biến đặt tiền tố "si"/"SI_" để không đụng tên đã dùng ở
+// Shopee/TikTok (kể cả khi cùng ý nghĩa, cố tình viết riêng theo đúng đặc
+// tả, không dùng chung ketQua()/giaTheoMargin_ cũ nữa — công thức tab Sỉ
+// giờ độc lập hoàn toàn, xem B1-B7 trong đặc tả).
 // ================================================================
-function thamSoSi_(von, vatPct){
-  var dn = $('phapNhanSel').value === 'dn';
-  return {
-    von: von,
-    vat: dn ? vatPct/100 : 0,
-    thueDT: dn ? 0 : n('thueKhoan')/100,
-    tndn: dn ? n('tndn')/100 : 0,
-    daXacMinh: dn ? ($('daXacMinh').value === '1') : false,
-    hoaHong: 0, giaoDich: 0, shipShop: 0, tyLeHoan: 0
-  };
-}
-function ketQuaSi_(P, von, vatPct, chiPhiKhac){
-  var p = thamSoSi_(von, vatPct);
-  return ketQua(P, p, chiPhiKhac, [], chiPhiKhac > 0 ? [['Chi phí giao/đóng gói', -chiPhiKhac]] : []);
-}
-// Dò nhị phân giá bán sao cho đúng margin mục tiêu — trả về null nếu margin
-// vượt quá mức thuế/chi phí cho phép đạt (giống cảnh báo "vô nghiệm" khi
-// margin ròng đòi hỏi cao hơn cả (1 - thuế) có thể cho).
-function giaTheoMargin_(von, vatPct, marginPct, chiPhiKhac, basis){
-  var m = marginPct / 100;
-  var lo = von, hi = Math.max(von * 50, von + 50000000);
-  for (var i = 0; i < 80; i++){
-    var mid = (lo + hi) / 2;
-    var b = ketQuaSi_(mid, von, vatPct, chiPhiKhac);
-    var cur = basis === 'net' ? b.laiSauThue : b.lai;
-    if (cur / mid < m) lo = mid; else hi = mid;
-  }
-  var bFinal = ketQuaSi_(hi, von, vatPct, chiPhiKhac);
-  var curFinal = basis === 'net' ? bFinal.laiSauThue : bFinal.lai;
-  if (curFinal / hi < m - 0.001) return null;
-  return Math.ceil(hi / 500) * 500;
-}
-
-var KHOA_SI = 'zaka_tinhgia_si';
-var SI = (function(){
-  try { return JSON.parse(localStorage.getItem(KHOA_SI)) } catch(e){ return null }
-})() || {
-  sp: [{ ten:'', von:0, vat:8, bao:1 }],
-  bac: [{ ten:'Sỉ', margin:15 }, { ten:'Phân phối', margin:10 }],
-  gia: {}, // override giá bán, khoá "spIdx_bacIdx"
-  xe: { capXeMay:10, capBanTai:150, capThueXe:80, soThung:15, khuVuc:'20',
-        giaXangXM:24239, haoXangXM:2, baoDuongXM:250, tocDoXM:22, luongXM:40000,
-        giaDauBT:28485, haoDauBT:9, baoDuongBT:2000, tocDoBT:25, luongBT:40000,
-        cpThueXe:900000, thoiGianTX:3 },
-  wp: { freeship:100, earlyPct:2, earlyDays:7, credit:30, deposit:30, rebate:3 }
+var KHOA_SI2 = 'zaka_tinhgia_si2';
+var SI_TIERS = [{ten:'Min', margin:15}, {ten:'Max', margin:34}];
+var SI_STATE_MAC_DINH_ = {
+  ten:'BYS Cát sạn 2kg', von:39000, vat:8, bao:8, vonVat:'1',
+  tndn:17, dg:0, dgVat:'0',
+  km:10, cap:10, xang:24239, hao:2, bd:250, toc:22, luong:40000, boc:10,
+  ck:2, rb:3, fs:1
 };
-// Dữ liệu lưu từ bản cũ (trước 17/09/2026, hoặc bản 20260917b flat trước khi có bảng so
-// sánh) chưa có đủ field xe/wp/bao — điền mặc định cho field còn thiếu, không mất gì đã lưu.
-var XE_MAC_DINH_ = { capXeMay:10, capBanTai:150, capThueXe:80, soThung:15, khuVuc:'20',
-  giaXangXM:24239, haoXangXM:2, baoDuongXM:250, tocDoXM:22, luongXM:40000,
-  giaDauBT:28485, haoDauBT:9, baoDuongBT:2000, tocDoBT:25, luongBT:40000,
-  cpThueXe:900000, thoiGianTX:3 };
-if (!SI.xe) SI.xe = {};
-Object.keys(XE_MAC_DINH_).forEach(function(k){ if (SI.xe[k] === undefined) SI.xe[k] = XE_MAC_DINH_[k]; });
-if (!SI.wp) SI.wp = { freeship:100, earlyPct:2, earlyDays:7, credit:30, deposit:30, rebate:3 };
-SI.sp.forEach(function(r){ if (r.bao === undefined) r.bao = 1 });
-function luuSi_(){ try { localStorage.setItem(KHOA_SI, JSON.stringify(SI)) } catch(e){} }
+(function siNapLuu_(){
+  var luu = null;
+  try { luu = JSON.parse(localStorage.getItem(KHOA_SI2)) } catch(e){}
+  if (luu && luu.tiers && luu.tiers.length) SI_TIERS = luu.tiers;
+  var st = (luu && luu.state) ? luu.state : SI_STATE_MAC_DINH_;
+  Object.keys(SI_STATE_MAC_DINH_).forEach(function(k){ if (st[k]===undefined) st[k]=SI_STATE_MAC_DINH_[k] });
+  var MAP = {siTen:'ten', siVon:'von', siVat:'vat', siBao:'bao', siVonVat:'vonVat',
+    siTndn:'tndn', siDg:'dg', siDgVat:'dgVat',
+    siKm:'km', siCap:'cap', siXang:'xang', siHao:'hao', siBd:'bd', siToc:'toc', siLuong:'luong', siBoc:'boc',
+    siCk:'ck', siRb:'rb', siFs:'fs'};
+  Object.keys(MAP).forEach(function(id){ if ($(id)) $(id).value = st[MAP[id]] });
+})();
+function siLuu_(){
+  var MAP = {siTen:'ten', siVon:'von', siVat:'vat', siBao:'bao', siVonVat:'vonVat',
+    siTndn:'tndn', siDg:'dg', siDgVat:'dgVat',
+    siKm:'km', siCap:'cap', siXang:'xang', siHao:'hao', siBd:'bd', siToc:'toc', siLuong:'luong', siBoc:'boc',
+    siCk:'ck', siRb:'rb', siFs:'fs'};
+  var st = {};
+  Object.keys(MAP).forEach(function(id){ st[MAP[id]] = $(id).type==='number' ? n(id) : $(id).value; });
+  try { localStorage.setItem(KHOA_SI2, JSON.stringify({tiers:SI_TIERS, state:st})) } catch(e){}
+}
 
-function veSiSpTable_(){
-  var html = '<tr><th>Tên sản phẩm</th><th>Giá vốn (₫)</th><th>VAT (%)</th><th>Bao/thùng</th><th></th></tr>';
-  SI.sp.forEach(function(r, i){
-    html += '<tr>'
-      + '<td><input type="text" data-si-sp="ten" data-i="'+i+'" value="'+esc_(r.ten)+'" placeholder="Tên sản phẩm"></td>'
-      + '<td><input type="number" data-si-sp="von" data-i="'+i+'" value="'+r.von+'" step="1000" min="0"></td>'
-      + '<td><input type="number" data-si-sp="vat" data-i="'+i+'" value="'+r.vat+'" step="0.5" min="0"></td>'
-      + '<td><input type="number" data-si-sp="bao" data-i="'+i+'" value="'+(r.bao||1)+'" step="1" min="1" title="Mấy đơn vị lẻ gộp thành 1 thùng — dùng để chia đều chi phí logistics"></td>'
-      + '<td><button type="button" class="si-x" data-si-sp-x="'+i+'" title="Xoá sản phẩm">✕</button></td>'
-      + '</tr>';
-  });
-  $('siSpTable').innerHTML = html;
-  $('siSpTable').querySelectorAll('[data-si-sp]').forEach(function(el){
-    el.addEventListener('input', function(){
-      var i = +this.getAttribute('data-i'), k = this.getAttribute('data-si-sp');
-      SI.sp[i][k] = (k === 'ten') ? this.value : (parseFloat(this.value) || 0);
-      luuSi_(); veSiKetQua_();
-    });
-  });
-  $('siSpTable').querySelectorAll('[data-si-sp-x]').forEach(function(el){
-    el.addEventListener('click', function(){
-      var i = +this.getAttribute('data-si-sp-x');
-      SI.sp.splice(i, 1);
-      luuSi_(); veSiSpTable_(); veSiKetQua_();
-    });
-  });
+// ── B1-B7 đúng theo đặc tả mục 3.2 ──
+function siP_(){
+  return {vat:n('siVat')/100, bao:Math.max(1,n('siBao')), vonRaw:n('siVon'),
+    vonGom:$('siVonVat').value==='1', tndn:n('siTndn')/100, dg:n('siDg'),
+    dgVat:$('siDgVat').value==='1',
+    km:n('siKm'), cap:Math.max(1,n('siCap')), xang:n('siXang'), hao:n('siHao'), bd:n('siBd'),
+    toc:Math.max(1,n('siToc')), luong:n('siLuong'), boc:n('siBoc'),
+    ck:n('siCk')/100, rb:n('siRb')/100, fs:n('siFs')};
 }
-function veSiBacTable_(){
-  var html = '<tr><th>Tên bậc</th><th>Margin mục tiêu (%)</th><th></th></tr>';
-  SI.bac.forEach(function(r, i){
-    html += '<tr>'
-      + '<td><input type="text" data-si-bac="ten" data-i="'+i+'" value="'+esc_(r.ten)+'" placeholder="Tên bậc"></td>'
-      + '<td><input type="number" data-si-bac="margin" data-i="'+i+'" value="'+r.margin+'" step="1"></td>'
-      + '<td><button type="button" class="si-x" data-si-bac-x="'+i+'" title="Xoá bậc">✕</button></td>'
-      + '</tr>';
-  });
-  $('siBacTable').innerHTML = html;
-  $('siBacTable').querySelectorAll('[data-si-bac]').forEach(function(el){
-    el.addEventListener('input', function(){
-      var i = +this.getAttribute('data-i'), k = this.getAttribute('data-si-bac');
-      SI.bac[i][k] = (k === 'ten') ? this.value : (parseFloat(this.value) || 0);
-      luuSi_(); veSiKetQua_();
-    });
-  });
-  $('siBacTable').querySelectorAll('[data-si-bac-x]').forEach(function(el){
-    el.addEventListener('click', function(){
-      var i = +this.getAttribute('data-si-bac-x');
-      SI.bac.splice(i, 1);
-      luuSi_(); veSiBacTable_(); veSiKetQua_();
-    });
-  });
+function siParts_(p){ var k=p.km*2;
+  return {nl:k*(p.hao/100)*p.xang, bd:k*p.bd, lg:(k/p.toc + p.boc/60)*p.luong}; }
+function siCpChuyen_(p){ var q=siParts_(p); return q.nl+q.bd+q.lg; }
+function siSoChuyen_(p,n2){ return Math.max(1,Math.ceil(n2/p.cap)); }
+function siLogDonVi_(p,n2){ return n2<=0?0:siSoChuyen_(p,n2)*siCpChuyen_(p)/n2/p.bao; }
+function siLai_(p,gia,n2){
+  var vg = p.vonGom ? p.vonRaw : p.vonRaw*(1+p.vat);
+  var dongGoiThuan = p.dgVat ? p.dg/(1+p.vat) : p.dg;
+  var lntt = gia/(1+p.vat) - vg/(1+p.vat) - dongGoiThuan - siLogDonVi_(p,n2);
+  return {lntt:lntt, lnst: lntt>0 ? lntt*(1-p.tndn) : lntt};
 }
-// So sánh 3 phương thức vận chuyển cho Sỉ/Phân phối — SPX/Lalamove tính riêng
-// ở 2 tab Shopee/TikTok, chỉ dùng cho khách lẻ, không liên quan ở đây. Chi
-// phí/chuyến tự tính từ khoảng cách × xăng/dầu/hao/bảo dưỡng/lương, không phải
-// số cố định nhập tay. XE_CHON_SET: các phương thức đang tích để thu hẹp so
-// sánh (rỗng = xét cả 3) — không đổi giá, chỉ đổi phương thức RẺ NHẤT áp dụng.
-var XE_CHON_SET = [];
-function tinhXe_(soThungOverride){
-  var x = SI.xe;
-  var kmMotChieu = parseFloat(x.khuVuc)||0, kmKhuHoi = kmMotChieu*2;
-  // Mặc định dùng số thùng tham chiếu chung (ô "Số thùng đặt" của khung logistics) khi
-  // không truyền vào — "Đơn hàng thử" bên dưới gọi tinhXe_(tổng thùng thật của đơn) để
-  // tính đúng cho đơn cụ thể đó, không lệ thuộc số tham chiếu chung.
-  var soThung = (soThungOverride !== undefined) ? soThungOverride : (x.soThung||0);
-  function chiPhiChuyen(giaNhienLieu, haoLit100km, baoDuongKm, tocDo, luongGio){
-    return kmKhuHoi*(haoLit100km/100)*giaNhienLieu + kmKhuHoi*baoDuongKm + (kmKhuHoi/(tocDo||1))*luongGio;
+function siGiaTheoMargin_(p,m,n2){ var lo=0, hi=Math.max(p.vonRaw*20,p.vonRaw+5e6);
+  for(var i=0;i<70;i++){ var mid=(lo+hi)/2; if(siLai_(p,mid,n2).lnst/mid<m) lo=mid; else hi=mid; }
+  return Math.ceil(hi/500)*500; }
+function siDonToiThieu_(p,g){ for(var n2=1;n2<=300;n2++) if(siLai_(p,g,n2).lnst>0) return n2; return null; }
+
+function siDrawChart_(p){
+  var W=900,H=250,L=60,R=14,T=22,B=32;
+  var MIN=Math.max(2,Math.round(p.cap/3)), MAX=Math.max(MIN+6,p.cap*3);
+  var pts=[]; for(var n2=MIN;n2<=MAX;n2++) pts.push({n:n2,v:siLogDonVi_(p,n2),opt:n2%p.cap===0});
+  var raw=Math.max.apply(null,pts.map(function(d){return d.v}))||1;
+  var e=Math.pow(10,Math.floor(Math.log10(raw/4))), u=raw/4/e;
+  var step=(u<=1?1:u<=2?2:u<=5?5:10)*e, vmax=Math.ceil(raw*1.08/step)*step;
+  var x=function(n2){return L+(n2-MIN)/(MAX-MIN)*(W-L-R)}, y=function(v){return T+(1-v/vmax)*(H-T-B)};
+  var fmt=function(v){ return step>=1000 ? Math.round(v/1000)+'k' : (v>=1000?(v/1000).toFixed(1).replace('.',',')+'k':Math.round(v)); };
+  var s='<defs><linearGradient id="siGA" x1="0" y1="0" x2="0" y2="1">'+
+    '<stop offset="0%" stop-color="var(--amber)" stop-opacity=".30"/>'+
+    '<stop offset="100%" stop-color="var(--amber)" stop-opacity=".03"/></linearGradient></defs>';
+  for(var t=0;t*p.cap<MAX;t++){
+    var a=Math.max(MIN,t*p.cap+1), b=Math.min(MAX,(t+1)*p.cap);
+    if(b<a) continue;
+    if(t%2===1) s+='<rect x="'+x(a)+'" y="'+T+'" width="'+(x(b)-x(a))+'" height="'+(H-T-B)+'" fill="var(--si-line-2)" opacity=".7"/>';
+    var mid=(x(a)+x(b))/2;
+    if(x(b)-x(a)>52) s+='<text x="'+mid+'" y="'+(T-7)+'" text-anchor="middle" fill="var(--muted)" font-size="10" font-weight="600" letter-spacing=".08em">'+(t+1)+' CHUYẾN</text>';
   }
-  var cpXeMay1 = chiPhiChuyen(x.giaXangXM, x.haoXangXM, x.baoDuongXM, x.tocDoXM, x.luongXM);
-  var cpBanTai1 = chiPhiChuyen(x.giaDauBT, x.haoDauBT, x.baoDuongBT, x.tocDoBT, x.luongBT);
-  var cpThueXe1 = x.cpThueXe||0;
-  var xaChoXeMay = kmMotChieu>=40, xaChoBanTai = kmMotChieu>=100;
-  var ds=[
-    {k:'xemay', ten:'🛵 Xe máy', khaDung:!xaChoXeMay, cap:x.capXeMay||1, soChuyen:Math.ceil(soThung/(x.capXeMay||1)), cpChuyen:cpXeMay1, gioChuyen:kmKhuHoi/(x.tocDoXM||1)},
-    {k:'bantai', ten:'🚚 Xe bán tải', khaDung:!xaChoBanTai, cap:x.capBanTai||1, soChuyen:Math.ceil(soThung/(x.capBanTai||1)), cpChuyen:cpBanTai1, gioChuyen:kmKhuHoi/(x.tocDoBT||1)},
-    {k:'thuexe', ten:'🚛 Thuê xe ngoài', khaDung:true, cap:x.capThueXe||1, soChuyen:Math.ceil(soThung/(x.capThueXe||1)), cpChuyen:cpThueXe1, gioChuyen:x.thoiGianTX||0}
-  ];
-  // Số thùng đang để trống/0 (đang gõ dở, hoặc chưa điền) thì KHÔNG được để "0 chuyến" —
-  // 0 chuyến × bất kỳ chi phí/thời gian nào cũng ra 0, nhìn như chỉnh gì cũng không nhảy
-  // số (đúng thứ chủ báo). Luôn tính tối thiểu 1 chuyến — bảng vẫn so sánh được đúng chi
-  // phí/thời gian "nếu gửi 1 chuyến" ngay cả khi chưa gõ số thùng.
-  ds.forEach(function(d){
-    d.soChuyen = Math.max(1, d.soChuyen);
-    d.tong=d.soChuyen*d.cpChuyen; d.moiThung=d.tong/(soThung||1); d.tongGio=d.soChuyen*d.gioChuyen;
+  for(var v=0;v<=vmax+1;v+=step){ var yy=y(v);
+    s+='<line x1="'+L+'" y1="'+yy+'" x2="'+(W-R)+'" y2="'+yy+'" stroke="var(--si-line)" stroke-width="1" opacity=".55"/>'+
+       '<text x="'+(L-9)+'" y="'+(yy+4)+'" text-anchor="end" fill="var(--muted)" font-size="11">'+fmt(v)+'</text>'; }
+  var d='M'+x(MIN)+','+y(pts[0].v); pts.forEach(function(q){d+=' L'+x(q.n)+','+y(q.v)});
+  s+='<path d="'+d+' L'+x(MAX)+','+(H-B)+' L'+x(MIN)+','+(H-B)+' Z" fill="url(#siGA)"/>';
+  s+='<path d="'+d+'" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linejoin="round"/>';
+  pts.forEach(function(q){
+    if(q.opt){ s+='<line x1="'+x(q.n)+'" y1="'+y(q.v)+'" x2="'+x(q.n)+'" y2="'+(H-B)+'" stroke="var(--good)" stroke-width="1.5" stroke-dasharray="3 3" opacity=".65"/>'+
+      '<circle cx="'+x(q.n)+'" cy="'+y(q.v)+'" r="5" fill="var(--good)" stroke="var(--surface)" stroke-width="2"/>'; }
+    else if(q.n%p.cap===1){ s+='<circle cx="'+x(q.n)+'" cy="'+y(q.v)+'" r="5" fill="var(--warn)" stroke="var(--surface)" stroke-width="2"/>'+
+      '<text x="'+x(q.n)+'" y="'+(y(q.v)-12)+'" text-anchor="middle" fill="var(--warn)" font-size="11" font-weight="700">'+vnd(q.v)+'</text>'; }
   });
-  var khaDung=ds.filter(function(d){return d.khaDung});
-  var goiY=khaDung.slice().sort(function(a,b){return a.moiThung-b.moiThung})[0];
-  return {ds:ds, goiY:goiY};
-}
-function veSiXe_(){
-  var r=tinhXe_();
-  if (!$('siXeSoSanh')) return 0;
-  var html='<tr><th></th><th>Phương thức</th><th class="r">Chuyến</th><th class="r">Thời gian</th><th class="r">Tổng chi phí</th><th class="r">Chi phí/thùng</th></tr>';
-  r.ds.forEach(function(d){
-    var daTich = XE_CHON_SET.indexOf(d.k)>=0;
-    html+='<tr data-xe-row="'+d.k+'" style="cursor:'+(d.khaDung?'pointer':'not-allowed')+(daTich?';background:var(--accent-soft)':'')+'">'+
-      '<td><input type="checkbox" '+(daTich?'checked':'')+' '+(d.khaDung?'':'disabled')+'></td>'+
-      '<td>'+d.ten+(!d.khaDung?'<div class="si-cell-sub neg">quá xa, không dùng được</div>':'')+
-        (d.k===r.goiY.k?' <span class="si-cell-sub" style="color:var(--accent-si)">rẻ nhất</span>':'')+'</td>'+
-      '<td class="r">'+d.soChuyen+'</td>'+
-      '<td class="r">'+(d.khaDung?d.tongGio.toFixed(1)+' giờ':'—')+'</td>'+
-      '<td class="r">'+vnd(d.tong)+'</td>'+
-      '<td class="r">'+(d.khaDung?vnd(d.moiThung):'—')+'</td></tr>';
-  });
-  $('siXeSoSanh').innerHTML=html;
-  $('siXeSoSanh').querySelectorAll('[data-xe-row]').forEach(function(tr){
-    tr.addEventListener('click',function(){
-      var k = tr.dataset.xeRow;
-      var d = r.ds.filter(function(x){return x.k===k})[0];
-      if (!d.khaDung) return;
-      var i = XE_CHON_SET.indexOf(k);
-      if (i>=0) XE_CHON_SET.splice(i,1); else XE_CHON_SET.push(k);
-      veSiKetQua_();
-    });
-  });
-  var xetDen = XE_CHON_SET.length ? r.ds.filter(function(d){return XE_CHON_SET.indexOf(d.k)>=0 && d.khaDung}) : r.ds.filter(function(d){return d.khaDung});
-  var apDung = xetDen.slice().sort(function(a,b){return a.moiThung-b.moiThung})[0] || r.goiY;
-  $('siXeKQ').className = 'note ok';
-  $('siXeKQ').innerHTML = 'Đang áp vào bảng giá: <b>'+apDung.ten+'</b> — rẻ nhất trong số '
-    + (XE_CHON_SET.length ? XE_CHON_SET.length+' phương thức đang tích so sánh' : 'tất cả phương thức khả dụng')
-    + ' — <b>'+vnd(apDung.moiThung)+'</b>/thùng.'
-    + (XE_CHON_SET.length ? ' <button type="button" class="si-x" style="font-size:11px" id="siXeVeAuto">↺ bỏ tích, xem tất cả</button>' : '');
-  if ($('siXeVeAuto')) $('siXeVeAuto').addEventListener('click', function(){ XE_CHON_SET=[]; veSiKetQua_(); });
-  return apDung.moiThung;
-}
-function veSiChinhSach_(){
-  var w = SI.wp;
-  if (!$('siWpKQ')) return;
-  $('siWpKQ').innerHTML = 'Miễn phí vận chuyển khi mua từ <b>'+w.freeship+' đơn vị/đơn hàng</b> · Chiết khấu trả sớm <b>'+w.earlyPct+'%</b> nếu trả trong <b>'+
-    w.earlyDays+' ngày</b> · Công nợ tối đa <b>'+w.credit+' ngày</b> · Đặt cọc đơn đầu <b>'+w.deposit+'%</b> · Rebate tích luỹ quý <b>'+w.rebate+'%</b>.';
-}
-function veSiKetQua_(){
-  var basis = $('siBasis').value, chiPhiTay = n('siChiPhi');
-  var cpMoiThung = veSiXe_();
-  var html = '<tr><th>Sản phẩm</th>';
-  SI.bac.forEach(function(b){ html += '<th>'+esc_(b.ten || '(chưa đặt tên)')+' — '+b.margin+'%</th>'; });
-  html += '</tr>';
-  SI.sp.forEach(function(sp, i){
-    var cpLogistics = cpMoiThung / (sp.bao || 1);
-    var chiPhi = chiPhiTay + cpLogistics;
-    html += '<tr><td><b>'+esc_(sp.ten || '(chưa đặt tên)')+'</b><div class="si-cell-sub">vốn '+vnd(sp.von)+' · VAT '+sp.vat+'% · logistics '+vnd(cpLogistics)+'/đơn vị (tự tính)</div></td>';
-    SI.bac.forEach(function(bac, j){
-      var key = i + '_' + j;
-      var daGhiDe = SI.gia[key] !== undefined && SI.gia[key] !== null && SI.gia[key] !== '';
-      var gia = daGhiDe ? SI.gia[key] : giaTheoMargin_(sp.von, sp.vat, bac.margin, chiPhi, basis);
-      if (gia === null){
-        html += '<td><input type="number" data-si-gia="'+key+'" placeholder="không khả thi"><div class="si-cell-sub neg">Margin quá cao so với vốn+thuế</div></td>';
-      } else {
-        var b = ketQuaSi_(gia, sp.von, sp.vat, chiPhi);
-        var lai = basis === 'net' ? b.laiSauThue : b.lai;
-        html += '<td><input type="number" data-si-gia="'+key+'" value="'+Math.round(gia)+'" step="500">'
-          + '<div class="si-cell-sub'+(lai<0?' neg':'')+'">lời '+vnd(lai)+' ('+pct(gia>0?lai/gia:0)+')</div>'
-          + (daGhiDe
-            ? '<div class="si-cell-sub"><span style="color:var(--loss)">✎ tự đặt tay</span> · <button type="button" class="si-x" style="font-size:11px" data-si-reset="'+key+'">↺ tính lại theo margin</button></div>'
-            : '<div class="si-cell-sub" style="color:var(--accent-si)">tự tính theo margin</div>')
-          + '</td>';
-      }
-    });
-    html += '</tr>';
-  });
-  $('siKetQuaTable').innerHTML = html;
-  $('siKetQuaTable').querySelectorAll('[data-si-gia]').forEach(function(el){
-    // "change" (bấm ra ngoài/Enter), KHÔNG PHẢI "input" (mỗi ký tự) — veSiKetQua_() vẽ lại
-    // toàn bộ bảng kể cả chính ô này, nên nếu bắt theo từng ký tự thì gõ số thứ 2 trở đi
-    // sẽ mất focus, rơi vào ô mới vừa vẽ lại, nhìn như "gõ 1 lần rồi đứng yên không nhảy".
-    el.addEventListener('change', function(){
-      var key = this.getAttribute('data-si-gia');
-      if (this.value === '') { delete SI.gia[key]; } else { SI.gia[key] = parseFloat(this.value) || 0; }
-      luuSi_(); veSiKetQua_();
-    });
-  });
-  $('siKetQuaTable').querySelectorAll('[data-si-reset]').forEach(function(el){
-    el.addEventListener('click', function(){
-      delete SI.gia[this.getAttribute('data-si-reset')];
-      luuSi_(); veSiKetQua_();
-    });
-  });
-  veDonBac_(); veDonSp_(); tinhDon_();
+  var marks=[MIN]; for(var m=p.cap;m<=MAX;m+=p.cap) marks.push(m); if(marks.indexOf(MAX)<0) marks.push(MAX);
+  marks.forEach(function(n2){ if(n2<MIN||n2>MAX)return; var o=n2%p.cap===0;
+    s+='<text x="'+x(n2)+'" y="'+(H-11)+'" text-anchor="middle" fill="'+(o?'var(--good)':'var(--muted)')+
+      '" font-size="11.5" font-weight="'+(o?'700':'400')+'">'+n2+'</text>'; });
+  $('siChart').innerHTML=s;
 }
 
-// ================================================================
-// ĐƠN HÀNG THỬ — lợi nhuận THẬT của 1 đơn nhiều sản phẩm (khác bảng giá đề
-// xuất ở trên, vốn chỉ tính lời/đơn vị lẻ). Gõ số thùng thật từng sản phẩm,
-// đơn giá tự gợi ý theo bậc đã chọn nhưng gõ đè được riêng cho đơn này
-// (DON_GIA) — không đụng ô giá chung SI.gia. Luôn gọi lại từ veSiKetQua_()
-// nên tự đồng bộ theo SP/bậc/logistics mới nhất, không cần dây riêng.
-// ================================================================
-var DON_SL = [], DON_GIA = [];
-function donDamBaoDoDai_(){
-  while (DON_SL.length < SI.sp.length) DON_SL.push(0);
-  while (DON_GIA.length < SI.sp.length) DON_GIA.push(null);
-  DON_SL.length = SI.sp.length; DON_GIA.length = SI.sp.length;
-}
-function veDonBac_(){
-  if (!$('donBac')) return;
-  var cur = $('donBac').value;
-  $('donBac').innerHTML = SI.bac.map(function(b,j){return '<option value="'+j+'">'+esc_(b.ten||'(chưa đặt tên)')+' — '+b.margin+'%</option>'}).join('');
-  if (SI.bac[+cur]) $('donBac').value = cur;
-}
-function donGiaGoiY_(i, bacIdx, cpMoiThung){
-  var sp = SI.sp[i], bac = SI.bac[bacIdx]; if (!sp || !bac) return 0;
-  var g = giaTheoMargin_(sp.von, sp.vat, bac.margin, cpMoiThung/(sp.bao||1), $('siBasis').value);
-  return g === null ? 0 : g;
-}
-function veDonSp_(){
-  if (!$('donSpTable')) return;
-  donDamBaoDoDai_();
-  var bacIdx = +$('donBac').value || 0;
-  var tongHienTai = DON_SL.reduce(function(a,b){return a+(b||0)},0);
-  var cpMoiThung = tongHienTai ? tinhXe_(tongHienTai).goiY.moiThung : 0;
-  var html = '<tr><th>Sản phẩm</th><th class="r">Số thùng</th><th class="r">Đơn giá bán</th><th></th></tr>';
-  SI.sp.forEach(function(sp,i){
-    var daGhiDe = DON_GIA[i]!==null && DON_GIA[i]!==undefined;
-    var giaHT = daGhiDe ? DON_GIA[i] : donGiaGoiY_(i, bacIdx, cpMoiThung);
-    html += '<tr><td>'+esc_(sp.ten||'(chưa đặt tên)')+'<div class="si-cell-sub">'+(sp.bao||1)+' đơn vị/thùng</div></td>'+
-      '<td class="r"><input type="number" min="0" value="'+(DON_SL[i]||0)+'" data-don-sl="'+i+'" style="width:70px"></td>'+
-      '<td class="r"><input type="number" step="500" value="'+Math.round(giaHT)+'" data-don-gia="'+i+'" style="width:100px"></td>'+
-      '<td>'+(daGhiDe?'<button type="button" class="si-x" style="font-size:11px" data-don-reset="'+i+'">↺ theo bậc</button>':'<span class="si-cell-sub">theo bậc</span>')+'</td></tr>';
-  });
-  $('donSpTable').innerHTML = html;
-  $('donSpTable').querySelectorAll('[data-don-sl]').forEach(function(el){
-    el.addEventListener('change', function(){ DON_SL[+this.dataset.donSl]=Math.max(0,parseInt(this.value)||0); veDonSp_(); tinhDon_(); });
-  });
-  $('donSpTable').querySelectorAll('[data-don-gia]').forEach(function(el){
-    el.addEventListener('change', function(){
-      var i=+this.dataset.donGia;
-      DON_GIA[i] = this.value==='' ? null : (parseFloat(this.value)||0);
-      veDonSp_(); tinhDon_();
-    });
-  });
-  $('donSpTable').querySelectorAll('[data-don-reset]').forEach(function(el){
-    el.addEventListener('click', function(){ DON_GIA[+this.dataset.donReset]=null; veDonSp_(); tinhDon_(); });
-  });
-}
-function tinhDon_(){
-  if (!$('donTongThung')) return;
-  donDamBaoDoDai_();
-  var bacIdx = +$('donBac').value || 0, bac = SI.bac[bacIdx];
-  var tongThung = DON_SL.reduce(function(a,b){return a+(b||0)},0);
-  $('donTongThung').innerHTML = tongThung ? 'Tổng đơn: <b>'+tongThung+' thùng</b>' : 'Chưa nhập số thùng nào.';
-  if (!tongThung || !bac){
-    $('donOLai').textContent='—'; $('donODoanhThu').textContent='—'; $('donOBien').textContent='—';
-    $('donTbodyChiTiet').innerHTML=''; $('donGoiYToiUu').textContent='Nhập số thùng để xem gợi ý.';
-    return;
-  }
-  var xe = tinhXe_(tongThung), cpMoiThung = xe.goiY.moiThung;
-  var tongVon=0, tongGia=0, tongLogistics=0, tongLaiTruoc=0, tongLaiSau=0, rows=[];
-  SI.sp.forEach(function(sp,i){
-    var sl = DON_SL[i]; if (!sl) return;
-    var chiPhiDonVi = cpMoiThung/(sp.bao||1);
-    var gia = DON_GIA[i];
-    if (gia===null || gia===undefined) gia = donGiaGoiY_(i, bacIdx, cpMoiThung);
-    var slDonVi = sl*(sp.bao||1);
-    var r = ketQuaSi_(gia, sp.von, sp.vat, chiPhiDonVi);
-    tongVon += sp.von*slDonVi;
-    tongGia += gia*slDonVi;
-    tongLogistics += chiPhiDonVi*slDonVi;
-    tongLaiTruoc += r.lai*slDonVi;
-    tongLaiSau += r.laiSauThue*slDonVi;
-    rows.push([esc_(sp.ten||'(chưa đặt tên)')+' ('+sl+' thùng = '+slDonVi+' đơn vị)', gia*slDonVi]);
-  });
-  $('donODoanhThu').textContent = vnd(tongGia);
-  $('donOLai').textContent = vnd(tongLaiSau);
-  $('donLoiBox').className = 'out hero'+(tongLaiSau<0?' bad':'');
-  $('donOBien').textContent = pct(tongGia?tongLaiSau/tongGia:0);
+function siRender_(){
+  if (!$('panelSi') || SAN!=='si') return;
+  var p=siP_(), nRef=p.cap;
+  var q=siParts_(p), tot=q.nl+q.bd+q.lg;
+  $('siMixNote').innerHTML='Chuyến '+vnd(tot)+' = xăng '+Math.round(q.nl/tot*100)+'% · bảo dưỡng '+
+    Math.round(q.bd/tot*100)+'% · <b>công '+Math.round(q.lg/tot*100)+'%</b>. Công là khoản lớn nhất — ô lương và ô bốc/dỡ mới đáng chỉnh, không phải giá xăng.';
 
-  var html='';
-  rows.forEach(function(r){ html+='<tr><td>'+r[0]+'</td><td class="num">'+vnd(r[1])+'</td></tr>' });
-  html+='<tr><td><b>Tổng doanh thu</b></td><td class="num"><b>'+vnd(tongGia)+'</b></td></tr>';
-  html+='<tr><td>− Giá vốn</td><td class="num neg">'+vnd(-tongVon)+'</td></tr>';
-  html+='<tr><td>− Chi phí logistics ('+xe.goiY.ten+', '+tongThung+' thùng)</td><td class="num neg">'+vnd(-tongLogistics)+'</td></tr>';
-  html+='<tr class="total"><td>Lợi nhuận trước thuế (đã gồm VAT netting)</td><td class="num'+(tongLaiTruoc<0?' neg':'')+'">'+vnd(tongLaiTruoc)+'</td></tr>';
-  html+='<tr><td>− Thuế TNDN</td><td class="num neg">'+vnd(-(tongLaiTruoc-tongLaiSau))+'</td></tr>';
-  html+='<tr class="total"><td>Lợi nhuận sau thuế</td><td class="num'+(tongLaiSau<0?' neg':'')+'">'+vnd(tongLaiSau)+'</td></tr>';
-  $('donTbodyChiTiet').innerHTML = html;
+  var th='<tr><th>Sản phẩm</th>';
+  SI_TIERS.forEach(function(t){ th+='<th>'+esc_(t.ten||'bậc')+' — mục tiêu '+t.margin+'%</th>' });
+  $('si-t-price').tHead.innerHTML=th+'<th>Giá hoà vốn</th></tr>';
 
-  veDonGoiYToiUu_(tongThung, xe);
-}
-function veDonGoiYToiUu_(tongThung, xe){
-  var d = xe.goiY;
-  if (tongThung % d.cap === 0){
-    $('donGoiYToiUu').className='note ok'; $('donGoiYToiUu').style.background='';
-    $('donGoiYToiUu').innerHTML='Đơn hiện tại (<b>'+tongThung+' thùng</b>) đã VỪA ĐỦ '+d.soChuyen+' chuyến '+d.ten+' — không lãng phí chỗ trống trên xe.';
-    return;
-  }
-  var conThieu = d.cap - (tongThung % d.cap);
-  var xeSau = tinhXe_(tongThung+conThieu);
-  var tietKiem = xe.goiY.moiThung - xeSau.goiY.moiThung;
-  $('donGoiYToiUu').className='note';
-  $('donGoiYToiUu').style.background='var(--page)';
-  $('donGoiYToiUu').innerHTML =
-    'Đơn hiện tại <b>'+tongThung+' thùng</b> đang dùng '+d.soChuyen+' chuyến '+d.ten+' nhưng CHUYẾN CUỐI chỉ chở '+
-    (d.cap-conThieu)+'/'+d.cap+' thùng (còn trống '+conThieu+' chỗ) — chi phí logistics đang là <b>'+vnd(xe.goiY.moiThung)+'/thùng</b>.<br><br>'+
-    '<b>Gợi ý:</b> nếu gộp thêm <b>'+conThieu+' thùng</b> nữa (đủ '+(tongThung+conThieu)+' thùng, lấp đầy chuyến cuối) → '+
-    'chi phí logistics giảm còn khoảng <b>'+vnd(xeSau.goiY.moiThung)+'/thùng</b> (tiết kiệm '+vnd(tietKiem)+'/thùng trên TOÀN đơn).';
-}
-$('donBac').addEventListener('change', function(){ veDonSp_(); tinhDon_(); });
-
-function veSi(){ veSiSpTable_(); veSiBacTable_(); veSiKetQua_(); veSiChinhSach_(); }
-$('siSpAdd').addEventListener('click', function(){
-  SI.sp.push({ ten:'', von:0, vat:8, bao:1 }); luuSi_(); veSiSpTable_(); veSiKetQua_();
-});
-$('siBacAdd').addEventListener('click', function(){
-  SI.bac.push({ ten:'', margin:10 }); luuSi_(); veSiBacTable_(); veSiKetQua_();
-});
-$('siBasis').addEventListener('change', function(){ luuSi_(); veSiKetQua_(); });
-$('siChiPhi').addEventListener('input', function(){ luuSi_(); veSiKetQua_(); });
-
-// Logistics theo số lượng — mọi ô đều ghi thẳng vào SI.xe rồi tính lại bảng giá.
-['siCapXeMay','siCapBanTai','siCapThueXe','siSoThung',
- 'siGiaXangXM','siHaoXangXM','siBaoDuongXM','siTocDoXM','siLuongXM',
- 'siGiaDauBT','siHaoDauBT','siBaoDuongBT','siTocDoBT','siLuongBT',
- 'siCpThueXe','siThoiGianTX'].forEach(function(id){
-  var k = id.replace(/^si/, ''); k = k.charAt(0).toLowerCase() + k.slice(1);
-  $(id).value = SI.xe[k];
-  $(id).addEventListener('input', function(){ SI.xe[k] = parseFloat(this.value)||0; luuSi_(); veSiKetQua_(); });
-});
-$('siKhuVuc').value = SI.xe.khuVuc;
-$('siKhuVuc').addEventListener('change', function(){ SI.xe.khuVuc = this.value; luuSi_(); veSiKetQua_(); });
-$('siXeAdvToggle').addEventListener('click', function(){
-  var open = $('siXeAdvBox').style.display!=='none';
-  $('siXeAdvBox').style.display = open?'none':'block';
-  this.textContent = (open?'▾':'▴')+' Chỉnh thông số từng phương thức (giá xăng/dầu, hao, bảo dưỡng, tải xe, thời gian…)';
-});
-
-// Lương trung bình đội shipper thật (từ tab Vận hành, quanly.html) — chỉ gợi
-// ý, bấm nút mới áp vào ô Lương xe máy/xe bán tải, không tự ghi đè.
-var LUONG_TB_SHIPPER_ = null;
-function veLuongTBShipper_(){
-  var d = LUONG_TB_SHIPPER_, box = $('siLuongTBNote'); if (!box) return;
-  if (!d || !d.luongTB){ box.style.display='none'; return }
-  box.style.display = '';
-  box.className = 'note';
-  box.innerHTML = 'Lương trung bình đội shipper (đã khai lương, '+d.soNguoi+' người): <b>'+vnd(d.luongTB)+'</b>/giờ — '+
-    '<button type="button" class="si-x" style="font-size:11px" id="siApDungLuongTB">Dùng cho cả xe máy &amp; xe bán tải</button>';
-  $('siApDungLuongTB').addEventListener('click', function(){
-    $('siLuongXM').value = d.luongTB; $('siLuongXM').dispatchEvent(new Event('input',{bubbles:true}));
-    $('siLuongBT').value = d.luongTB; $('siLuongBT').dispatchEvent(new Event('input',{bubbles:true}));
+  var row='<tr><td><b>'+esc_($('siTen').value||'—')+'</b><div style="font-size:11.5px;color:var(--muted);margin-top:3px">vốn '+
+    vnd(p.vonRaw)+' · giao '+vnd(siLogDonVi_(p,nRef))+'/đv ở đơn '+nRef+' thùng</div></td>';
+  SI_TIERS.forEach(function(t,i){
+    var g=t.gia||siGiaTheoMargin_(p,t.margin/100,nRef), r=siLai_(p,g,nRef), m=r.lnst/g;
+    var off=Math.abs(m*100-t.margin)>0.6;
+    row+='<td class="pricecell"><input type="number" step="500" value="'+g+'" data-si-tier="'+i+'">'+
+      '<div class="meta">lời <b>'+vnd(r.lnst)+'</b> · thực <b class="'+(m>=t.margin/100?'strong':'weak')+'">'+pct(m)+'</b>'+
+      (off?' <span class="pill warn">đè tay</span>':'')+'</div></td>';
   });
+  var hv=siGiaTheoMargin_(p,0,nRef), giaMin=SI_TIERS[0].gia||siGiaTheoMargin_(p,SI_TIERS[0].margin/100,nRef);
+  $('si-t-price').tBodies[0].innerHTML=row+'<td class="money" style="font-weight:700;color:var(--green)">'+vnd(hv)+'</td></tr>';
+
+  $('si-k-hv').textContent=vnd(hv);
+  $('si-k-hv-s').textContent='ở đơn '+nRef+' thùng · giảm tối đa '+pct(1-hv/giaMin);
+  var dmin=siDonToiThieu_(p,giaMin), fsT=p.fs/p.bao, ho=dmin&&fsT<dmin;
+  $('si-k-min').textContent=dmin?dmin+' thùng':'—';
+  $('si-k-min-s').textContent=ho?'freeship đang mở từ '+p.fs+' đơn vị — đơn nhỏ hơn giao là lỗ':'ở giá '+vnd(giaMin)+' · ngưỡng freeship an toàn';
+  $('si-k-min-box').className='kpi k2'+(ho?' alert':'');
+  $('si-k-log').textContent=vnd(siLogDonVi_(p,nRef));
+  $('si-k-log-s').textContent='chuyến '+vnd(tot)+' · '+p.km+'km khứ hồi';
+  $('si-k-opt').textContent=p.cap+' · '+p.cap*2+' · '+p.cap*3;
+
+  siDrawChart_(p);
+  var best=siLogDonVi_(p,p.cap), tb='', seen=[];
+  [1,2,3,5,p.cap,p.cap+1,Math.round(p.cap*1.5),p.cap*2,p.cap*2+1,p.cap*3].forEach(function(n2){
+    if(n2<1||seen.indexOf(n2)>=0)return; seen.push(n2);
+    var v=siLogDonVi_(p,n2), w=v/best, opt=n2%p.cap===0;
+    var tag=opt?'<span class="pill good">đầy chuyến</span>'
+      :w>1.5?'<span class="pill bad">×'+w.toFixed(1).replace('.',',')+'</span>'
+      :w>1.12?'<span class="pill warn">×'+w.toFixed(1).replace('.',',')+'</span>'
+      :'<span style="color:var(--muted)">×'+w.toFixed(1).replace('.',',')+'</span>';
+    tb+='<tr class="'+(opt?'opt':'')+'"><td>'+n2+' thùng</td><td class="money">'+siSoChuyen_(p,n2)+
+      '</td><td class="money">'+vnd(siSoChuyen_(p,n2)*tot)+'</td><td class="money">'+vnd(v*p.bao)+
+      '</td><td class="money" style="font-weight:700">'+vnd(v)+'</td><td>'+tag+'</td></tr>';
+  });
+  $('si-t-log').tBodies[0].innerHTML=tb;
+
+  var nb=p.cap+1, ra=siLogDonVi_(p,nb)/siLogDonVi_(p,p.cap*2);
+  $('siTip').innerHTML='<div class="k">+'+Math.round((ra-1)*100)+'%</div><p>Đơn <b>'+nb+' thùng</b> tốn <b>'+
+    vnd(siLogDonVi_(p,nb))+'/đơn vị</b>, đơn <b>'+p.cap*2+' thùng</b> chỉ tốn <b>'+vnd(siLogDonVi_(p,p.cap*2))+
+    '</b>. Chuyến thứ hai đang chạy gần như rỗng — nói với đại lý rằng đặt thêm cho đủ '+p.cap*2+
+    ' thùng thì <b>rẻ hơn cho cả hai bên</b>.</p>';
+
+  var ck='';
+  SI_TIERS.forEach(function(t){
+    var g=t.gia||siGiaTheoMargin_(p,t.margin/100,nRef);
+    function m(d){ return siLai_(p,g*(1-d),nRef).lnst/g; }
+    var b=m(p.ck+p.rb), cls=b<0.08?'weak':b<0.12?'mid':'strong';
+    ck+='<tr><td><b>'+esc_(t.ten||'bậc')+'</b></td><td class="money">'+vnd(g)+'</td><td class="money">'+pct(m(0))+
+      '</td><td class="money">'+pct(m(p.ck))+'</td><td class="money">'+pct(m(p.rb))+
+      '</td><td class="money"><span class="'+cls+'">'+pct(b)+'</span></td></tr>';
+  });
+  $('si-t-ck').tBodies[0].innerHTML=ck;
+  siLuu_();
 }
 
-// Chính sách khách sỉ — chỉ tham khảo, không đụng công thức giá.
-['siWpFreeship','siWpEarlyPct','siWpEarlyDays','siWpCredit','siWpDeposit','siWpRebate'].forEach(function(id){
-  var k = id.replace(/^siWp/, ''); k = k.charAt(0).toLowerCase() + k.slice(1);
-  $(id).value = SI.wp[k];
-  $(id).addEventListener('input', function(){ SI.wp[k] = parseFloat(this.value)||0; luuSi_(); veSiChinhSach_(); });
-});
+function siDrawTiers_(){ $('siTiers').innerHTML=SI_TIERS.map(function(t,i){
+  return '<div class="si-tier"><div><label>Tên bậc</label><input value="'+esc_(t.ten)+'" data-si-t="ten" data-si-i="'+i+'"></div>'+
+   '<div><label>Margin %</label><input type="number" value="'+t.margin+'" step="1" data-si-t="margin" data-si-i="'+i+'"></div>'+
+   '<button class="si-btn x" type="button" data-si-del="'+i+'" aria-label="Xoá bậc">×</button></div>'; }).join(''); }
+
+document.addEventListener('input',function(e){ var el=e.target;
+  if (!el.closest || !el.closest('#panelSi')) return;
+  if(el.dataset.siT){ var i=+el.dataset.siI;
+    if(el.dataset.siT==='margin'){ SI_TIERS[i].margin=parseFloat(el.value)||0; SI_TIERS[i].gia=null; } else SI_TIERS[i].ten=el.value; }
+  if(el.dataset.siTier!==undefined) SI_TIERS[+el.dataset.siTier].gia=parseFloat(el.value)||0;
+  siRender_(); });
+document.addEventListener('change',function(e){ var el=e.target;
+  if (!el.closest || !el.closest('#panelSi')) return;
+  siRender_(); });
+document.addEventListener('click',function(e){
+  if(e.target.id==='siAddTier'){ SI_TIERS.push({ten:'Bậc '+(SI_TIERS.length+1),margin:20}); siDrawTiers_(); siRender_(); }
+  if(e.target.dataset.siDel!==undefined&&SI_TIERS.length>1){ SI_TIERS.splice(+e.target.dataset.siDel,1); siDrawTiers_(); siRender_(); } });
+
+function siInit_(){ siDrawTiers_(); siRender_(); }
 
 function render(){
   if (SAN === 'sp') return renderShopeeMoi_();
@@ -1440,7 +1340,7 @@ function chonSan_(san){
   $('chiTietBox').style.display = laSi ? 'none' : $('chiTietBox').style.display;
   $('btnSucChiuDung').style.display = laSi ? 'none' : '';
   $('sucChiuDungBox').style.display = laSi ? 'none' : $('sucChiuDungBox').style.display;
-  if (laSi){ veSi(); } else { apDungMacDinh(); render(); }
+  if (laSi){ siInit_(); } else { apDungMacDinh(); render(); }
 }
 $('btnSp').addEventListener('click', function(){ chonSan_('sp'); });
 $('btnTt').addEventListener('click', function(){ chonSan_('tt'); });
@@ -1615,9 +1515,6 @@ window.addEventListener('message', function(e){
     }
     setTimeout(function(){ if(!bt.disabled) bt.textContent = '💾 Lưu kết quả này' }, 1600);
   }
-  // Lương trung bình đội shipper thật (tab Vận hành) — chỉ gợi ý, không tự
-  // ghi đè ô Lương xe máy/xe bán tải đã có, bấm nút mới áp dụng.
-  if (d.type === 'tg-luong-tb'){ LUONG_TB_SHIPPER_ = d; veLuongTBShipper_(); }
 });
 function xoaLichSu_(i){
   if (TRONG_IFRAME_) return; // chưa làm xoá trên Sheet — lịch sử tính giá cố tình chỉ thêm, không xoá (như Chi phí/Nhật ký)
