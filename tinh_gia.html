@@ -26,7 +26,43 @@ body{margin:0;padding:20px 14px 60px;background:var(--page);color:var(--ink);
   .topgrid{display:grid;grid-template-columns:380px 1fr;gap:18px;align-items:start}
   .out-grid{grid-template-columns:1fr 1fr}
   .out.hero{grid-column:1/-1}
+  /* SỬA 19/09/2026 — chủ yêu cầu khung kết quả "dính" lại khi cuộn để tiện đối
+     chiếu, KHÔNG cần cuộn lên lại mỗi lần muốn xem lời/lỗ. Chỉ áp dụng ở màn
+     đủ rộng (≥820px, đã có 2 cột sẵn) — màn hẹp giữ nguyên dòng chảy tự nhiên,
+     dính ở đây dễ che mất nội dung bên dưới trên màn nhỏ. */
+  .rescol{position:sticky;top:14px}
 }
+/* ── Nhiều tab sản phẩm (Shopee) — thêm 19/09/2026, chủ yêu cầu để đối chiếu
+   nhiều sản phẩm cùng lúc mà không mất dữ liệu tab kia. CHỈ áp dụng tab
+   Shopee (spTabsBar bị ẩn khi chuyển sang TikTok/Sỉ). */
+.tabstrip{display:flex;gap:6px;align-items:flex-end;overflow-x:auto;padding-bottom:2px;margin-bottom:10px;
+  border-bottom:1px solid var(--line)}
+.ptab{flex:none;background:var(--card);border:1px solid var(--line);border-bottom:none;border-radius:9px 9px 0 0;
+  padding:7px 11px 8px;cursor:pointer;min-width:118px;position:relative;top:1px}
+.ptab.on{border-color:var(--line-2);background:var(--page);box-shadow:0 -2px 0 var(--accent) inset}
+.ptab .nm{font-weight:700;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px}
+.ptab .kq{font:700 12.5px var(--mono);margin-top:2px}
+.ptab .kq.am{color:var(--loss)}
+.ptab .kq.duong{color:var(--accent-si)}
+.ptab .x{position:absolute;top:3px;right:5px;background:none;border:0;color:var(--ink-3);cursor:pointer;font-size:11px;
+  padding:2px;line-height:1;display:none}
+.ptab:hover .x{display:block}
+.ptab .x:hover{color:var(--loss)}
+.tabadd{flex:none;background:none;border:1px dashed var(--line-2);border-radius:9px;color:var(--ink-2);
+  padding:7px 12px;cursor:pointer;font:600 12px inherit;align-self:center}
+.tabadd:hover{border-color:var(--accent);color:var(--accent)}
+.compare{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:10px 13px;margin-bottom:14px;
+  font-size:12px;color:var(--ink-2);display:none}
+.compare.on{display:block}
+.compare b{color:var(--ink)}
+.compare .row{display:flex;gap:14px;flex-wrap:wrap;margin-top:5px}
+.compare .item{white-space:nowrap}
+.compare .item .v{font-family:var(--mono);font-weight:700}
+.compare .item .v.am{color:var(--loss)}
+.compare .item .v.duong{color:var(--accent-si)}
+.swrow{display:flex;align-items:center;gap:9px;cursor:pointer;margin-bottom:0}
+.swrow input[type=checkbox]{width:auto;height:auto;accent-color:var(--accent);flex:none}
+.swrow span{font-size:13.5px;color:var(--ink);font-weight:600}
 h1{font-size:19px;font-weight:600;margin:0 0 16px}
 .seg{display:flex;border:1px solid var(--line-2);border-radius:10px;overflow:hidden;margin-bottom:16px}
 .seg button{flex:1;height:44px;border:0;background:#fff;color:var(--ink-2);font:600 14px inherit;cursor:pointer}
@@ -105,6 +141,10 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
 </div>
 
 <div id="panelSan">
+<div id="spTabsBar">
+  <div class="tabstrip" id="tabstrip"></div>
+  <div class="compare" id="compareBar"></div>
+</div>
 <div class="topgrid">
 <div>
 <div class="card">
@@ -136,13 +176,14 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
 
 <div class="card" id="cardShopeeMoi">
   <h3>Đồng Tài Trợ voucher (Shopee)</h3>
-  <div class="hint">Shopee tự phát hành mã giảm giá toàn sàn, khách tự áp vào đơn, rồi Shopee tự động cấn trừ một phần vào tiền bán hàng của shop — áp dụng mặc định, không có nút tắt. Để 0 nếu đơn không dính mã.</div>
-  <div class="pair">
-    <div><label for="voucherMenhGia">Mệnh giá mã gốc (₫)</label><input type="number" id="voucherMenhGia" value="0" step="1000" min="0"></div>
-    <div><label for="voucherTyLeChia">Tỷ lệ shop chịu (%)</label><input type="number" id="voucherTyLeChia" value="40" step="1" min="0"></div>
+  <label class="swrow" for="voucherOnSp"><input type="checkbox" id="voucherOnSp"><span>Đơn này có dùng mã Đồng Tài Trợ không?</span></label>
+  <div class="hint" style="margin-top:6px">Mặc định TẮT — không phải đơn nào cũng dính mã. Bật lên khi biết chắc sản phẩm/đợt này thường bị trừ (Shopee tự áp mã, không có nút tắt PHÍA SHOPEE — ô này chỉ là công tắc để TOOL có tính khoản này vào hay không).</div>
+  <div class="pair" id="voucherFieldsSp" style="margin-top:10px;opacity:.4">
+    <div><label for="voucherMenhGia">Mệnh giá mã gốc (₫)</label><input type="number" id="voucherMenhGia" value="0" step="1000" min="0" disabled></div>
+    <div><label for="voucherTyLeChia">Tỷ lệ shop chịu (%)</label><input type="number" id="voucherTyLeChia" value="40" step="1" min="0" disabled></div>
   </div>
-  <div class="pair" style="margin-top:10px">
-    <div><label for="voucherTyLeDon">Tỷ lệ đơn có dùng mã (%)</label><input type="number" id="voucherTyLeDon" value="0" step="5" min="0" max="100"></div>
+  <div class="pair" id="voucherTyLeDonRow" style="margin-top:10px;opacity:.4">
+    <div><label for="voucherTyLeDon">Tỷ lệ đơn có dùng mã (%)</label><input type="number" id="voucherTyLeDon" value="0" step="5" min="0" max="100" disabled></div>
     <div></div>
   </div>
   <div class="hint" style="margin-top:6px">Tỷ lệ shop chịu đã tăng 20% (01/10/2025) → 30% (29/12/2025) → 40% (23/05/2026, hiện hành) trong 8 tháng — nên chừa biên chịu được tới 50%. Trần 50.000đ/sản phẩm.</div>
@@ -167,7 +208,7 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
 </div>
 </div>
 
-<div>
+<div class="rescol">
 <div class="out-grid">
   <div class="out hero" id="oLaiBox"><div class="k" id="oLaiK">Lợi nhuận mỗi đơn</div><div class="v" id="oLai">—</div></div>
   <div class="out"><div class="k">Giá hòa vốn</div><div class="v" id="oHoaVon" style="font-size:18px">—</div></div>
@@ -653,7 +694,11 @@ function thamSoShopeeMoi_(){
     vat: n('vat')/100, ts_tndn: n('tndn')/100,
     r_phi_co_dinh: n('hoaHong')/100, r_phi_xu_ly: n('giaoDich')/100,
     phi_ha_tang: n('phiCoDinh'), r_affiliate: 0,
-    voucher_menh_gia: n('voucherMenhGia'), voucher_ty_le_chia_se: n('voucherTyLeChia')/100,
+    // Công tắc "Đơn này có dùng mã Đồng Tài Trợ không?" — mặc định TẮT (chủ yêu
+    // cầu 19/09/2026: phải là option, không bắt buộc mặc định trong hệ tính).
+    // TẮT = ép mệnh giá về 0, không đọc số đã gõ trong 3 ô — không chỉ để trống.
+    voucher_menh_gia: $('voucherOnSp').checked ? n('voucherMenhGia') : 0,
+    voucher_ty_le_chia_se: n('voucherTyLeChia')/100,
     voucher_ty_le_don: n('voucherTyLeDon')/100,
     ty_le_hoan: n('tyLeHoanSp')/100, chi_phi_moi_don_hoan: n('cpMoiHoanSp'),
     chi_phi_dong_goi: n('cpDongGoiSp'), chi_phi_quang_cao: n('cpQuangCaoSp')
@@ -667,7 +712,117 @@ function hoaVonShopeeMoi_(inp){
   }
   return hi;
 }
+// ================================================================
+// NHIỀU TAB SẢN PHẨM (Shopee) — thêm 19/09/2026, chủ yêu cầu để đối chiếu
+// nhiều sản phẩm cùng lúc mà không mất dữ liệu tab kia. Mỗi tab giữ TRỌN VẸN
+// input riêng của Shopee (giá vốn/bán/VAT/voucher/hoàn/đóng gói/quảng cáo/
+// giá vốn đã gồm VAT) — KHÔNG gồm tham số dùng chung công ty (TNDN, hoa
+// hồng, phí giao dịch, pháp nhân) vì đó là hằng số cả cửa hàng, không phải
+// riêng từng sản phẩm. Lưu localStorage riêng (KHÔNG lên Sheet) — đây là
+// bảng nháp so sánh trong lúc thao tác, khác hẳn "💾 Lưu kết quả này" (chốt
+// MỘT kết quả lên Sheet, đã có sẵn từ trước).
+// ================================================================
+var KHOA_SP_TABS = 'zaka_tinhgia_sp_tabs';
+var SP_TAB_MAC_DINH_ = {
+  ten:'', vonSp:85000, niemYet:159000, vat:8,
+  voucherOn:false, voucherMenhGia:0, voucherTyLeChia:40, voucherTyLeDon:0,
+  tyLeHoanSp:5, cpMoiHoanSp:30000, vonDaGomVat:'1', cpDongGoiSp:0, cpQuangCaoSp:0
+};
+var SP_TABS_LUU_ = (function(){
+  try { return JSON.parse(localStorage.getItem(KHOA_SP_TABS)) } catch(e){ return null }
+})();
+var SP_TABS = (SP_TABS_LUU_ && SP_TABS_LUU_.tabs && SP_TABS_LUU_.tabs.length) ? SP_TABS_LUU_.tabs
+  : [Object.assign({id:1}, SP_TAB_MAC_DINH_)];
+var SP_TAB_ACTIVE = (SP_TABS_LUU_ && SP_TABS.some(function(t){return t.id===SP_TABS_LUU_.active})) ? SP_TABS_LUU_.active : SP_TABS[0].id;
+var SP_TAB_NEXT_ID_ = SP_TABS.reduce(function(a,t){return Math.max(a,t.id)},0) + 1;
+
+function spTabHienTai_(){ return SP_TABS.find(function(t){return t.id===SP_TAB_ACTIVE}) || SP_TABS[0] }
+function luuSpTabs_(){ try { localStorage.setItem(KHOA_SP_TABS, JSON.stringify({tabs:SP_TABS, active:SP_TAB_ACTIVE})) } catch(e){} }
+
+// Đồng bộ form đang hiện trên màn hình vào ĐÚNG tab đang mở — gọi mỗi lần
+// renderShopeeMoi_() chạy, nên gõ ô nào cũng tự lưu vào tab đó, không cần
+// gắn listener riêng cho từng ô (đỡ phải sửa lại toàn bộ danh sách đã có).
+function luuFormVaoTab_(){
+  var t = spTabHienTai_(); if (!t) return;
+  t.ten = ($('timSp').value || '').trim();
+  t.vonSp = n('vonSp'); t.niemYet = n('niemYet'); t.vat = n('vat');
+  t.voucherOn = $('voucherOnSp').checked;
+  t.voucherMenhGia = n('voucherMenhGia'); t.voucherTyLeChia = n('voucherTyLeChia'); t.voucherTyLeDon = n('voucherTyLeDon');
+  t.tyLeHoanSp = n('tyLeHoanSp'); t.cpMoiHoanSp = n('cpMoiHoanSp');
+  t.vonDaGomVat = $('vonDaGomVat').value;
+  t.cpDongGoiSp = n('cpDongGoiSp'); t.cpQuangCaoSp = n('cpQuangCaoSp');
+  luuSpTabs_();
+}
+// Nạp NGƯỢC — đổ dữ liệu 1 tab vào form (bấm chuyển tab / vừa mở trang).
+function napTabVaoForm_(t){
+  $('timSp').value = t.ten || ''; $('giaLeInfo').textContent = ''; SP_DANG_CHON = null;
+  $('vonSp').value = t.vonSp; $('niemYet').value = t.niemYet; $('vat').value = t.vat; veNutVatNhanh_();
+  $('voucherOnSp').checked = t.voucherOn;
+  ['voucherFieldsSp','voucherTyLeDonRow'].forEach(function(bid){ $(bid).style.opacity = t.voucherOn?'1':'.4' });
+  ['voucherMenhGia','voucherTyLeChia','voucherTyLeDon'].forEach(function(iid){ $(iid).disabled = !t.voucherOn });
+  $('voucherMenhGia').value = t.voucherMenhGia; $('voucherTyLeChia').value = t.voucherTyLeChia; $('voucherTyLeDon').value = t.voucherTyLeDon;
+  $('tyLeHoanSp').value = t.tyLeHoanSp; $('cpMoiHoanSp').value = t.cpMoiHoanSp;
+  $('vonDaGomVat').value = t.vonDaGomVat;
+  $('cpDongGoiSp').value = t.cpDongGoiSp; $('cpQuangCaoSp').value = t.cpQuangCaoSp;
+}
+function tinhChoTab_(t){
+  var inp = {
+    gia_ban: t.niemYet, gia_von: t.vonSp, von_da_gom_vat: t.vonDaGomVat==='1',
+    vat: t.vat/100, ts_tndn: n('tndn')/100,
+    r_phi_co_dinh: n('hoaHong')/100, r_phi_xu_ly: n('giaoDich')/100,
+    phi_ha_tang: n('phiCoDinh'), r_affiliate: 0,
+    voucher_menh_gia: t.voucherOn ? t.voucherMenhGia : 0, voucher_ty_le_chia_se: t.voucherTyLeChia/100,
+    voucher_ty_le_don: t.voucherTyLeDon/100,
+    ty_le_hoan: t.tyLeHoanSp/100, chi_phi_moi_don_hoan: t.cpMoiHoanSp,
+    chi_phi_dong_goi: t.cpDongGoiSp, chi_phi_quang_cao: t.cpQuangCaoSp
+  };
+  return tinhShopeeMoi_(inp);
+}
+function veSpTabstrip_(){
+  if (!$('tabstrip')) return;
+  var html = SP_TABS.map(function(t){
+    var r = tinhChoTab_(t);
+    return '<div class="ptab'+(t.id===SP_TAB_ACTIVE?' on':'')+'" data-sptab="'+t.id+'">'+
+      (SP_TABS.length>1?'<button type="button" class="x" data-sptab-x="'+t.id+'" title="Đóng tab">✕</button>':'')+
+      '<div class="nm">'+esc_(t.ten||'Sản phẩm chưa đặt tên')+'</div>'+
+      '<div class="kq '+(r.LNST<0?'am':'duong')+'">'+vnd(r.LNST)+'</div>'+
+    '</div>';
+  }).join('') + '<button type="button" class="tabadd" id="btnSpTabAdd">+ Thêm tab</button>';
+  $('tabstrip').innerHTML = html;
+  $('compareBar').className = 'compare' + (SP_TABS.length>1?' on':'');
+  if (SP_TABS.length>1){
+    $('compareBar').innerHTML = '<b>So sánh nhanh mọi tab đang mở:</b><div class="row">' + SP_TABS.map(function(t){
+      var r = tinhChoTab_(t);
+      return '<span class="item">'+esc_(t.ten||'(chưa đặt tên)')+': <span class="v '+(r.LNST<0?'am':'duong')+'">'+vnd(r.LNST)+'</span></span>';
+    }).join('') + '</div>';
+  }
+  $('tabstrip').querySelectorAll('[data-sptab]').forEach(function(el){
+    el.addEventListener('click', function(e){
+      if (e.target.hasAttribute('data-sptab-x')) return;
+      SP_TAB_ACTIVE = +el.getAttribute('data-sptab');
+      napTabVaoForm_(spTabHienTai_()); luuSpTabs_(); render();
+    });
+  });
+  $('tabstrip').querySelectorAll('[data-sptab-x]').forEach(function(el){
+    el.addEventListener('click', function(e){
+      e.stopPropagation();
+      var id = +el.getAttribute('data-sptab-x');
+      SP_TABS = SP_TABS.filter(function(t){return t.id!==id});
+      if (SP_TAB_ACTIVE===id) SP_TAB_ACTIVE = SP_TABS[0].id;
+      napTabVaoForm_(spTabHienTai_()); luuSpTabs_(); render();
+    });
+  });
+  $('btnSpTabAdd').addEventListener('click', function(){
+    var t = Object.assign({id:SP_TAB_NEXT_ID_++}, SP_TAB_MAC_DINH_);
+    SP_TABS.push(t); SP_TAB_ACTIVE = t.id;
+    napTabVaoForm_(t); luuSpTabs_(); render();
+    setTimeout(function(){ $('timSp').focus() }, 0);
+  });
+}
+
 function renderShopeeMoi_(){
+  luuFormVaoTab_();
+  veSpTabstrip_();
   var inp = thamSoShopeeMoi_(), r = tinhShopeeMoi_(inp);
   var hv = hoaVonShopeeMoi_(inp);
 
@@ -1248,6 +1403,7 @@ function apDungMacDinh(){
   // xem báo cáo bàn giao mục "quyết định cần chủ xác nhận".
   $('cardDichVu').style.display = (SAN === 'sp') ? 'none' : '';
   $('cardShopeeMoi').style.display = (SAN === 'sp') ? '' : 'none';
+  $('spTabsBar').style.display = (SAN === 'sp') ? '' : 'none';
   veDichVu();
 }
 
@@ -1261,6 +1417,7 @@ function chonSan_(san){
   $('panelSi').style.display = laSi ? '' : 'none';
   ['cardPhiSan','cardDichVu','cardVanChuyen'].forEach(function(id){ $(id).style.display = laSi ? 'none' : ''; });
   $('cardShopeeMoi').style.display = (!laSi && san === 'sp') ? '' : 'none';
+  $('spTabsBar').style.display = (!laSi && san === 'sp') ? '' : 'none';
   $('btnChiTiet').style.display = laSi ? 'none' : '';
   $('chiTietBox').style.display = laSi ? 'none' : $('chiTietBox').style.display;
   $('btnSucChiuDung').style.display = laSi ? 'none' : '';
@@ -1303,6 +1460,12 @@ $('btnSucChiuDung').addEventListener('click', function(){
   $(id).addEventListener('input', render);
   $(id).addEventListener('change', render);
 });
+$('voucherOnSp').addEventListener('change', function(){
+  var on = this.checked;
+  ['voucherFieldsSp','voucherTyLeDonRow'].forEach(function(bid){ $(bid).style.opacity = on?'1':'.4' });
+  ['voucherMenhGia','voucherTyLeChia','voucherTyLeDon'].forEach(function(iid){ $(iid).disabled = !on });
+  render();
+});
 
 // Nút chọn nhanh mức VAT — đổi theo TỪNG sản phẩm, không phải cài 1 lần cho
 // cả cửa hàng. Thêm 17/09/2026 vì mức VAT trước đó bị giấu trong "Tuỳ chỉnh
@@ -1324,6 +1487,7 @@ function veNutVatNhanh_(){
 $('vat').addEventListener('input', veNutVatNhanh_);
 
 apDungMacDinh();
+napTabVaoForm_(spTabHienTai_());
 veNutVatNhanh_();
 render();
 
