@@ -289,6 +289,10 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
   <div class="tabstrip" id="tabstrip"></div>
   <div class="compare" id="compareBar"></div>
 </div>
+<div id="ttTabsBar" style="display:none">
+  <div class="tabstrip" id="ttTabstrip"></div>
+  <div class="compare" id="ttCompareBar"></div>
+</div>
 <div class="topgrid">
 <div>
 <div class="card">
@@ -696,22 +700,26 @@ function bocShopee(P, p){
 }
 
 // ---- Tính lãi TikTok
-function bocTiktok(P, p){
+// Tách riêng phần TÍNH THUẦN (bocTiktokCalc_, nhận thẳng trạng thái dv thay vì
+// tự đọc DOM) khỏi bocTiktok() (đọc DOM rồi gọi hàm thuần) — thêm 19/09/2026
+// để dùng LẠI đúng công thức này cho việc tính badge từng tab (nhiều tab
+// TikTok, xem khối "NHIỀU TAB SẢN PHẨM (TikTok)" phía dưới) mà không phải
+// tạm ghi đè DOM đang hiện để tính cho tab KHÁC đang không hiện.
+function bocTiktokCalc_(P, p, dv){
   var extra = 0, rows = [];
-  if ($('dv_vxp') && $('dv_vxp').checked){
-    var bac = parseInt($('bacVXP').value, 10);
+  if (dv.vxp.on){
     var coBan = Math.min(P*VXP_CO_BAN_R/100, VXP_CO_BAN_C);
-    var them = BAC_VXP[bac];
+    var them = BAC_VXP[dv.vxp.bac];
     var phanThem = them[1] > 0 ? Math.min(P*them[0]/100, them[1]) : P*them[0]/100;
     var vVXP = coBan + phanThem;
     extra += vVXP; rows.push(['Voucher Extra Program', vVXP]);
   }
-  if ($('dv_fs') && $('dv_fs').checked){
-    var vFs = P * (parseFloat($('dvR_fs').value)/100 || 0);
+  if (dv.fs.on){
+    var vFs = P * (dv.fs.r/100 || 0);
     extra += vFs; rows.push(['Freeship Extra', vFs]);
   }
-  if ($('dv_aff') && $('dv_aff').checked){
-    var vAff = P * (parseFloat($('dvR_aff').value)/100 || 0);
+  if (dv.aff.on){
+    var vAff = P * (dv.aff.r/100 || 0);
     extra += vAff; rows.push(['Affiliate/KOC', vAff]);
   }
   var hh = P*p.hoaHong, gd = P*p.giaoDich, coDinh = n('phiCoDinh');
@@ -719,6 +727,13 @@ function bocTiktok(P, p){
   return ketQua(P, p, phiSanTong, rows, [
     ['Hoa hồng nền tảng', -hh], ['Phí giao dịch', -gd], ['Phí xử lý đơn hàng', -coDinh]
   ]);
+}
+function bocTiktok(P, p){
+  return bocTiktokCalc_(P, p, {
+    vxp: { on: !!($('dv_vxp') && $('dv_vxp').checked), bac: $('bacVXP') ? parseInt($('bacVXP').value,10)||0 : 0 },
+    fs:  { on: !!($('dv_fs')  && $('dv_fs').checked),  r: $('dvR_fs')  ? parseFloat($('dvR_fs').value)||0  : 0 },
+    aff: { on: !!($('dv_aff') && $('dv_aff').checked), r: $('dvR_aff') ? parseFloat($('dvR_aff').value)||0 : 0 }
+  });
 }
 
 function ketQua(P, p, phiSanTong, rowsDichVu, rowsCoDinh){
@@ -956,6 +971,118 @@ function veSpTabstrip_(){
     var t = Object.assign({id:SP_TAB_NEXT_ID_++}, SP_TAB_MAC_DINH_);
     SP_TABS.push(t); SP_TAB_ACTIVE = t.id;
     napTabVaoForm_(t); luuSpTabs_(); render();
+    setTimeout(function(){ $('timSp').focus() }, 0);
+  });
+}
+
+// ================================================================
+// NHIỀU TAB SẢN PHẨM (TikTok) — thêm 19/09/2026, chủ yêu cầu làm tương tự
+// Shopee ("thêm nhiều tab cho TikTok, giống hệt Shopee"). Mỗi tab giữ input
+// riêng của TikTok: giá vốn/bán/VAT, 3 ô vận chuyển-đơn (cân nặng/khu vực/
+// sàn trả cước/tỷ lệ hoàn — CŨNG per-đơn giống Shopee, không phải hằng số
+// công ty), và trạng thái dịch vụ tuỳ chọn (VXP+bậc, Freeship Extra, Affiliate).
+// KHÔNG gồm hoa hồng/phí giao dịch/phí cố định/TNDN/pháp nhân — hằng số
+// chung cả cửa hàng, giống đúng nguyên tắc đã áp cho Shopee. Lưu localStorage
+// riêng (KHÔNG lên Sheet) — bảng nháp so sánh, không phải "Lưu kết quả này".
+// ================================================================
+var KHOA_TT_TABS = 'zaka_tinhgia_tt_tabs';
+var TT_TAB_MAC_DINH_ = {
+  ten:'', vonSp:85000, niemYet:159000, vat:8,
+  klThuc:3.7, khuVuc:'gan', shipSanTro:0, tyLeHoanDon:3,
+  dvVxp:false, bacVXP:0, dvFs:false, dvFsR:5, dvAff:false, dvAffR:15
+};
+var TT_TABS_LUU_ = (function(){
+  try { return JSON.parse(localStorage.getItem(KHOA_TT_TABS)) } catch(e){ return null }
+})();
+var TT_TABS = (TT_TABS_LUU_ && TT_TABS_LUU_.tabs && TT_TABS_LUU_.tabs.length) ? TT_TABS_LUU_.tabs
+  : [Object.assign({id:1}, TT_TAB_MAC_DINH_)];
+var TT_TAB_ACTIVE = (TT_TABS_LUU_ && TT_TABS.some(function(t){return t.id===TT_TABS_LUU_.active})) ? TT_TABS_LUU_.active : TT_TABS[0].id;
+var TT_TAB_NEXT_ID_ = TT_TABS.reduce(function(a,t){return Math.max(a,t.id)},0) + 1;
+
+function ttTabHienTai_(){ return TT_TABS.find(function(t){return t.id===TT_TAB_ACTIVE}) || TT_TABS[0] }
+function luuTtTabs_(){ try { localStorage.setItem(KHOA_TT_TABS, JSON.stringify({tabs:TT_TABS, active:TT_TAB_ACTIVE})) } catch(e){} }
+
+function luuFormVaoTtTab_(){
+  var t = ttTabHienTai_(); if (!t) return;
+  t.ten = ($('timSp').value || '').trim();
+  t.vonSp = n('vonSp'); t.niemYet = n('niemYet'); t.vat = n('vat');
+  t.klThuc = n('klThuc'); t.khuVuc = $('khuVuc').value;
+  t.shipSanTro = n('shipSanTro'); t.tyLeHoanDon = n('tyLeHoanDon');
+  if ($('dv_vxp')){
+    t.dvVxp = $('dv_vxp').checked; t.bacVXP = parseInt($('bacVXP').value,10)||0;
+    t.dvFs = $('dv_fs').checked; t.dvFsR = parseFloat($('dvR_fs').value)||0;
+    t.dvAff = $('dv_aff').checked; t.dvAffR = parseFloat($('dvR_aff').value)||0;
+  }
+  luuTtTabs_();
+}
+function napTtTabVaoForm_(t){
+  $('timSp').value = t.ten || ''; $('giaLeInfo').textContent = ''; SP_DANG_CHON = null;
+  $('vonSp').value = t.vonSp; $('niemYet').value = t.niemYet; $('vat').value = t.vat; veNutVatNhanh_();
+  $('klThuc').value = t.klThuc; $('khuVuc').value = t.khuVuc;
+  $('shipSanTro').value = t.shipSanTro; $('tyLeHoanDon').value = t.tyLeHoanDon;
+  if ($('dv_vxp')){
+    $('dv_vxp').checked = t.dvVxp; $('bacVXP').value = t.bacVXP; $('bacVXP').disabled = !t.dvVxp;
+    $('dv_fs').checked = t.dvFs; $('dvR_fs').value = t.dvFsR; $('dvR_fs').disabled = !t.dvFs;
+    $('dv_aff').checked = t.dvAff; $('dvR_aff').value = t.dvAffR; $('dvR_aff').disabled = !t.dvAff;
+  }
+}
+// p dùng cho tính preview 1 tab — giống thamSoChung() nhưng lấy giá trị
+// PER-ĐƠN từ đúng tab đó thay vì đọc DOM đang hiện (DOM chỉ phản ánh tab
+// đang mở), hằng số công ty (hoa hồng/phí giao dịch/TNDN/pháp nhân) vẫn đọc
+// DOM sống vì đó là 1 giá trị dùng chung, không thuộc riêng tab nào.
+function thamSoTuTtTab_(t){
+  var dn = $('phapNhanSel').value === 'dn';
+  return {
+    von: t.vonSp, vat: dn ? t.vat/100 : 0, thueDT: dn ? 0 : n('thueKhoan')/100,
+    tndn: dn ? n('tndn')/100 : 0, daXacMinh: dn ? ($('daXacMinh').value === '1') : false,
+    hoaHong: n('hoaHong')/100, giaoDich: n('giaoDich')/100,
+    shipShop: t.shipSanTro, tyLeHoan: t.tyLeHoanDon/100
+  };
+}
+function tinhChoTtTab_(t){
+  return bocTiktokCalc_(t.niemYet, thamSoTuTtTab_(t), {
+    vxp: { on: t.dvVxp, bac: t.bacVXP }, fs: { on: t.dvFs, r: t.dvFsR }, aff: { on: t.dvAff, r: t.dvAffR }
+  });
+}
+function veTtTabstrip_(){
+  if (!$('ttTabstrip')) return;
+  var dn2 = $('phapNhanSel').value === 'dn';
+  var html = TT_TABS.map(function(t){
+    var r = tinhChoTtTab_(t), lai = dn2 ? r.laiSauThue : r.lai;
+    return '<div class="ptab'+(t.id===TT_TAB_ACTIVE?' on':'')+'" data-tttab="'+t.id+'">'+
+      (TT_TABS.length>1?'<button type="button" class="x" data-tttab-x="'+t.id+'" title="Đóng tab">✕</button>':'')+
+      '<div class="nm">'+esc_(t.ten||'Sản phẩm chưa đặt tên')+'</div>'+
+      '<div class="kq '+(lai<0?'am':'duong')+'">'+vnd(lai)+'</div>'+
+    '</div>';
+  }).join('') + '<button type="button" class="tabadd" id="btnTtTabAdd">+ Thêm tab</button>';
+  $('ttTabstrip').innerHTML = html;
+  $('ttCompareBar').className = 'compare' + (TT_TABS.length>1?' on':'');
+  if (TT_TABS.length>1){
+    $('ttCompareBar').innerHTML = '<b>So sánh nhanh mọi tab đang mở:</b><div class="row">' + TT_TABS.map(function(t){
+      var r = tinhChoTtTab_(t), lai = dn2 ? r.laiSauThue : r.lai;
+      return '<span class="item">'+esc_(t.ten||'(chưa đặt tên)')+': <span class="v '+(lai<0?'am':'duong')+'">'+vnd(lai)+'</span></span>';
+    }).join('') + '</div>';
+  }
+  $('ttTabstrip').querySelectorAll('[data-tttab]').forEach(function(el){
+    el.addEventListener('click', function(e){
+      if (e.target.hasAttribute('data-tttab-x')) return;
+      TT_TAB_ACTIVE = +el.getAttribute('data-tttab');
+      napTtTabVaoForm_(ttTabHienTai_()); luuTtTabs_(); render();
+    });
+  });
+  $('ttTabstrip').querySelectorAll('[data-tttab-x]').forEach(function(el){
+    el.addEventListener('click', function(e){
+      e.stopPropagation();
+      var id = +el.getAttribute('data-tttab-x');
+      TT_TABS = TT_TABS.filter(function(t){return t.id!==id});
+      if (TT_TAB_ACTIVE===id) TT_TAB_ACTIVE = TT_TABS[0].id;
+      napTtTabVaoForm_(ttTabHienTai_()); luuTtTabs_(); render();
+    });
+  });
+  $('btnTtTabAdd').addEventListener('click', function(){
+    var t = Object.assign({id:TT_TAB_NEXT_ID_++}, TT_TAB_MAC_DINH_);
+    TT_TABS.push(t); TT_TAB_ACTIVE = t.id;
+    napTtTabVaoForm_(t); luuTtTabs_(); render();
     setTimeout(function(){ $('timSp').focus() }, 0);
   });
 }
@@ -1239,6 +1366,7 @@ function siInit_(){ siDrawTiers_(); siRender_(); }
 
 function render(){
   if (SAN === 'sp') return renderShopeeMoi_();
+  if (SAN === 'tt'){ luuFormVaoTtTab_(); veTtTabstrip_(); }
   var p = thamSoChung();
   var P = n('niemYet');
   var hv = hoaVon(p);
@@ -1326,6 +1454,7 @@ function apDungMacDinh(){
   $('cardDichVu').style.display = (SAN === 'sp') ? 'none' : '';
   $('cardShopeeMoi').style.display = (SAN === 'sp') ? '' : 'none';
   $('spTabsBar').style.display = (SAN === 'sp') ? '' : 'none';
+  $('ttTabsBar').style.display = (SAN === 'tt') ? '' : 'none';
   veDichVu();
 }
 
@@ -1340,11 +1469,20 @@ function chonSan_(san){
   ['cardPhiSan','cardDichVu','cardVanChuyen'].forEach(function(id){ $(id).style.display = laSi ? 'none' : ''; });
   $('cardShopeeMoi').style.display = (!laSi && san === 'sp') ? '' : 'none';
   $('spTabsBar').style.display = (!laSi && san === 'sp') ? '' : 'none';
+  $('ttTabsBar').style.display = (!laSi && san === 'tt') ? '' : 'none';
   $('btnChiTiet').style.display = laSi ? 'none' : '';
   $('chiTietBox').style.display = laSi ? 'none' : $('chiTietBox').style.display;
   $('btnSucChiuDung').style.display = laSi ? 'none' : '';
   $('sucChiuDungBox').style.display = laSi ? 'none' : $('sucChiuDungBox').style.display;
-  if (laSi){ siInit_(); } else { apDungMacDinh(); render(); }
+  if (laSi){ siInit_(); }
+  else {
+    apDungMacDinh();
+    // Nạp lại tab TikTok đang chọn vào form — CHỈ làm được sau khi apDungMacDinh()
+    // (gọi veDichVu()) đã dựng xong ô dv_vxp/bacVXP/dv_fs/dvR_fs/dv_aff/dvR_aff
+    // của TikTok trong DOM (ban đầu trang mở mặc định Shopee, các ô này CHƯA có).
+    if (san === 'tt') napTtTabVaoForm_(ttTabHienTai_());
+    render();
+  }
 }
 $('btnSp').addEventListener('click', function(){ chonSan_('sp'); });
 $('btnTt').addEventListener('click', function(){ chonSan_('tt'); });
