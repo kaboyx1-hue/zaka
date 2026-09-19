@@ -730,7 +730,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260919a';
+var APP_VER='20260919b';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -2479,6 +2479,7 @@ function guiCatalogChoTs(){
 window.addEventListener('message', function(e){
   if (e.data && e.data.type === 'ts-ready'){ guiCatalogChoTs(); guiTinhGiaChoTs(); guiLuongShipperChoTs() }
   if (e.data && e.data.type === 'tg-luu') nhanLuuTinhGiaTuTs_(e.data.item);
+  if (e.data && e.data.type === 'tg-xoa') nhanXoaTinhGiaTuTs_(e.data.ma);
   if (e.data && e.data.type === 'vc-ready'){ guiNguoiPTChoVc(); guiViecChoVc() }
   if (e.data && e.data.type === 'vc-luu') nhanLuuViecTuVc_(e.data.items);
 });
@@ -2515,6 +2516,23 @@ async function nhanLuuTinhGiaTuTs_(item){
     guiTinhGiaChoTs();
     traLoi(true);
   }catch(e){ traLoi(false, 'Chưa lưu được: '+e.message) }
+}
+/* Xoá 1 dòng lịch sử tính giá — thêm 19/09/2026, chủ báo lỡ lưu trùng sản
+   phẩm không có cách nào bớt đi. Cùng khuôn cầu nối postMessage như lưu. */
+async function nhanXoaTinhGiaTuTs_(ma){
+  var f = $('ifTs');
+  function traLoi(ok, loi){ if(f&&f.contentWindow) f.contentWindow.postMessage({type:'tg-xoa-ket-qua', ma:ma, ok:ok, loi:loi}, '*') }
+  if(!ma){ traLoi(false,'Thiếu mã dòng cần xoá'); return }
+  if(!QCFG.url||!QCFG.key){ traLoi(false,'Cần dán link và mật khẩu quản lý ở tab Nạp đơn trước.'); return }
+  try{
+    var r=await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'xoatinhgia',ma:ma})});
+    var j=JSON.parse(await r.text());
+    if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
+    TINHGIA_LUU = TINHGIA_LUU.filter(function(x){ return x.ma!==ma }); set('tinhgialuu',TINHGIA_LUU);
+    guiTinhGiaChoTs();
+    traLoi(true);
+  }catch(e){ traLoi(false, 'Chưa xoá được: '+e.message) }
 }
 function trongKy(d){
   var iso=String(d.iso||''); if(!iso) return true;
@@ -5158,6 +5176,12 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260919b', ngay:'19/09/2026', ten:'Tính giá sàn: xoá được dòng đã lưu, nhiều tab TikTok',
+  vaPhieu:[],
+  muc:[
+   ['moi','Tab <b>Tính giá sàn</b>: khung "Đã lưu trên Sheet" giờ có nút <b>Xoá</b> — lỡ bấm "Lưu kết quả" trùng sản phẩm thì xoá bớt được, không còn phải sống chung với dòng thừa mãi.'],
+   ['moi','Tab <b>Tính giá sàn</b> — sàn TikTok cũng có nhiều tab để mở nhiều sản phẩm so sánh cùng lúc, giống hệt Shopee.'],
+  ]},
  {ban:'20260919a', ngay:'19/09/2026', ten:'Sửa lỗi phiếu "Bỏ qua"/"Duyệt" cứ hiện lại',
   vaPhieu:[],
   muc:[

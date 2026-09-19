@@ -1675,6 +1675,10 @@ var DANG_LUU_ = {}; // ma -> mục đang chờ Sheet trả lời, TRONG_IFRAME_ 
 window.addEventListener('message', function(e){
   var d = e.data || {};
   if (d.type === 'tg-list' && Array.isArray(d.items)){ LICH_SU = d.items; veDsLuu(); }
+  if (d.type === 'tg-xoa-ket-qua'){
+    if (d.ok){ LICH_SU = LICH_SU.filter(function(x){ return x.ma !== d.ma }); veDsLuu(); }
+    else alert('Chưa xoá được: ' + (d.loi || 'không rõ lý do'));
+  }
   if (d.type === 'tg-luu-ket-qua'){
     var bt = $('btnLuu'); bt.disabled = false;
     var muc = DANG_LUU_[d.ma]; delete DANG_LUU_[d.ma];
@@ -1689,7 +1693,16 @@ window.addEventListener('message', function(e){
   }
 });
 function xoaLichSu_(i){
-  if (TRONG_IFRAME_) return; // chưa làm xoá trên Sheet — lịch sử tính giá cố tình chỉ thêm, không xoá (như Chi phí/Nhật ký)
+  var x = LICH_SU[i]; if (!x) return;
+  // SỬA 19/09/2026 — chủ báo lỡ bấm "Lưu kết quả" trùng sản phẩm không có
+  // cách nào xoá bớt (trước đó CỐ Ý không cho xoá, coi lịch sử tính giá
+  // giống sổ Chi phí/Nhật ký append-only — nhưng đây là bảng NHÁP tính thử
+  // giá, không phải sổ kế toán chính thức, nên khác bản chất, cho xoá được).
+  if (TRONG_IFRAME_){
+    if (!confirm('Xoá dòng "'+(x.sku?x.sku+' — ':'')+x.ten+'" khỏi Sheet?\n\nKhông hoàn tác được.')) return;
+    window.parent.postMessage({type:'tg-xoa', ma:x.ma}, '*');
+    return;
+  }
   LICH_SU.splice(i, 1); luuLichSu_(); veDsLuu();
 }
 function xemLaiLichSu_(i){
@@ -1716,7 +1729,7 @@ function veDsLuu(){
       '<div class="phu">'+(x.san==='sp'?'Shopee':'TikTok')+' · vốn '+vnd(x.von)+' · bán '+vnd(x.gia)+' · VAT '+x.vat+'% · '+gio+'</div></div>'+
       '<div class="lai'+(x.lai<0?' am':'')+'">'+vnd(x.lai)+'</div>'+
       '<button type="button" onclick="xemLaiLichSu_('+i+')">Xem lại</button>'+
-      (TRONG_IFRAME_ ? '' : '<button type="button" onclick="xoaLichSu_('+i+')" style="color:var(--loss)">Xoá</button>')+'</div>';
+      '<button type="button" onclick="xoaLichSu_('+i+')" style="color:var(--loss)">Xoá</button></div>';
   }).join('');
 }
 function esc_(s){ var d = document.createElement('div'); d.textContent = s; return d.innerHTML }
