@@ -189,6 +189,14 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
   <div class="hint" style="margin-top:6px">Tỷ lệ shop chịu đã tăng 20% (01/10/2025) → 30% (29/12/2025) → 40% (23/05/2026, hiện hành) trong 8 tháng — nên chừa biên chịu được tới 50%. Trần 50.000đ/sản phẩm.</div>
   <div id="doNhayVoucherBox" style="margin-top:10px"></div>
 
+  <h3 style="margin-top:18px">Affiliate / KOC</h3>
+  <label class="swrow" for="affOnSp"><input type="checkbox" id="affOnSp"><span>Đơn này chạy qua Affiliate/KOC không?</span></label>
+  <div class="hint" style="margin-top:6px">Mặc định TẮT. Hoa hồng affiliate cộng thẳng vào phí sàn (giống phí cố định/phí giao dịch) — trả cho người giới thiệu đơn, không phải Shopee thu.</div>
+  <div class="pair" id="affFieldsSp" style="margin-top:10px;opacity:.4">
+    <div><label for="affTyLe">Hoa hồng affiliate (%)</label><input type="number" id="affTyLe" value="10" step="0.5" min="0" disabled></div>
+    <div></div>
+  </div>
+
   <h3 style="margin-top:18px">Đơn hoàn</h3>
   <div class="hint">Với hàng nặng/cồng kềnh, chi phí một đơn hoàn chủ yếu là <b>cước ship hoàn</b>, không phải phí sàn — nhập trực tiếp thay vì suy ra từ % phí sàn.</div>
   <div class="pair">
@@ -693,7 +701,11 @@ function thamSoShopeeMoi_(){
     von_da_gom_vat: $('vonDaGomVat').value === '1',
     vat: n('vat')/100, ts_tndn: n('tndn')/100,
     r_phi_co_dinh: n('hoaHong')/100, r_phi_xu_ly: n('giaoDich')/100,
-    phi_ha_tang: n('phiCoDinh'), r_affiliate: 0,
+    phi_ha_tang: n('phiCoDinh'),
+    // Công tắc Affiliate/KOC — chủ báo 19/09/2026 tab Shopee đang THIẾU HẲN, dù
+    // công thức r_affiliate đã có sẵn từ đầu (tinhShopeeMoi_) — chỉ chưa có ô
+    // nhập nào gán vào. Mặc định TẮT, cùng khuôn công tắc Đồng Tài Trợ ngay dưới.
+    r_affiliate: $('affOnSp').checked ? n('affTyLe')/100 : 0,
     // Công tắc "Đơn này có dùng mã Đồng Tài Trợ không?" — mặc định TẮT (chủ yêu
     // cầu 19/09/2026: phải là option, không bắt buộc mặc định trong hệ tính).
     // TẮT = ép mệnh giá về 0, không đọc số đã gõ trong 3 ô — không chỉ để trống.
@@ -726,6 +738,7 @@ var KHOA_SP_TABS = 'zaka_tinhgia_sp_tabs';
 var SP_TAB_MAC_DINH_ = {
   ten:'', vonSp:85000, niemYet:159000, vat:8,
   voucherOn:false, voucherMenhGia:0, voucherTyLeChia:40, voucherTyLeDon:0,
+  affOn:false, affTyLe:10,
   tyLeHoanSp:5, cpMoiHoanSp:30000, vonDaGomVat:'1', cpDongGoiSp:0, cpQuangCaoSp:0
 };
 var SP_TABS_LUU_ = (function(){
@@ -748,6 +761,7 @@ function luuFormVaoTab_(){
   t.vonSp = n('vonSp'); t.niemYet = n('niemYet'); t.vat = n('vat');
   t.voucherOn = $('voucherOnSp').checked;
   t.voucherMenhGia = n('voucherMenhGia'); t.voucherTyLeChia = n('voucherTyLeChia'); t.voucherTyLeDon = n('voucherTyLeDon');
+  t.affOn = $('affOnSp').checked; t.affTyLe = n('affTyLe');
   t.tyLeHoanSp = n('tyLeHoanSp'); t.cpMoiHoanSp = n('cpMoiHoanSp');
   t.vonDaGomVat = $('vonDaGomVat').value;
   t.cpDongGoiSp = n('cpDongGoiSp'); t.cpQuangCaoSp = n('cpQuangCaoSp');
@@ -761,6 +775,10 @@ function napTabVaoForm_(t){
   ['voucherFieldsSp','voucherTyLeDonRow'].forEach(function(bid){ $(bid).style.opacity = t.voucherOn?'1':'.4' });
   ['voucherMenhGia','voucherTyLeChia','voucherTyLeDon'].forEach(function(iid){ $(iid).disabled = !t.voucherOn });
   $('voucherMenhGia').value = t.voucherMenhGia; $('voucherTyLeChia').value = t.voucherTyLeChia; $('voucherTyLeDon').value = t.voucherTyLeDon;
+  $('affOnSp').checked = t.affOn;
+  $('affFieldsSp').style.opacity = t.affOn?'1':'.4';
+  $('affTyLe').disabled = !t.affOn;
+  $('affTyLe').value = t.affTyLe;
   $('tyLeHoanSp').value = t.tyLeHoanSp; $('cpMoiHoanSp').value = t.cpMoiHoanSp;
   $('vonDaGomVat').value = t.vonDaGomVat;
   $('cpDongGoiSp').value = t.cpDongGoiSp; $('cpQuangCaoSp').value = t.cpQuangCaoSp;
@@ -770,7 +788,7 @@ function tinhChoTab_(t){
     gia_ban: t.niemYet, gia_von: t.vonSp, von_da_gom_vat: t.vonDaGomVat==='1',
     vat: t.vat/100, ts_tndn: n('tndn')/100,
     r_phi_co_dinh: n('hoaHong')/100, r_phi_xu_ly: n('giaoDich')/100,
-    phi_ha_tang: n('phiCoDinh'), r_affiliate: 0,
+    phi_ha_tang: n('phiCoDinh'), r_affiliate: t.affOn ? t.affTyLe/100 : 0,
     voucher_menh_gia: t.voucherOn ? t.voucherMenhGia : 0, voucher_ty_le_chia_se: t.voucherTyLeChia/100,
     voucher_ty_le_don: t.voucherTyLeDon/100,
     ty_le_hoan: t.tyLeHoanSp/100, chi_phi_moi_don_hoan: t.cpMoiHoanSp,
@@ -1466,6 +1484,14 @@ $('voucherOnSp').addEventListener('change', function(){
   ['voucherMenhGia','voucherTyLeChia','voucherTyLeDon'].forEach(function(iid){ $(iid).disabled = !on });
   render();
 });
+$('affOnSp').addEventListener('change', function(){
+  var on = this.checked;
+  $('affFieldsSp').style.opacity = on?'1':'.4';
+  $('affTyLe').disabled = !on;
+  render();
+});
+$('affTyLe').addEventListener('input', render);
+$('affTyLe').addEventListener('change', render);
 
 // Nút chọn nhanh mức VAT — đổi theo TỪNG sản phẩm, không phải cài 1 lần cho
 // cả cửa hàng. Thêm 17/09/2026 vì mức VAT trước đó bị giấu trong "Tuỳ chỉnh
