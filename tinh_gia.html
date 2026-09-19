@@ -414,7 +414,7 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
           <button class="si-btn" id="siAddTier" type="button">+ Thêm bậc</button>
           <div class="fgrid two" style="margin-top:12px">
             <div><label for="siTndn">Thuế TNDN</label>
-              <select id="siTndn"><option value="15">15% — ≤ 3 tỷ</option><option value="17" selected>17% — 3–50 tỷ</option><option value="20">20% — &gt; 50 tỷ</option></select></div>
+              <select id="siTndn"><option value="15">15% — ≤ 3 tỷ</option><option value="20" selected>20% — &gt; 50 tỷ (hoặc không đủ điều kiện hưởng 15%)</option></select></div>
             <div><label for="siDg">Đóng gói ₫/đv</label><input id="siDg" type="number" value="0" step="100"></div>
           </div>
           <!-- SỬA 19/09/2026 — mục 2.2 đặc tả: tách "đã xác minh MST" (không liên
@@ -515,8 +515,7 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
       <div><label for="tndn">Thuế TNDN (%)</label>
         <select id="tndn">
           <option value="15">15% — doanh thu năm trước liền kề ≤ 3 tỷ</option>
-          <option value="17" selected>17% — doanh thu năm trước liền kề 3–50 tỷ</option>
-          <option value="20">20% — doanh thu năm trước liền kề &gt; 50 tỷ</option>
+          <option value="20" selected>20% — doanh thu năm trước liền kề &gt; 50 tỷ (hoặc không đủ điều kiện hưởng 15%)</option>
         </select>
       </div>
       <div class="hint" style="margin-top:22px">VAT đã chuyển lên ô "VAT sản phẩm" ở khung nhập chính — sửa theo từng sản phẩm ở đó.</div>
@@ -1057,7 +1056,7 @@ var KHOA_SI2 = 'zaka_tinhgia_si2';
 var SI_TIERS = [{ten:'Min', margin:15}, {ten:'Max', margin:34}];
 var SI_STATE_MAC_DINH_ = {
   ten:'BYS Cát sạn 2kg', von:39000, vat:8, bao:8, vonVat:'1',
-  tndn:17, dg:0, dgVat:'0',
+  tndn:20, dg:0, dgVat:'0',
   km:10, cap:10, xang:24239, hao:2, bd:250, toc:22, luong:40000, boc:10,
   ck:2, rb:3, fs:1
 };
@@ -1072,6 +1071,11 @@ var SI_STATE_MAC_DINH_ = {
     siKm:'km', siCap:'cap', siXang:'xang', siHao:'hao', siBd:'bd', siToc:'toc', siLuong:'luong', siBoc:'boc',
     siCk:'ck', siRb:'rb', siFs:'fs'};
   Object.keys(MAP).forEach(function(id){ if ($(id)) $(id).value = st[MAP[id]] });
+  // Di trú 19/09/2026: bỏ mức 17% khỏi <select> — dữ liệu CŨ đã lưu 17% từ
+  // trước thì gán .value='17' vào <select> không còn option đó sẽ để trống
+  // trắng (không chọn gì), khác hẳn "vẫn còn 17%" — rơi về 20% thay vì để
+  // trống, không âm thầm mất lựa chọn thuế của chủ.
+  if (!$('siTndn').value) $('siTndn').value = '20';
 })();
 function siLuu_(){
   var MAP = {siTen:'ten', siVon:'von', siVat:'vat', siBao:'bao', siVonVat:'vonVat',
@@ -1411,6 +1415,36 @@ function veNutVatNhanh_(){
   });
 }
 $('vat').addEventListener('input', veNutVatNhanh_);
+
+// ---- Pháp nhân & thuế (Shopee/TikTok) — hằng số CHUNG cả cửa hàng, phải giữ
+// nguyên qua các lần mở lại. Chủ báo 19/09/2026: trước đây KHÔNG lưu gì cả —
+// đóng/mở lại tool (hay tab Tính giá sàn trong quanly.html) là mất, phải tự
+// chọn lại Doanh nghiệp/Hộ kinh doanh + mức thuế mỗi lần. Riêng tab Sỉ đã có
+// lưu localStorage riêng từ trước (zaka_tinhgia_si2) nên không đụng ở đây.
+var KHOA_PHAP_NHAN = 'zaka_tinhgia_phapnhan';
+function luuPhapNhan_(){
+  try { localStorage.setItem(KHOA_PHAP_NHAN, JSON.stringify({
+    phapNhanSel: $('phapNhanSel').value, daXacMinh: $('daXacMinh').value,
+    tndn: $('tndn').value, thueKhoan: $('thueKhoan').value
+  })) } catch(e){}
+}
+(function napPhapNhan_(){
+  var luu = null;
+  try { luu = JSON.parse(localStorage.getItem(KHOA_PHAP_NHAN)) } catch(e){}
+  if (!luu) return;
+  if (luu.phapNhanSel) $('phapNhanSel').value = luu.phapNhanSel;
+  if (luu.daXacMinh) $('daXacMinh').value = luu.daXacMinh;
+  if (luu.tndn) $('tndn').value = luu.tndn;
+  if (!$('tndn').value) $('tndn').value = '20'; // mức đã bỏ (vd 17%) -> rơi về 20%, không để trống
+  if (luu.thueKhoan != null) $('thueKhoan').value = luu.thueKhoan;
+  // Đồng bộ lại hiện/ẩn khung DN vs HKD theo giá trị vừa nạp (bình thường chỉ
+  // đổi lúc bấm tay, kích hoạt lại đúng logic đó thay vì viết trùng ở đây).
+  $('phapNhanSel').dispatchEvent(new Event('change', {bubbles:true}));
+})();
+['phapNhanSel','daXacMinh','tndn','thueKhoan'].forEach(function(id){
+  $(id).addEventListener('change', luuPhapNhan_);
+  $(id).addEventListener('input', luuPhapNhan_);
+});
 
 apDungMacDinh();
 napTabVaoForm_(spTabHienTai_());
