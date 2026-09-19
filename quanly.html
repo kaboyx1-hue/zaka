@@ -730,7 +730,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260918b';
+var APP_VER='20260919a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -5158,6 +5158,11 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260919a', ngay:'19/09/2026', ten:'Sửa lỗi phiếu "Bỏ qua"/"Duyệt" cứ hiện lại',
+  vaPhieu:[],
+  muc:[
+   ['sua','Hộp <b>"Báo cho kỹ sư"</b>: bấm <b>Đúng là lỗi</b> hoặc <b>Bỏ qua</b> cho từng phiếu riêng trước đây KHÔNG thật sự đánh dấu được lên Sheet (lỗi kỹ thuật ở cách so khớp thời gian — Sheet tự đổi định dạng giờ khi ghi) — phiếu cứ hiện lại y nguyên dù đã xử lý. Đã vá tận gốc, xử lý phiếu nào giờ ở yên đúng phiếu đó, mọi máy/phiên đăng nhập đều thấy đúng.'],
+  ]},
  {ban:'20260918b', ngay:'18/09/2026', ten:'Thức ăn tự hiểu VAT 0%',
   vaPhieu:[],
   muc:[
@@ -5465,6 +5470,12 @@ async function duyetPhieuNV(i,dung){
     if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
     (x.ban||[x]).forEach(function(b){ b.tt=dung?'DA DUYET':'BO QUA'; b.chuGhi=ghi });
     set('phieunv',PHIEU_NV);
+    // Đánh dấu cục bộ NGAY (giống boQuaHetPhieuNV) — phòng khi lần đồng bộ kế
+    // tiếp kéo về Sheet vẫn còn "CHO DUYET" vì lý do gì đó (mạng, cache), máy
+    // này ít nhất không hỏi lại đúng phiếu vừa xử lý trong phiên đang mở.
+    if(!Object.keys(KS_XONG).length){ try{ KS_XONG=get('ksxong',{})||{} }catch(e){} }
+    KS_XONG[khoaPhieuNV_(x)]={luc:x.luc||'', noi:x.noi||'', ban:(dung?'(chủ duyệt)':'(chủ bỏ qua)'), danhDau:Date.now()};
+    set('ksxong',KS_XONG);
     if(dung){
       // đưa thẳng vào tập phiếu của chủ để lát nữa xuất file cho kỹ sư
       KS_PHIEU.push({luc:x.luc, app:'May nhan vien ('+(x.may||'')+')', ban:x.ban||'?',
