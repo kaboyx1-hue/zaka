@@ -114,8 +114,22 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
 .luuRow{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
 .luuRow:last-child{border-bottom:0}
 .luuRow .tt{flex:1;min-width:0}
-.luuRow .ten{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.luuRow .ten{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:6px}
+.luuRow .ten .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .luuRow .phu{color:var(--ink-3);font-size:11.5px}
+/* Nhãn sàn — chủ báo 19/09/2026: chữ "Shopee"/"TikTok" nằm lẫn trong dòng phụ,
+   quét nhanh không phân biệt được nguồn nào, nhất là sau khi TikTok cũng có
+   nhiều tab để lưu (danh sách trộn lẫn 2 sàn). Đổi thành huy hiệu màu đứng
+   riêng, dùng LẠI đúng màu 2 nút chọn sàn phía trên (--accent đỏ Shopee,
+   --accent-tt đen TikTok) để không phải học thêm 1 bảng màu mới. */
+.sanTag{flex:none;font-size:10.5px;font-weight:700;letter-spacing:.02em;padding:2px 7px;border-radius:5px}
+.sanTag.sp{background:var(--accent-soft);color:var(--accent)}
+.sanTag.tt{background:var(--accent-tt);color:#fff}
+.sanTag.si{background:#E3F2E9;color:var(--accent-si)}
+.luuFilter{display:flex;gap:6px;margin-bottom:10px}
+.luuFilter button{width:auto;flex:none;height:28px;padding:0 11px;font-size:12px;border:1px solid var(--line);
+  border-radius:7px;background:var(--card);color:var(--ink-2);cursor:pointer}
+.luuFilter button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 .luuRow .lai{font-family:var(--mono);font-weight:700;white-space:nowrap}
 .luuRow .lai.am{color:var(--loss)}
 .luuRow button{width:auto;height:30px;padding:0 10px;font-size:12px;flex:none}
@@ -378,6 +392,7 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
 <div class="card" id="cardDsLuu" style="display:none">
   <h3 id="lblCardDsLuu">Đã lưu trên máy này</h3>
   <div class="hint" id="hintCardDsLuu" style="margin:-4px 0 8px">Chỉ xem lại được trên đúng máy/trình duyệt đã lưu — đổi qua máy khác sẽ không thấy.</div>
+  <div class="luuFilter" id="luuFilterBar"></div>
   <div id="dsLuu"></div>
 </div>
 </div>
@@ -1715,22 +1730,36 @@ function xemLaiLichSu_(i){
   veNutVatNhanh_(); render();
   window.scrollTo({top:0, behavior:'smooth'});
 }
+// Bộ lọc theo sàn — chủ báo 19/09/2026: danh sách trộn Shopee/TikTok, quét
+// nhanh không phân biệt được. Nhãn màu (.sanTag, xem CSS) giải quyết việc
+// PHÂN BIỆT từng dòng; bộ lọc này giải quyết thêm việc TÌM nhanh 1 sàn khi
+// danh sách dài (từ khi TikTok cũng lưu được nhiều tab, danh sách sẽ dài hơn).
+var LICH_SU_LOC = 'tat_ca'; // 'tat_ca' | 'sp' | 'tt'
+function locDsLuu_(v){ LICH_SU_LOC = v; veDsLuu(); }
+function tenSan_(san){ return san==='tt' ? 'TikTok' : (san==='si' ? 'Sỉ' : 'Shopee') }
 function veDsLuu(){
   $('cardDsLuu').style.display = LICH_SU.length ? '' : 'none';
   $('lblCardDsLuu').textContent = TRONG_IFRAME_ ? 'Đã lưu trên Sheet' : 'Đã lưu trên máy này';
   $('hintCardDsLuu').textContent = TRONG_IFRAME_
     ? 'Lưu thẳng lên Google Sheet — xem được ở mọi máy quản lý (PC, điện thoại).'
     : 'Chỉ xem lại được trên đúng máy/trình duyệt đã lưu — đổi qua máy khác sẽ không thấy.';
-  $('dsLuu').innerHTML = LICH_SU.map(function(x, i){
+  var demSp = LICH_SU.filter(function(x){return x.san==='sp'}).length;
+  var demTt = LICH_SU.filter(function(x){return x.san==='tt'}).length;
+  $('luuFilterBar').innerHTML = [['tat_ca','Tất cả ('+LICH_SU.length+')'],['sp','Shopee ('+demSp+')'],['tt','TikTok ('+demTt+')']]
+    .map(function(b){ return '<button type="button" class="'+(LICH_SU_LOC===b[0]?'on':'')+'" onclick="locDsLuu_(\''+b[0]+'\')">'+b[1]+'</button>' }).join('');
+  var ds = LICH_SU.map(function(x,i){ return {x:x, i:i} }).filter(function(o){ return LICH_SU_LOC==='tat_ca' || o.x.san===LICH_SU_LOC });
+  $('dsLuu').innerHTML = ds.length ? ds.map(function(o){
+    var x = o.x, i = o.i;
     var gio = typeof x.luc === 'number'
       ? (function(d){ return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)+' '+('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2) })(new Date(x.luc))
       : String(x.luc||'').slice(0,16);
-    return '<div class="luuRow"><div class="tt"><div class="ten">'+(x.sku?esc_(x.sku)+' — ':'')+esc_(x.ten)+'</div>'+
-      '<div class="phu">'+(x.san==='sp'?'Shopee':'TikTok')+' · vốn '+vnd(x.von)+' · bán '+vnd(x.gia)+' · VAT '+x.vat+'% · '+gio+'</div></div>'+
+    return '<div class="luuRow"><div class="tt"><div class="ten"><span class="sanTag '+(x.san||'sp')+'">'+tenSan_(x.san)+'</span>'+
+      '<span class="nm">'+(x.sku?esc_(x.sku)+' — ':'')+esc_(x.ten)+'</span></div>'+
+      '<div class="phu">vốn '+vnd(x.von)+' · bán '+vnd(x.gia)+' · VAT '+x.vat+'% · '+gio+'</div></div>'+
       '<div class="lai'+(x.lai<0?' am':'')+'">'+vnd(x.lai)+'</div>'+
       '<button type="button" onclick="xemLaiLichSu_('+i+')">Xem lại</button>'+
       '<button type="button" onclick="xoaLichSu_('+i+')" style="color:var(--loss)">Xoá</button></div>';
-  }).join('');
+  }).join('') : '<div class="hint" style="padding:10px 0">Không có dòng nào khớp bộ lọc đang chọn.</div>';
 }
 function esc_(s){ var d = document.createElement('div'); d.textContent = s; return d.innerHTML }
 $('btnLuu').addEventListener('click', luuKetQua);
