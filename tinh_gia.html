@@ -935,11 +935,11 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
       <section class="card c-violet">
         <header><h2>So sánh chi phí giao theo bậc</h2><span class="hint" id="lblChartMix" style="margin:0">—</span></header>
         <div class="body">
-          <p class="hint" style="margin-top:0">Chi phí giao/thùng ở mỗi bậc: <b style="color:var(--moto)">chỉ xe máy</b> so với <b style="color:var(--pickup)">chỉ bán tải</b>. ⭐ là xe quy tắc đang chọn.</p>
+          <p class="hint" style="margin-top:0">Chi phí giao/thùng ở mỗi bậc: <b style="color:var(--moto)">chỉ xe máy</b> so với <b style="color:var(--pickup)">chỉ bán tải</b>. Cột <b>Kết hợp</b> trong bảng số là phương án máy đang chọn — xếp từng chuyến rồi dồn lại, có thể dùng cả 2 loại xe nên thường rẻ hơn cả hai cột kia.</p>
           <div class="legend" id="chartLegend"></div>
           <div class="chartwrap"><svg id="chuyenChart" viewBox="0 0 900 320" role="img" aria-label="So sánh chi phí giao mỗi thùng giữa xe máy và bán tải theo từng bậc giá"></svg></div>
           <div class="scroll"><table style="margin-top:10px">
-            <thead><tr><th>Bậc (thùng)</th><th class="num">Xe máy đ/thùng</th><th class="num">Bán tải đ/thùng</th><th>Đang chọn</th></tr></thead>
+            <thead><tr><th>Bậc (thùng)</th><th class="num">Chỉ xe máy</th><th class="num">Chỉ bán tải</th><th class="num">Kết hợp</th><th>Đang chọn</th></tr></thead>
             <tbody id="tbodyChart"></tbody>
           </table></div>
         </div>
@@ -2437,6 +2437,40 @@ function tripCost(p){
    ban tai gom het don trong DUNG 1 chuyen VA chuyen do lap day >= nguong %.
    Tach thanh 1 ham dung chung cho ca khung "Xep xe cho don hien tai" LAN bieu do
    "So sanh chi phi theo bac" — tranh viet 2 lan cung 1 logic quyet dinh. ===== */
+var XE_NHAN = {moto:'🏍 Xe máy', 'moto-tach':'🏍 Xe máy (tách loại)', pickup:'🛻 Bán tải', 'ket-hop':'🛻+🏍 Kết hợp'};
+/* Sức chở THẬT của một chuyến, tính theo đúng tỉ lệ 2 loại của đơn này: lấy số
+   nhỏ hơn giữa giới hạn chỗ (thể tích) và giới hạn tải trọng. */
+function sucChoMix_(ev, maxKg, tong){
+  var theoCho = ev.achievableTofu + ev.achievableCassava;
+  var theoTai = (maxKg>0 && ev.weightNeededKg>0) ? (maxKg*tong/ev.weightNeededKg) : Infinity;
+  /* KHONG lam tron xuong: evaluateCombo() tinh so chuyen tu suc chua PHAN LE
+     (vd xe may cho duoc 4,7 thung/chuyen -> 9 thung di 2 chuyen). Lam tron xuong 4
+     se ra 3 chuyen, lech han voi cot "Chi xe may" cua chinh bang so sanh. */
+  return Math.min(theoCho, theoTai);
+}
+/* Xếp lần lượt từng chuyến cho tới khi hết hàng, không ép cả đơn vào 1 loại xe. */
+function tronChuyen_(tong, capMoto, capPickup, cpMoto, cpPickup, nguong){
+  if (!(tong>0) || !(capMoto>0) || !(capPickup>0)) return null;
+  var con = tong, cM = 0, cP = 0, chan = 0;
+  while (con > 0 && chan++ < 500) {
+    if (con >= nguong*capPickup) { cP++; con -= capPickup; }   // chuyến bán tải đủ đầy
+    else {                                                      // phần lẻ cuối: chọn cái rẻ hơn
+      var soMoto = Math.ceil(con/capMoto);
+      if (soMoto*cpMoto <= cpPickup) cM += soMoto; else cP++;
+      con = 0;
+    }
+  }
+  if (con > 0) return null;                                     // xếp không xong thì trả về cách cũ
+  return {moto:cM, pickup:cP, cp:cM*cpMoto + cP*cpPickup};
+}
+function moTaTron_(tron, capM, capP, nguong){
+  if (tron.pickup>0 && tron.moto>0)
+    return tron.pickup+' chuyến bán tải (mỗi chuyến ~'+Math.floor(capP)+' thùng) chở phần lớn, '
+      +tron.moto+' chuyến xe máy gom nốt phần lẻ — rẻ hơn là cho bán tải chạy thêm một chuyến gần rỗng.';
+  if (tron.pickup>0)
+    return tron.pickup+' chuyến bán tải, mỗi chuyến chở tới ~'+Math.floor(capP)+' thùng (đủ đầy ≥ ngưỡng '+(nguong*100)+'%).';
+  return tron.moto+' chuyến xe máy, mỗi chuyến ~'+Math.floor(capM)+' thùng — đơn chưa đủ lớn để bán tải có lợi.';
+}
 function chonXeChoDon(qT, qC, ctx){
   var vMoto=ctx.vMoto, vPickup=ctx.vPickup, boxT=ctx.boxT, boxC=ctx.boxC, boxKg=ctx.boxKg,
       pickupMaxKg=ctx.pickupMaxKg, nguongBanTai=ctx.nguongBanTai;
@@ -2444,6 +2478,26 @@ function chonXeChoDon(qT, qC, ctx){
   var evMoto = evaluateCombo(vMoto, boxT, boxC, boxKg, boxKg, qT, qC, ctx.phanCongMoto);
   var evPickup = evaluateCombo(vPickup, boxT, boxC, boxKg, boxKg, qT, qC, ctx.phanCongPickup);
   var xeDung=null, tripsDung=0, lyDoXe='';
+
+  /* SỬA 21/09/2026 (chủ: "phải tính theo từng chuyến riêng biệt rồi dồn lại")
+     — trước đó cả đơn phải đi NGUYÊN một loại xe, nên đơn 54 thùng (bán tải chở
+     đủ 52, dư 2) hoặc phải đi 2 chuyến bán tải (chuyến 2 gần rỗng) hoặc 12 chuyến
+     xe máy. Nay xếp từng chuyến một: chuyến nào bán tải chở đủ đầy thì đi bán tải,
+     phần lẻ cuối so giá xem xe máy hay thêm 1 chuyến bán tải rẻ hơn. */
+  var binhThuong = function(v){ return v==='OK' || v==='OVER_WEIGHT' || v==='OVER_VOLUME' };
+  if (binhThuong(evMoto.verdict) && binhThuong(evPickup.verdict)) {
+    var capM = sucChoMix_(evMoto, vMoto.maxW, tong);
+    var capP = sucChoMix_(evPickup, pickupMaxKg, tong);
+    var tron = tronChuyen_(tong, capM, capP, ctx.cpMoto, ctx.cpPickup, nguongBanTai);
+    if (tron) {
+      xeDung = tron.pickup>0 ? (tron.moto>0 ? 'ket-hop' : 'pickup') : 'moto';
+      tripsDung = tron.moto + tron.pickup;
+      lyDoXe = moTaTron_(tron, capM, capP, nguongBanTai);
+      return {xeDung:xeDung, tripsDung:tripsDung, lyDoXe:lyDoXe, evMoto:evMoto, evPickup:evPickup,
+        chuyenMoto:tron.moto, chuyenPickup:tron.pickup, tongChiPhi:tron.cp};
+    }
+  }
+
   if (evMoto.verdict === 'OK') {
     xeDung='moto'; tripsDung=1; lyDoXe='Xe máy đủ chở cả đơn trong 1 chuyến.';
   } else {
@@ -2723,22 +2777,23 @@ function veChuyenChart_(table, tongThungHienTai, reqT, reqC, ctxXe){
     var moto = chiPhiRiengXe(qT, qC, 'moto', ctxXe);
     var pickup = chiPhiRiengXe(qT, qC, 'pickup', ctxXe);
     var qd = chonXeChoDon(qT, qC, ctxXe);
-    return {label:label, qty:qty, qT:qT, qC:qC, moto:moto, pickup:pickup, chon:qd.xeDung};
+    var ketHop = (qd.tongChiPhi !== undefined && qty>0) ? qd.tongChiPhi/qty : null;
+    return {label:label, qty:qty, qT:qT, qC:qC, moto:moto, pickup:pickup, chon:qd.xeDung, ketHop:ketHop};
   });
 
   $('lblChartMix').textContent = 'Tỉ lệ dùng: '+Math.round(ratioT*100)+'% Tofu · '+Math.round((1-ratioT)*100)+'% Cassava (theo đơn đang tính)';
   $('chartLegend').innerHTML =
     '<span class="lg moto"><i class="sw"></i>Chỉ xe máy — '+vnd(ctxXe.cpMoto)+'/chuyến</span>'+
     '<span class="lg pickup"><i class="sw"></i>Chỉ bán tải — '+vnd(ctxXe.cpPickup)+'/chuyến</span>'+
-    '<span class="lg">⭐ đang được quy tắc chọn xe áp dụng</span>';
+    '<span class="lg">⭐ rẻ hơn nếu bắt buộc đi nguyên 1 loại xe</span>';
 
   // ---- bang so lieu (accessibility: luon co ban doc duoc thay cho bieu do) ----
   $('tbodyChart').innerHTML = tiers.map(function(d){
-    var chonLabel = {moto:'🏍 Xe máy', 'moto-tach':'🏍 Xe máy (tách loại)', pickup:'🛻 Bán tải'}[d.chon] || '—';
     return '<tr><td class="mono">'+d.label+'</td>'+
       '<td class="num" style="color:var(--moto)">'+(d.moto?vnd(d.moto.perUnit):'—')+'</td>'+
       '<td class="num" style="color:var(--pickup)">'+(d.pickup?vnd(d.pickup.perUnit):'—')+'</td>'+
-      '<td>'+chonLabel+'</td></tr>';
+      '<td class="num" style="font-weight:700">'+(d.ketHop!==null?vnd(d.ketHop):'—')+'</td>'+
+      '<td>'+(XE_NHAN[d.chon]||'—')+'</td></tr>';
   }).join('');
 
   // ---- bieu do cot doi ----
@@ -2909,16 +2964,24 @@ function render(){
     phanCongMoto:phanCongMoto, phanCongPickup:phanCongPickup};
   var qd = chonXeChoDon(reqT, reqC, ctxXe);
   var xeDung = qd.xeDung, tripsDung = qd.tripsDung, lyDoXe = qd.lyDoXe;
-  // Chi phi/chuyen lay DUNG theo xe duoc chon, khong dung chung 1 so nua.
+  // Cong tien TUNG CHUYEN mot roi moi chia deu — don co the di 2 loai xe.
   var cpXeDung = (xeDung==='pickup') ? cpPickup : cpMoto;
-  var chiPhiGiaoThung = tongThung>0 && tripsDung>0 ? (cpXeDung*tripsDung)/tongThung : 0;
+  var tongCpGiao = (qd.tongChiPhi !== undefined) ? qd.tongChiPhi : cpXeDung*tripsDung;
+  var chiPhiGiaoThung = tongThung>0 && tripsDung>0 ? tongCpGiao/tongThung : 0;
   $('kShip').textContent = tongThung>0 ? vnd(chiPhiGiaoThung) : '—';
-  $('kShipSub').textContent = xeDung ? (tripsDung+' chuyến × '+vnd(cpXeDung)+' · chia đều '+tongThung+' thùng') : 'Chưa xác định được xe';
+  $('kShipSub').textContent = !xeDung ? 'Chưa xác định được xe'
+    : (qd.chuyenPickup !== undefined
+        ? [(qd.chuyenPickup ? qd.chuyenPickup+' chuyến bán tải × '+vnd(cpPickup) : ''),
+           (qd.chuyenMoto ? qd.chuyenMoto+' chuyến xe máy × '+vnd(cpMoto) : '')].filter(Boolean).join(' + ')
+          +' = '+vnd(tongCpGiao)+' · chia đều '+tongThung+' thùng'
+        : tripsDung+' chuyến × '+vnd(cpXeDung)+' · chia đều '+tongThung+' thùng');
 
-  var xeLabel = {moto:'🏍 Xe máy', 'moto-tach':'🏍 Xe máy (tách loại)', pickup:'🛻 Bán tải'}[xeDung] || '—';
-  $('kXe').className = 'kq-row ' + (xeDung==='pickup' ? 'k-pickup' : xeDung ? 'k-moto' : '');
+  var xeLabel = XE_NHAN[xeDung] || '—';
+  $('kXe').className = 'kq-row ' + (xeDung==='pickup' ? 'k-pickup' : xeDung==='ket-hop' ? '' : xeDung ? 'k-moto' : '');
   $('kXeVal').textContent = xeLabel;
-  $('kXeSub').textContent = tripsDung ? (tripsDung+' chuyến') : (xeDung ? '' : 'Không xe nào chở vừa — xem cảnh báo ở trên');
+  $('kXeSub').textContent = !tripsDung ? (xeDung ? '' : 'Không xe nào chở vừa — xem cảnh báo ở trên')
+    : (xeDung==='ket-hop' ? (qd.chuyenPickup+' chuyến bán tải + '+qd.chuyenMoto+' chuyến xe máy')
+                          : (tripsDung+' chuyến'));
   $('lyDoXeBox').innerHTML = xeDung ? ('<b>Vì sao chọn '+xeLabel+':</b> '+lyDoXe) : '<b>Không có xe nào chở vừa đơn này</b> — cả xe máy lẫn bán tải đều IMPOSSIBLE, xem cảnh báo ở 2 thẻ trên.';
 
   veChuyenChart_(table, tongThung, reqT, reqC, ctxXe);
