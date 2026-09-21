@@ -70,6 +70,7 @@ h1{font-size:19px;font-weight:600;margin:0 0 16px}
 .seg button[aria-pressed="true"].sp{background:var(--accent);color:#fff}
 .seg button[aria-pressed="true"].tt{background:var(--accent-tt);color:#fff}
 .seg button[aria-pressed="true"].si{background:var(--accent-si);color:#fff}
+.seg button[aria-pressed="true"].moc{background:#0E8A72;color:#fff}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:14px}
 label{display:block;font-size:13px;color:var(--ink-2);margin-bottom:5px}
 input,select{width:100%;height:44px;padding:0 12px;border:1px solid var(--line-2);border-radius:8px;
@@ -286,6 +287,206 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
   #panelSi .fgrid.two,#panelSi .fgrid.three{grid-template-columns:1fr}
   #panelSi .callout{flex-direction:column;align-items:flex-start;gap:8px}
 }
+
+/* ------------------------------------------------------------------
+   TAB "MỐC GIÁ THEO SỨC CHỞ" — đưa vào 21/09/2026 từ demo đã được chủ
+   duyệt (artifact "Mốc Giá Theo Sức Chở"), nguồn công thức:
+   BAN-GIAO-MOC-GIA-THEO-SUC-CHO.md + công thức lãi/thuế mượn tab Sỉ.
+   MỌI SELECTOR SCOPE DƯỚI #panelMoc — không rò ra Shopee/TikTok/Sỉ dù
+   trùng tên class (.card/.seg/.hint/table/input…). Token màu khai ngay
+   trên #panelMoc, lấy đúng dải màu sáng của tab Sỉ cho đồng bộ cả phần
+   mềm; riêng 2 màu xe (moto/pickup) giữ cặp đã kiểm tương phản. */
+#panelMoc{
+  --paper:#EDF1F0; --card:#FFFFFF; --line:#D7E1DC; --line-2:#C3D0CA;
+  --ink:#10201A; --ink-2:#3A4C44; --ink-3:#697C73;
+  --amber:#B45309; --amber-soft:#FDF0D6; --amber-ink:#7C3D07;
+  --teal:#0B7A8C;  --teal-soft:#DBF0F3;
+  --violet:#6D28D9; --violet-soft:#EDE7FD;
+  --green:#12734E; --green-soft:#DCF2E6;
+  --bad:#B4241C;   --bad-soft:#FCE5E3;
+  --warn:#B45309;  --warn-soft:#FDF0D6;
+  --moto:#0E8A72;  --moto-soft:#DCEFE9;
+  --pickup:#C2410C; --pickup-soft:#FBE4D6;
+  --chart-surface:#FFFFFF; --chart-grid:#E4EBE7;
+  --font-display:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --font-body:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --font-mono:var(--mono);
+  background:var(--paper);color:var(--ink);padding:16px;border-radius:14px;
+  font:400 14.5px/1.55 var(--font-body);
+}
+@media(prefers-color-scheme:dark){ #panelMoc:not([data-theme="light"]){
+  --paper:#0B1311; --card:#141E1A; --line:#28372F; --line-2:#334A40;
+  --ink:#E9F1EC; --ink-2:#BBCCC3; --ink-3:#879A90;
+  --amber:#F0B45E; --amber-soft:#3A2A10; --amber-ink:#F3D89B;
+  --teal:#3FC0D4;  --teal-soft:#0C2F35;
+  --violet:#A78BFA; --violet-soft:#241B44;
+  --green:#4FC08D; --green-soft:#10321F;
+  --bad:#F0837A;   --bad-soft:#3A1A18;
+  --warn:#F0B45E;  --warn-soft:#3A2A10;
+  --moto:#26A683;  --moto-soft:#0F2A22;
+  --pickup:#E07B41; --pickup-soft:#3A2313;
+  --chart-surface:#141E1A; --chart-grid:#28372F;
+}}
+#panelMoc[data-theme="dark"]{
+  --paper:#0B1311; --card:#141E1A; --line:#28372F; --line-2:#334A40;
+  --ink:#E9F1EC; --ink-2:#BBCCC3; --ink-3:#879A90;
+  --amber:#F0B45E; --amber-soft:#3A2A10; --amber-ink:#F3D89B;
+  --teal:#3FC0D4;  --teal-soft:#0C2F35;
+  --violet:#A78BFA; --violet-soft:#241B44;
+  --green:#4FC08D; --green-soft:#10321F;
+  --bad:#F0837A;   --bad-soft:#3A1A18;
+  --warn:#F0B45E;  --warn-soft:#3A2A10;
+  --moto:#26A683;  --moto-soft:#0F2A22;
+  --pickup:#E07B41; --pickup-soft:#3A2313;
+  --chart-surface:#141E1A; --chart-grid:#28372F;
+}
+/* Tab này cần bề ngang hơn 960px mặc định của .wrap (3 cột: nhập / bảng /
+   kết quả dính). Chỉ nới khi đang mở đúng tab này — chonSan_() gắn/gỡ lớp. */
+.wrap.rongMoc{max-width:1460px}
+
+#panelMoc h1, #panelMoc h2, #panelMoc h3{font-family:var(--font-display);font-weight:600;text-wrap:balance;margin:0}
+#panelMoc .tnum{font-variant-numeric:tabular-nums}
+#panelMoc .mono{font-family:var(--font-mono)}
+#panelMoc .wrap{max-width:1500px;margin:0 auto}
+#panelMoc .cols{display:grid;grid-template-columns:320px minmax(0,1fr) 340px;gap:16px;align-items:start;margin-top:8px}
+@media(max-width:1279px){#panelMoc .cols{grid-template-columns:320px minmax(0,1fr)}
+#panelMoc .ketqua{grid-column:2}
+}
+@media(max-width:899px){#panelMoc .cols{grid-template-columns:1fr}
+#panelMoc .ketqua{grid-column:1}
+}
+#panelMoc .rail{display:flex;flex-direction:column;gap:14px;position:sticky;top:14px}
+@media(max-width:899px){#panelMoc .rail{position:static}
+}
+#panelMoc .main{display:flex;flex-direction:column;gap:16px;min-width:0}
+#panelMoc .card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+#panelMoc .card>header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 16px;border-bottom:1px solid var(--line)}
+#panelMoc .card>header h2{font-size:16px}
+#panelMoc .card .body{padding:14px 16px}
+#panelMoc .c-amber>header{background:var(--amber-soft);border-color:var(--amber)}
+#panelMoc .c-amber>header h2{color:var(--amber-ink)}
+#panelMoc .c-violet>header{background:var(--violet-soft)}
+#panelMoc .c-violet>header h2{color:var(--violet)}
+#panelMoc .c-teal>header{background:var(--teal-soft)}
+#panelMoc .c-teal>header h2{color:var(--teal)}
+#panelMoc .c-green>header{background:var(--green-soft)}
+#panelMoc .c-green>header h2{color:var(--green)}
+#panelMoc label{display:block;font:600 11.5px var(--font-body);color:var(--ink-2);text-transform:uppercase;letter-spacing:.03em;margin-bottom:5px}
+#panelMoc input, #panelMoc select{width:100%;font:500 14px var(--font-body);color:var(--ink);background:var(--paper);
+  border:1px solid var(--line-2);border-radius:9px;padding:9px 10px}
+#panelMoc input:focus, #panelMoc select:focus{outline:2px solid var(--amber);outline-offset:1px}
+#panelMoc .fgrid{display:grid;gap:10px}
+#panelMoc .fgrid.two{grid-template-columns:1fr 1fr}
+#panelMoc .fgrid.three{grid-template-columns:1fr 1fr 1fr}
+#panelMoc .field{margin-bottom:0}
+#panelMoc .hint{color:var(--ink-3);font-size:12px;margin-top:8px;line-height:1.5}
+#panelMoc .seg{display:flex;background:var(--paper);border:1px solid var(--line-2);border-radius:10px;padding:3px;gap:3px}
+#panelMoc .seg button{flex:1;border:0;background:none;color:var(--ink-2);font:600 12.5px var(--font-body);padding:8px 6px;border-radius:7px;cursor:pointer}
+#panelMoc .seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+#panelMoc .toggle-row{display:flex;align-items:center;gap:9px;padding:8px 0}
+#panelMoc .toggle-row input[type=checkbox]{width:auto;accent-color:var(--amber)}
+#panelMoc .toggle-row span{font-size:13px;color:var(--ink)}
+#panelMoc table{width:100%;border-collapse:collapse;font-size:13px}
+#panelMoc th{text-align:left;font:600 11px var(--font-body);text-transform:uppercase;letter-spacing:.03em;color:var(--ink-3);
+  padding:7px 8px;border-bottom:1px solid var(--line)}
+#panelMoc td{padding:8px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+#panelMoc tr.hi{background:var(--amber-soft)}
+#panelMoc .num{text-align:right;font-family:var(--font-mono)}
+#panelMoc .num.neg{color:var(--bad)}
+#panelMoc .scroll{overflow-x:auto}
+#panelMoc .pill{display:inline-flex;align-items:center;gap:4px;font:600 11px var(--font-body);padding:3px 9px;border-radius:999px;white-space:nowrap}
+#panelMoc .pill.moto{background:var(--moto-soft);color:var(--moto)}
+#panelMoc .pill.pickup{background:var(--pickup-soft);color:var(--pickup)}
+#panelMoc .pill.pickup.multi{box-shadow:inset 0 0 0 1px var(--pickup)}
+#panelMoc .vcards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:640px){#panelMoc .vcards{grid-template-columns:1fr}
+}
+#panelMoc .vcard{border:1px solid var(--line);border-left:4px solid var(--line);border-radius:12px;padding:14px;background:var(--paper)}
+#panelMoc .vcard.v-moto{border-left-color:var(--moto)}
+#panelMoc .vcard.v-pickup{border-left-color:var(--pickup)}
+#panelMoc .vcard .vhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+#panelMoc .vcard .vhead h3{font-size:15px;font-family:var(--font-body);font-weight:700}
+#panelMoc .vcard.v-moto .vhead h3{color:var(--moto)}
+#panelMoc .vcard.v-pickup .vhead h3{color:var(--pickup)}
+#panelMoc .vcard .verdict{font:700 12px var(--font-mono);padding:4px 10px;border-radius:7px}
+#panelMoc .verdict.OK{background:var(--green-soft);color:var(--green)}
+#panelMoc .verdict.OVER_VOLUME, #panelMoc .verdict.OVER_WEIGHT{background:var(--warn-soft);color:var(--amber-ink)}
+#panelMoc .verdict.CANNOT_MIX, #panelMoc .verdict.IMPOSSIBLE{background:var(--bad-soft);color:var(--bad)}
+#panelMoc .vcard .msg{font-size:13px;color:var(--ink-2);line-height:1.5;margin-bottom:10px}
+#panelMoc .vcard .rows{display:flex;flex-direction:column;gap:5px;font-size:12.5px}
+#panelMoc .vcard .rows .r{display:flex;justify-content:space-between;gap:8px}
+#panelMoc .vcard .rows .r b{font-family:var(--font-mono)}
+#panelMoc .zonelist{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line-2);font-size:12px;color:var(--ink-2)}
+#panelMoc .zonelist div{display:flex;justify-content:space-between;padding:2px 0}
+#panelMoc .callout{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-size:12.5px;color:var(--ink-2);line-height:1.5}
+#panelMoc .vehparam{margin-top:14px;padding:12px;border-radius:11px;border:1px solid var(--line);background:var(--paper)}
+#panelMoc .vehparam .vh{display:flex;align-items:center;gap:7px;font:700 13px var(--font-body);margin-bottom:10px}
+#panelMoc .vehparam .vh .dot{width:9px;height:9px;border-radius:50%;flex:none}
+#panelMoc .vehparam .vh .fuel{margin-left:auto;font:600 10.5px var(--font-mono);text-transform:uppercase;letter-spacing:.06em;
+  padding:2px 8px;border-radius:999px}
+#panelMoc .vehparam .chiphi{margin:10px 0 0;font:600 12.5px var(--font-body)}
+#panelMoc .p-moto{border-left:4px solid var(--moto)}
+#panelMoc .p-moto .vh{color:var(--moto)}
+#panelMoc .p-moto .vh .dot{background:var(--moto)}
+#panelMoc .p-moto .vh .fuel{background:var(--moto-soft);color:var(--moto)}
+#panelMoc .p-moto .chiphi{color:var(--moto)}
+#panelMoc .p-pickup{border-left:4px solid var(--pickup)}
+#panelMoc .p-pickup .vh{color:var(--pickup)}
+#panelMoc .p-pickup .vh .dot{background:var(--pickup)}
+#panelMoc .p-pickup .vh .fuel{background:var(--pickup-soft);color:var(--pickup)}
+#panelMoc .p-pickup .chiphi{color:var(--pickup)}
+#panelMoc .khu{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:9px 10px;margin-bottom:8px}
+#panelMoc .khu:last-child{margin-bottom:0}
+#panelMoc .khu-top{display:flex;align-items:center;gap:8px}
+#panelMoc .khu-ten{flex:1;min-width:0;font:600 12.5px var(--font-body);color:var(--ink)}
+#panelMoc .khu-top select{width:auto;flex:none;min-width:124px;padding:6px 8px;font-size:12.5px}
+#panelMoc .khu-kq{margin-top:6px;font-size:12px;line-height:1.45}
+#panelMoc .khu-tudat{font-size:12px;color:var(--ink-2);line-height:1.5;background:var(--card);
+  border:1px dashed var(--line-2);border-radius:9px;padding:10px}
+#panelMoc .canhbao{margin-top:10px;background:var(--warn-soft);border:1px solid var(--warn);border-radius:9px;
+  padding:9px 11px;font-size:12px;line-height:1.5;color:var(--ink)}
+#panelMoc .legend{display:flex;gap:16px;flex-wrap:wrap;margin:2px 0 12px;font-size:12.5px;color:var(--ink-2)}
+#panelMoc .legend .lg{display:inline-flex;align-items:center;gap:6px}
+#panelMoc .legend .lg .sw{width:11px;height:11px;border-radius:3px;flex:none}
+#panelMoc .legend .lg.moto .sw{background:var(--moto)}
+#panelMoc .legend .lg.pickup .sw{background:var(--pickup)}
+#panelMoc .chartwrap{background:var(--chart-surface);border:1px solid var(--line);border-radius:12px;padding:12px 6px 4px;overflow-x:auto}
+#panelMoc .chartwrap svg{width:100%;height:auto;min-width:640px;display:block;font-family:var(--font-body)}
+#panelMoc .ketqua{display:flex;flex-direction:column;gap:12px;min-width:0}
+@media(min-width:1280px){#panelMoc .ketqua{position:sticky;top:14px;max-height:calc(100vh - 28px);overflow-y:auto;
+    padding-right:2px;scrollbar-width:thin}
+
+}
+#panelMoc .kq-box{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+#panelMoc .kq-hero{padding:16px 16px 14px;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,var(--green-soft),transparent)}
+#panelMoc .kq-hero.am{background:linear-gradient(180deg,var(--bad-soft),transparent)}
+#panelMoc .kq-lbl{font:600 10.5px var(--font-body);text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3)}
+#panelMoc .kq-val{font:700 30px/1.15 var(--font-display);margin-top:5px;color:var(--green);font-variant-numeric:tabular-nums}
+#panelMoc .kq-hero.am .kq-val{color:var(--bad)}
+#panelMoc .kq-sub{font-size:12px;color:var(--ink-2);margin-top:4px}
+#panelMoc .kq-sp:not(:empty){border-bottom:1px solid var(--line)}
+#panelMoc .kq-sp .sp{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;
+  padding:11px 16px;border-bottom:1px dashed var(--line)}
+#panelMoc .kq-sp .sp:last-child{border-bottom:0}
+#panelMoc .sp-ten{font:600 12.5px var(--font-body);color:var(--ink-2)}
+#panelMoc .sp-sl{font:700 22px/1.1 var(--font-display);font-variant-numeric:tabular-nums;margin-top:2px}
+#panelMoc .sp-gia{font:700 20px/1.1 var(--font-display);font-variant-numeric:tabular-nums;text-align:right;color:var(--green)}
+#panelMoc .sp-gia small{display:block;font:400 11px var(--font-body);color:var(--ink-3);margin-top:3px}
+#panelMoc .kq-rows{padding:6px 16px 14px}
+#panelMoc .kq-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:9px 0;
+  border-bottom:1px solid var(--line)}
+#panelMoc .kq-row:last-child{border-bottom:0}
+#panelMoc .kq-row>span{font-size:12.5px;color:var(--ink-2)}
+#panelMoc .kq-row>b{font:700 15px var(--font-body);font-variant-numeric:tabular-nums;text-align:right}
+#panelMoc .kq-row.k-moto>b{color:var(--moto)}
+#panelMoc .kq-row.k-pickup>b{color:var(--pickup)}
+#panelMoc .kq-note{font-size:11.5px;color:var(--ink-3);margin:-4px 0 0;padding:0 0 9px;border-bottom:1px solid var(--line);line-height:1.45}
+#panelMoc .kq-note:last-child{border-bottom:0;padding-bottom:0}
+#panelMoc .ketqua table{font-size:12.5px;width:100%;table-layout:fixed}
+#panelMoc .ketqua td, #panelMoc .ketqua th{padding:7px 4px;vertical-align:top}
+#panelMoc .ketqua td.num, #panelMoc .ketqua th.num{white-space:nowrap;width:108px}
+#panelMoc .ketqua .scroll{overflow-x:visible}
 </style>
 </head>
 <body>
@@ -296,6 +497,7 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
   <button id="btnSp" class="sp" aria-pressed="true">Shopee</button>
   <button id="btnTt" class="tt" aria-pressed="false">TikTok Shop</button>
   <button id="btnSi" class="si" aria-pressed="false">🏭 Sỉ / Phân phối</button>
+  <button id="btnMoc" class="moc" aria-pressed="false">🚚 Mốc giá &amp; sức chở</button>
 </div>
 
 <div id="panelSan">
@@ -509,6 +711,275 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
 </div>
 
 <button class="toggle" id="btnAdv">▾ Tuỳ chỉnh nâng cao (thuế, phí dịch vụ, vận chuyển)</button>
+
+<div id="panelMoc" style="display:none">
+<div class="cols">
+    <aside class="rail">
+
+      <section class="card c-amber">
+        <header><h2>Đơn hàng đang tính</h2></header>
+        <div class="body">
+          <div class="fgrid two">
+            <div class="field"><label for="reqT">Thùng Tofu đặt</label><input id="reqT" type="number" value="10" min="0" step="1"></div>
+            <div class="field"><label for="reqC">Thùng Cassava đặt</label><input id="reqC" type="number" value="5" min="0" step="1"></div>
+          </div>
+          <div style="margin-top:12px">
+            <label>Tính giá theo</label>
+            <div class="seg" id="segCombined">
+              <button type="button" data-v="0" class="on">Riêng từng loại</button>
+              <button type="button" data-v="1">Gộp tổng cả 2 loại</button>
+            </div>
+            <p class="hint" id="hintCombined">Mỗi loại tra giá theo đúng số thùng của chính nó.</p>
+          </div>
+          <div style="margin-top:12px">
+            <label>Bảng giá dùng</label>
+            <div class="seg" id="segTable">
+              <button type="button" data-v="full" class="on">Đầy đủ (QĐ-21-2026)</button>
+              <button type="button" data-v="gapped">Có khoảng trống (web cũ)</button>
+            </div>
+            <p class="hint" id="hintTable"></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card c-amber">
+        <header><h2>Quy tắc chọn xe</h2></header>
+        <div class="body">
+          <label for="nguongBanTai">Chỉ chuyển sang bán tải khi đơn lấp đầy ≥ bao nhiêu % sức chở</label>
+          <input id="nguongBanTai" type="number" value="70" min="0" max="100" step="5">
+          <p class="hint">Xe máy đi trước, nhiều chuyến cũng được. Chỉ dùng bán tải khi nó xong đơn trong <b>1 chuyến</b> và lấp đầy ≥ mức này.</p>
+        </div>
+      </section>
+
+      <section class="card c-violet">
+        <header><h2>Phân khu vực chở hàng</h2></header>
+        <div class="body">
+          <div class="seg" id="segPhanKhu">
+            <button type="button" data-v="auto" class="on">Máy tự chia</button>
+            <button type="button" data-v="tay">Tự chọn tay</button>
+          </div>
+          <p class="hint" id="hintPhanKhu" style="margin-bottom:0">Máy thử mọi cách chia, lấy cách đều nhất cho cả 2 loại.</p>
+          <div id="khuVucBox" hidden style="margin-top:12px"></div>
+        </div>
+      </section>
+
+      <section class="card c-teal">
+        <header><h2>Sản phẩm &amp; giá vốn</h2></header>
+        <div class="body">
+          <div class="fgrid two">
+            <div class="field"><label for="vonT">Vốn/thùng Tofu (đ)</label><input id="vonT" type="number" value="277600" step="1000"></div>
+            <div class="field"><label for="vonC">Vốn/thùng Cassava (đ)</label><input id="vonC" type="number" value="312000" step="1000"></div>
+          </div>
+          <div class="fgrid two" style="margin-top:10px">
+            <div class="field"><label for="mgVat">VAT (%)</label><input id="mgVat" type="number" value="8" step="1"></div>
+            <div class="field"><label for="mgTndn">Thuế TNDN (%)</label>
+              <select id="mgTndn"><option value="15">15%</option><option value="20" selected>20%</option></select>
+            </div>
+          </div>
+          <div style="margin-top:6px">
+            <label for="vonVat">Giá vốn nhập trên là</label>
+            <select id="vonVat"><option value="1" selected>Đã gồm VAT</option><option value="0">Chưa gồm VAT</option></select>
+          </div>
+          <div class="fgrid two" style="margin-top:10px">
+            <div class="field"><label for="dongGoi">Đóng gói/thùng (đ)</label><input id="dongGoi" type="number" value="0" step="500"></div>
+            <div class="field"><label for="dongGoiVat">Đóng gói trên</label>
+              <select id="dongGoiVat"><option value="0" selected>Không hoá đơn VAT</option><option value="1">Có hoá đơn VAT</option></select>
+            </div>
+          </div>
+          <p class="hint">Lãi = giá bán − vốn − đóng gói − chi phí giao (đều là số thuần), rồi trừ TNDN. Giống tab Sỉ.</p>
+        </div>
+      </section>
+
+      <section class="card c-violet">
+        <header><h2>Chi phí chuyến giao</h2></header>
+        <div class="body">
+          <div class="field"><label for="km">Khoảng cách tới khách (km, 1 chiều)</label><input id="km" type="number" value="10" step="1"></div>
+          <p class="hint" style="margin-top:6px">Chung cho cả hai xe. Các thông số còn lại khai riêng từng xe bên dưới.</p>
+
+          <div class="vehparam p-moto">
+            <div class="vh"><span class="dot"></span>🏍 Xe máy <span class="fuel">xăng</span></div>
+            <div class="fgrid two">
+              <div class="field"><label for="xangM">Xăng (đ/lít)</label><input id="xangM" type="number" value="24239" step="100"></div>
+              <div class="field"><label for="haoM">Hao (L/100km)</label><input id="haoM" type="number" value="2.5" step="0.1"></div>
+            </div>
+            <div class="fgrid three" style="margin-top:8px">
+              <div class="field"><label for="baoduongM">Bảo dưỡng đ/km</label><input id="baoduongM" type="number" value="300" step="10"></div>
+              <div class="field"><label for="tocM">Tốc độ km/h</label><input id="tocM" type="number" value="25" step="1"></div>
+              <div class="field"><label for="bocM">Bốc/dỡ phút</label><input id="bocM" type="number" value="15" step="1"></div>
+            </div>
+            <div class="field" style="margin-top:8px"><label for="luongM">Công người chạy (đ/giờ)</label><input id="luongM" type="number" value="40000" step="1000"></div>
+            <p class="chiphi" id="cpMotoNote">—</p>
+          </div>
+
+          <div class="vehparam p-pickup">
+            <div class="vh"><span class="dot"></span>🛻 Bán tải Navara <span class="fuel">dầu</span></div>
+            <div class="fgrid two">
+              <div class="field"><label for="xangP">Dầu (đ/lít)</label><input id="xangP" type="number" value="20500" step="100"></div>
+              <div class="field"><label for="haoP">Hao (L/100km)</label><input id="haoP" type="number" value="9.5" step="0.1"></div>
+            </div>
+            <div class="fgrid three" style="margin-top:8px">
+              <div class="field"><label for="baoduongP">Bảo dưỡng đ/km</label><input id="baoduongP" type="number" value="1200" step="50"></div>
+              <div class="field"><label for="tocP">Tốc độ km/h</label><input id="tocP" type="number" value="35" step="1"></div>
+              <div class="field"><label for="bocP">Bốc/dỡ phút</label><input id="bocP" type="number" value="25" step="1"></div>
+            </div>
+            <div class="field" style="margin-top:8px"><label for="luongP">Công tài xế (đ/giờ)</label><input id="luongP" type="number" value="60000" step="1000"></div>
+            <p class="chiphi" id="cpPickupNote">—</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <header><h2>Sức chở mỗi chuyến</h2></header>
+        <div class="body">
+          <p class="hint" style="margin-top:0">Số máy tính ra chỉ là <b>ước lượng theo kích thước</b> — thực tế chở được nhiều hơn. Chọn <b>Tự đặt</b> để khai đúng số thật.</p>
+
+          <div class="vehparam p-moto">
+            <div class="vh"><span class="dot"></span>🏍 Xe máy</div>
+            <div class="seg" id="segCapMoto">
+              <button type="button" data-v="auto" class="on">Máy tính theo kích thước</button>
+              <button type="button" data-v="tay">Tự đặt</button>
+            </div>
+            <div id="capMotoAuto" class="hint" style="margin-top:8px">—</div>
+            <div id="capMotoTay" hidden style="margin-top:10px">
+              <div class="fgrid two">
+                <div class="field"><label for="capMT">Tofu (thùng/chuyến)</label><input id="capMT" type="number" value="8" min="1" step="1"></div>
+                <div class="field"><label for="capMC">Cassava (thùng/chuyến)</label><input id="capMC" type="number" value="8" min="1" step="1"></div>
+              </div>
+              <p class="hint" style="margin-bottom:0">Chở lẫn thì quy theo tỉ lệ: khai 8 mỗi loại thì 4 Tofu + 4 Cassava là vừa 1 chuyến.</p>
+            </div>
+            <div id="canhBaoTaiMoto"></div>
+          </div>
+
+          <div class="vehparam p-pickup">
+            <div class="vh"><span class="dot"></span>🛻 Bán tải Navara</div>
+            <div class="seg" id="segCapPickup">
+              <button type="button" data-v="auto" class="on">Máy tính theo kích thước</button>
+              <button type="button" data-v="tay">Tự đặt</button>
+            </div>
+            <div id="capPickupAuto" class="hint" style="margin-top:8px">—</div>
+            <div id="capPickupTay" hidden style="margin-top:10px">
+              <div class="fgrid two">
+                <div class="field"><label for="capPT">Tofu (thùng/chuyến)</label><input id="capPT" type="number" value="60" min="1" step="1"></div>
+                <div class="field"><label for="capPC">Cassava (thùng/chuyến)</label><input id="capPC" type="number" value="56" min="1" step="1"></div>
+              </div>
+            </div>
+            <div id="canhBaoTaiPickup"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <header><h2>Kích thước &amp; tải trọng <span class="mono" style="font-size:11px;color:var(--ink-3);font-weight:400">(nền cho chế độ máy tính)</span></h2></header>
+        <div class="body">
+          <label style="margin-bottom:6px">🏍 Ba-ga xe máy (mm)</label>
+          <div class="fgrid three">
+            <div class="field"><label for="mRackW">Rộng ba-ga</label><input id="mRackW" type="number" value="320"></div>
+            <div class="field"><label for="mOverW">Nhô ngang/bên</label><input id="mOverW" type="number" value="300"></div>
+            <div class="field"><label for="mRackL">Dài ba-ga</label><input id="mRackL" type="number" value="300"></div>
+          </div>
+          <div class="fgrid three" style="margin-top:8px">
+            <div class="field"><label for="mOverL">Nhô dài sau</label><input id="mOverL" type="number" value="500"></div>
+            <div class="field"><label for="mRackH">Cao ba-ga</label><input id="mRackH" type="number" value="700"></div>
+            <div class="field"><label for="mLegalH">Cao tối đa luật</label><input id="mLegalH" type="number" value="1500"></div>
+          </div>
+          <div class="field" style="margin-top:8px"><label for="mMaxKg">Tải trọng an toàn xe máy (kg)</label><input id="mMaxKg" type="number" value="80"></div>
+
+          <label style="margin:14px 0 6px">🛻 Bán tải Navara (mm)</label>
+          <div class="fgrid three">
+            <div class="field"><label for="pBedL">Dài thùng</label><input id="pBedL" type="number" value="1509"></div>
+            <div class="field"><label for="pBedW">Rộng thùng</label><input id="pBedW" type="number" value="1560"></div>
+            <div class="field"><label for="pBedH">Cao thùng</label><input id="pBedH" type="number" value="519"></div>
+          </div>
+          <div class="fgrid three" style="margin-top:8px">
+            <div class="field"><label for="pArchW">Rộng giữa vòm</label><input id="pArchW" type="number" value="1134"></div>
+            <div class="field"><label for="pArchL">Dài giữa vòm</label><input id="pArchL" type="number" value="700"></div>
+            <div class="field"><label for="pMaxKg">Tải trọng (kg)</label><input id="pMaxKg" type="number" value="900"></div>
+          </div>
+          <div class="fgrid three" style="margin-top:8px">
+            <div class="field"><label for="pCabL">Dài cabin sau</label><input id="pCabL" type="number" value="550"></div>
+            <div class="field"><label for="pCabW">Rộng cabin sau</label><input id="pCabW" type="number" value="1300"></div>
+            <div class="field"><label for="pCabH">Cao cabin sau</label><input id="pCabH" type="number" value="1000"></div>
+          </div>
+
+          <label style="margin:14px 0 6px">📦 Thùng hàng</label>
+          <div class="fgrid three">
+            <div class="field"><label for="tL">Tofu L×W×H</label><input id="tL" type="text" value="400,225,243"></div>
+            <div class="field"><label for="cL">Cassava L×W×H</label><input id="cL" type="text" value="400,305,195"></div>
+            <div class="field"><label for="boxKg">Kg / thùng</label><input id="boxKg" type="number" value="17"></div>
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <main class="main">
+
+      <section class="card c-teal">
+        <header><h2>Bảng giá theo mốc số lượng</h2><span class="hint" id="lblBangHienTai" style="margin:0">—</span></header>
+        <div class="body">
+          <div class="scroll"><table>
+            <thead><tr><th>Mốc (thùng)</th><th class="num">Tofu đ/túi</th><th>Xe gợi ý</th><th class="num">Cassava đ/túi</th><th>Xe gợi ý</th></tr></thead>
+            <tbody id="priceTable"></tbody>
+          </table></div>
+          <p class="hint">1 thùng = 8 túi. Xe gợi ý ở đây tính cho đơn <b>nguyên 1 loại</b>; đơn trộn 2 loại xem khung "Xếp xe".</p>
+        </div>
+      </section>
+
+      <section class="card c-amber">
+        <header><h2>Xếp xe cho đơn hiện tại</h2><span class="hint" id="lblDonHienTai" style="margin:0">—</span></header>
+        <div class="body">
+          <div class="vcards" id="vcards"></div>
+          <div class="callout" id="lyDoXeBox" style="margin-top:12px"></div>
+        </div>
+      </section>
+
+      <section class="card c-violet">
+        <header><h2>So sánh chi phí giao theo bậc</h2><span class="hint" id="lblChartMix" style="margin:0">—</span></header>
+        <div class="body">
+          <p class="hint" style="margin-top:0">Chi phí giao/thùng ở mỗi bậc: <b style="color:var(--moto)">chỉ xe máy</b> so với <b style="color:var(--pickup)">chỉ bán tải</b>. ⭐ là xe quy tắc đang chọn.</p>
+          <div class="legend" id="chartLegend"></div>
+          <div class="chartwrap"><svg id="chuyenChart" viewBox="0 0 900 320" role="img" aria-label="So sánh chi phí giao mỗi thùng giữa xe máy và bán tải theo từng bậc giá"></svg></div>
+          <div class="scroll"><table style="margin-top:10px">
+            <thead><tr><th>Bậc (thùng)</th><th class="num">Xe máy đ/thùng</th><th class="num">Bán tải đ/thùng</th><th>Đang chọn</th></tr></thead>
+            <tbody id="tbodyChart"></tbody>
+          </table></div>
+        </div>
+      </section>
+
+    </main>
+
+    <aside class="ketqua">
+      <div class="kq-box">
+        <div class="kq-hero" id="kLai">
+          <div class="kq-lbl">Lợi nhuận sau thuế</div>
+          <div class="kq-val" id="kLaiVal">—</div>
+          <div class="kq-sub" id="kLaiSub">—</div>
+        </div>
+        <div class="kq-sp" id="kSp"></div>
+        <div class="kq-rows">
+          <div class="kq-row"><span>Tổng tiền hàng</span><b id="kTien">—</b></div>
+          <p class="kq-note" id="kTienSub">—</p>
+          <div class="kq-row" id="kXe"><span>Xe đề xuất</span><b id="kXeVal">—</b></div>
+          <p class="kq-note" id="kXeSub">—</p>
+          <div class="kq-row"><span>Chi phí giao / thùng</span><b id="kShip">—</b></div>
+          <p class="kq-note" id="kShipSub">—</p>
+        </div>
+      </div>
+
+      <section class="card c-green">
+        <header><h2>Chi tiết lợi nhuận</h2></header>
+        <div class="body">
+          <div class="scroll"><table>
+            <thead><tr><th>Khoản</th><th class="num">Thành tiền</th></tr></thead>
+            <tbody id="tbodyProfit"></tbody>
+          </table></div>
+          <details style="margin-top:10px">
+            <summary style="cursor:pointer;font-size:12.5px;color:var(--ink-2)">Ba dòng VAT nghĩa là gì?</summary>
+            <div class="callout" id="profitNote" style="margin-top:8px"></div>
+          </details>
+        </div>
+      </section>
+    </aside>
+</div>
 
 <div class="adv" id="adv">
 
@@ -1478,6 +1949,15 @@ function chonSan_(san){
   $('btnSp').setAttribute('aria-pressed', san === 'sp' ? 'true' : 'false');
   $('btnTt').setAttribute('aria-pressed', san === 'tt' ? 'true' : 'false');
   $('btnSi').setAttribute('aria-pressed', san === 'si' ? 'true' : 'false');
+  $('btnMoc').setAttribute('aria-pressed', san === 'moc' ? 'true' : 'false');
+  /* Tab Mốc giá & sức chở (21/09/2026): panel riêng, KHÔNG dùng chung ô nhập/
+     dữ liệu với Shopee/TikTok/Sỉ — nên ẩn hết mọi thứ của 2 luồng kia. */
+  var laMoc = san === 'moc';
+  $('panelMoc').style.display = laMoc ? '' : 'none';
+  $('adv').style.display = laMoc ? 'none' : '';
+  $('btnAdv').style.display = laMoc ? 'none' : '';
+  document.querySelector('.wrap').classList.toggle('rongMoc', laMoc);
+  if (laMoc){ if (window.mocInit_) window.mocInit_(); $('panelSan').style.display='none'; $('panelSi').style.display='none'; return; }
   var laSi = san === 'si';
   $('panelSan').style.display = laSi ? 'none' : '';
   $('panelSi').style.display = laSi ? '' : 'none';
@@ -1502,6 +1982,7 @@ function chonSan_(san){
 $('btnSp').addEventListener('click', function(){ chonSan_('sp'); });
 $('btnTt').addEventListener('click', function(){ chonSan_('tt'); });
 $('btnSi').addEventListener('click', function(){ chonSan_('si'); });
+$('btnMoc').addEventListener('click', function(){ chonSan_('moc'); });
 
 $('phapNhanSel').addEventListener('change', function(){
   var dn = this.value === 'dn';
@@ -1789,6 +2270,728 @@ veDsLuu();
   }
   SAN = oldSan;
   console.log(fail === 0 ? 'Tự kiểm tra: OK (2/2)' : ('Tự kiểm tra: ' + fail + ' lỗi'));
+})();
+</script>
+
+<script>
+/* ===== TAB MỐC GIÁ & SỨC CHỞ — bọc IIFE: bên trong có $ / vnd / pct / n /
+   render trùng tên với phần Shopee/TikTok/Sỉ ở trên, bọc lại để hai bên
+   không đè nhau. Chỉ lộ ra đúng window.mocInit_ cho chonSan_() gọi. ===== */
+(function(){
+var $=function(id){return document.getElementById(id)};
+function vnd(x){ if(x===null||x===undefined) return '—'; return Math.round(x).toLocaleString('vi-VN')+'đ' }
+function pct(x){ return (x*100).toFixed(1).replace('.',',')+'%' }
+function n(id){ var v=parseFloat($(id).value); return isNaN(v)?0:v }
+function parseBox(id){ return $(id).value.split(',').map(function(s){return parseFloat(s)||0}) }
+
+/* ===== B1-B4: xep xe (port nguyen van tu tai lieu) ===== */
+function fitCount(zoneL,zoneW,zoneH,box){
+  var h=box[2]; if(h<=0||zoneH<h) return 0;
+  var layers=Math.floor(zoneH/h), a=box[0], b=box[1];
+  var perLayer=Math.max(Math.floor(zoneL/a)*Math.floor(zoneW/b), Math.floor(zoneL/b)*Math.floor(zoneW/a));
+  return Math.max(0, perLayer*layers);
+}
+function motoZones(cfg){
+  return [{name:'Ba-ga chở hàng (tối đa theo luật)', L:cfg.rackL+cfg.overL, W:cfg.rackW+2*cfg.overW, H:Math.max(0,cfg.legalH-cfg.rackH)}];
+}
+function pickupZones(cfg){
+  var openL=Math.max(0, cfg.bedL-cfg.archL);
+  return [
+    {name:'Giữa 2 vòm bánh', L:cfg.archL, W:cfg.archW, H:cfg.bedH},
+    {name:'Đoạn thùng còn lại', L:openL, W:cfg.bedW, H:cfg.bedH},
+    {name:'Cabin ghế sau', L:cfg.cabL, W:cfg.cabW, H:cfg.cabH}
+  ];
+}
+function zoneCap(zone,box){ return fitCount(zone.L,zone.W,zone.H,box) }
+function vehicleCap(zones,box,wPerBox,maxW){
+  var byVol=zones.reduce(function(s,z){return s+zoneCap(z,box)},0);
+  var byWeight=wPerBox>0?Math.floor(maxW/wPerBox):Infinity;
+  return Math.max(0, Math.min(byVol,byWeight));
+}
+function badgeFor(qty,capMoto,capPickup){
+  if(qty<=0) return null;
+  if(qty<=capMoto) return {level:'moto', label:'🏍 Xe máy'};
+  if(qty<=capPickup) return {level:'pickup', label:'🛻 Bán tải'};
+  var trips=Math.ceil(qty/Math.max(capPickup,1));
+  return {level:'pickup multi', label:'🛻 ×'+trips+' chuyến'};
+}
+function findTierPrice(table,qty){
+  if(qty<=0) return null; var match=null;
+  table.forEach(function(t){ var to=(t.to===null||t.to===undefined)?Infinity:t.to; if(qty>=t.from&&qty<=to) match=t.pricePerBag; });
+  return match;
+}
+function calcOrderPrice(tofuTable,cassavaTable,reqT,reqC,combined){
+  var lookupT=combined?(reqT+reqC):reqT, lookupC=combined?(reqT+reqC):reqC;
+  var pT=findTierPrice(tofuTable,lookupT), pC=findTierPrice(cassavaTable,lookupC);
+  var lineT=reqT>0?(pT===null?null:pT*8*reqT):0, lineC=reqC>0?(pC===null?null:pC*8*reqC):0;
+  return {pricePerBagTofu:pT, pricePerBagCassava:pC, lineTotalTofu:lineT, lineTotalCassava:lineC,
+    grandTotal:(lineT===null||lineC===null)?null:lineT+lineC, missingTier:(reqT>0&&pT===null)||(reqC>0&&pC===null)};
+}
+function bestComboForZones(zones,tBox,cBox,reqT,reqC){
+  var nz=zones.length, best=null;
+  for(var mask=0; mask<Math.pow(2,nz); mask++){
+    var achT=0, achC=0, assign=[];
+    for(var i=0;i<nz;i++){ var isC=(mask>>i)&1;
+      if(isC){ achC+=zoneCap(zones[i],cBox); assign.push(zones[i].name+': Cassava') }
+      else { achT+=zoneCap(zones[i],tBox); assign.push(zones[i].name+': Tofu') }
+    }
+    var ratioT=reqT>0?achT/reqT:Infinity, ratioC=reqC>0?achC/reqC:Infinity, fill=Math.min(ratioT,ratioC);
+    if(!best||fill>best.fill) best={fill:fill, achT:achT, achC:achC, assign:assign};
+  }
+  return best;
+}
+/* Chu tu phan khu vuc (them 21/09/2026 theo yeu cau "tu quyen phan so luong
+   cu the cua hang hoa thay vi bi cuong ep") — dung DUNG cach chia chu chon,
+   khong brute-force tim cach toi uu nua. 'T'=Tofu, 'C'=Cassava, 'X'=de trong. */
+function comboTheoPhanCong(zones,tBox,cBox,reqT,reqC,phanCong){
+  var achT=0, achC=0, assign=[];
+  zones.forEach(function(z,i){
+    var a=phanCong[i]||'T';
+    if(a==='C'){ achC+=zoneCap(z,cBox); assign.push(z.name+': Cassava') }
+    else if(a==='X'){ assign.push(z.name+': (để trống)') }
+    else { achT+=zoneCap(z,tBox); assign.push(z.name+': Tofu') }
+  });
+  var ratioT=reqT>0?achT/reqT:Infinity, ratioC=reqC>0?achC/reqC:Infinity;
+  return {fill:Math.min(ratioT,ratioC), achT:achT, achC:achC, assign:assign,
+    thieuKhuT:(reqT>0&&achT===0), thieuKhuC:(reqC>0&&achC===0)};
+}
+/* ================================================================
+   SUC CHO DO CHU TU DAT (them 21/09/2026): "xe may co the cho len 8 thung thay
+   vi 4 nhu he thong do co the bo thung don bao gon hon... pha bo khuon kho
+   guong ep". Khi bat, BO HAN mo hinh xep hinh hoc theo khu vuc cho xe do va
+   dung dung con so chu khai. Don tron 2 loai thi quy theo ti le cho chiem:
+   dung = qT/capT + qC/capC; <= 1 la vua 1 chuyen. Tai trong VAN kiem nhu cu
+   (chu tu sua o "tai trong an toan" neu xe chiu duoc nang hon) — khong am tham
+   bo qua, nhung cung khong chan chu.
+   ================================================================ */
+function evalSucChoTuDat(vehicle,wT,wC,reqT,reqC){
+  var ov=vehicle.capOverride, capT=ov.T||0, capC=ov.C||0;
+  var impossible=(reqT>0&&capT<=0)||(reqC>0&&capC<=0);
+  var dung=(capT>0?reqT/capT:0)+(capC>0?reqC/capC:0);
+  var volFill = impossible ? 0 : (dung>0 ? 1/dung : Infinity);
+  var weightNeeded=reqT*wT+reqC*wC;
+  var weightFill=vehicle.maxW>0?vehicle.maxW/Math.max(weightNeeded,1e-9):Infinity;
+  var fill=Math.min(volFill,weightFill);
+  var TRIP_CAP=999;
+  var rawTrips=(reqT+reqC)<=0||impossible?0:Math.ceil(1/Math.max(fill,1/TRIP_CAP));
+  var overWeight=!impossible&&weightFill<1, overVolOnly=!impossible&&!overWeight&&volFill<1;
+  return {
+    verdict: impossible?'IMPOSSIBLE':overWeight?'OVER_WEIGHT':overVolOnly?'OVER_VOLUME':'OK',
+    trips:Math.min(rawTrips,TRIP_CAP), fillByVolume:volFill, fillByWeight:weightFill, tuDatCap:true,
+    achievableTofu:capT, achievableCassava:capC, weightNeededKg:weightNeeded,
+    zoneAssignment:['Sức chở tự đặt: '+capT+' thùng Tofu hoặc '+capC+' thùng Cassava mỗi chuyến']
+  };
+}
+
+function evaluateCombo(vehicle,tBox,cBox,wT,wC,reqT,reqC,phanCong){
+  if (vehicle.capOverride) return evalSucChoTuDat(vehicle,wT,wC,reqT,reqC);
+  var tuTay = !!(phanCong && phanCong.length);
+  var vol = tuTay ? comboTheoPhanCong(vehicle.zones,tBox,cBox,reqT,reqC,phanCong)
+                  : bestComboForZones(vehicle.zones,tBox,cBox,reqT,reqC);
+  var weightNeeded=reqT*wT+reqC*wC;
+  var weightFill=vehicle.maxW>0?vehicle.maxW/Math.max(weightNeeded,1e-9):Infinity;
+  var fill=Math.min(vol.fill, weightFill);
+  var soloCapT=vehicle.zones.reduce(function(s,z){return s+zoneCap(z,tBox)},0);
+  var soloCapC=vehicle.zones.reduce(function(s,z){return s+zoneCap(z,cBox)},0);
+  var impossible=(reqT>0&&soloCapT===0)||(reqC>0&&soloCapC===0);
+  // Xe 1 khu (xe may) + don co ca 2 loai -> van la CANNOT_MIX nhu cu.
+  var cannotMix = !impossible && reqT>0 && reqC>0 && vehicle.zones.length<2 && vol.fill<=0;
+  // Tu chia tay ma quen chua khu nao cho mot loai dang co trong don -> bao rieng.
+  // BUG THAT chu bao 21/09/2026: truoc do dieu kien nay doi zones.length>=2 nen xe may
+  // (1 khu) gan nham loai — vd don toan Tofu ma gan khu cho Cassava — khong roi vao day,
+  // cung khong phai cannotMix (vi chi co 1 loai trong don), nen tut xuong nhanh duoi va
+  // tinh ceil(1/fill) voi fill=0 -> ra dung 999 chuyen. Bo rang buoc so khu di.
+  var thieuKhu = !impossible && !cannotMix && tuTay && (vol.thieuKhuT||vol.thieuKhuC);
+  var TRIP_CAP=999;
+  var rawTrips=(reqT+reqC)<=0||impossible||cannotMix||thieuKhu?0:Math.ceil(1/Math.max(fill,1/TRIP_CAP));
+  var trips=Math.min(rawTrips,TRIP_CAP);
+  var overWeight=!impossible&&!cannotMix&&!thieuKhu&&weightFill<1;
+  var overVolOnly=!impossible&&!cannotMix&&!thieuKhu&&!overWeight&&vol.fill<1;
+  return {
+    verdict: impossible?'IMPOSSIBLE':thieuKhu?'THIEU_KHU':cannotMix?'CANNOT_MIX':overWeight?'OVER_WEIGHT':overVolOnly?'OVER_VOLUME':'OK',
+    trips:trips, fillByVolume:vol.fill, fillByWeight:weightFill, tuTay:tuTay,
+    achievableTofu:vol.achT, achievableCassava:vol.achC, weightNeededKg:weightNeeded, zoneAssignment:vol.assign
+  };
+}
+
+/* ===== Chi phi chuyen — muon dung cong thuc Si/Phan phoi (siCpChuyen_) ===== */
+function tripCost(p){
+  var k=p.km*2;
+  return k*(p.hao/100)*p.xang + k*p.baoduong + (k/p.toc + p.boc/60)*p.luong;
+}
+
+/* ===== Chon xe: xe may di truoc (ke ca nhieu chuyen), CHI doi sang ban tai khi
+   ban tai gom het don trong DUNG 1 chuyen VA chuyen do lap day >= nguong %.
+   Tach thanh 1 ham dung chung cho ca khung "Xep xe cho don hien tai" LAN bieu do
+   "So sanh chi phi theo bac" — tranh viet 2 lan cung 1 logic quyet dinh. ===== */
+function chonXeChoDon(qT, qC, ctx){
+  var vMoto=ctx.vMoto, vPickup=ctx.vPickup, boxT=ctx.boxT, boxC=ctx.boxC, boxKg=ctx.boxKg,
+      pickupMaxKg=ctx.pickupMaxKg, nguongBanTai=ctx.nguongBanTai;
+  var tong = qT+qC;
+  var evMoto = evaluateCombo(vMoto, boxT, boxC, boxKg, boxKg, qT, qC, ctx.phanCongMoto);
+  var evPickup = evaluateCombo(vPickup, boxT, boxC, boxKg, boxKg, qT, qC, ctx.phanCongPickup);
+  var xeDung=null, tripsDung=0, lyDoXe='';
+  if (evMoto.verdict === 'OK') {
+    xeDung='moto'; tripsDung=1; lyDoXe='Xe máy đủ chở cả đơn trong 1 chuyến.';
+  } else {
+    var volCapPickup = evPickup.achievableTofu + evPickup.achievableCassava;
+    var weightCapPickup = evPickup.weightNeededKg>0 ? (pickupMaxKg*tong/evPickup.weightNeededKg) : Infinity;
+    var pickupMaxChoMix = Math.min(volCapPickup, weightCapPickup);
+    var lapDayBanTai = pickupMaxChoMix>0 ? tong/pickupMaxChoMix : 0;
+    if (evPickup.verdict==='OK' && lapDayBanTai>=nguongBanTai) {
+      xeDung='pickup'; tripsDung=1;
+      lyDoXe='Xe máy không đủ 1 chuyến; bán tải gom hết đơn trong 1 chuyến và lấp đầy '+pct(lapDayBanTai)+' (≥ ngưỡng '+(nguongBanTai*100)+'%) — đổi bán tải tối ưu hơn.';
+    } else if (evMoto.verdict==='CANNOT_MIX') {
+      var soloT = evaluateCombo(vMoto, boxT, boxC, boxKg, boxKg, qT, 0);
+      var soloC = evaluateCombo(vMoto, boxT, boxC, boxKg, boxKg, 0, qC);
+      if (soloT.verdict!=='IMPOSSIBLE' && soloC.verdict!=='IMPOSSIBLE') {
+        xeDung='moto-tach'; tripsDung=soloT.trips+soloC.trips;
+        lyDoXe='Xe máy chỉ có 1 khu vực, không chở lẫn 2 loại — tách thành '+soloT.trips+' chuyến Tofu + '+soloC.trips+' chuyến Cassava.';
+      } else if (evPickup.verdict!=='IMPOSSIBLE' && evPickup.verdict!=='THIEU_KHU') {
+        xeDung='pickup'; tripsDung=evPickup.trips;
+        lyDoXe='Có loại xe máy không chở được dù tách riêng — buộc dùng bán tải.';
+      } else if (evPickup.verdict==='THIEU_KHU') {
+        lyDoXe='Xe máy không chở được loại này; cách chia khu vực bán tải cũng chưa có chỗ cho một loại — sửa ở khung Phân khu vực.';
+      }
+    } else if (evMoto.verdict==='IMPOSSIBLE') {
+      if (evPickup.verdict!=='IMPOSSIBLE' && evPickup.verdict!=='THIEU_KHU') {
+        xeDung='pickup'; tripsDung=evPickup.trips;
+        lyDoXe='Thùng hàng to hơn mọi khu vực xe máy — buộc dùng bán tải.';
+      } else if (evPickup.verdict==='THIEU_KHU') {
+        lyDoXe='Chỉ bán tải chở được, nhưng cách chia khu vực chưa có chỗ cho một loại — sửa ở khung Phân khu vực.';
+      }
+    } else if (evMoto.verdict==='THIEU_KHU') {
+      // BUG THAT bat duoc khi test 21/09/2026: truoc do nhanh "else" duoi cung om luon
+      // ca THIEU_KHU, nen chon xe may voi trips=0 -> hien "chia 0 chuyen xe may".
+      if (evPickup.verdict!=='IMPOSSIBLE' && evPickup.verdict!=='THIEU_KHU') {
+        xeDung='pickup'; tripsDung=evPickup.trips;
+        lyDoXe='Khu vực xe máy đang gán cho loại khác nên xe máy không nhận được đơn này — chuyển bán tải ('+evPickup.trips+' chuyến). Sửa ở khung "Phân khu vực chở hàng" nếu muốn đi xe máy.';
+      } else {
+        lyDoXe='Cả hai xe đều không nhận được: cách chia khu vực chưa có chỗ cho một loại — sửa ở khung Phân khu vực.';
+      }
+    } else {
+      xeDung='moto'; tripsDung=evMoto.trips;
+      if (evPickup.verdict==='OK') {
+        lyDoXe='Bán tải tuy chở hết trong 1 chuyến nhưng chỉ lấp đầy '+pct(lapDayBanTai)+' (dưới ngưỡng '+(nguongBanTai*100)+'%) — ưu tiên chia '+evMoto.trips+' chuyến xe máy.';
+      } else if (evPickup.verdict==='IMPOSSIBLE') {
+        lyDoXe='Bán tải cũng không chở được (thùng to hơn mọi khu vực) — chia '+evMoto.trips+' chuyến xe máy.';
+      } else if (evPickup.verdict==='THIEU_KHU') {
+        lyDoXe='Cách chia khu vực bán tải đang chọn chưa dành chỗ cho một loại trong đơn nên không so được — chia '+evMoto.trips+' chuyến xe máy.';
+      } else {
+        lyDoXe='Bán tải cũng cần tới '+evPickup.trips+' chuyến (không chỉ 1) nên không có lợi thế — chia '+evMoto.trips+' chuyến xe máy.';
+      }
+    }
+  }
+  return {xeDung:xeDung, tripsDung:tripsDung, lyDoXe:lyDoXe, evMoto:evMoto, evPickup:evPickup};
+}
+/* Chi phi/thung neu BAT BUOC dung nguyen 1 loai xe (dung cho bieu do so sanh).
+   Moi xe an chi phi/chuyen RIENG (ctx.cpMoto / ctx.cpPickup) — xang khac dau,
+   muc hao khac, bao duong khac, cong nguoi chay khac. */
+function chiPhiRiengXe(qT, qC, loai, ctx){
+  var tong=qT+qC; if(tong<=0) return null;
+  var trips, cp;
+  if (loai==='moto') {
+    cp = ctx.cpMoto;
+    if (qT>0 && qC>0) {
+      var soloT=evaluateCombo(ctx.vMoto, ctx.boxT, ctx.boxC, ctx.boxKg, ctx.boxKg, qT, 0);
+      var soloC=evaluateCombo(ctx.vMoto, ctx.boxT, ctx.boxC, ctx.boxKg, ctx.boxKg, 0, qC);
+      if (soloT.verdict==='IMPOSSIBLE' || soloC.verdict==='IMPOSSIBLE') return null;
+      trips = soloT.trips+soloC.trips;
+    } else {
+      var ev=evaluateCombo(ctx.vMoto, ctx.boxT, ctx.boxC, ctx.boxKg, ctx.boxKg, qT, qC);
+      if (ev.verdict==='IMPOSSIBLE') return null;
+      trips = ev.trips;
+    }
+  } else {
+    cp = ctx.cpPickup;
+    var evP=evaluateCombo(ctx.vPickup, ctx.boxT, ctx.boxC, ctx.boxKg, ctx.boxKg, qT, qC, ctx.phanCongPickup);
+    if (evP.verdict==='IMPOSSIBLE' || evP.verdict==='THIEU_KHU') return null;
+    trips = evP.trips;
+  }
+  return {trips:trips, perUnit:(cp*trips)/tong};
+}
+
+/* ===== Loi nhuan — muon dung cong thuc Si/Phan phoi (siLai_) ===== */
+function margin(giaBanThung, vonThung, chiPhiGiaoThung, prm){
+  var vonGomVat = prm.vonVat ? vonThung : vonThung*(1+prm.vat);
+  var dongGoiThuan = prm.dongGoiVat ? prm.dongGoi/(1+prm.vat) : prm.dongGoi;
+  var lntt = giaBanThung/(1+prm.vat) - vonGomVat/(1+prm.vat) - dongGoiThuan - chiPhiGiaoThung;
+  var lnst = lntt>0 ? lntt*(1-prm.tndn) : lntt;
+  return {lntt:lntt, lnst:lnst};
+}
+
+/* ===== Bang gia ===== */
+var TABLE_FULL = {
+  tofu:[{from:1,to:2,pricePerBag:79000},{from:3,to:4,pricePerBag:77000},{from:5,to:9,pricePerBag:75000},
+    {from:10,to:15,pricePerBag:70000},{from:16,to:34,pricePerBag:68000},{from:35,to:39,pricePerBag:63000},
+    {from:40,to:119,pricePerBag:58000},{from:120,to:null,pricePerBag:50000}],
+  cassava:[{from:1,to:2,pricePerBag:84000},{from:3,to:4,pricePerBag:82000},{from:5,to:9,pricePerBag:80000},
+    {from:10,to:15,pricePerBag:75000},{from:16,to:34,pricePerBag:73000},{from:35,to:39,pricePerBag:68000},
+    {from:40,to:119,pricePerBag:63000},{from:120,to:null,pricePerBag:55000}]
+};
+var TABLE_GAPPED = {
+  tofu:[{from:1,to:2,pricePerBag:79000},{from:3,to:4,pricePerBag:77000},{from:5,to:9,pricePerBag:75000},
+    {from:10,to:16,pricePerBag:70000},{from:52,to:52,pricePerBag:60000},{from:104,to:104,pricePerBag:50000}],
+  cassava:[{from:1,to:2,pricePerBag:84000},{from:3,to:4,pricePerBag:82000},{from:5,to:9,pricePerBag:80000},
+    {from:10,to:16,pricePerBag:75000},{from:52,to:52,pricePerBag:65000},{from:104,to:104,pricePerBag:55000}]
+};
+
+var STATE = {combined:false, table:'full', phanKhu:'auto',
+  assignMoto:['T'], assignPickup:['T','C','T'], sigKhu:'',
+  capMoto:'auto', capPickup:'auto'};
+
+document.querySelectorAll('#segCombined button').forEach(function(b){
+  b.addEventListener('click', function(){
+    document.querySelectorAll('#segCombined button').forEach(function(x){x.classList.remove('on')});
+    this.classList.add('on'); STATE.combined = this.dataset.v==='1';
+    $('hintCombined').textContent = STATE.combined
+      ? 'Tra giá theo tổng Tofu + Cassava — dùng khi khách mua kết hợp đủ số lượng hưởng mốc cao hơn.'
+      : 'Mỗi loại tra giá theo đúng số thùng của chính nó.';
+    render();
+  });
+});
+document.querySelectorAll('#segTable button').forEach(function(b){
+  b.addEventListener('click', function(){
+    document.querySelectorAll('#segTable button').forEach(function(x){x.classList.remove('on')});
+    this.classList.add('on'); STATE.table = this.dataset.v;
+    render();
+  });
+});
+document.querySelectorAll('#segPhanKhu button').forEach(function(b){
+  b.addEventListener('click', function(){
+    document.querySelectorAll('#segPhanKhu button').forEach(function(x){x.classList.remove('on')});
+    this.classList.add('on'); STATE.phanKhu = this.dataset.v;
+    $('khuVucBox').hidden = STATE.phanKhu!=='tay';
+    $('hintPhanKhu').textContent = STATE.phanKhu==='tay'
+      ? 'Chủ tự quyết khu vực nào chở loại nào. Máy chỉ tính sức chứa theo đúng cách chia này, không tự đổi.'
+      : 'Máy thử hết mọi cách chia khu vực rồi lấy cách đáp ứng đều nhất cho cả 2 loại.';
+    STATE.sigKhu = ''; // buoc ve lai danh sach khu vuc
+    render();
+  });
+});
+[['segCapMoto','capMoto','capMotoTay','capMotoAuto'],['segCapPickup','capPickup','capPickupTay','capPickupAuto']]
+.forEach(function(cf){
+  document.querySelectorAll('#'+cf[0]+' button').forEach(function(b){
+    b.addEventListener('click', function(){
+      document.querySelectorAll('#'+cf[0]+' button').forEach(function(x){x.classList.remove('on')});
+      this.classList.add('on'); STATE[cf[1]] = this.dataset.v;
+      $(cf[2]).hidden = this.dataset.v!=='tay';
+      $(cf[3]).hidden = this.dataset.v==='tay';
+      STATE.sigKhu=''; render();
+    });
+  });
+});
+/* Doi loai hang cua 1 khu vuc — dung uy quyen su kien vi danh sach khu duoc ve lai
+   moi khi thong so xe doi (ten khu + suc chua thay doi theo). */
+document.addEventListener('change', function(e){
+  var el = e.target;
+  if (!el.dataset || el.dataset.khuXe===undefined) return;
+  var i = +el.dataset.khuI;
+  if (el.dataset.khuXe==='moto') STATE.assignMoto[i] = el.value;
+  else STATE.assignPickup[i] = el.value;
+  render();
+});
+
+var ALL_IDS = ['reqT','reqC','vonT','vonC','mgVat','mgTndn','vonVat','dongGoi','dongGoiVat','nguongBanTai',
+  'km','xangM','haoM','baoduongM','tocM','luongM','bocM',
+  'xangP','haoP','baoduongP','tocP','luongP','bocP',
+  'capMT','capMC','capPT','capPC',
+  'mRackW','mOverW','mRackL','mOverL','mRackH','mLegalH','mMaxKg',
+  'pBedL','pBedW','pBedH','pArchW','pArchL','pMaxKg','pCabL','pCabW','pCabH','tL','cL','boxKg'];
+ALL_IDS.forEach(function(id){ $(id).addEventListener('input', render); $(id).addEventListener('change', render); });
+
+function esc(s){ var d=document.createElement('div'); d.textContent=s; return d.innerHTML }
+
+/* ================================================================
+   PHAN KHU VUC CHO HANG BANG TAY — them 21/09/2026 theo yeu cau chu:
+   "cho them tinh nang tu quyen phan so luong cu the cua hang hoa thay vi bi
+   cuong ep". Truoc do bestComboForZones() tu brute-force chon cach chia, chu
+   khong can thiep duoc. Nay moi khu vuc co 1 o chon: Tofu / Cassava / de trong,
+   kem so thung THUC TE xep vua khu do de chu thay ngay hau qua cua lua chon.
+   Chi ve lai danh sach khi cau truc/suc chua doi (khong ve lai moi lan go phim)
+   — tranh dang chon dở thì bi thay DOM moi, mat lua chon.
+   ================================================================ */
+/* Chu tu dat suc cho cao hon muc tai trong khai bao thi noi thang ra — khong chan,
+   chi bao de chu biet minh dang cho qua tai an toan da khai (va chi cho o sua). */
+function canhBaoTai_(id, ov, boxKg, maxKg, tenXe){
+  var el=$(id); if(!el) return;
+  if(!ov){ el.innerHTML=''; return }
+  var capMax=Math.max(ov.T||0, ov.C||0), kg=capMax*boxKg;
+  if(maxKg>0 && kg>maxKg){
+    el.innerHTML='<div class="canhbao">⚠ '+capMax+' thùng × '+boxKg+'kg = <b>'+kg+'kg</b>, vượt tải trọng an toàn '+
+      maxKg+'kg đang khai cho '+tenXe+'. Máy vẫn tính theo số anh đặt nhưng sẽ báo <b>OVER_WEIGHT</b> — '+
+      'nếu xe chịu được thật thì sửa ô “Tải trọng an toàn” ở khung Kích thước &amp; tải trọng bên dưới.</div>';
+  } else el.innerHTML='';
+}
+
+function vePhanKhu_(motoZ, pickZ, boxT, boxC){
+  var box = $('khuVucBox');
+  if (STATE.phanKhu !== 'tay'){ box.hidden = true; return }
+  box.hidden = false;
+  var dsKhu = motoZ.map(function(z){return {xe:'moto', z:z}})
+    .concat(pickZ.map(function(z){return {xe:'pickup', z:z}}));
+  var sig = dsKhu.map(function(k){ return k.xe+'|'+k.z.name+'|'+zoneCap(k.z,boxT)+'|'+zoneCap(k.z,boxC) }).join('#')
+    + '#' + STATE.assignMoto.join('') + STATE.assignPickup.join('')
+    + '#' + STATE.capMoto + STATE.capPickup;
+  if (sig === STATE.sigKhu) return;   // khong co gi doi -> giu nguyen DOM
+  STATE.sigKhu = sig;
+
+  /* VIET LAI 21/09/2026 — chu bao "doc vao khong hieu gi het". Ban cu chi co
+     1 dong ten khu + 2 con so 24 lap lai + o select ghi "Tofu (24)" — khong noi
+     ro so nao la gi. Ban nay: moi khu la 1 the, cau hoi ro rang "Khu nay cho gi?",
+     va ngay duoi la mot cau tieng Viet day du noi hau qua cua lua chon. */
+  function theKhu(xe, i, z, val){
+    var capT = zoneCap(z, boxT), capC = zoneCap(z, boxC);
+    var ketQua, mau;
+    if (val==='X'){ ketQua = 'Không chở gì — để trống khu này.'; mau='var(--ink-3)'; }
+    else if (val==='C'){ ketQua = capC>0 ? ('Xếp được <b>'+capC+' thùng Cassava</b> mỗi chuyến.') : 'Thùng Cassava <b>không lọt</b> khu này.'; mau='var(--ink-2)'; }
+    else { ketQua = capT>0 ? ('Xếp được <b>'+capT+' thùng Tofu</b> mỗi chuyến.') : 'Thùng Tofu <b>không lọt</b> khu này.'; mau='var(--ink-2)'; }
+    return '<div class="khu">'+
+      '<div class="khu-top"><span class="khu-ten">'+esc(z.name)+'</span>'+
+        '<select data-khu-xe="'+xe+'" data-khu-i="'+i+'">'+
+          '<option value="T"'+(val==='T'?' selected':'')+'>Chở Tofu</option>'+
+          '<option value="C"'+(val==='C'?' selected':'')+'>Chở Cassava</option>'+
+          '<option value="X"'+(val==='X'?' selected':'')+'>Để trống</option>'+
+        '</select></div>'+
+      '<div class="khu-kq" style="color:'+mau+'">→ '+ketQua+'</div>'+
+    '</div>';
+  }
+  function nhomHtml(nhan, cls, zones, xe, assign, tuDatCap){
+    var than = tuDatCap
+      ? '<div class="khu-tudat">Xe này đang dùng <b>sức chở tự đặt</b> nên không chia khu vực. Muốn chia khu thì đổi về “Máy tính theo kích thước”.</div>'
+      : zones.map(function(z,i){ return theKhu(xe, i, z, assign[i]||'T') }).join('');
+    return '<div class="vehparam '+cls+'" style="margin-top:0"><div class="vh"><span class="dot"></span>'+nhan+'</div>'+than+'</div>';
+  }
+  box.innerHTML =
+    nhomHtml('🏍 Xe máy', 'p-moto', motoZ, 'moto', STATE.assignMoto, STATE.capMoto==='tay') +
+    '<div style="height:12px"></div>' +
+    nhomHtml('🛻 Bán tải Navara', 'p-pickup', pickZ, 'pickup', STATE.assignPickup, STATE.capPickup==='tay');
+}
+
+/* Duong top-round cho 1 cot bieu do — chi bo 2 goc tren, chan cot (baseline)
+   giu vuong, dung 4px theo mark-spec cua skill dataviz. */
+function roundTopRectPath(x,y,w,h,r){
+  if (h<=0.5) return '';
+  r = Math.max(0, Math.min(r, w/2, h));
+  return 'M'+x+','+(y+h)+' L'+x+','+(y+r)+' Q'+x+','+y+' '+(x+r)+','+y+
+    ' L'+(x+w-r)+','+y+' Q'+(x+w)+','+y+' '+(x+w)+','+(y+r)+' L'+(x+w)+','+(y+h)+' Z';
+}
+
+/* ================================================================
+   BIEU DO "SO SANH CHI PHI GIAO THEO BAC" — them 21/09/2026, chu yeu cau
+   "tich hop so sanh loi thiet chi phi cac loai van chuyen... theo bieu do
+   cang tot de tien so sanh theo tung bac". Dung LAI dung 1 bo mac (chonXeChoDon,
+   chiPhiRiengXe) voi khung "Xep xe cho don hien tai" — khong viet 2 lan.
+   Theo dung skill dataviz: mau moto/pickup da chay validate_palette.js (PASS
+   ca 2 mode), legend truoc bieu do, nhan truc tiep chon loc (chi so tien tren
+   cot, khong nhoi so tren moi diem), bang du lieu di kem cho ai can doc so
+   that thay vi doan qua chieu cao cot, tooltip hover qua <title> tren tung cot.
+   ================================================================ */
+function veChuyenChart_(table, tongThungHienTai, reqT, reqC, ctxXe){
+  var ratioT = tongThungHienTai>0 ? reqT/tongThungHienTai : 0.5;
+  var tiers = table.tofu.map(function(t){
+    var qty = (t.to===null||t.to===undefined) ? Math.round(t.from*1.4) : t.to;
+    qty = Math.min(qty, 300);
+    var qT = Math.round(qty*ratioT), qC = qty-qT;
+    if (qT<=0 && qC<=0) qC = qty; // phong ho ratioT=0 tron
+    var label = (t.to===null||t.to===undefined) ? (t.from+'+') : (t.from===t.to ? String(t.from) : t.from+'–'+t.to);
+    var moto = chiPhiRiengXe(qT, qC, 'moto', ctxXe);
+    var pickup = chiPhiRiengXe(qT, qC, 'pickup', ctxXe);
+    var qd = chonXeChoDon(qT, qC, ctxXe);
+    return {label:label, qty:qty, qT:qT, qC:qC, moto:moto, pickup:pickup, chon:qd.xeDung};
+  });
+
+  $('lblChartMix').textContent = 'Tỉ lệ dùng: '+Math.round(ratioT*100)+'% Tofu · '+Math.round((1-ratioT)*100)+'% Cassava (theo đơn đang tính)';
+  $('chartLegend').innerHTML =
+    '<span class="lg moto"><i class="sw"></i>Chỉ xe máy — '+vnd(ctxXe.cpMoto)+'/chuyến</span>'+
+    '<span class="lg pickup"><i class="sw"></i>Chỉ bán tải — '+vnd(ctxXe.cpPickup)+'/chuyến</span>'+
+    '<span class="lg">⭐ đang được quy tắc chọn xe áp dụng</span>';
+
+  // ---- bang so lieu (accessibility: luon co ban doc duoc thay cho bieu do) ----
+  $('tbodyChart').innerHTML = tiers.map(function(d){
+    var chonLabel = {moto:'🏍 Xe máy', 'moto-tach':'🏍 Xe máy (tách loại)', pickup:'🛻 Bán tải'}[d.chon] || '—';
+    return '<tr><td class="mono">'+d.label+'</td>'+
+      '<td class="num" style="color:var(--moto)">'+(d.moto?vnd(d.moto.perUnit):'—')+'</td>'+
+      '<td class="num" style="color:var(--pickup)">'+(d.pickup?vnd(d.pickup.perUnit):'—')+'</td>'+
+      '<td>'+chonLabel+'</td></tr>';
+  }).join('');
+
+  // ---- bieu do cot doi ----
+  var W=900, H=320, L=64, R=14, T=20, B=54;
+  var vals = []; tiers.forEach(function(d){ if(d.moto) vals.push(d.moto.perUnit); if(d.pickup) vals.push(d.pickup.perUnit); });
+  var raw = vals.length ? Math.max.apply(null, vals) : 1000;
+  var e = Math.pow(10, Math.floor(Math.log10(raw/4||1))), u = raw/4/e;
+  var step = (u<=1?1:u<=2?2:u<=5?5:10)*e, vmax = Math.ceil(raw*1.12/step)*step || step;
+  var innerW = W-L-R, innerH = H-T-B;
+  var n = tiers.length || 1, groupW = innerW/n;
+  var barW = Math.min(30, groupW*0.32), gapBar = 4;
+  var y = function(v){ return T + (1 - v/vmax) * innerH; };
+  var fmtY = function(v){ return v>=1000 ? Math.round(v/1000)+'k' : Math.round(v); };
+
+  var s = '';
+  // gridlines + nhan truc Y
+  for (var v=0; v<=vmax+1e-6; v+=step){
+    var yy=y(v);
+    s += '<line x1="'+L+'" y1="'+yy+'" x2="'+(W-R)+'" y2="'+yy+'" stroke="var(--chart-grid)" stroke-width="1"/>'+
+      '<text x="'+(L-9)+'" y="'+(yy+4)+'" text-anchor="end" fill="var(--ink-3)" font-size="11">'+fmtY(v)+'đ</text>';
+  }
+  // baseline dam hon
+  s += '<line x1="'+L+'" y1="'+y(0)+'" x2="'+(W-R)+'" y2="'+y(0)+'" stroke="var(--line-2)" stroke-width="1.5"/>';
+
+  tiers.forEach(function(d, i){
+    var gx = L + i*groupW;
+    var cx = gx + groupW/2;
+    var xMoto = cx - gapBar/2 - barW, xPickup = cx + gapBar/2;
+    [['moto', xMoto, 'var(--moto)'], ['pickup', xPickup, 'var(--pickup)']].forEach(function(pair){
+      var key=pair[0], bx=pair[1], color=pair[2], res=d[key];
+      if (!res){
+        // khong cho duoc (IMPOSSIBLE) — ve gach cheo nho bao hieu, khong ve cot
+        s += '<text x="'+(bx+barW/2)+'" y="'+(y(0)-6)+'" text-anchor="middle" fill="var(--bad)" font-size="14" font-weight="700">✕</text>';
+        return;
+      }
+      var h = (y(0) - y(res.perUnit));
+      var by = y(res.perUnit);
+      var star = d.chon===key || (key==='moto' && d.chon==='moto-tach');
+      s += '<g><title>'+esc(d.label+' thùng · '+(key==='moto'?'Xe máy':'Bán tải')+': '+vnd(res.perUnit)+'/thùng · '+res.trips+' chuyến')+'</title>'+
+        '<path d="'+roundTopRectPath(bx, by, barW, h, 4)+'" fill="'+color+'" opacity="'+(star?'1':'.62')+'"/>'+
+        (star ? '<text x="'+(bx+barW/2)+'" y="'+(by-14)+'" text-anchor="middle" fill="'+color+'" font-size="13">★</text>' : '')+
+        '<text x="'+(bx+barW/2)+'" y="'+(by-3)+'" text-anchor="middle" fill="var(--ink-2)" font-size="9.5" font-family="var(--font-mono)">'+fmtY(res.perUnit)+'</text>'+
+        '</g>';
+    });
+    s += '<text x="'+cx+'" y="'+(H-B+22)+'" text-anchor="middle" fill="var(--ink-2)" font-size="11.5" font-weight="600" font-family="var(--font-mono)">'+esc(d.label)+'</text>';
+  });
+
+  $('chuyenChart').innerHTML = s;
+}
+
+function render(){
+  var table = STATE.table==='full' ? TABLE_FULL : TABLE_GAPPED;
+  $('lblBangHienTai').textContent = STATE.table==='full' ? 'Đang dùng: bảng đầy đủ (QĐ-21-2026)' : 'Đang dùng: bảng có khoảng trống (web cũ)';
+  $('hintTable').textContent = STATE.table==='full'
+    ? 'Không có khoảng trống — mọi số lượng đều tra được giá, khớp văn bản pháp lý đã ký.'
+    : 'Mốc 17–51 và 53–103 thùng KHÔNG có giá — đơn rơi vào đó sẽ báo "chưa có mốc".';
+
+  var moto = {rackW:n('mRackW'), overW:n('mOverW'), rackL:n('mRackL'), overL:n('mOverL'), rackH:n('mRackH'), legalH:n('mLegalH'), maxKg:n('mMaxKg')};
+  var pickup = {bedL:n('pBedL'), bedW:n('pBedW'), bedH:n('pBedH'), archW:n('pArchW'), archL:n('pArchL'), maxKg:n('pMaxKg'), cabL:n('pCabL'), cabW:n('pCabW'), cabH:n('pCabH')};
+  var boxT = parseBox('tL'), boxC = parseBox('cL'), boxKg = n('boxKg');
+  var motoZ = motoZones(moto), pickZ = pickupZones(pickup);
+
+  var capMotoT = vehicleCap(motoZ, boxT, boxKg, moto.maxKg);
+  var capMotoC = vehicleCap(motoZ, boxC, boxKg, moto.maxKg);
+  var capPickupT = vehicleCap(pickZ, boxT, boxKg, pickup.maxKg);
+  var capPickupC = vehicleCap(pickZ, boxC, boxKg, pickup.maxKg);
+
+  // ---- bang gia ----
+  var maxLen = Math.max(table.tofu.length, table.cassava.length);
+  var rows='';
+  for(var i=0;i<maxLen;i++){
+    var t=table.tofu[i], c=table.cassava[i];
+    var moc = t ? (t.to===null?t.from+'+':(t.from===t.to?t.from:t.from+'–'+t.to)) : (c?(c.to===null?c.from+'+':(c.from===c.to?c.from:c.from+'–'+c.to)):'');
+    var qtyT = t ? (t.to===null?t.from:t.to) : 0, qtyC = c ? (c.to===null?c.from:c.to) : 0;
+    var bT = t ? badgeFor(qtyT, capMotoT, capPickupT) : null;
+    var bC = c ? badgeFor(qtyC, capMotoC, capPickupC) : null;
+    rows += '<tr><td class="mono">'+moc+'</td>'+
+      '<td class="num">'+(t?vnd(t.pricePerBag):'—')+'</td>'+
+      '<td>'+(bT?'<span class="pill '+bT.level+'">'+bT.label+'</span>':'—')+'</td>'+
+      '<td class="num">'+(c?vnd(c.pricePerBag):'—')+'</td>'+
+      '<td>'+(bC?'<span class="pill '+bC.level+'">'+bC.label+'</span>':'—')+'</td></tr>';
+  }
+  $('priceTable').innerHTML = rows;
+
+  // ---- don hang hien tai ----
+  var reqT=n('reqT'), reqC=n('reqC');
+  var order = calcOrderPrice(table.tofu, table.cassava, reqT, reqC, STATE.combined);
+  $('lblDonHienTai').textContent = reqT+' thùng Tofu · '+reqC+' thùng Cassava';
+
+  function spHTML(ten, sl, giaTui){
+    if (!(sl>0)) return '';
+    var giaThung = giaTui!==null ? giaTui*8 : null;   /* 1 thung = 8 tui, dung nguyen quy uoc cua file */
+    return '<div class="sp"><div><div class="sp-ten">'+ten+'</div><div class="sp-sl">'+sl+' thùng</div></div>'
+      + '<div class="sp-gia">'+(giaTui!==null?vnd(giaTui)+'/túi':'—')
+      + '<small>'+(giaThung!==null?vnd(giaThung)+'/thùng':'chưa có giá')+'</small></div></div>';
+  }
+  $('kSp').innerHTML = spHTML('Tofu', reqT, order.pricePerBagTofu)
+    + spHTML('Cassava', reqC, order.pricePerBagCassava);
+
+  $('kTien').textContent = order.missingTier ? 'Chưa có giá' : vnd(order.grandTotal);
+  /* Don gia/tui da nam o khoi kSp ngay tren — dong nay chi con canh bao khoang trong. */
+  $('kTienSub').textContent = order.missingTier ? 'Số lượng rơi vào khoảng trống bảng giá' : '';
+  $('kTienSub').style.display = order.missingTier ? '' : 'none';
+
+  // ---- xep xe cho don hien tai ----
+  var vMoto = {zones:motoZ, maxW:moto.maxKg}, vPickup = {zones:pickZ, maxW:pickup.maxKg};
+
+  // Suc cho: may tinh theo kich thuoc, hoac chu tu dat (khong con bi ep theo hinh hoc)
+  var capAutoMT=capMotoT, capAutoMC=capMotoC, capAutoPT=capPickupT, capAutoPC=capPickupC;
+  $('capMotoAuto').innerHTML = 'Máy tính ra: <b style="color:var(--moto)">'+capAutoMT+' thùng Tofu</b> hoặc <b style="color:var(--moto)">'+capAutoMC+' thùng Cassava</b> mỗi chuyến (đã tính cả giới hạn tải trọng '+moto.maxKg+'kg).';
+  $('capPickupAuto').innerHTML = 'Máy tính ra: <b style="color:var(--pickup)">'+capAutoPT+' thùng Tofu</b> hoặc <b style="color:var(--pickup)">'+capAutoPC+' thùng Cassava</b> mỗi chuyến (đã tính cả giới hạn tải trọng '+pickup.maxKg+'kg).';
+  if (STATE.capMoto==='tay') vMoto.capOverride = {T:n('capMT'), C:n('capMC')};
+  if (STATE.capPickup==='tay') vPickup.capOverride = {T:n('capPT'), C:n('capPC')};
+  canhBaoTai_('canhBaoTaiMoto', vMoto.capOverride, boxKg, moto.maxKg, 'xe máy');
+  canhBaoTai_('canhBaoTaiPickup', vPickup.capOverride, boxKg, pickup.maxKg, 'bán tải');
+
+  // Chi phi 1 chuyen RIENG tung xe — xang/dau, muc hao, bao duong, toc do, cong
+  // nguoi chay deu khac nhau (chu yeu cau 21/09/2026). Cung cong thuc tripCost()
+  // muon tu tab Si, chi khac bo tham so dua vao.
+  var kmChung = n('km');
+  var prmMoto = {km:kmChung, xang:n('xangM'), hao:n('haoM'), baoduong:n('baoduongM'), toc:n('tocM'), luong:n('luongM'), boc:n('bocM')};
+  var prmPickup = {km:kmChung, xang:n('xangP'), hao:n('haoP'), baoduong:n('baoduongP'), toc:n('tocP'), luong:n('luongP'), boc:n('bocP')};
+  var cpMoto = tripCost(prmMoto), cpPickup = tripCost(prmPickup);
+  $('cpMotoNote').innerHTML = 'Chi phí 1 chuyến (khứ hồi '+(kmChung*2)+'km): <b>'+vnd(cpMoto)+'</b>';
+  $('cpPickupNote').innerHTML = 'Chi phí 1 chuyến (khứ hồi '+(kmChung*2)+'km): <b>'+vnd(cpPickup)+'</b>'+
+    (cpMoto>0 ? ' <span style="font-weight:500;color:var(--ink-3)">— gấp '+(cpPickup/cpMoto).toFixed(1).replace('.',',')+'× xe máy</span>' : '');
+
+  // Phan khu vuc: tu dong (may chia) hay tu chon tay
+  vePhanKhu_(motoZ, pickZ, boxT, boxC);
+  var phanCongMoto = STATE.phanKhu==='tay' ? STATE.assignMoto.slice(0, motoZ.length) : null;
+  var phanCongPickup = STATE.phanKhu==='tay' ? STATE.assignPickup.slice(0, pickZ.length) : null;
+
+  var evMoto = evaluateCombo(vMoto, boxT, boxC, boxKg, boxKg, reqT, reqC, phanCongMoto);
+  var evPickup = evaluateCombo(vPickup, boxT, boxC, boxKg, boxKg, reqT, reqC, phanCongPickup);
+
+  var MSG = {
+    IMPOSSIBLE: 'Thùng 1 loại to hơn mọi khu vực của xe này — đổi phương tiện hoặc đóng gói lại kích thước thùng.',
+    CANNOT_MIX: 'Xe chỉ có 1 khu vực chở hàng, không chở lẫn 2 loại cùng chuyến — tách đơn thành 2 chuyến riêng theo từng loại.',
+    THIEU_KHU: 'Cách chia khu vực chưa có chỗ cho một loại hàng trong đơn — sửa ở khung Phân khu vực.',
+    OVER_WEIGHT: 'Vượt tải trọng an toàn dù còn chỗ chứa — giảm hàng hoặc chia thành nhiều chuyến.',
+    OVER_VOLUME: 'Vượt chỗ chứa dù tải trọng còn dư — chia nhiều chuyến hoặc giảm xuống mức xếp vừa.',
+    OK: 'Vừa đúng 1 chuyến.'
+  };
+  function fillLabel(v){
+    if(!isFinite(v)) return '—';
+    if(v>9.99) return '≥999%';
+    return pct(v);
+  }
+  function vcardHtml(cls, name, ev){
+    var rows = '<div class="r"><span>Số chuyến cần</span><b>'+(ev.trips||'—')+'</b></div>'+
+      '<div class="r"><span>Lấp đầy theo thể tích</span><b>'+fillLabel(ev.fillByVolume)+'</b></div>'+
+      '<div class="r"><span>Lấp đầy theo tải trọng</span><b>'+fillLabel(ev.fillByWeight)+'</b></div>'+
+      '<div class="r"><span>Khối lượng cần chở</span><b>'+ev.weightNeededKg.toFixed(1)+' kg</b></div>';
+    var zones = (ev.zoneAssignment&&ev.verdict!=='IMPOSSIBLE'&&ev.verdict!=='CANNOT_MIX') ?
+      '<div class="zonelist">'+ev.zoneAssignment.map(function(z){var p=z.split(': '); return '<div><span>'+esc(p[0])+'</span><b>'+esc(p[1])+'</b></div>'}).join('')+'</div>' : '';
+    return '<div class="vcard '+cls+'"><div class="vhead"><h3>'+name+'</h3><span class="verdict '+ev.verdict+'">'+ev.verdict+'</span></div>'+
+      '<p class="msg">'+MSG[ev.verdict]+'</p><div class="rows">'+rows+'</div>'+zones+'</div>';
+  }
+  $('vcards').innerHTML = vcardHtml('v-moto', '🏍 Xe máy', evMoto) + vcardHtml('v-pickup', '🛻 Bán tải Navara', evPickup);
+
+  var tongThung = reqT+reqC;
+  // ---- Chon xe cho don hien tai — dung chung ham chonXeChoDon() voi bieu do so sanh ----
+  var nguongBanTai = n('nguongBanTai')/100;
+  var ctxXe = {vMoto:vMoto, vPickup:vPickup, boxT:boxT, boxC:boxC, boxKg:boxKg, pickupMaxKg:pickup.maxKg,
+    nguongBanTai:nguongBanTai, cpMoto:cpMoto, cpPickup:cpPickup,
+    phanCongMoto:phanCongMoto, phanCongPickup:phanCongPickup};
+  var qd = chonXeChoDon(reqT, reqC, ctxXe);
+  var xeDung = qd.xeDung, tripsDung = qd.tripsDung, lyDoXe = qd.lyDoXe;
+  // Chi phi/chuyen lay DUNG theo xe duoc chon, khong dung chung 1 so nua.
+  var cpXeDung = (xeDung==='pickup') ? cpPickup : cpMoto;
+  var chiPhiGiaoThung = tongThung>0 && tripsDung>0 ? (cpXeDung*tripsDung)/tongThung : 0;
+  $('kShip').textContent = tongThung>0 ? vnd(chiPhiGiaoThung) : '—';
+  $('kShipSub').textContent = xeDung ? (tripsDung+' chuyến × '+vnd(cpXeDung)+' · chia đều '+tongThung+' thùng') : 'Chưa xác định được xe';
+
+  var xeLabel = {moto:'🏍 Xe máy', 'moto-tach':'🏍 Xe máy (tách loại)', pickup:'🛻 Bán tải'}[xeDung] || '—';
+  $('kXe').className = 'kq-row ' + (xeDung==='pickup' ? 'k-pickup' : xeDung ? 'k-moto' : '');
+  $('kXeVal').textContent = xeLabel;
+  $('kXeSub').textContent = tripsDung ? (tripsDung+' chuyến') : (xeDung ? '' : 'Không xe nào chở vừa — xem cảnh báo ở trên');
+  $('lyDoXeBox').innerHTML = xeDung ? ('<b>Vì sao chọn '+xeLabel+':</b> '+lyDoXe) : '<b>Không có xe nào chở vừa đơn này</b> — cả xe máy lẫn bán tải đều IMPOSSIBLE, xem cảnh báo ở 2 thẻ trên.';
+
+  veChuyenChart_(table, tongThung, reqT, reqC, ctxXe);
+
+  // ---- loi nhuan ----
+  var prmMargin = {vat:n('mgVat')/100, tndn:parseFloat($('mgTndn').value)/100, vonVat:$('vonVat').value==='1', dongGoi:n('dongGoi'), dongGoiVat:$('dongGoiVat').value==='1'};
+  var vonT=n('vonT'), vonC=n('vonC');
+  var giaBanT = order.pricePerBagTofu!==null ? order.pricePerBagTofu*8 : null;
+  var giaBanC = order.pricePerBagCassava!==null ? order.pricePerBagCassava*8 : null;
+
+  var mT = (reqT>0 && giaBanT!==null) ? margin(giaBanT, vonT, chiPhiGiaoThung, prmMargin) : null;
+  var mC = (reqC>0 && giaBanC!==null) ? margin(giaBanC, vonC, chiPhiGiaoThung, prmMargin) : null;
+
+  var lnttTong = (mT?mT.lntt*reqT:0) + (mC?mC.lntt*reqC:0);
+  var lnstTong = (mT?mT.lnst*reqT:0) + (mC?mC.lnst*reqC:0);
+
+  $('kLaiVal').textContent = (reqT===0&&reqC===0) ? '—' : vnd(lnstTong);
+  $('kLai').className = 'kq-hero' + (lnstTong<0?' am':'');
+  $('kLaiSub').textContent = order.grandTotal ? 'Biên '+pct(lnstTong/order.grandTotal) : '';
+
+  /* Cot ket qua ben hong hep (~340px) — 4 cot (SL/don gia/thanh tien) bop chu vo
+     xuong dong tung chu (chu bao 21/09/2026). Gop SL + don gia thanh dong phu duoi
+     nhan, chi con 2 cot: khoan | thanh tien. */
+  function rowP(nhan, phu, tien, opt){
+    opt = opt || {};
+    return '<tr'+(opt.tr||'')+'><td'+(opt.thut?' class="hint" style="padding-left:14px"':'')+'>'+nhan
+      + (phu ? '<div class="hint" style="font-size:11px;margin-top:2px">'+phu+'</div>' : '')
+      + '</td><td class="num'+(opt.tdc?' '+opt.tdc:'')+'">'+tien+'</td></tr>';
+  }
+  var rowsP = '';
+  if (reqT>0){
+    rowsP += rowP('Tofu — giá bán', reqT+' thùng × '+(giaBanT!==null?vnd(giaBanT):'—'), (order.lineTotalTofu!==null?vnd(order.lineTotalTofu):'—'));
+    rowsP += rowP('— giá vốn', vnd(vonT)+'/thùng', '-'+vnd(vonT*reqT), {thut:1});
+  }
+  if (reqC>0){
+    rowsP += rowP('Cassava — giá bán', reqC+' thùng × '+(giaBanC!==null?vnd(giaBanC):'—'), (order.lineTotalCassava!==null?vnd(order.lineTotalCassava):'—'));
+    rowsP += rowP('— giá vốn', vnd(vonC)+'/thùng', '-'+vnd(vonC*reqC), {thut:1});
+  }
+  rowsP += rowP('Chi phí giao (chia đều)', tripsDung+' chuyến · '+vnd(chiPhiGiaoThung)+'/thùng', '-'+vnd(chiPhiGiaoThung*tongThung));
+  if (prmMargin.dongGoi>0) rowsP += rowP('Đóng gói', tongThung+' thùng × '+vnd(prmMargin.dongGoi), '-'+vnd(prmMargin.dongGoi*tongThung));
+
+  /* ---- 3 dong VAT (chu bao 21/09/2026 "chua co phan tinh vat dau vao dau ra").
+     Cong thuc margin() VAN netting VAT y het tab Si tu truoc — chi la bang chi tiet
+     khong bay ra cho xem. Nay tach ro tung dong dung khuon tab Shopee/Si dang dung. */
+  var vatR = prmMargin.vat;
+  var dtCoVat = (order.lineTotalTofu||0) + (order.lineTotalCassava||0);
+  var vatDauRa = dtCoVat - dtCoVat/(1+vatR);
+  var vonCoVatT = prmMargin.vonVat ? vonT : vonT*(1+vatR);
+  var vonCoVatC = prmMargin.vonVat ? vonC : vonC*(1+vatR);
+  var vonCoVat = vonCoVatT*reqT + vonCoVatC*reqC;
+  var vatDauVaoVon = vonCoVat - vonCoVat/(1+vatR);
+  var dongGoiTong = prmMargin.dongGoi*tongThung;
+  var vatDauVaoDongGoi = prmMargin.dongGoiVat ? (dongGoiTong - dongGoiTong/(1+vatR)) : 0;
+  var vatPhaiNop = vatDauRa - vatDauVaoVon - vatDauVaoDongGoi;
+  if (vatR > 0){
+    rowsP += rowP('VAT đầu ra', 'nằm trong giá bán '+n('mgVat')+'%', '-'+vnd(vatDauRa), {tdc:'neg'});
+    rowsP += rowP('VAT đầu vào khấu trừ', 'từ giá vốn', '+'+vnd(vatDauVaoVon));
+    if (vatDauVaoDongGoi>0) rowsP += rowP('VAT đầu vào khấu trừ', 'từ đóng gói', '+'+vnd(vatDauVaoDongGoi));
+    rowsP += rowP('= VAT thực nộp cho đơn này', '', vnd(vatPhaiNop), {thut:1, tdc:'hint'});
+  }
+  rowsP += rowP('Lợi nhuận trước thuế', '', vnd(lnttTong), {tr:' style="font-weight:600"'});
+  rowsP += rowP('Thuế TNDN ('+$('mgTndn').value+'%)', '', '-'+vnd(Math.max(0,lnttTong)*prmMargin.tndn));
+  rowsP += rowP('Lợi nhuận sau thuế', '', vnd(lnstTong), {tr:' style="font-weight:700"'});
+  $('tbodyProfit').innerHTML = rowsP;
+
+  $('profitNote').innerHTML = order.missingTier
+    ? '<b>Số lượng này rơi vào khoảng trống của bảng giá</b> — đổi sang bảng "Đầy đủ" hoặc đổi số thùng.'
+    : '<b>Giá bán và giá vốn ở trên đều đã gồm VAT.</b> VAT đầu ra là thuế nằm sẵn trong giá bán (thu hộ nhà nước), VAT đầu vào là phần đã trả khi nhập hàng và được khấu trừ. Hiệu hai bên (' + vnd(vatPhaiNop) + ') là thuế GTGT thực nộp — tiền ra thật nhưng không phải chi phí, nên không trừ vào lợi nhuận. Chỉ TNDN mới ăn vào lãi.<br><br>Chi phí giao chia đều theo thùng, không phân biệt loại.';
+  luuMoc_();
+}
+
+/* Nho lai moi thu da nhap TREN DUNG MAY NAY — khoa RIENG cua tab nay, khong
+   dung chung / khong dung toi du lieu cua Shopee, TikTok, Si hay lich su da luu. */
+var MOC_KEY = "zaka_tinhgia_moc";
+function luuMoc_(){
+  try{
+    var d = {st:STATE, f:{}};
+    ALL_IDS.forEach(function(id){ d.f[id] = $(id).value });
+    localStorage.setItem(MOC_KEY, JSON.stringify(d));
+  }catch(e){}
+}
+function napMoc_(){
+  try{
+    var d = JSON.parse(localStorage.getItem(MOC_KEY) || "null");
+    if (!d) return;
+    ALL_IDS.forEach(function(id){ if (d.f && d.f[id] !== undefined && d.f[id] !== "") $(id).value = d.f[id] });
+    if (d.st) Object.keys(d.st).forEach(function(k){ if (d.st[k] !== undefined) STATE[k] = d.st[k] });
+    [["segCombined", STATE.combined?"1":"0"], ["segTable", STATE.table], ["segPhanKhu", STATE.phanKhu],
+     ["segCapMoto", STATE.capMoto], ["segCapPickup", STATE.capPickup]].forEach(function(c){
+      document.querySelectorAll("#"+c[0]+" button").forEach(function(b){ b.classList.toggle("on", b.dataset.v === c[1]) });
+    });
+    $("khuVucBox").hidden   = STATE.phanKhu   !== "tay";
+    $("capMotoTay").hidden  = STATE.capMoto   !== "tay";  $("capMotoAuto").hidden  = STATE.capMoto   === "tay";
+    $("capPickupTay").hidden= STATE.capPickup !== "tay";  $("capPickupAuto").hidden= STATE.capPickup === "tay";
+  }catch(e){}
+}
+napMoc_();
+
+render();
+window.mocInit_ = render;
 })();
 </script>
 </body>
