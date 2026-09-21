@@ -2320,12 +2320,25 @@ function findTierPrice(table,qty){
   table.forEach(function(t){ var to=(t.to===null||t.to===undefined)?Infinity:t.to; if(qty>=t.from&&qty<=to) match=t.pricePerBag; });
   return match;
 }
+/* SỬA 21/09/2026 — chủ chốt "dùng CẢ 2 BẢNG". Bảng cũ (web) thủng 2 khoảng
+   17–51 và 53–103 thùng: rơi vào đó thì trước đây báo "chưa có giá" và lợi nhuận
+   ra 0đ dù bên dưới vẫn trừ giá vốn/chi phí giao — nhìn như hỏng. Nay mốc nào
+   bảng cũ không có thì lấy giá của bảng đầy đủ (QĐ-21-2026), có ghi chú rõ. */
+function giaMoc_(table, bangDuPhong, qty){
+  var p = findTierPrice(table, qty);
+  if (p !== null) return {gia:p, duPhong:false};
+  p = findTierPrice(bangDuPhong, qty);
+  return {gia:p, duPhong:p !== null};
+}
 function calcOrderPrice(tofuTable,cassavaTable,reqT,reqC,combined){
   var lookupT=combined?(reqT+reqC):reqT, lookupC=combined?(reqT+reqC):reqC;
-  var pT=findTierPrice(tofuTable,lookupT), pC=findTierPrice(cassavaTable,lookupC);
+  var gT=giaMoc_(tofuTable,TABLE_FULL.tofu,lookupT), gC=giaMoc_(cassavaTable,TABLE_FULL.cassava,lookupC);
+  var pT=gT.gia, pC=gC.gia;
   var lineT=reqT>0?(pT===null?null:pT*8*reqT):0, lineC=reqC>0?(pC===null?null:pC*8*reqC):0;
   return {pricePerBagTofu:pT, pricePerBagCassava:pC, lineTotalTofu:lineT, lineTotalCassava:lineC,
-    grandTotal:(lineT===null||lineC===null)?null:lineT+lineC, missingTier:(reqT>0&&pT===null)||(reqC>0&&pC===null)};
+    grandTotal:(lineT===null||lineC===null)?null:lineT+lineC,
+    missingTier:(reqT>0&&pT===null)||(reqC>0&&pC===null),
+    duPhong:(reqT>0&&gT.duPhong)||(reqC>0&&gC.duPhong)};
 }
 function bestComboForZones(zones,tBox,cBox,reqT,reqC){
   var nz=zones.length, best=null;
@@ -2437,10 +2450,22 @@ function chonXeChoDon(qT, qC, ctx){
     var volCapPickup = evPickup.achievableTofu + evPickup.achievableCassava;
     var weightCapPickup = evPickup.weightNeededKg>0 ? (pickupMaxKg*tong/evPickup.weightNeededKg) : Infinity;
     var pickupMaxChoMix = Math.min(volCapPickup, weightCapPickup);
-    var lapDayBanTai = pickupMaxChoMix>0 ? tong/pickupMaxChoMix : 0;
-    if (evPickup.verdict==='OK' && lapDayBanTai>=nguongBanTai) {
-      xeDung='pickup'; tripsDung=1;
-      lyDoXe='Xe máy không đủ 1 chuyến; bán tải gom hết đơn trong 1 chuyến và lấp đầy '+pct(lapDayBanTai)+' (≥ ngưỡng '+(nguongBanTai*100)+'%) — đổi bán tải tối ưu hơn.';
+    /* SỬA 21/09/2026 — chủ hỏi đúng ca 104 thùng: trước đó chỉ cho bán tải thắng khi
+       nó xong đơn trong ĐÚNG 1 chuyến, nên đơn 104 thùng (bán tải cần 2 chuyến, mỗi
+       chuyến đầy ~98%) bị đẩy về 23 chuyến xe máy — tốn gấp ~5,7 lần, mâu thuẫn với
+       chính bảng so sánh chi phí ngay bên dưới. Ý chủ là "bán tải ĐỦ ĐƠN" tức đủ đầy,
+       không phải đủ trong 1 chuyến — nên tính độ lấp đầy trên số chuyến thật sự cần. */
+    var chuyenBanTai = (evPickup.verdict==='OK') ? 1
+      : ((evPickup.verdict==='OVER_WEIGHT' || evPickup.verdict==='OVER_VOLUME') ? evPickup.trips : 0);
+    var lapDayBanTai = (pickupMaxChoMix>0 && chuyenBanTai>0) ? tong/(pickupMaxChoMix*chuyenBanTai) : 0;
+    var motoThuong = (evMoto.verdict==='OVER_WEIGHT' || evMoto.verdict==='OVER_VOLUME');
+    var banTaiThang = lapDayBanTai>=nguongBanTai &&
+      (evPickup.verdict==='OK' || (chuyenBanTai>1 && motoThuong && chuyenBanTai<evMoto.trips));
+    if (banTaiThang) {
+      xeDung='pickup'; tripsDung=chuyenBanTai;
+      lyDoXe = chuyenBanTai===1
+        ? 'Xe máy không đủ 1 chuyến; bán tải gom hết đơn trong 1 chuyến và lấp đầy '+pct(lapDayBanTai)+' (≥ ngưỡng '+(nguongBanTai*100)+'%) — đổi bán tải tối ưu hơn.'
+        : 'Bán tải cần '+chuyenBanTai+' chuyến nhưng mỗi chuyến lấp đầy '+pct(lapDayBanTai)+' (≥ ngưỡng '+(nguongBanTai*100)+'%), trong khi xe máy phải đi '+evMoto.trips+' chuyến — đi bán tải rẻ hơn hẳn.';
     } else if (evMoto.verdict==='CANNOT_MIX') {
       var soloT = evaluateCombo(vMoto, boxT, boxC, boxKg, boxKg, qT, 0);
       var soloC = evaluateCombo(vMoto, boxT, boxC, boxKg, boxKg, 0, qC);
@@ -2478,7 +2503,7 @@ function chonXeChoDon(qT, qC, ctx){
       } else if (evPickup.verdict==='THIEU_KHU') {
         lyDoXe='Cách chia khu vực bán tải đang chọn chưa dành chỗ cho một loại trong đơn nên không so được — chia '+evMoto.trips+' chuyến xe máy.';
       } else {
-        lyDoXe='Bán tải cũng cần tới '+evPickup.trips+' chuyến (không chỉ 1) nên không có lợi thế — chia '+evMoto.trips+' chuyến xe máy.';
+        lyDoXe='Bán tải cần '+evPickup.trips+' chuyến mà mỗi chuyến chỉ lấp đầy '+pct(lapDayBanTai)+' (dưới ngưỡng '+(nguongBanTai*100)+'%) — chạy gần rỗng, thà chia '+evMoto.trips+' chuyến xe máy.';
       }
     }
   }
@@ -2769,7 +2794,7 @@ function render(){
   $('lblBangHienTai').textContent = STATE.table==='full' ? 'Đang dùng: bảng đầy đủ (QĐ-21-2026)' : 'Đang dùng: bảng có khoảng trống (web cũ)';
   $('hintTable').textContent = STATE.table==='full'
     ? 'Không có khoảng trống — mọi số lượng đều tra được giá, khớp văn bản pháp lý đã ký.'
-    : 'Mốc 17–51 và 53–103 thùng KHÔNG có giá — đơn rơi vào đó sẽ báo "chưa có mốc".';
+    : 'Bảng cũ thủng 2 khoảng 17–51 và 53–103 thùng — rơi vào đó máy tự lấy giá bảng đầy đủ và báo rõ.';
 
   var moto = {rackW:n('mRackW'), overW:n('mOverW'), rackL:n('mRackL'), overL:n('mOverL'), rackH:n('mRackH'), legalH:n('mLegalH'), maxKg:n('mMaxKg')};
   var pickup = {bedL:n('pBedL'), bedW:n('pBedW'), bedH:n('pBedH'), archW:n('pArchW'), archL:n('pArchL'), maxKg:n('pMaxKg'), cabL:n('pCabL'), cabW:n('pCabW'), cabH:n('pCabH')};
@@ -2815,8 +2840,10 @@ function render(){
 
   $('kTien').textContent = order.missingTier ? 'Chưa có giá' : vnd(order.grandTotal);
   /* Don gia/tui da nam o khoi kSp ngay tren — dong nay chi con canh bao khoang trong. */
-  $('kTienSub').textContent = order.missingTier ? 'Số lượng rơi vào khoảng trống bảng giá' : '';
-  $('kTienSub').style.display = order.missingTier ? '' : 'none';
+  var ghiChuGia = order.missingTier ? 'Số lượng rơi vào khoảng trống bảng giá'
+    : (order.duPhong ? 'Bảng cũ không có mốc này — đang lấy giá bảng đầy đủ (QĐ-21-2026)' : '');
+  $('kTienSub').textContent = ghiChuGia;
+  $('kTienSub').style.display = ghiChuGia ? '' : 'none';
 
   // ---- xep xe cho don hien tai ----
   var vMoto = {zones:motoZ, maxW:moto.maxKg}, vPickup = {zones:pickZ, maxW:pickup.maxKg};
@@ -2908,7 +2935,9 @@ function render(){
   var lnttTong = (mT?mT.lntt*reqT:0) + (mC?mC.lntt*reqC:0);
   var lnstTong = (mT?mT.lnst*reqT:0) + (mC?mC.lnst*reqC:0);
 
-  $('kLaiVal').textContent = (reqT===0&&reqC===0) ? '—' : vnd(lnstTong);
+  /* Chưa tra được giá thì KHÔNG hiện "0đ" — dễ hiểu nhầm là hoà vốn trong khi
+     bên dưới vẫn trừ vốn/chi phí giao thật. */
+  $('kLaiVal').textContent = (reqT===0&&reqC===0) || order.missingTier ? '—' : vnd(lnstTong);
   $('kLai').className = 'kq-hero' + (lnstTong<0?' am':'');
   $('kLaiSub').textContent = order.grandTotal ? 'Biên '+pct(lnstTong/order.grandTotal) : '';
 
