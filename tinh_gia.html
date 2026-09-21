@@ -1840,10 +1840,14 @@ document.addEventListener('input',function(e){ var el=e.target;
   if (!el.closest || !el.closest('#panelSi')) return;
   if(el.dataset.siT){ var i=+el.dataset.siI;
     if(el.dataset.siT==='margin'){ SI_TIERS[i].margin=parseFloat(el.value)||0; SI_TIERS[i].gia=null; } else SI_TIERS[i].ten=el.value; }
-  if(el.dataset.siTier!==undefined) SI_TIERS[+el.dataset.siTier].gia=parseFloat(el.value)||0;
+  if(el.dataset.siTier!==undefined){
+    SI_TIERS[+el.dataset.siTier].gia=parseFloat(el.value)||0;
+    return;   /* KHÔNG vẽ lại ngay — vẽ lại là xoá mất chính ô đang gõ */
+  }
   siRender_(); });
 document.addEventListener('change',function(e){ var el=e.target;
   if (!el.closest || !el.closest('#panelSi')) return;
+  if(el.dataset.siTier!==undefined) SI_TIERS[+el.dataset.siTier].gia=parseFloat(el.value)||0;
   siRender_(); });
 document.addEventListener('click',function(e){
   if(e.target.id==='siAddTier'){ SI_TIERS.push({ten:'Bậc '+(SI_TIERS.length+1),margin:20}); siDrawTiers_(); siRender_(); }
