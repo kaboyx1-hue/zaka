@@ -2116,6 +2116,15 @@ var TK=get('tk',[]);       // danh sách tài khoản nhận chuyển khoản: {
 var CHIPHI_QL=get('chiphiql',[]);   // chi phí nhân viên báo lên: {ma,ngay,iso,may,nv,muc,tien,gc}
 var TINHGIA_LUU=get('tinhgialuu',[]);   // lịch sử tính giá đã lưu lên Sheet (tab Tính giá sàn/Sỉ)
 var VIEC_CL=get('vieccl',[]);   // "Việc cần làm" — nay lưu Sheet (VIEC_CAN_LAM), giữ bản chép cục bộ để mở lại nhanh
+/* Trang "Điều hành công việc" (truc.html) — 2 bảng trên Sheet: việc + nhân sự.
+   Giữ bản chép cục bộ để mở lại nhanh khi mất mạng, y như các danh sách trên. */
+var TRUC_VIEC=get('trucviec',[]), TRUC_NS=get('trucns',[]);
+/* CHUA lay duoc du lieu tu bang chung lan nao trong phien nay thi TUYET DOI khong
+   gui xuong trang con. Bug that bat duoc khi test 22/09/2026: may B vua cai, bo
+   nho trong, trang cha gui xuong danh sach RONG (ban chep cuc bo con trong) ->
+   trang con tuong bang chung trong that, day nguyen bo du lieu mau cua no len,
+   ghi de mat ban sua cua may A. */
+var TRUC_DA_NAP=false;
 async function hoiNhanh(){
   if(!QCFG.url||!QCFG.key) return;
   try{
@@ -2148,9 +2157,12 @@ function apDungKeoVe(j, luc){
   if(j.chiPhi) CHIPHI_QL=j.chiPhi; set('chiphiql',CHIPHI_QL);
   if(j.tinhGia){ TINHGIA_LUU=j.tinhGia.slice().reverse(); set('tinhgialuu',TINHGIA_LUU); guiTinhGiaChoTs() }
   if(j.viec){ VIEC_CL=j.viec; set('vieccl',VIEC_CL); guiViecChoVc() }
+  if(j.trucViec){ TRUC_VIEC=j.trucViec; set('trucviec',TRUC_VIEC); TRUC_DA_NAP=true }
+  if(j.trucNhanSu){ TRUC_NS=j.trucNhanSu; set('trucns',TRUC_NS) }
+  if(TRUC_DA_NAP) guiTrucChoIframe();
   NVS=j.nvs||[]; set('nvs',NVS);
   KTRUONG=j.khaiTruong||''; set('ktruong',KTRUONG);
-  VERQL={don:j.donVer||'',von:j.vonVer||'',sv:j.svVer||'',nv:VERQL.nv,kt:VERQL.kt,ship:j.shipVer||'',tk:j.tkVer||'',cp:j.cpVer||'',tg:j.tgVer||'',vc:j.vcVer||''};
+  VERQL={don:j.donVer||'',von:j.vonVer||'',sv:j.svVer||'',nv:VERQL.nv,kt:VERQL.kt,ship:j.shipVer||'',tk:j.tkVer||'',cp:j.cpVer||'',tg:j.tgVer||'',vc:j.vcVer||'',trv:j.trvVer||'',trn:j.trnVer||''};
   set('verql',VERQL);
   MADK=j.maDK||''; MAYGUI=j.mayGuiCuoi||{}; set('maygui',MAYGUI);
   napDon(j.don||[],'Drive');
@@ -2518,6 +2530,8 @@ window.addEventListener('message', function(e){
   if (e.data && e.data.type === 'tg-xoa') nhanXoaTinhGiaTuTs_(e.data.ma);
   if (e.data && e.data.type === 'vc-ready'){ guiNguoiPTChoVc(); guiViecChoVc() }
   if (e.data && e.data.type === 'vc-luu') nhanLuuViecTuVc_(e.data.items);
+  if (e.data && e.data.type === 'truc-ready') guiTrucChoIframe();
+  if (e.data && e.data.type === 'truc-luu') nhanLuuTrucTuIframe_(e.data.viec, e.data.nhansu);
 });
 /* Lương trung bình đội shipper (chỉ tính người ĐÃ khai lương/giờ > 0) — gửi
    cho tool tính giá sàn dùng làm gợi ý lương cho logistics tab Sỉ/Phân phối,
@@ -4728,6 +4742,38 @@ async function nhanLuuViecTuVc_(ds){
     var j=JSON.parse(await r.text());
     if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
     VIEC_CL=ds||[]; set('vieccl',VIEC_CL);
+    traLoi(true);
+  }catch(e){ traLoi(false, 'Chưa lưu được: '+e.message) }
+}
+
+/* ══════════════════════ ĐIỀU HÀNH CÔNG VIỆC ↔ SHEET ══════════════════════
+   22/09/2026 — nối trang truc.html vào 2 bảng chung trên Sheet, để mọi máy thấy
+   cùng một danh sách việc/nhân sự. Cùng khuôn "vc-list"/"vc-luu" đã chạy ổn cho
+   tab Việc cần làm cũ: trang con báo sẵn sàng → cha gửi dữ liệu xuống; trang con
+   đổi gì thì gửi TOÀN BỘ lên, cha ghi đè Sheet rồi báo lại kết quả. */
+function guiTrucChoIframe(){
+  if(!TRUC_DA_NAP) return;          // chua lay duoc tu bang chung thi im lang, xem ghi chu o TRUC_DA_NAP
+  var f=$('ifVc'); if(!f||!f.contentWindow) return;
+  f.contentWindow.postMessage({type:'truc-list', viec:TRUC_VIEC, nhansu:TRUC_NS}, '*');
+}
+async function nhanLuuTrucTuIframe_(dsViec, dsNhanSu){
+  var f=$('ifVc');
+  function traLoi(ok, loi){ if(f&&f.contentWindow) f.contentWindow.postMessage({type:'truc-luu-ket-qua', ok:ok, loi:loi}, '*') }
+  /* Trang con co the goi ngay luc trang cha vua mo, truoc khi QCFG kip nap
+     (khoiDongQL doi 200ms) — doc thang tu bo nho may thay vi bao loi oan. */
+  if(!QCFG.url||!QCFG.key){ var c=get('qcfg',{}); if(c&&c.url&&c.key) QCFG=c }
+  if(!QCFG.url||!QCFG.key){ traLoi(false,'Cần dán link và mật khẩu quản lý ở tab Nạp đơn trước.'); return }
+  async function ghi(hanhdong, ds){
+    var r=await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:hanhdong,ds:ds})});
+    var j=JSON.parse(await r.text());
+    if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
+  }
+  try{
+    await ghi('trucviec', dsViec||[]);
+    await ghi('trucnhansu', dsNhanSu||[]);
+    TRUC_VIEC=dsViec||[]; set('trucviec',TRUC_VIEC); TRUC_DA_NAP=true;
+    TRUC_NS=dsNhanSu||[]; set('trucns',TRUC_NS);
     traLoi(true);
   }catch(e){ traLoi(false, 'Chưa lưu được: '+e.message) }
 }

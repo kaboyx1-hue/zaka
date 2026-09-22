@@ -681,7 +681,7 @@ bootTruc();
 }
 function bootTruc() {
 const h = React.createElement;
-const { useState, useEffect } = React;
+const { useState, useEffect, useRef } = React;
 // "Nhớ máy này" — key localStorage. Trong artifact demo chỉ nhớ trên đúng trình
 // duyệt đang xem; khi lên GitHub Pages thật thì mỗi nhân viên có điện thoại riêng,
 // nên mỗi máy sẽ tự nhớ đúng người đó lâu dài qua các lần mở lại — không cần đăng
@@ -693,6 +693,57 @@ window.addEventListener('message', function (e) {
   if (!d || d.type !== 'giao-dien') return;
   document.body.classList.toggle('sang', !!d.sang);
 });
+
+/* ===== NOI VAO BANG CHUNG (22/09/2026) =====
+   Truoc day trang nay chi luu tren tung may — chu them viec o may tinh thi dien
+   thoai khong thay. Nay khi mo TRONG phan mem quan ly, no gui/nhan du lieu qua
+   trang cha, cha ghi len bang chung. Mo rieng ngoai (nhan vien) thi van dung ban
+   tren may nhu cu.
+   Cac truong long nhau (checklist / nhat ky / chuoi quy trinh / phong ban) goi
+   thanh chuoi JSON khi gui di, mo ra khi nhan ve. */
+const TRONG_QUAN_LY = (function () { try { return window.parent !== window } catch (e) { return false } })();
+function goiJSON_(v) { try { return v === undefined || v === null ? '' : JSON.stringify(v) } catch (e) { return '' } }
+function moJSON_(v, macDinh) { if (v === undefined || v === null || v === '') return macDinh; if (typeof v !== 'string') return v; try { return JSON.parse(v) } catch (e) { return macDinh } }
+function viecSangBang_(ds) {
+  return (ds || []).map(t => ({
+    id: t.id, title: t.title, desc: t.desc || '', dept: t.dept, owner: t.owner || '',
+    due: t.due || '', status: t.status, priority: t.priority, recurring: t.recurring ? 1 : 0,
+    doneAt: t.doneAt || '', checklist: goiJSON_(t.checklist || []), log: goiJSON_(t.log || []),
+    pipeline: t.pipeline ? goiJSON_(t.pipeline) : '',
+  }));
+}
+function viecTuBang_(ds) {
+  return (ds || []).map(t => {
+    const ra = {
+      id: Number(t.id) || t.id, title: t.title || '', desc: t.desc || '', dept: t.dept || 'gd',
+      owner: t.owner || null, due: t.due || '', status: t.status || 'todo',
+      priority: t.priority || 'vua', recurring: !!Number(t.recurring),
+      doneAt: t.doneAt ? Number(t.doneAt) : null,
+      checklist: moJSON_(t.checklist, []), log: moJSON_(t.log, []), images: [],
+    };
+    const pl = moJSON_(t.pipeline, null);
+    if (pl && pl.length) ra.pipeline = pl;
+    return ra;
+  });
+}
+function nhanSuSangBang_(people, leads) {
+  return Object.keys(people).map(k => ({
+    key: k, name: people[k].name, code: people[k].code || '',
+    depts: goiJSON_(people[k].depts || []), real: people[k].real ? 1 : 0,
+    leadOf: Object.keys(leads).filter(d => leads[d] === k).join(','),
+  }));
+}
+function nhanSuTuBang_(ds) {
+  const people = {}, leads = { kd: null, kv: null, kt: null, mk: null, vs: null, ship: null, gd: null };
+  (ds || []).forEach(n => {
+    if (!n.key) return;
+    people[n.key] = { name: n.name || '', depts: moJSON_(n.depts, ['tv']) };
+    if (n.code) people[n.key].code = n.code;
+    if (Number(n.real)) people[n.key].real = true;
+    String(n.leadOf || '').split(',').filter(Boolean).forEach(d => { leads[d] = n.key });
+  });
+  return { people, leads };
+}
 
 const REMEMBER_KEY = 'zaka_whoami';
 // Dữ liệu test (việc, người, ai là trưởng nhóm) — không có nữa thì mọi thứ admin
@@ -1893,6 +1944,60 @@ function App() {
     try { localStorage.setItem(DATA_KEY, JSON.stringify({ version: DATA_VERSION, tasks, people: PEOPLE, deptLeads: DEPT_LEADS })); } catch (e) {}
   }, [tasks, peopleVersion]);
 
+  /* ===== DONG BO VOI BANG CHUNG (22/09/2026) =====
+     Chi chay khi mo TRONG phan mem quan ly. Nhan du lieu chung ve thi thay cho
+     du lieu tren may; doi gi thi gui toan bo len (gom 1,5 giay mot lan cho khoi
+     ghi lien tuc luc dang tich checklist). */
+  const [dongBo, setDongBo] = useState({ trangThai: TRONG_QUAN_LY ? 'cho' : 'rieng', loi: '' });
+  const daNhan = useRef(false);
+  const boQuaLanDau = useRef(true);
+  const henGui = useRef(null);
+  const tasksRef = useRef(tasks);
+  tasksRef.current = tasks;
+
+  function guiLen(ds, people, leads) {
+    setDongBo({ trangThai: 'dang', loi: '' });
+    window.parent.postMessage({
+      type: 'truc-luu',
+      viec: viecSangBang_(ds),
+      nhansu: nhanSuSangBang_(people || PEOPLE, leads || DEPT_LEADS),
+    }, '*');
+  }
+
+  useEffect(() => {
+    if (!TRONG_QUAN_LY) return;
+    function nhan(e) {
+      const d = e && e.data; if (!d) return;
+      if (d.type === 'truc-list') {
+        const dsViec = viecTuBang_(d.viec);
+        const ns = nhanSuTuBang_(d.nhansu);
+        /* Bang chung con TRONG ma may nay dang co du lieu that thi DAY LEN lam
+           ban dau, khong im lang xoa trang — dung bai hoc su co 18/09/2026. */
+        if (!dsViec.length && tasksRef.current.length) {
+          daNhan.current = true; boQuaLanDau.current = false;
+          guiLen(tasksRef.current, PEOPLE, DEPT_LEADS);
+          return;
+        }
+        if (Object.keys(ns.people).length) { PEOPLE = ns.people; DEPT_LEADS = ns.leads; bumpPeople(v => v + 1); }
+        setTasks(dsViec);
+        daNhan.current = true; boQuaLanDau.current = true;
+        setDongBo({ trangThai: 'xong', loi: '' });
+      }
+      if (d.type === 'truc-luu-ket-qua') setDongBo(d.ok ? { trangThai: 'xong', loi: '' } : { trangThai: 'loi', loi: d.loi || '' });
+    }
+    window.addEventListener('message', nhan);
+    window.parent.postMessage({ type: 'truc-ready' }, '*');
+    return () => window.removeEventListener('message', nhan);
+  }, []);
+
+  useEffect(() => {
+    if (!TRONG_QUAN_LY || !daNhan.current) return;
+    if (boQuaLanDau.current) { boQuaLanDau.current = false; return; }
+    clearTimeout(henGui.current);
+    henGui.current = setTimeout(() => guiLen(tasksRef.current), 1500);
+    return () => clearTimeout(henGui.current);
+  }, [tasks, peopleVersion]);
+
   function resetToSeedData() {
     if (!window.confirm('Xoá hết dữ liệu test trên máy này (việc, nhân viên, trưởng nhóm đã sửa) và về lại mẫu gốc?')) return;
     try { localStorage.removeItem(DATA_KEY); } catch (e) {}
@@ -2123,7 +2228,12 @@ function App() {
   if (role === 'employee') {
     return h(React.Fragment, null,
       h('div', { className: 'mockbar' },
-        'BẢN DEMO — dữ liệu tự lưu tạm trên máy này, chưa nối dữ liệu thật',
+        TRONG_QUAN_LY
+          ? (dongBo.trangThai === 'loi' ? '⚠ Chưa lưu được lên bảng chung: ' + dongBo.loi
+            : dongBo.trangThai === 'dang' ? 'Đang lưu lên bảng chung…'
+            : dongBo.trangThai === 'xong' ? '✓ Đang dùng bảng chung — mọi máy thấy cùng một danh sách'
+            : 'Đang lấy dữ liệu chung…')
+          : 'Mở riêng ngoài phần mềm quản lý — dữ liệu chỉ lưu trên máy này',
         h('button', { className: 'mockbar-switch', onClick: forgetAndGoToRoleGate }, '⇄ Về màn chọn vai trò')),
       h(EmployeeHome, {
         tasks, employeeId, onOpenTask: setOpenTaskId,
@@ -2137,7 +2247,12 @@ function App() {
 
   return h(React.Fragment, null,
     h('div', { className: 'mockbar' },
-      'BẢN DEMO — dữ liệu tự lưu tạm trên máy này, chưa nối dữ liệu thật',
+      TRONG_QUAN_LY
+        ? (dongBo.trangThai === 'loi' ? '⚠ Chưa lưu được lên bảng chung: ' + dongBo.loi
+          : dongBo.trangThai === 'dang' ? 'Đang lưu lên bảng chung…'
+          : dongBo.trangThai === 'xong' ? '✓ Đang dùng bảng chung — mọi máy thấy cùng một danh sách'
+          : 'Đang lấy dữ liệu chung…')
+        : 'Mở riêng ngoài phần mềm quản lý — dữ liệu chỉ lưu trên máy này',
       h('button', { className: 'mockbar-switch', onClick: forgetAndGoToRoleGate }, '⇄ Về màn chọn vai trò')),
     h('div', { className: 'app' },
       h(Sidebar, { view, setView: goToView, alertCount, onSelectDept: k => jumpToBoard({ dept: k }), onPreviewEmployee: () => setRole('employee'), onBackToRoleGate: forgetAndGoToRoleGate, onResetData: resetToSeedData, onDonMau: donNoiDungMau }),
