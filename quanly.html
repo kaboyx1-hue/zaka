@@ -466,7 +466,7 @@ body.ks-chi *{cursor:crosshair!important}
        dung, da soat va sua 8 loi). viec_can_lam.html GIU LAI trong repo, chua
        xoa — doi src ve lai la quay lai ban cu ngay. Luu y: truc.html hien luu
        tren tung may, chua noi Sheet nhu ban cu. -->
-  <iframe id="ifVc" src="truc.html" style="width:100%;height:100%;border:0;border-radius:12px"></iframe>
+  <iframe id="ifVc" src="truc.html" onload="baoSangToiChoVc()" style="width:100%;height:100%;border:0;border-radius:12px"></iframe>
 </section>
 
 <section id="pg-cb" class="hide"><div id="cb"></div></section>
@@ -751,7 +751,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260922a';
+var APP_VER='20260922b';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -2079,6 +2079,18 @@ function napSangToi(){
   var b=$('btnSangToi'); if(b) b.textContent=luu==='sang'?'\ud83c\udf19':'\u2600';
 }
 napSangToi();
+/* 22/09/2026 — chủ báo: bấm nút sáng/tối thì tab "Việc cần làm" không đổi màu.
+   Tab đó là một trang riêng nhúng vào (truc.html) nên phải báo sang cho nó biết,
+   nó tự đổi bảng màu. Bọc ngoài 2 hàm có sẵn thay vì sửa ruột chúng. */
+function baoSangToiChoVc(){
+  var f=$('ifVc'); if(!f||!f.contentWindow) return;
+  f.contentWindow.postMessage({type:'giao-dien', sang:document.body.classList.contains('sang')}, '*');
+}
+(function(){
+  var doiGoc=doiSangToi, napGoc=napSangToi;
+  doiSangToi=function(){ doiGoc(); baoSangToiChoVc(); };
+  napSangToi=function(){ napGoc(); baoSangToiChoVc(); };
+})();
 function bao(el,t,cl){$(el).innerHTML='<div class="msg '+(cl||'ok')+'">'+t+'</div>'}
 function nowStr(){var d=new Date();
  return ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear()+
@@ -5227,6 +5239,11 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260922b', ngay:'22/09/2026', ten:'Tab Việc cần làm đổi màu theo nút sáng/tối',
+  vaPhieu:[],
+  muc:[
+   ['sua','Bấm nút <b>☀/🌙</b> giờ đổi màu cả tab <b>Việc cần làm</b> — trước đó tab này luôn nền tối dù phần mềm đang để chế độ sáng.'],
+  ]},
  {ban:'20260922a', ngay:'22/09/2026', ten:'Tab Việc cần làm đổi sang bản điều hành công việc mới',
   vaPhieu:[],
   muc:[

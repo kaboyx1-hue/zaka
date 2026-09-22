@@ -324,6 +324,28 @@ function(a,b,c){if(!Vd(b))throw Error(m(200));return Wd(null,a,b,!1,c)};Q.unmoun
   --radius-lg: 14px;
   color-scheme: dark;
 }
+/* ===== CHE DO SANG (22/09/2026) =====
+   Chu bao: bam nut sang/toi ben phan mem quan ly thi tab "Viec can lam" khong
+   doi mau gi ca. Trang nay truoc do chi co mot bang mau toi. Nay them bang mau
+   sang; phan mem quan ly bao sang day moi lan doi (xem doiSangToi/napSangToi ben
+   quanly.html), trang tu gan class .sang len body. Moi mau deu di qua 13 bien
+   duoi day nen khong phai sua tung cho. */
+body.sang {
+  --bg: #F1F5F3;
+  --panel: #FFFFFF;
+  --panel-2: #F7FAF8;
+  --panel-3: #EBF1EE;
+  --border: #D6E1DC;
+  --text: #11211E;
+  --text-dim: #4D675F;
+  --text-faint: #7B928A;
+  --gold: #8A5A0B;
+  --gold-soft: #FBF0D8;
+  --sage: #1B7A5A;
+  --coral: #B93A22;
+  --coral-soft: #FBE6E1;
+  color-scheme: light;
+}
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { height: 100%; }
 body {
@@ -664,6 +686,14 @@ const { useState, useEffect } = React;
 // duyệt đang xem; khi lên GitHub Pages thật thì mỗi nhân viên có điện thoại riêng,
 // nên mỗi máy sẽ tự nhớ đúng người đó lâu dài qua các lần mở lại — không cần đăng
 // nhập lại mỗi lần, giống cơ chế "dnoff" đã có sẵn trong index.html thật.
+/* Nghe phan mem quan ly bao dang o che do sang hay toi. Mo rieng ngoai (khong
+   nam trong tab quan ly) thi giu mau toi mac dinh nhu cu. */
+window.addEventListener('message', function (e) {
+  const d = e && e.data;
+  if (!d || d.type !== 'giao-dien') return;
+  document.body.classList.toggle('sang', !!d.sang);
+});
+
 const REMEMBER_KEY = 'zaka_whoami';
 // Dữ liệu test (việc, người, ai là trưởng nhóm) — không có nữa thì mọi thứ admin
 // thêm/sửa qua UI (thêm nhân viên, đổi phòng ban, giao việc mới...) chỉ sống trong
