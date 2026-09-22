@@ -487,11 +487,304 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
 #panelMoc .ketqua td, #panelMoc .ketqua th{padding:7px 4px;vertical-align:top}
 #panelMoc .ketqua td.num, #panelMoc .ketqua th.num{white-space:nowrap;width:108px}
 #panelMoc .ketqua .scroll{overflow-x:visible}
+/* ===== LỚP CẤU HÌNH (21/09/2026) ===== */
+.tlHang{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px}
+.tlNut{border:1.5px solid var(--line-2);background:var(--card);color:var(--ink);border-radius:10px;
+  padding:9px 15px;font:600 13.5px inherit;cursor:pointer}
+.tlNut:hover{border-color:var(--ink-2)}
+.tlPhu{font-size:12.5px;color:var(--ink-3)}
+/* Lop rieng phu kin man hinh, co nut back — chu yeu cau 21/09/2026:
+   "phan nen mong cho nam 1 layer va co nut back ra" (sau doi ten thanh Cau hinh). */
+.tlLop{position:fixed;inset:0;z-index:60;background:var(--page);display:flex;flex-direction:column}
+.tlLop[hidden]{display:none}
+.tlLop>header{flex:none;display:flex;align-items:center;gap:16px;background:var(--card);
+  border-bottom:1px solid var(--line);padding:14px 20px}
+.tlLop>header h2{margin:0;font-size:18px}
+.tlLop>header p{margin:3px 0 0;font-size:12.5px;color:var(--ink-3)}
+.tlBack{flex:none;border:1.5px solid var(--line-2);background:var(--page);color:var(--ink);
+  border-radius:9px;padding:9px 16px;font:600 13.5px inherit;cursor:pointer}
+.tlBack:hover{border-color:var(--ink-2)}
+.tlThan{flex:1;overflow-y:auto;padding:20px;display:grid;gap:22px;align-content:start;
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));max-width:1200px;
+  margin:0 auto;width:100%}
+.tlNhom>h3{margin:0 0 4px;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.tlNhom>p{margin:0 0 10px;font-size:12.5px;color:var(--ink-3)}
+.tlTrong{font-size:13px;color:var(--ink-3);padding:10px 0}
+.tlNhan{margin:6px 0 2px;font:600 13px inherit;color:var(--ink-2)}
+#tlNgan .si-card,#tlNgan .card{margin-bottom:10px}.vatTheoHang{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;
+  background:#FDF0D6;color:#7C3D07;font:600 10px/1.6 inherit;letter-spacing:.02em;text-transform:none}
+.chLuc{display:block;margin:4px 0 0;font-size:11px;color:var(--ink-3)}
+.chLuc.moi{color:var(--accent-si);font-weight:600}
+.chNhatKy{list-style:none;margin:0;padding:0}
+.chNhatKy li{display:flex;gap:10px;align-items:baseline;padding:7px 0;border-top:1px solid var(--line)}
+.chNhatKy li:first-child{border-top:0}
+.chNhatKy .luc{flex:none;font-size:11.5px;color:var(--ink-3);min-width:96px}
+.chNhatKy .oTen{font-weight:600;font-size:12.5px}
+.chNhatKy .doi{font-size:12.5px;color:var(--ink-2)}
+.chNhatKy .doi b{font-variant-numeric:tabular-nums}
+.chTrong{font-size:12.5px;color:var(--ink-3);padding:8px 0}
+.vatNhac{background:#FDF0D6;border:1.5px solid #B45309;border-radius:11px;padding:12px 15px;margin:0 0 14px;
+  display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:13.5px;color:#4A2A05}
+.vatNhac[hidden]{display:none}
+.vatNhac .noi{flex:1;min-width:240px;line-height:1.45}
+.vatNhac b{font-weight:700}
+.vatNhac button{border:1.5px solid #B45309;background:#fff;color:#7C3D07;border-radius:9px;
+  padding:8px 14px;font:600 13px inherit;cursor:pointer;white-space:nowrap}
+.vatNhac button.chinh{background:#B45309;border-color:#B45309;color:#fff}
+@media(max-width:640px){ .tlLop>header{flex-wrap:wrap} .tlThan{padding:14px} }
+
+/* ===== nhan ban style cho ngan keo thiet lap (sinh tu dong) ===== */
+#tlNgan{color-scheme:light;
+  --ground:#EDF1F0; --surface:#fff; --surface-2:#F6F9F8;
+  --si-ink:#10201A; --si-ink-2:#3A4C44; --muted:#697C73;
+  --si-line:#D7E1DC; --si-line-2:#E9F0EC;
+  --si-shadow:0 1px 2px rgba(16,32,26,.05),0 10px 26px -14px rgba(16,32,26,.18);
+  --si-r:12px;
+  --teal:#0B7A8C;   --teal-s:#DBF0F3;
+  --violet:#6D28D9; --violet-s:#EDE7FD;
+  --amber:#B45309;  --amber-s:#FDF0D6;
+  --rose:#BE1D5E;   --rose-s:#FCE4EE;
+  --green:#12734E;  --green-s:#DCF2E6;
+  --blue:#1D4ED8;   --blue-s:#DEE7FD;
+  --good:#12734E; --good-s:#DCF2E6;
+  --warn:#B45309; --warn-s:#FDF0D6;
+  --bad:#B4241C;  --bad-s:#FCE5E3;
+  font-size:14px;line-height:1.5;
+  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+--moto:#0E8A72;--moto-soft:#DCEFE9;--pickup:#C2410C;--pickup-soft:#FBE4D6;--chart-surface:#FFFFFF;--chart-grid:#E4EBE7;}
+#tlNgan .num,#tlNgan .money{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+#tlNgan .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+#tlNgan .kpi{background:var(--surface);border:1px solid var(--si-line);border-radius:var(--si-r);padding:0;
+  overflow:hidden;box-shadow:var(--si-shadow)}
+#tlNgan .kpi .bar{height:4px;background:var(--c)}
+#tlNgan .kpi .in{padding:12px 15px 14px}
+#tlNgan .kpi .lbl{font:600 10.5px/1.2 -apple-system,sans-serif;letter-spacing:.09em;text-transform:uppercase;color:var(--c)}
+#tlNgan .kpi .val{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;
+  font-size:23px;font-weight:700;letter-spacing:-.025em;margin-top:6px;line-height:1.08;color:var(--si-ink)}
+#tlNgan .kpi .sub{font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.35}
+#tlNgan .kpi.k1{--c:var(--green)}
+#tlNgan .kpi.k2{--c:var(--blue)}
+#tlNgan .kpi.k3{--c:var(--amber)}
+#tlNgan .kpi.k4{--c:var(--violet)}
+#tlNgan .kpi.alert{--c:var(--bad);background:var(--bad-s);border-color:var(--bad)}
+#tlNgan .kpi.alert .val{color:var(--bad)}
+#tlNgan .si-main{display:flex;flex-direction:column;gap:16px;min-width:0}
+#tlNgan .si-card{background:var(--surface);border:1px solid var(--si-line);border-radius:var(--si-r);
+  overflow:hidden;box-shadow:var(--si-shadow);border-top:3px solid var(--c)}
+#tlNgan .si-card>header{padding:11px 15px;background:var(--c-s);display:flex;align-items:center;
+  justify-content:space-between;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--si-line-2)}
+#tlNgan .si-card>header h2{font-size:12.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--c);display:flex;align-items:center;gap:8px;margin:0}
+#tlNgan .si-card>header h2::before{content:"";width:9px;height:9px;border-radius:3px;background:var(--c);flex:none}
+#tlNgan .si-hint{font-size:11.5px;color:var(--muted);font-weight:400}
+#tlNgan .si-body{padding:14px 15px}
+#tlNgan .c-teal{--c:var(--teal);--c-s:var(--teal-s)}
+#tlNgan .c-violet{--c:var(--violet);--c-s:var(--violet-s)}
+#tlNgan .c-amber{--c:var(--amber);--c-s:var(--amber-s)}
+#tlNgan .c-rose{--c:var(--rose);--c-s:var(--rose-s)}
+#tlNgan .c-green{--c:var(--green);--c-s:var(--green-s)}
+#tlNgan .fgrid{display:grid;gap:10px}
+#tlNgan .fgrid.two{grid-template-columns:1fr 1fr}
+#tlNgan .fgrid.three{grid-template-columns:1fr 1fr 1fr}
+#tlNgan label{display:block;font:600 10.5px/1.2 -apple-system,sans-serif;color:var(--muted);margin-bottom:5px;
+  letter-spacing:.06em;text-transform:uppercase}
+#tlNgan input,#tlNgan select{width:100%;height:auto;padding:8px 10px;border:1px solid var(--si-line);border-radius:8px;
+  background:var(--surface-2);color:var(--si-ink);font:600 13.5px "IBM Plex Mono",monospace;
+  font-variant-numeric:tabular-nums}
+#tlNgan select{font-family:-apple-system,sans-serif}
+#tlNgan input:focus,#tlNgan select:focus{outline:none;border-color:var(--c,var(--green));background:var(--surface)}
+#tlNgan .si-note{font-size:11.5px;color:var(--muted);margin:9px 0 0;line-height:1.5}
+#tlNgan .si-note b{color:var(--c,var(--si-ink-2))}
+#tlNgan .scroll{overflow-x:auto}
+#tlNgan table{width:100%;border-collapse:collapse;font-size:13px;margin-top:0}
+#tlNgan th{font:700 10.5px/1.3 -apple-system,sans-serif;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--c);background:var(--c-s);text-align:right;padding:9px 12px;
+  border-bottom:1px solid var(--si-line);white-space:nowrap}
+#tlNgan th:first-child{text-align:left}
+#tlNgan td{padding:10px 12px;border-bottom:1px solid var(--si-line-2);text-align:right;white-space:nowrap}
+#tlNgan td:first-child{text-align:left;white-space:normal}
+#tlNgan tbody tr:last-child td{border-bottom:0}
+#tlNgan tr.opt{background:var(--good-s)}
+#tlNgan tr.opt td:first-child{font-weight:600;color:var(--good)}
+#tlNgan .pill{display:inline-block;padding:3px 9px;border-radius:99px;font:700 10.5px -apple-system,sans-serif;
+  letter-spacing:.05em;text-transform:uppercase}
+#tlNgan .pill.good{background:var(--good);color:#fff}
+#tlNgan .pill.warn{background:var(--warn);color:#fff}
+#tlNgan .pill.bad{background:var(--bad);color:#fff}
+#tlNgan .si-tier{display:grid;grid-template-columns:1fr 88px 32px;gap:7px;align-items:end;margin-bottom:8px}
+#tlNgan .si-btn{border:1px solid var(--c);background:var(--c-s);color:var(--c);
+  font:700 12px -apple-system,sans-serif;padding:8px 13px;border-radius:8px;cursor:pointer}
+#tlNgan .si-btn:hover{background:var(--c);color:#fff}
+#tlNgan .si-btn.x{padding:8px 0;width:32px;border-color:var(--si-line);background:var(--surface-2);color:var(--muted)}
+#tlNgan .si-btn.x:hover{background:var(--bad);border-color:var(--bad);color:#fff}
+#tlNgan .pricecell input{font-size:16px;font-weight:700;text-align:right;border-width:2px}
+#tlNgan .pricecell .meta{font-size:11px;color:var(--muted);margin-top:5px;text-align:right}
+#tlNgan .pricecell .meta b{font-family:"IBM Plex Mono",monospace;color:var(--si-ink-2);font-weight:600}
+#tlNgan .chartwrap{padding:10px 12px 0}
+#tlNgan svg{display:block;width:100%;height:auto}
+#tlNgan .legend{display:flex;gap:8px;flex-wrap:wrap;padding:10px 15px 14px;font-size:11.5px;color:var(--muted);align-items:center}
+#tlNgan .lg{display:flex;align-items:center;gap:6px;padding:3px 9px;border-radius:99px;font-weight:600;font-size:11px}
+#tlNgan .lg.g{background:var(--good-s);color:var(--good)}
+#tlNgan .lg.w{background:var(--warn-s);color:var(--warn)}
+#tlNgan .si-dot{width:9px;height:9px;border-radius:99px;display:inline-block;background:currentColor}
+#tlNgan .callout{display:flex;gap:14px;padding:14px 15px;border-radius:10px;align-items:center;
+  margin:0 15px 14px;background:var(--warn-s);border:1px solid var(--warn)}
+#tlNgan .callout .k{font:700 26px/1 "IBM Plex Mono",monospace;color:var(--warn);white-space:nowrap;letter-spacing:-.03em}
+#tlNgan .callout p{margin:0;font-size:12.5px;line-height:1.5;color:var(--si-ink-2)}
+#tlNgan .callout p b{color:var(--si-ink)}
+#tlNgan .strong{color:var(--good);font-weight:700}
+#tlNgan .weak{color:var(--bad);font-weight:700}
+#tlNgan .mid{color:var(--warn);font-weight:700}
+#tlNgan .kpis{grid-template-columns:repeat(2,1fr)}
+#tlNgan .kpis{grid-template-columns:1fr}
+#tlNgan .fgrid.two,#tlNgan .fgrid.three{grid-template-columns:1fr}
+#tlNgan .callout{flex-direction:column;align-items:flex-start;gap:8px}
+#tlNgan h1,#tlNgan h2,#tlNgan h3{font-family:var(--font-display);font-weight:600;text-wrap:balance;margin:0}
+#tlNgan .tnum{font-variant-numeric:tabular-nums}
+#tlNgan .mono{font-family:var(--font-mono)}
+#tlNgan .wrap{max-width:1500px;margin:0 auto}
+#tlNgan .main{display:flex;flex-direction:column;gap:16px;min-width:0}
+#tlNgan .card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+#tlNgan .card>header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 16px;border-bottom:1px solid var(--line)}
+#tlNgan .card>header h2{font-size:16px}
+#tlNgan .card .body{padding:14px 16px}
+#tlNgan .c-amber>header{background:var(--amber-soft);border-color:var(--amber)}
+#tlNgan .c-amber>header h2{color:var(--amber-ink)}
+#tlNgan .c-violet>header{background:var(--violet-soft)}
+#tlNgan .c-violet>header h2{color:var(--violet)}
+#tlNgan .c-teal>header{background:var(--teal-soft)}
+#tlNgan .c-teal>header h2{color:var(--teal)}
+#tlNgan .c-green>header{background:var(--green-soft)}
+#tlNgan .c-green>header h2{color:var(--green)}
+#tlNgan label{display:block;font:600 11.5px var(--font-body);color:var(--ink-2);text-transform:uppercase;letter-spacing:.03em;margin-bottom:5px}
+#tlNgan input,#tlNgan select{width:100%;font:500 14px var(--font-body);color:var(--ink);background:var(--paper);
+  border:1px solid var(--line-2);border-radius:9px;padding:9px 10px}
+#tlNgan input:focus,#tlNgan select:focus{outline:2px solid var(--amber);outline-offset:1px}
+#tlNgan .fgrid{display:grid;gap:10px}
+#tlNgan .fgrid.two{grid-template-columns:1fr 1fr}
+#tlNgan .fgrid.three{grid-template-columns:1fr 1fr 1fr}
+#tlNgan .field{margin-bottom:0}
+#tlNgan .hint{color:var(--ink-3);font-size:12px;margin-top:8px;line-height:1.5}
+#tlNgan .seg{display:flex;background:var(--paper);border:1px solid var(--line-2);border-radius:10px;padding:3px;gap:3px}
+#tlNgan .seg button{flex:1;border:0;background:none;color:var(--ink-2);font:600 12.5px var(--font-body);padding:8px 6px;border-radius:7px;cursor:pointer}
+#tlNgan .seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+#tlNgan .toggle-row{display:flex;align-items:center;gap:9px;padding:8px 0}
+#tlNgan .toggle-row input[type=checkbox]{width:auto;accent-color:var(--amber)}
+#tlNgan .toggle-row span{font-size:13px;color:var(--ink)}
+#tlNgan table{width:100%;border-collapse:collapse;font-size:13px}
+#tlNgan th{text-align:left;font:600 11px var(--font-body);text-transform:uppercase;letter-spacing:.03em;color:var(--ink-3);
+  padding:7px 8px;border-bottom:1px solid var(--line)}
+#tlNgan td{padding:8px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+#tlNgan tr.hi{background:var(--amber-soft)}
+#tlNgan .num{text-align:right;font-family:var(--font-mono)}
+#tlNgan .num.neg{color:var(--bad)}
+#tlNgan .scroll{overflow-x:auto}
+#tlNgan .pill{display:inline-flex;align-items:center;gap:4px;font:600 11px var(--font-body);padding:3px 9px;border-radius:999px;white-space:nowrap}
+#tlNgan .pill.moto{background:var(--moto-soft);color:var(--moto)}
+#tlNgan .pill.pickup{background:var(--pickup-soft);color:var(--pickup)}
+#tlNgan .pill.pickup.multi{box-shadow:inset 0 0 0 1px var(--pickup)}
+#tlNgan .vcards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#tlNgan .vcards{grid-template-columns:1fr}
+#tlNgan .vcard{border:1px solid var(--line);border-left:4px solid var(--line);border-radius:12px;padding:14px;background:var(--paper)}
+#tlNgan .vcard.v-moto{border-left-color:var(--moto)}
+#tlNgan .vcard.v-pickup{border-left-color:var(--pickup)}
+#tlNgan .vcard .vhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+#tlNgan .vcard .vhead h3{font-size:15px;font-family:var(--font-body);font-weight:700}
+#tlNgan .vcard.v-moto .vhead h3{color:var(--moto)}
+#tlNgan .vcard.v-pickup .vhead h3{color:var(--pickup)}
+#tlNgan .vcard .verdict{font:700 12px var(--font-mono);padding:4px 10px;border-radius:7px}
+#tlNgan .verdict.OK{background:var(--green-soft);color:var(--green)}
+#tlNgan .verdict.OVER_VOLUME,#tlNgan .verdict.OVER_WEIGHT{background:var(--warn-soft);color:var(--amber-ink)}
+#tlNgan .verdict.CANNOT_MIX,#tlNgan .verdict.IMPOSSIBLE{background:var(--bad-soft);color:var(--bad)}
+#tlNgan .vcard .msg{font-size:13px;color:var(--ink-2);line-height:1.5;margin-bottom:10px}
+#tlNgan .vcard .rows{display:flex;flex-direction:column;gap:5px;font-size:12.5px}
+#tlNgan .vcard .rows .r{display:flex;justify-content:space-between;gap:8px}
+#tlNgan .vcard .rows .r b{font-family:var(--font-mono)}
+#tlNgan .zonelist{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line-2);font-size:12px;color:var(--ink-2)}
+#tlNgan .zonelist div{display:flex;justify-content:space-between;padding:2px 0}
+#tlNgan .callout{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-size:12.5px;color:var(--ink-2);line-height:1.5}
+#tlNgan .vehparam{margin-top:14px;padding:12px;border-radius:11px;border:1px solid var(--line);background:var(--paper)}
+#tlNgan .vehparam .vh{display:flex;align-items:center;gap:7px;font:700 13px var(--font-body);margin-bottom:10px}
+#tlNgan .vehparam .vh .dot{width:9px;height:9px;border-radius:50%;flex:none}
+#tlNgan .vehparam .vh .fuel{margin-left:auto;font:600 10.5px var(--font-mono);text-transform:uppercase;letter-spacing:.06em;
+  padding:2px 8px;border-radius:999px}
+#tlNgan .vehparam .chiphi{margin:10px 0 0;font:600 12.5px var(--font-body)}
+#tlNgan .p-moto{border-left:4px solid var(--moto)}
+#tlNgan .p-moto .vh{color:var(--moto)}
+#tlNgan .p-moto .vh .dot{background:var(--moto)}
+#tlNgan .p-moto .vh .fuel{background:var(--moto-soft);color:var(--moto)}
+#tlNgan .p-moto .chiphi{color:var(--moto)}
+#tlNgan .p-pickup{border-left:4px solid var(--pickup)}
+#tlNgan .p-pickup .vh{color:var(--pickup)}
+#tlNgan .p-pickup .vh .dot{background:var(--pickup)}
+#tlNgan .p-pickup .vh .fuel{background:var(--pickup-soft);color:var(--pickup)}
+#tlNgan .p-pickup .chiphi{color:var(--pickup)}
+#tlNgan .khu{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:9px 10px;margin-bottom:8px}
+#tlNgan .khu:last-child{margin-bottom:0}
+#tlNgan .khu-top{display:flex;align-items:center;gap:8px}
+#tlNgan .khu-ten{flex:1;min-width:0;font:600 12.5px var(--font-body);color:var(--ink)}
+#tlNgan .khu-top select{width:auto;flex:none;min-width:124px;padding:6px 8px;font-size:12.5px}
+#tlNgan .khu-kq{margin-top:6px;font-size:12px;line-height:1.45}
+#tlNgan .khu-tudat{font-size:12px;color:var(--ink-2);line-height:1.5;background:var(--card);
+  border:1px dashed var(--line-2);border-radius:9px;padding:10px}
+#tlNgan .canhbao{margin-top:10px;background:var(--warn-soft);border:1px solid var(--warn);border-radius:9px;
+  padding:9px 11px;font-size:12px;line-height:1.5;color:var(--ink)}
+#tlNgan .legend{display:flex;gap:16px;flex-wrap:wrap;margin:2px 0 12px;font-size:12.5px;color:var(--ink-2)}
+#tlNgan .legend .lg{display:inline-flex;align-items:center;gap:6px}
+#tlNgan .legend .lg .sw{width:11px;height:11px;border-radius:3px;flex:none}
+#tlNgan .legend .lg.moto .sw{background:var(--moto)}
+#tlNgan .legend .lg.pickup .sw{background:var(--pickup)}
+#tlNgan .chartwrap{background:var(--chart-surface);border:1px solid var(--line);border-radius:12px;padding:12px 6px 4px;overflow-x:auto}
+#tlNgan .chartwrap svg{width:100%;height:auto;min-width:640px;display:block;font-family:var(--font-body)}
+#tlNgan .kq-box{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+#tlNgan .kq-hero{padding:16px 16px 14px;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,var(--green-soft),transparent)}
+#tlNgan .kq-hero.am{background:linear-gradient(180deg,var(--bad-soft),transparent)}
+#tlNgan .kq-lbl{font:600 10.5px var(--font-body);text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3)}
+#tlNgan .kq-val{font:700 30px/1.15 var(--font-display);margin-top:5px;color:var(--green);font-variant-numeric:tabular-nums}
+#tlNgan .kq-hero.am .kq-val{color:var(--bad)}
+#tlNgan .kq-sub{font-size:12px;color:var(--ink-2);margin-top:4px}
+#tlNgan .kq-sp:not(:empty){border-bottom:1px solid var(--line)}
+#tlNgan .kq-sp .sp{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;
+  padding:11px 16px;border-bottom:1px dashed var(--line)}
+#tlNgan .kq-sp .sp:last-child{border-bottom:0}
+#tlNgan .sp-ten{font:600 12.5px var(--font-body);color:var(--ink-2)}
+#tlNgan .sp-sl{font:700 22px/1.1 var(--font-display);font-variant-numeric:tabular-nums;margin-top:2px}
+#tlNgan .sp-gia{font:700 20px/1.1 var(--font-display);font-variant-numeric:tabular-nums;text-align:right;color:var(--green)}
+#tlNgan .sp-gia small{display:block;font:400 11px var(--font-body);color:var(--ink-3);margin-top:3px}
+#tlNgan .kq-rows{padding:6px 16px 14px}
+#tlNgan .kq-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:9px 0;
+  border-bottom:1px solid var(--line)}
+#tlNgan .kq-row:last-child{border-bottom:0}
+#tlNgan .kq-row>span{font-size:12.5px;color:var(--ink-2)}
+#tlNgan .kq-row>b{font:700 15px var(--font-body);font-variant-numeric:tabular-nums;text-align:right}
+#tlNgan .kq-row.k-moto>b{color:var(--moto)}
+#tlNgan .kq-row.k-pickup>b{color:var(--pickup)}
+#tlNgan .kq-note{font-size:11.5px;color:var(--ink-3);margin:-4px 0 0;padding:0 0 9px;border-bottom:1px solid var(--line);line-height:1.45}
+#tlNgan .kq-note:last-child{border-bottom:0;padding-bottom:0}
 </style>
 </head>
 <body>
 <div class="wrap">
 <h1>Tính giá bán sản phẩm</h1>
+
+<div class="vatNhac" id="vatNhac" hidden></div>
+
+<div class="tlHang">
+  <button type="button" class="tlNut" id="btnTL">⚙ Cấu hình</button>
+  <span class="tlPhu">Thuế, hoá đơn, đội xe, phí sàn — khai một lần, dùng cho mọi phép tính</span>
+</div>
+
+<section class="tlLop" id="tlNgan" hidden aria-label="Cấu hình">
+  <header>
+    <button type="button" class="tlBack" id="btnTLDong">← Quay lại</button>
+    <div>
+      <h2>Cấu hình</h2>
+      <p>Khai một lần rồi thôi. Màn hình tính giá chỉ còn số của đơn đang tính.</p>
+    </div>
+  </header>
+  <div class="tlThan" id="tlThan"></div>
+</section>
 
 <div class="seg">
   <button id="btnSp" class="sp" aria-pressed="true">Shopee</button>
@@ -619,12 +912,8 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
           <div><label for="siTen">Tên</label><input id="siTen" value="BYS Cát sạn 2kg"></div>
           <div class="fgrid three" style="margin-top:10px">
             <div><label for="siVon">Giá vốn ₫</label><input id="siVon" type="number" value="39000" step="500"></div>
-            <div><label for="siVat">VAT %</label><input id="siVat" type="number" value="8" step="1"></div>
             <div><label for="siBao">Bao/thùng</label><input id="siBao" type="number" value="8" step="1"></div>
           </div>
-          <div style="margin-top:10px"><label for="siVonVat">Giá vốn nhập trên là</label>
-            <select id="siVonVat"><option value="1" selected>Đã gồm VAT</option><option value="0">Chưa gồm VAT</option></select></div>
-          <p class="si-note">Chọn sai ô này làm lệch lợi nhuận khoảng <b>19,5%</b> mà không có cảnh báo nào.</p>
         </div>
       </section>
 
@@ -633,10 +922,8 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
         <div class="si-body">
           <div id="siTiers"></div>
           <button class="si-btn" id="siAddTier" type="button">+ Thêm bậc</button>
-          <div class="fgrid two" style="margin-top:12px">
-            <div><label for="siTndn">Thuế TNDN</label>
-              <select id="siTndn"><option value="15">15% — ≤ 3 tỷ</option><option value="20" selected>20% — &gt; 50 tỷ (hoặc không đủ điều kiện hưởng 15%)</option></select></div>
-            <div><label for="siDg">Đóng gói ₫/đv</label><input id="siDg" type="number" value="0" step="100"></div>
+          <div style="margin-top:12px">
+            <label for="siDg">Đóng gói ₫/đv</label><input id="siDg" type="number" value="0" step="100">
           </div>
           <!-- SỬA 19/09/2026 — mục 2.2 đặc tả: tách "đã xác minh MST" (không liên
                quan gì tới Sỉ) khỏi chi phí đóng gói. Cờ RIÊNG cho Sỉ, mặc định TẮT
@@ -656,21 +943,16 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
               <select id="siKm"><option value="10" selected>Nội thành ~10km</option><option value="20">Ven đô ~20km</option><option value="40">Ngoại thành ~40km</option><option value="100">Tỉnh ~100km</option></select></div>
             <div><label for="siCap">Sức chở thùng/chuyến</label><input id="siCap" type="number" value="10" step="1"></div>
           </div>
-          <div class="fgrid three" style="margin-top:10px">
-            <div><label for="siXang">Xăng ₫/lít</label><input id="siXang" type="number" value="24239" step="100"></div>
-            <div><label for="siHao">Hao L/100km</label><input id="siHao" type="number" value="2" step="0.1"></div>
-            <div><label for="siBd">Bảo dưỡng ₫/km</label><input id="siBd" type="number" value="250" step="10"></div>
-          </div>
-          <div class="fgrid three" style="margin-top:10px">
-            <div><label for="siToc">Tốc độ km/h</label><input id="siToc" type="number" value="22" step="1"></div>
-            <div><label for="siLuong">Lương ₫/giờ</label><input id="siLuong" type="number" value="40000" step="1000"></div>
-            <div><label for="siBoc">Bốc/dỡ phút</label><input id="siBoc" type="number" value="10" step="1"></div>
-          </div>
+          <div style="margin-top:10px"><label for="siXe">Giao bằng xe nào</label>
+            <select id="siXe">
+              <option value="m" selected>🏍 Xe máy</option>
+              <option value="p">🛻 Bán tải Navara</option>
+            </select></div>
           <p class="si-note" id="siMixNote">—</p>
         </div>
       </section>
 
-      <section class="si-card c-rose">
+      <section class="si-card c-rose" id="cardChinhSach">
         <header><h2>Chính sách đại lý</h2></header>
         <div class="si-body">
           <div class="fgrid three">
@@ -771,16 +1053,6 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
             <div class="field"><label for="vonC">Vốn/thùng Cassava (đ)</label><input id="vonC" type="number" value="312000" step="1000"></div>
           </div>
           <div class="fgrid two" style="margin-top:10px">
-            <div class="field"><label for="mgVat">VAT (%)</label><input id="mgVat" type="number" value="8" step="1"></div>
-            <div class="field"><label for="mgTndn">Thuế TNDN (%)</label>
-              <select id="mgTndn"><option value="15">15%</option><option value="20" selected>20%</option></select>
-            </div>
-          </div>
-          <div style="margin-top:6px">
-            <label for="vonVat">Giá vốn nhập trên là</label>
-            <select id="vonVat"><option value="1" selected>Đã gồm VAT</option><option value="0">Chưa gồm VAT</option></select>
-          </div>
-          <div class="fgrid two" style="margin-top:10px">
             <div class="field"><label for="dongGoi">Đóng gói/thùng (đ)</label><input id="dongGoi" type="number" value="0" step="500"></div>
             <div class="field"><label for="dongGoiVat">Đóng gói trên</label>
               <select id="dongGoiVat"><option value="0" selected>Không hoá đơn VAT</option><option value="1">Có hoá đơn VAT</option></select>
@@ -796,6 +1068,7 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
           <div class="field"><label for="km">Khoảng cách tới khách (km, 1 chiều)</label><input id="km" type="number" value="10" step="1"></div>
           <p class="hint" style="margin-top:6px">Chung cho cả hai xe. Các thông số còn lại khai riêng từng xe bên dưới.</p>
 
+          <div id="mocThongSoXe" data-tl-ten="Xe máy &amp; bán tải (tab Mốc giá)">
           <div class="vehparam p-moto">
             <div class="vh"><span class="dot"></span>🏍 Xe máy <span class="fuel">xăng</span></div>
             <div class="fgrid two">
@@ -824,6 +1097,7 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
             </div>
             <div class="field" style="margin-top:8px"><label for="luongP">Công tài xế (đ/giờ)</label><input id="luongP" type="number" value="60000" step="1000"></div>
             <p class="chiphi" id="cpPickupNote">—</p>
+          </div>
           </div>
         </div>
       </section>
@@ -868,7 +1142,7 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
         </div>
       </section>
 
-      <section class="card">
+      <section class="card" id="cardKichThuoc">
         <header><h2>Kích thước &amp; tải trọng <span class="mono" style="font-size:11px;color:var(--ink-3);font-weight:400">(nền cho chế độ máy tính)</span></h2></header>
         <div class="body">
           <label style="margin-bottom:6px">🏍 Ba-ga xe máy (mm)</label>
@@ -982,9 +1256,48 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
   </div><!-- .cols -->
 </div><!-- #panelMoc -->
 
+<!-- ===== THẺ DÙNG CHUNG cho tab Sỉ và tab Mốc giá (sáp nhập 21/09/2026).
+     Đây là hằng số của cả cửa hàng, không phải của riêng một cách tính — nên
+     chỉ có MỘT bộ ô nhập, chuyển qua lại giữa 2 panel khi đổi tab. ===== -->
+<section class="si-card c-violet" id="cardThue" style="display:none">
+  <header><h2>Thuế của công ty</h2><span class="si-hint">khai một lần, mọi cách tính dùng chung</span></header>
+  <div class="si-body">
+    <div id="oVatBanRa"><label for="gVat">VAT bán ra % <span class="vatTheoHang">theo mặt hàng</span></label>
+      <input id="gVat" type="number" value="8" step="1"></div>
+    <div style="margin-top:10px"><label for="gVin">Hoá đơn khi mua vào</label>
+      <select id="gVin">
+        <option value="10">Có — VAT 10%</option>
+        <option value="8" selected>Có — VAT 8%</option>
+        <option value="5">Có — VAT 5%</option>
+        <option value="0">Không có hoá đơn</option>
+      </select></div>
+    <p class="si-note" id="gVinNote">—</p>
+    <div style="margin-top:10px"><label for="gCong">Tiền công shipper</label>
+      <select id="gCong">
+        <option value="du" selected>Tính đủ tiền công theo giờ — mỗi đơn một chuyến riêng</option>
+        <option value="cung">Lương cứng, ghép nhiều đơn một chuyến — chỉ xăng &amp; hao mòn</option>
+      </select></div>
+  </div>
+</section>
+
+<section class="si-card c-amber" id="cardChiPhiChung" style="display:none">
+  <header><h2>Chi phí chung hàng tháng</h2><span class="si-hint">không thuộc về đơn nào</span></header>
+  <div class="si-body">
+    <div class="fgrid two">
+      <div><label for="cpLuong">Lương nhân viên ₫/tháng</label><input id="cpLuong" type="number" value="0" step="500000"></div>
+      <div><label for="cpKho">Thuê kho / mặt bằng ₫/tháng</label><input id="cpKho" type="number" value="0" step="500000"></div>
+    </div>
+    <div class="fgrid two" style="margin-top:10px">
+      <div><label for="cpDien">Điện nước, internet ₫/tháng</label><input id="cpDien" type="number" value="0" step="100000"></div>
+      <div><label for="cpKhac">Khoản chung khác ₫/tháng</label><input id="cpKhac" type="number" value="0" step="100000"></div>
+    </div>
+    <p class="si-note" id="cpChungNote">—</p>
+  </div>
+</section>
+
 <div class="adv" id="adv">
 
-  <div class="card">
+  <div class="card" id="cardPhapNhan">
     <h3>Pháp nhân &amp; thuế</h3>
     <div class="pair">
       <div>
@@ -1669,57 +1982,103 @@ function renderShopeeMoi_(){
 var KHOA_SI2 = 'zaka_tinhgia_si2';
 var SI_TIERS = [{ten:'Min', margin:15}, {ten:'Max', margin:34}];
 var SI_STATE_MAC_DINH_ = {
-  ten:'BYS Cát sạn 2kg', von:39000, vat:8, bao:8, vonVat:'1',
+  ten:'BYS Cát sạn 2kg', von:39000, vat:8, bao:8, vin:'8',
   tndn:20, dg:0, dgVat:'0',
-  km:10, cap:10, xang:24239, hao:2, bd:250, toc:22, luong:40000, boc:10,
-  ck:2, rb:3, fs:1
+  km:10, cap:10, xe:'m',
+  cong:'du', ck:2, rb:3, fs:1
 };
 (function siNapLuu_(){
   var luu = null;
   try { luu = JSON.parse(localStorage.getItem(KHOA_SI2)) } catch(e){}
   if (luu && luu.tiers && luu.tiers.length) SI_TIERS = luu.tiers;
   var st = (luu && luu.state) ? luu.state : SI_STATE_MAC_DINH_;
+  var chuaCoVin = (st.vin === undefined);
+  if (st.vin !== undefined) $('gVin').value = st.vin;
   Object.keys(SI_STATE_MAC_DINH_).forEach(function(k){ if (st[k]===undefined) st[k]=SI_STATE_MAC_DINH_[k] });
-  var MAP = {siTen:'ten', siVon:'von', siVat:'vat', siBao:'bao', siVonVat:'vonVat',
-    siTndn:'tndn', siDg:'dg', siDgVat:'dgVat',
-    siKm:'km', siCap:'cap', siXang:'xang', siHao:'hao', siBd:'bd', siToc:'toc', siLuong:'luong', siBoc:'boc',
+  var MAP = {siTen:'ten', siVon:'von', siBao:'bao', 
+    siDg:'dg', siDgVat:'dgVat',
+    siKm:'km', siCap:'cap', siXe:'xe',
     siCk:'ck', siRb:'rb', siFs:'fs'};
   Object.keys(MAP).forEach(function(id){ if ($(id)) $(id).value = st[MAP[id]] });
   // Di trú 19/09/2026: bỏ mức 17% khỏi <select> — dữ liệu CŨ đã lưu 17% từ
   // trước thì gán .value='17' vào <select> không còn option đó sẽ để trống
   // trắng (không chọn gì), khác hẳn "vẫn còn 17%" — rơi về 20% thay vì để
   // trống, không âm thầm mất lựa chọn thuế của chủ.
-  if (!$('siTndn').value) $('siTndn').value = '20';
+  /* Di trú 21/09/2026: state cũ chỉ có vonVat ('1' đã gồm VAT / '0' chưa gồm).
+     Cả 2 nhánh cũ đều khấu trừ VAT nên quy sang: đã gồm -> hoá đơn đúng bằng
+     VAT bán ra đang đặt; chưa gồm -> vốn đã là số thuần, tương đương "không
+     hoá đơn" về mặt con số (lãi không đổi một đồng nào sau khi di trú). */
+  if (chuaCoVin && st.vonVat !== undefined) {
+    $('gVin').value = (st.vonVat === '0' || st.vonVat === 0) ? '0' : String(st.vat || 8);
+  }
+  if (st.vat  !== undefined) $('gVat').value  = st.vat;
+  if (st.cong !== undefined) $('gCong').value = st.cong;
+  if (!$('gVin').value) $('gVin').value = '8';
 })();
 function siLuu_(){
-  var MAP = {siTen:'ten', siVon:'von', siVat:'vat', siBao:'bao', siVonVat:'vonVat',
-    siTndn:'tndn', siDg:'dg', siDgVat:'dgVat',
-    siKm:'km', siCap:'cap', siXang:'xang', siHao:'hao', siBd:'bd', siToc:'toc', siLuong:'luong', siBoc:'boc',
+  var MAP = {siTen:'ten', siVon:'von', siBao:'bao', 
+    siDg:'dg', siDgVat:'dgVat',
+    siKm:'km', siCap:'cap', siXe:'xe',
     siCk:'ck', siRb:'rb', siFs:'fs'};
   var st = {};
   Object.keys(MAP).forEach(function(id){ st[MAP[id]] = $(id).type==='number' ? n(id) : $(id).value; });
+  st.vat = n('gVat'); st.vin = $('gVin').value; st.cong = $('gCong').value;
   try { localStorage.setItem(KHOA_SI2, JSON.stringify({tiers:SI_TIERS, state:st})) } catch(e){}
+}
+
+/* Thông số xe lấy từ ĐỘI XE trong Cấu hình — một bộ số duy nhất cho cả 2 tab.
+   Tab Sỉ chỉ chọn đi xe nào, không khai lại giá xăng/lương lần thứ hai. */
+function siXeHt_(){
+  var p = $('siXe') && $('siXe').value === 'p';
+  return p
+    ? {ten:'🛻 Bán tải', xang:n('xangP'), hao:n('haoP'), bd:n('baoduongP'),
+       toc:n('tocP'), luong:n('luongP'), boc:n('bocP')}
+    : {ten:'🏍 Xe máy', xang:n('xangM'), hao:n('haoM'), bd:n('baoduongM'),
+       toc:n('tocM'), luong:n('luongM'), boc:n('bocM')};
 }
 
 // ── B1-B7 đúng theo đặc tả mục 3.2 ──
 function siP_(){
-  return {vat:n('siVat')/100, bao:Math.max(1,n('siBao')), vonRaw:n('siVon'),
-    vonGom:$('siVonVat').value==='1', tndn:n('siTndn')/100, dg:n('siDg'),
+  var tc = thueChung_();
+  return {vat:tc.vat, vin:tc.vin, tndn:tc.tndn, cong:tc.cong,
+    bao:Math.max(1,n('siBao')), vonRaw:n('siVon'), dg:n('siDg'),
     dgVat:$('siDgVat').value==='1',
-    km:n('siKm'), cap:Math.max(1,n('siCap')), xang:n('siXang'), hao:n('siHao'), bd:n('siBd'),
-    toc:Math.max(1,n('siToc')), luong:n('siLuong'), boc:n('siBoc'),
+    km:n('siKm'), cap:Math.max(1,n('siCap')), xe:siXeHt_().ten,
+    xang:siXeHt_().xang, hao:siXeHt_().hao, bd:siXeHt_().bd,
+    toc:Math.max(1,siXeHt_().toc), luong:siXeHt_().luong, boc:siXeHt_().boc,
     ck:n('siCk')/100, rb:n('siRb')/100, fs:n('siFs')};
 }
-function siParts_(p){ var k=p.km*2;
-  return {nl:k*(p.hao/100)*p.xang, bd:k*p.bd, lg:(k/p.toc + p.boc/60)*p.luong}; }
-function siCpChuyen_(p){ var q=siParts_(p); return q.nl+q.bd+q.lg; }
+var siParts_ = phanChuyen_, siCpChuyen_ = cpChuyen_;
 function siSoChuyen_(p,n2){ return Math.max(1,Math.ceil(n2/p.cap)); }
 function siLogDonVi_(p,n2){ return n2<=0?0:siSoChuyen_(p,n2)*siCpChuyen_(p)/n2/p.bao; }
-function siLai_(p,gia,n2){
-  var vg = p.vonGom ? p.vonRaw : p.vonRaw*(1+p.vat);
+/* ===== LÕI DÙNG CHUNG (sáp nhập 21/09/2026) =====
+   Trước đó siLai_() và margin() là hai bản sao y hệt nhau, siCpChuyen_() và
+   tripCost() cũng vậy — vá một bên thì bên kia vẫn dính lỗi cũ. Nay mỗi thứ
+   chỉ còn một bản, cả hai tab gọi chung.
+   von = số tiền THỰC TRẢ một đơn vị. Có hoá đơn VAT vin% thì phần thuế đó được
+   khấu trừ (vốn thuần = von/(1+vin)); không hoá đơn thì chịu nguyên giá. */
+function laiChung_(gia, von, cpGiao, p){
+  var vonThuan = p.vin > 0 ? von/(1+p.vin) : von;
   var dongGoiThuan = p.dgVat ? p.dg/(1+p.vat) : p.dg;
-  var lntt = gia/(1+p.vat) - vg/(1+p.vat) - dongGoiThuan - siLogDonVi_(p,n2);
+  var lntt = gia/(1+p.vat) - vonThuan - dongGoiThuan - cpGiao;
   return {lntt:lntt, lnst: lntt>0 ? lntt*(1-p.tndn) : lntt};
+}
+/* Chi phí một chuyến. Ghép nhiều đơn một chuyến + shipper lương cứng thì tiền
+   công không phải chi phí thêm của riêng đơn này. */
+function cpChuyen_(p){ var q = phanChuyen_(p); return q.nl + q.bd + q.lg; }
+function phanChuyen_(p){ var k = p.km*2;
+  return {nl:k*(p.hao/100)*p.xang, bd:k*p.bd,
+    lg: p.cong==='cung' ? 0 : (k/p.toc + p.boc/60)*p.luong}; }
+/* Tham số thuế/hoá đơn dùng chung, đọc từ thẻ "Thuế & hoá đơn". */
+function thueChung_(){
+  return {vat:n('gVat')/100, vin:parseFloat($('gVin').value)/100 || 0,
+    /* TNDN doc tu DUY NHAT o cua the "Phap nhan & thue" — truoc do moi tab mot o,
+     dat lech nhau ma khong ai biet. */
+    tndn:parseFloat($('tndn').value)/100 || 0, cong:$('gCong').value};
+}
+
+function siLai_(p,gia,n2){
+  return laiChung_(gia, p.vonRaw, siLogDonVi_(p,n2), p);
 }
 function siGiaTheoMargin_(p,m,n2){ var lo=0, hi=Math.max(p.vonRaw*20,p.vonRaw+5e6);
   for(var i=0;i<70;i++){ var mid=(lo+hi)/2; if(siLai_(p,mid,n2).lnst/mid<m) lo=mid; else hi=mid; }
@@ -1768,8 +2127,15 @@ function siRender_(){
   if (!$('panelSi') || SAN!=='si') return;
   var p=siP_(), nRef=p.cap;
   var q=siParts_(p), tot=q.nl+q.bd+q.lg;
-  $('siMixNote').innerHTML='Chuyến '+vnd(tot)+' = xăng '+Math.round(q.nl/tot*100)+'% · bảo dưỡng '+
-    Math.round(q.bd/tot*100)+'% · <b>công '+Math.round(q.lg/tot*100)+'%</b>. Công là khoản lớn nhất — ô lương và ô bốc/dỡ mới đáng chỉnh, không phải giá xăng.';
+  var nhanXe = p.xe + ' · ';
+  $('siMixNote').innerHTML = nhanXe + (p.cong==='cung'
+    ? 'Chuyến '+vnd(tot)+' = xăng '+Math.round(q.nl/tot*100)+'% · bảo dưỡng '+Math.round(q.bd/tot*100)+
+      '%. <b>Không tính tiền công</b> vì shipper ăn lương cứng và chuyến này chở chung nhiều đơn.'
+    : 'Chuyến '+vnd(tot)+' = xăng '+Math.round(q.nl/tot*100)+'% · bảo dưỡng '+
+      Math.round(q.bd/tot*100)+'% · <b>công '+Math.round(q.lg/tot*100)+'%</b>. Đổi số xăng/lương ở mục Cấu hình → Đội xe.');
+  $('gVinNote').innerHTML = p.vin>0
+    ? 'Vốn thuần <b>'+vnd(p.vonRaw/(1+p.vin))+'</b>/đv — phần VAT '+Math.round(p.vin*100)+'% trong giá nhập được khấu trừ.'
+    : 'Vốn thuần <b>'+vnd(p.vonRaw)+'</b>/đv — không hoá đơn thì chịu nguyên giá, <b>không khấu trừ được đồng nào</b>.';
 
   var th='<tr><th>Sản phẩm</th>';
   SI_TIERS.forEach(function(t){ th+='<th>'+esc_(t.ten||'bậc')+' — mục tiêu '+t.margin+'%</th>' });
@@ -1837,7 +2203,7 @@ function siDrawTiers_(){ $('siTiers').innerHTML=SI_TIERS.map(function(t,i){
    '<button class="si-btn x" type="button" data-si-del="'+i+'" aria-label="Xoá bậc">×</button></div>'; }).join(''); }
 
 document.addEventListener('input',function(e){ var el=e.target;
-  if (!el.closest || !el.closest('#panelSi')) return;
+  if (!el.closest || !el.closest('#panelSi, #tlNgan')) return;
   if(el.dataset.siT){ var i=+el.dataset.siI;
     if(el.dataset.siT==='margin'){ SI_TIERS[i].margin=parseFloat(el.value)||0; SI_TIERS[i].gia=null; } else SI_TIERS[i].ten=el.value; }
   if(el.dataset.siTier!==undefined){
@@ -1846,7 +2212,7 @@ document.addEventListener('input',function(e){ var el=e.target;
   }
   siRender_(); });
 document.addEventListener('change',function(e){ var el=e.target;
-  if (!el.closest || !el.closest('#panelSi')) return;
+  if (!el.closest || !el.closest('#panelSi, #tlNgan')) return;
   if(el.dataset.siTier!==undefined) SI_TIERS[+el.dataset.siTier].gia=parseFloat(el.value)||0;
   siRender_(); });
 document.addEventListener('click',function(e){
@@ -1962,6 +2328,12 @@ function chonSan_(san){
   $('adv').style.display = laMoc ? 'none' : '';
   $('btnAdv').style.display = laMoc ? 'none' : '';
   document.querySelector('.wrap').classList.toggle('rongMoc', laMoc);
+  if (laMoc || san === 'si'){
+    var oThue = $('cardThue'); oThue.style.display = '';
+    var raiSi = document.querySelector('#panelSi .rail'), raiMoc = document.querySelector('#panelMoc .rail');
+    if (laMoc && raiMoc) raiMoc.insertBefore(oThue, raiMoc.children[3] || null);
+    else if (raiSi) raiSi.insertBefore(oThue, raiSi.children[1] || null);
+  } else { $('cardThue').style.display = 'none'; }
   if (laMoc){ if (window.mocInit_) window.mocInit_(); $('panelSan').style.display='none'; $('panelSi').style.display='none'; return; }
   var laSi = san === 'si';
   $('panelSan').style.display = laSi ? 'none' : '';
@@ -1988,6 +2360,15 @@ $('btnSp').addEventListener('click', function(){ chonSan_('sp'); });
 $('btnTt').addEventListener('click', function(){ chonSan_('tt'); });
 $('btnSi').addEventListener('click', function(){ chonSan_('si'); });
 $('btnMoc').addEventListener('click', function(){ chonSan_('moc'); });
+/* Thẻ thuế dùng chung: đổi ở tab nào cũng phải vẽ lại đúng tab đang mở. */
+['gVat','gVin','tndn','gCong'].forEach(function(id){
+  $(id).addEventListener('input', function(){ veLaiTabDangMo_(); });
+  $(id).addEventListener('change', function(){ veLaiTabDangMo_(); });
+});
+function veLaiTabDangMo_(){
+  if (SAN === 'si' && window.siRender_) siRender_();
+  else if (SAN === 'moc' && window.mocInit_) window.mocInit_();
+}
 
 $('phapNhanSel').addEventListener('change', function(){
   var dn = this.value === 'dn';
@@ -2276,6 +2657,266 @@ veDsLuu();
   SAN = oldSan;
   console.log(fail === 0 ? 'Tự kiểm tra: OK (2/2)' : ('Tự kiểm tra: ' + fail + ' lỗi'));
 })();
+/* ===== LỚP THIẾT LẬP NỀN MÓNG =====
+   Các thẻ bên dưới là hằng số của cả cửa hàng — khai một lần, dùng cho mọi phép
+   tính. Trước đó chúng nằm lẫn với ô nhập của từng đơn nên màn hình rất nặng.
+   Mở ngăn kéo thì CHUYỂN HẲN thẻ sang, đóng thì trả về đúng chỗ cũ — không nhân
+   đôi ô nhập, không phải đồng bộ giá trị, mọi ràng buộc sự kiện giữ nguyên. */
+var TL_NHOM = [
+  {ten:'Thuế của công ty', mo:'Pháp nhân, TNDN, hoá đơn mua vào — một bộ cho mọi cách tính. VAT bán ra không nằm đây vì nó theo mặt hàng.', ids:['cardThue','cardPhapNhan']},
+  {ten:'Đội xe & chi phí chuyến', mo:'Một bộ số dùng cho cả hai cách tính — xăng dầu, mức hao, công người chạy, kích thước thùng xe.',
+   ids:['mocThongSoXe','cardKichThuoc']},
+  {ten:'Chi phí chung hàng tháng', mo:'Lương nhân viên, kho bãi, điện nước — không thuộc về đơn nào.',
+   ids:['cardChiPhiChung']},
+  {ten:'Chính sách bán sỉ', mo:'Chiết khấu và ngưỡng freeship cho đại lý.', ids:['cardChinhSach']},
+  {ten:'Phí sàn Shopee / TikTok', mo:'Hoa hồng, phí dịch vụ, cước vận chuyển.',
+   ids:['cardPhiSan','cardDichVu','cardVanChuyen']}
+];
+var TL_CHO_CU = {};   // id -> {cha, truoc} de tra the ve dung vi tri
+function tlMoNgan_(){
+  /* Mở Cấu hình thì kéo ô VAT về lại thẻ Thuế cho khỏi lạc mất — đóng lại nó tự
+     quay ra cạnh mặt hàng. */
+  var oVat = $('oVatBanRa'), theThue = $('cardThue');
+  if (oVat && theThue) theThue.querySelector('.si-body').insertBefore(oVat, theThue.querySelector('.si-body').firstChild);
+  var than = $('tlThan'); than.innerHTML = '';
+  TL_NHOM.forEach(function(nhom){
+    var co = nhom.ids.filter(function(id){ return $(id) });
+    if (!co.length) return;
+    var khung = document.createElement('div');
+    khung.className = 'tlNhom';
+    khung.innerHTML = '<h3>'+nhom.ten+'</h3><p>'+nhom.mo+'</p>';
+    co.forEach(function(id){
+      var el = $(id);
+      TL_CHO_CU[id] = {cha:el.parentNode, truoc:el.nextSibling};
+      el.style.display = '';
+      /* Khoi khong co tieu de rieng (chi la mot cum o nhap) thi dan nhan cho biet
+         dang chinh xe nao — trong ngan keo khong con boi canh the cha nua. */
+      if (el.dataset.tlTen){
+        var nhan = document.createElement('p');
+        nhan.className = 'tlNhan'; nhan.innerHTML = el.dataset.tlTen;
+        khung.appendChild(nhan);
+      }
+      khung.appendChild(el);
+    });
+    than.appendChild(khung);
+  });
+  $('tlNgan').hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+function tlDongNgan_(){
+  Object.keys(TL_CHO_CU).forEach(function(id){
+    var el = $(id), cu = TL_CHO_CU[id];
+    if (el && cu && cu.cha) cu.cha.insertBefore(el, cu.truoc);
+  });
+  TL_CHO_CU = {};
+  $('tlNgan').hidden = true;
+  document.body.style.overflow = '';
+  chonSan_(SAN);
+  vatDatChoDung_();   // dat lai an/hien dung theo tab dang mo
+}
+/* Cac the nen mong SONG HAN trong ngan keo: man hinh chinh khong hien chung
+   nua (de tra ve DOM cu cho dung cho khi mo lai, nhung an di). Do la ca y nghia
+   cua lop nay — khong thi dong ngan keo lai day het ve man hinh chinh nhu cu. */
+/* VAT bán ra đi theo mặt hàng: dán ô này vào thẻ "Sản phẩm" của tab đang mở,
+   không để trong Cấu hình. Vẫn là MỘT ô duy nhất — chỉ là nó di chuyển, không
+   nhân bản, nên không bao giờ có chuyện hai tab hai mức VAT lệch nhau. */
+function vatDatChoDung_(){
+  var o = $('oVatBanRa'); if (!o) return;
+  if (!$('tlNgan').hidden) return;                  // đang mở Cấu hình thì để yên
+  var cho = null;
+  if (SAN === 'si') cho = document.querySelector('#panelSi .si-card .si-body');
+  else if (SAN === 'moc') {
+    var vonT = $('vonT');
+    cho = vonT ? vonT.closest('.body') : null;
+  }
+  if (!cho) { o.style.display = 'none'; return; }
+  o.style.display = '';
+  o.style.marginTop = '10px';
+  if (o.parentNode !== cho) cho.appendChild(o);
+}
+
+function tlAnNenMong_(){
+  if (!$('tlNgan').hidden) return;                 // dang mo ngan keo thi de yen
+  TL_NHOM.forEach(function(nhom){
+    nhom.ids.forEach(function(id){ var el = $(id); if (el) el.style.display = 'none'; });
+  });
+}
+var chonSanGoc_ = chonSan_;
+chonSan_ = function(san){ chonSanGoc_(san); tlAnNenMong_(); vatDatChoDung_(); };
+
+$('btnTL').addEventListener('click', tlMoNgan_);
+$('btnTLDong').addEventListener('click', tlDongNgan_);
+document.addEventListener('keydown', function(e){ if (e.key==='Escape' && !$('tlNgan').hidden) tlDongNgan_(); });
+/* ===== NHẬT KÝ CHỈNH CẤU HÌNH =====
+   Ghi lại mỗi lần một ô cấu hình đổi giá trị: ô nào, từ bao nhiêu sang bao nhiêu,
+   lúc nào. Chỉ nằm trên MÁY NÀY (localStorage) — muốn xem xuyên máy thì phải đưa
+   lên Sheet như lịch sử tính giá, đó là việc riêng cần chủ duyệt. */
+var CH_KHOA = 'zaka_tinhgia_cauhinh_nk';
+var CH_NK = [];
+try { CH_NK = JSON.parse(localStorage.getItem(CH_KHOA)) || [] } catch(e){ CH_NK = [] }
+var CH_TRUOC = {};          // id -> gia tri truoc khi doi
+
+function chCacO_(){         // moi o nhap nam trong cac the cau hinh
+  var ra = [];
+  TL_NHOM.forEach(function(nhom){
+    nhom.ids.forEach(function(id){
+      var el = $(id); if (!el) return;
+      [].push.apply(ra, el.querySelectorAll('input, select'));
+    });
+  });
+  return ra;
+}
+function chTenO_(el){
+  var lb = el.id ? document.querySelector('label[for="'+el.id+'"]') : null;
+  if (lb) return lb.textContent.trim();
+  var boc = el.closest('div');
+  var lb2 = boc ? boc.querySelector('label') : null;
+  return lb2 ? lb2.textContent.trim() : (el.id || 'ô cấu hình');
+}
+function chDoc_(el){
+  if (el.tagName === 'SELECT') { var o = el.options[el.selectedIndex]; return o ? o.textContent.trim() : el.value; }
+  return el.value;
+}
+function chGioVn_(ts){
+  var d = new Date(ts), s = function(n){ return String(n).padStart(2,'0') };
+  return s(d.getDate())+'/'+s(d.getMonth()+1)+' '+s(d.getHours())+':'+s(d.getMinutes());
+}
+function chGhi_(el){
+  var cu = CH_TRUOC[el.id], moi = chDoc_(el);
+  if (cu === undefined || cu === moi) { CH_TRUOC[el.id] = moi; return; }
+  CH_TRUOC[el.id] = moi;
+  CH_NK.unshift({id:el.id, ten:chTenO_(el), cu:cu, moi:moi, luc:Date.now()});
+  CH_NK = CH_NK.slice(0, 200);
+  try { localStorage.setItem(CH_KHOA, JSON.stringify(CH_NK)) } catch(e){}
+  chVeNhatKy_();
+}
+function chLanCuoi_(id){
+  for (var i=0; i<CH_NK.length; i++) if (CH_NK[i].id === id) return CH_NK[i];
+  return null;
+}
+/* Dan dong "sua lan cuoi ..." ngay duoi tung o, va bang lich su o cuoi lop. */
+function chVeNhatKy_(){
+  chCacO_().forEach(function(el){
+    var cu = el.parentNode.querySelector(':scope > .chLuc');
+    var m = chLanCuoi_(el.id);
+    if (!m) { if (cu) cu.remove(); return; }
+    var chu = 'sửa lần cuối ' + chGioVn_(m.luc) + ' · từ ' + m.cu;
+    if (!cu) { cu = document.createElement('small'); cu.className = 'chLuc'; el.parentNode.appendChild(cu); }
+    cu.textContent = chu;
+    cu.classList.toggle('moi', Date.now() - m.luc < 86400000);   // trong 24h thi lam noi
+  });
+  var hop = $('chNhatKyHop');
+  if (!hop) return;
+  hop.innerHTML = CH_NK.length
+    ? CH_NK.slice(0, 30).map(function(m){
+        return '<li><span class="luc">'+chGioVn_(m.luc)+'</span>'
+          + '<span><span class="oTen">'+m.ten+'</span> '
+          + '<span class="doi">— <b>'+m.cu+'</b> → <b>'+m.moi+'</b></span></span></li>';
+      }).join('')
+    : '<li class="chTrong">Chưa chỉnh gì kể từ khi mở công cụ trên máy này.</li>';
+}
+
+/* Chay NGAY SAU khi lop cau hinh mo: chup gia tri truoc, gan su kien, ve nhat ky.
+   KHONG ghi de tlMoNgan_ — addEventListener da giu chat ham goc tu luc gan, ghi de
+   bien sau do khong doi duoc cai listener dang chay (da vap dung loi nay khi test). */
+function chSauKhiMo_(){
+  var than = $('tlThan');
+  if (than.querySelector('#chNhatKyHop')) return;
+  var khung = document.createElement('div');
+  khung.className = 'tlNhom';
+  khung.innerHTML = '<h3>Nhật ký chỉnh cấu hình</h3><p>Ai sửa gì, lúc nào — lưu trên máy này.</p>'
+    + '<div class="card"><div style="padding:12px 14px"><ul class="chNhatKy" id="chNhatKyHop"></ul></div></div>';
+  than.appendChild(khung);
+  chCacO_().forEach(function(el){
+    if (CH_TRUOC[el.id] === undefined) CH_TRUOC[el.id] = chDoc_(el);
+    if (el.dataset.chDaGan) return;
+    el.dataset.chDaGan = '1';
+    el.addEventListener('change', function(){ chGhi_(el) });
+  });
+  chVeNhatKy_();
+}
+/* ===== CHI PHÍ CHUNG HÀNG THÁNG =====
+   Lãi hiện trên màn hình là lãi của TỪNG đơn vị hàng, chưa trừ lương nhân viên,
+   kho bãi, điện nước — nên "hoà vốn 40.000đ" mới chỉ là hoà vốn trên một bao.
+   Khai các khoản chung ở đây để biết mỗi tháng phải bán bao nhiêu mới bù nổi. */
+var CP_KHOA = 'zaka_tinhgia_chiphichung';
+var CP_O = ['cpLuong','cpKho','cpDien','cpKhac'];
+(function cpNap_(){
+  try {
+    var d = JSON.parse(localStorage.getItem(CP_KHOA)) || {};
+    CP_O.forEach(function(id){ if (d[id] !== undefined) $(id).value = d[id] });
+  } catch(e){}
+})();
+function cpLuu_(){
+  var d = {}; CP_O.forEach(function(id){ d[id] = $(id).value });
+  try { localStorage.setItem(CP_KHOA, JSON.stringify(d)) } catch(e){}
+}
+function cpVe_(){
+  var tong = 0; CP_O.forEach(function(id){ tong += n(id) });
+  if (tong <= 0) {
+    $('cpChungNote').innerHTML = 'Chưa khai khoản nào. Khai vào đây thì máy mới nói được mỗi tháng phải bán bao nhiêu mới bù nổi chi phí cố định.';
+    return;
+  }
+  var txt = 'Tổng <b>' + vnd(tong) + '</b>/tháng.';
+  try {
+    var p = siP_(), bac = SI_TIERS[SI_TIERS.length-1];
+    var gia = bac.gia || siGiaTheoMargin_(p, bac.margin/100, n('siCap'));
+    var lai = siLai_(p, gia, n('siCap')).lnst;
+    if (lai > 0) {
+      var can = Math.ceil(tong / lai);
+      txt += ' Với lãi <b>' + vnd(lai) + '</b>/đơn vị ở bậc "' + esc_(bac.ten) + '", mỗi tháng phải bán <b>'
+           + can.toLocaleString('vi-VN') + ' đơn vị</b> (≈ ' + Math.ceil(can/Math.max(1,n('siBao'))).toLocaleString('vi-VN')
+           + ' thùng) mới bù nổi.';
+    }
+  } catch(e){}
+  $('cpChungNote').innerHTML = txt;
+}
+CP_O.forEach(function(id){
+  $(id).addEventListener('input', function(){ cpLuu_(); cpVe_(); });
+  $(id).addEventListener('change', function(){ cpLuu_(); cpVe_(); });
+});
+cpVe_();
+
+$('btnTL').addEventListener('click', function(){ cpVe_() });
+$('btnTL').addEventListener('click', chSauKhiMo_);   // gan sau -> chay sau ham mo lop
+
+/* ===== CỔNG NHẮC VAT KHI ĐỔI MẶT HÀNG =====
+   VAT bán ra khác nhau theo mặt hàng (thức ăn chăn nuôi 0%, hàng thường 8–10%),
+   trong khi nó nằm ở lớp cấu hình dùng chung. Nên nhớ đã xác nhận VAT cho mặt
+   hàng nào; gõ sang tên hàng khác thì chặn lại nhắc, không để tính nhầm thuế. */
+var VAT_KHOA = 'zaka_tinhgia_vat_xacnhan';
+var VAT_XN = null;
+try { VAT_XN = JSON.parse(localStorage.getItem(VAT_KHOA)) } catch(e){}
+
+function vatLuuXn_(ten, vat){
+  VAT_XN = {ten:ten, vat:vat};
+  try { localStorage.setItem(VAT_KHOA, JSON.stringify(VAT_XN)) } catch(e){}
+}
+function vatKiemTra_(){
+  var oTen = $('siTen'); if (!oTen) return;
+  var ten = oTen.value.trim(), vat = $('gVat').value;
+  var hop = $('vatNhac');
+  if (!ten) { hop.hidden = true; return; }
+  if (!VAT_XN) { vatLuuXn_(ten, vat); hop.hidden = true; return; }
+  if (VAT_XN.ten === ten) { if (VAT_XN.vat !== vat) vatLuuXn_(ten, vat); hop.hidden = true; return; }
+  hop.innerHTML = '<span class="noi">Đang tính cho <b>' + esc_(ten) + '</b>, nhưng VAT bán ra <b>'
+    + vat + '%</b> là khai cho <b>' + esc_(VAT_XN.ten) + '</b>. Mặt hàng khác nhau thì VAT khác nhau '
+    + '(thức ăn chăn nuôi 0%, hàng thường 8–10%) — kiểm lại trước khi báo giá.</span>'
+    + '<button type="button" class="chinh" id="vatGiu">Giữ ' + vat + '% cho ' + esc_(ten) + '</button>'
+    + '<button type="button" id="vatDoi">Mở cấu hình để đổi</button>';
+  hop.hidden = false;
+  $('vatGiu').onclick = function(){ vatLuuXn_(ten, $('gVat').value); $('vatNhac').hidden = true; };
+  $('vatDoi').onclick = function(){ tlMoNgan_(); chSauKhiMo_(); setTimeout(function(){ $('gVat').focus(); $('gVat').select(); }, 40); };
+}
+if ($('siTen')) {
+  $('siTen').addEventListener('change', vatKiemTra_);
+  $('siTen').addEventListener('blur', vatKiemTra_);
+}
+$('gVat').addEventListener('change', vatKiemTra_);
+$('btnTLDong').addEventListener('click', function(){ setTimeout(vatKiemTra_, 0) });
+vatKiemTra_();
+
+tlAnNenMong_();
 </script>
 
 <script>
@@ -2434,8 +3075,8 @@ function evaluateCombo(vehicle,tBox,cBox,wT,wC,reqT,reqC,phanCong){
 
 /* ===== Chi phi chuyen — muon dung cong thuc Si/Phan phoi (siCpChuyen_) ===== */
 function tripCost(p){
-  var k=p.km*2;
-  return k*(p.hao/100)*p.xang + k*p.baoduong + (k/p.toc + p.boc/60)*p.luong;
+  return cpChuyen_({km:p.km, hao:p.hao, xang:p.xang, bd:p.baoduong,
+    toc:p.toc, boc:p.boc, luong:p.luong, cong:$('gCong').value});
 }
 
 /* ===== Chon xe: xe may di truoc (ke ca nhieu chuyen), CHI doi sang ban tai khi
@@ -2597,11 +3238,7 @@ function chiPhiRiengXe(qT, qC, loai, ctx){
 
 /* ===== Loi nhuan — muon dung cong thuc Si/Phan phoi (siLai_) ===== */
 function margin(giaBanThung, vonThung, chiPhiGiaoThung, prm){
-  var vonGomVat = prm.vonVat ? vonThung : vonThung*(1+prm.vat);
-  var dongGoiThuan = prm.dongGoiVat ? prm.dongGoi/(1+prm.vat) : prm.dongGoi;
-  var lntt = giaBanThung/(1+prm.vat) - vonGomVat/(1+prm.vat) - dongGoiThuan - chiPhiGiaoThung;
-  var lnst = lntt>0 ? lntt*(1-prm.tndn) : lntt;
-  return {lntt:lntt, lnst:lnst};
+  return laiChung_(giaBanThung, vonThung, chiPhiGiaoThung, prm);
 }
 
 /* ===== Bang gia ===== */
@@ -2676,7 +3313,7 @@ document.addEventListener('change', function(e){
   render();
 });
 
-var ALL_IDS = ['reqT','reqC','vonT','vonC','mgVat','mgTndn','vonVat','dongGoi','dongGoiVat','nguongBanTai',
+var ALL_IDS = ['reqT','reqC','vonT','vonC','dongGoi','dongGoiVat','nguongBanTai',
   'km','xangM','haoM','baoduongM','tocM','luongM','bocM',
   'xangP','haoP','baoduongP','tocP','luongP','bocP',
   'capMT','capMC','capPT','capPC',
@@ -2992,7 +3629,9 @@ function render(){
   veChuyenChart_(table, tongThung, reqT, reqC, ctxXe);
 
   // ---- loi nhuan ----
-  var prmMargin = {vat:n('mgVat')/100, tndn:parseFloat($('mgTndn').value)/100, vonVat:$('vonVat').value==='1', dongGoi:n('dongGoi'), dongGoiVat:$('dongGoiVat').value==='1'};
+  var tcMoc = thueChung_();
+  var prmMargin = {vat:tcMoc.vat, vin:tcMoc.vin, tndn:tcMoc.tndn,
+    dg:n('dongGoi'), dgVat:$('dongGoiVat').value==='1'};
   var vonT=n('vonT'), vonC=n('vonC');
   var giaBanT = order.pricePerBagTofu!==null ? order.pricePerBagTofu*8 : null;
   var giaBanC = order.pricePerBagCassava!==null ? order.pricePerBagCassava*8 : null;
@@ -3044,13 +3683,13 @@ function render(){
   var vatDauVaoDongGoi = prmMargin.dongGoiVat ? (dongGoiTong - dongGoiTong/(1+vatR)) : 0;
   var vatPhaiNop = vatDauRa - vatDauVaoVon - vatDauVaoDongGoi;
   if (vatR > 0){
-    rowsP += rowP('VAT đầu ra', 'nằm trong giá bán '+n('mgVat')+'%', '-'+vnd(vatDauRa), {tdc:'neg'});
+    rowsP += rowP('VAT đầu ra', 'nằm trong giá bán '+n('gVat')+'%', '-'+vnd(vatDauRa), {tdc:'neg'});
     rowsP += rowP('VAT đầu vào khấu trừ', 'từ giá vốn', '+'+vnd(vatDauVaoVon));
     if (vatDauVaoDongGoi>0) rowsP += rowP('VAT đầu vào khấu trừ', 'từ đóng gói', '+'+vnd(vatDauVaoDongGoi));
     rowsP += rowP('= VAT thực nộp cho đơn này', '', vnd(vatPhaiNop), {thut:1, tdc:'hint'});
   }
   rowsP += rowP('Lợi nhuận trước thuế', '', vnd(lnttTong), {tr:' style="font-weight:600"'});
-  rowsP += rowP('Thuế TNDN ('+$('mgTndn').value+'%)', '', '-'+vnd(Math.max(0,lnttTong)*prmMargin.tndn));
+  rowsP += rowP('Thuế TNDN ('+$('tndn').value+'%)', '', '-'+vnd(Math.max(0,lnttTong)*prmMargin.tndn));
   rowsP += rowP('Lợi nhuận sau thuế', '', vnd(lnstTong), {tr:' style="font-weight:700"'});
   $('tbodyProfit').innerHTML = rowsP;
 
