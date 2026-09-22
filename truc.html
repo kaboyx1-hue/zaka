@@ -1787,7 +1787,12 @@ function App() {
   const remembered = (() => {
     try { return JSON.parse(localStorage.getItem(REMEMBER_KEY)); } catch (e) { return null; }
   })();
-  const [role, setRole] = useState(remembered && remembered.role ? remembered.role : null); // null | 'admin' | 'employee'
+  /* 22/09: mo TRONG tab "Viec can lam" cua phan mem quan ly thi nguoi dung da la
+     chu/quan ly roi — vao thang man Nguoi dieu hanh, khong hoi lai vai tro. Mo
+     rieng ngoai trinh duyet (nhan vien) thi van hoi nhu cu. */
+  const trongTabQuanLy = (function () { try { return window.parent !== window; } catch (e) { return false; } })();
+  const [role, setRole] = useState(
+    remembered && remembered.role ? remembered.role : (trongTabQuanLy ? 'admin' : null)); // null | 'admin' | 'employee'
   const [employeeId, setEmployeeId] = useState(remembered && remembered.employeeId && PEOPLE[remembered.employeeId] ? remembered.employeeId : null);
 
   useEffect(() => {
