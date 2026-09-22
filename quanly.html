@@ -751,7 +751,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260922c';
+var APP_VER='20260922d';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -5285,6 +5285,13 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260922d', ngay:'22/09/2026', ten:'Điều hành công việc dùng chung một danh sách cho mọi máy',
+  vaPhieu:[],
+  muc:[
+   ['moi','Tab <b>Điều hành công việc</b> giờ lưu lên <b>bảng chung</b> — máy tính và điện thoại thấy cùng một danh sách việc, cùng danh sách nhân sự và trưởng nhóm. Trước đó mỗi máy một kiểu.'],
+   ['moi','Dòng chữ trên đầu trang báo đúng tình trạng: đang lấy dữ liệu / đang lưu / đang dùng bảng chung / chưa lưu được.'],
+   ['sua','Sửa lỗi nguy hiểm bắt được khi thử: máy mới mở lần đầu có thể <b>ghi đè mất việc</b> máy khác vừa sửa. Nay chưa lấy được dữ liệu chung thì không ghi gì cả.'],
+  ]},
  {ban:'20260922c', ngay:'22/09/2026', ten:'Điều hành công việc: chốt ca Vận hành sàn, dọn nội dung mẫu',
   vaPhieu:[],
   muc:[
