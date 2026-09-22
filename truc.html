@@ -777,8 +777,11 @@ let PEOPLE = {
   // (dong goi 3-10, kiem hoa 2-5) da bo — ho khong co viec nao, chi ngoi day o muc
   // "Chua phan bo" lam roi danh sach. Chu tu them nguoi that bang nut
   // "+ Them nhan vien moi" khi can.
+  // Nhóm Vận hành sàn: 1 trưởng nhóm (kiểm hoá) + 3 nhân viên, MỖI người đúng
+  // MỘT loại đơn — xem DEPT_LEADS bên dưới và owner của 3 việc chuỗi quy trình.
   pk1: { name: 'NV đóng gói 1', depts: ['vs'] },
   pk2: { name: 'NV đóng gói 2', depts: ['vs'] },
+  pk3: { name: 'NV đóng gói 3', depts: ['vs'] },
   qc1: { name: 'NV kiểm hóa 1', depts: ['vs'] },
 };
 // Trưởng nhóm theo TỪNG phòng ban (tách khỏi PEOPLE vì 1 người giờ có thể thuộc
@@ -924,7 +927,7 @@ const INITIAL_TASKS = [
         compareTo: { stage: 'p2', field: 'soDonSauDong', selfField: 'soDonGiaoThanhCong', note: 'số sau khi đóng gói' } },
     ],
     log: ['Giao việc bởi Người điều hành — 19/09', 'NV đóng gói 2: đã nhận trách nhiệm việc này — 21/09'] },
-  { id: 111, title: 'Chuỗi quy trình đơn Nhanh', dept: 'vs', owner: 'pk1', due: '21/09', status: 'todo', overdue: false, priority: 'vua', recurring: true,
+  { id: 111, title: 'Chuỗi quy trình đơn Nhanh', dept: 'vs', owner: 'pk3', due: '21/09', status: 'todo', overdue: false, priority: 'vua', recurring: true,
     desc: 'Nhóm tiêu chuẩn — vẫn đi đúng chuỗi 3 khâu như 2 nhóm kia để không đơn nào lọt lưới, không cần ảnh/ký biên bản riêng.',
     checklist: [],
     pipeline: [
@@ -1001,11 +1004,11 @@ const NAV_ITEMS = [
   { key: 'board', label: 'Bảng nhiệm vụ', mobileLabel: 'Nhiệm vụ', Icon: IconBoard },
   { key: 'people', label: 'Theo người phụ trách', mobileLabel: 'Theo người', Icon: IconPeople },
   { key: 'feed', label: 'Nhật ký chung', mobileLabel: 'Nhật ký', Icon: IconFeed },
-  { key: 'report', label: 'Báo cáo với sếp', mobileLabel: 'Báo cáo', Icon: IconReport },
+  { key: 'report', label: 'Báo cáo', mobileLabel: 'Báo cáo', Icon: IconReport },
 ];
 
 /* ---------- Nav ---------- */
-function Sidebar({ view, setView, alertCount, onSelectDept, onPreviewEmployee, onBackToRoleGate, onResetData }) {
+function Sidebar({ view, setView, alertCount, onSelectDept, onPreviewEmployee, onBackToRoleGate, onResetData, onDonMau }) {
   return h('div', { className: 'sidebar' },
     h('div', { className: 'brand-sub', style: { paddingTop: 4, borderBottom: '1px solid var(--border)', paddingBottom: 14, marginBottom: 18 } }, 'Một luồng việc, một nơi chịu trách nhiệm'),
     h('div', { className: 'nav-group' },
@@ -1027,8 +1030,10 @@ function Sidebar({ view, setView, alertCount, onSelectDept, onPreviewEmployee, o
       '📦 Xem thử giao diện Nhân viên'),
     h('button', { className: 'nav-item', style: { marginBottom: 6 }, onClick: onBackToRoleGate },
       '⇄ Đổi vai trò'),
-    h('button', { className: 'nav-item', style: { marginBottom: 12, color: 'var(--text-faint)' }, onClick: onResetData },
+    h('button', { className: 'nav-item', style: { marginBottom: 6, color: 'var(--text-faint)' }, onClick: onResetData },
       '↺ Xoá dữ liệu test, về mẫu gốc'),
+    h('button', { className: 'nav-item', style: { marginBottom: 12, color: 'var(--gold)' }, onClick: onDonMau },
+      '🧹 Dọn nội dung mẫu — bắt đầu dùng thật'),
     h('div', { className: 'sidebar-foot' },
       h('div', { className: 'avatar' }, 'LĐ'),
       h('div', null,
@@ -1416,7 +1421,7 @@ function ReportView({ tasks }) {
   return h('div', { className: 'view' },
     h('div', { className: 'topbar no-print' },
       h('div', null,
-        h('h1', null, 'Báo cáo với sếp'),
+        h('h1', null, 'Báo cáo'),
         h('div', { className: 'sub' }, 'Danh sách việc đã hoàn thành — in ra hoặc lưu PDF để gửi qua Zalo/email, không cần gõ tay lại.')),
       h('button', { className: 'btn primary', onClick: () => window.print() }, '🖨 In báo cáo / Lưu PDF')),
     h('div', { className: 'content' },
@@ -1753,7 +1758,7 @@ function EmployeePicker({ onPick, onBack }) {
     h('button', { className: 'picker-back', onClick: onBack }, '← Về màn chọn vai trò'));
 }
 
-function EmployeeHome({ tasks, employeeId, onOpenTask, onSwitchPerson, onBackToRoleGate, onQuickAddTask }) {
+function EmployeeHome({ tasks, employeeId, onOpenTask, onSwitchPerson, onBackToRoleGate, onQuickAddTask, onChotCa }) {
   const [showAdd, setShowAdd] = useState(false);
   const me = PEOPLE[employeeId];
   const primaryDept = DEPTS[me.depts[0]];
@@ -1797,6 +1802,38 @@ function EmployeeHome({ tasks, employeeId, onOpenTask, onSwitchPerson, onBackToR
     unclaimed.length > 0 && h('div', { className: 'emp-section' },
       h('h3', null, 'Việc chưa ai nhận — ' + me.depts.map(dk => DEPTS[dk].name).join(' / ') + ' (' + unclaimed.length + ')'),
       unclaimed.map(t => h(TaskCard, { key: t.id, t, onOpen: onOpenTask }))),
+
+    leadOfDepts.includes('vs') && (() => {
+      /* Truong nhom Van hanh san: bang gom ket qua ca 3 loai don, du het moi cho chot. */
+      const chuoi = tasks.filter(t => t.dept === 'vs' && t.pipeline && t.status !== 'done');
+      if (!chuoi.length) return null;
+      const xong = chuoi.filter(t => t.pipeline.every(st => st.filled));
+      const duHet = xong.length === chuoi.length;
+      return h('div', { className: 'emp-section' },
+        h('h3', null, '★ Chốt ca — gom kết quả rồi gửi lên sếp (' + xong.length + '/' + chuoi.length + ' việc đã xong)'),
+        h('div', { className: 'panel-sub', style: { marginTop: -6, marginBottom: 10 } },
+          'Mỗi nhân viên chỉ lo một loại đơn và báo số về đây. Đủ cả ' + chuoi.length + ' việc thì bấm chốt — sếp nhận đúng một bản, không phải đọc từng mảnh rời.'),
+        h('div', { className: 'panel' },
+          chuoi.map(t => {
+            const den = t.pipeline.filter(st => st.filled).length;
+            const ok = den === t.pipeline.length;
+            const so = [];
+            t.pipeline.forEach(st => { const v = st.filled || {};
+              (st.fields || []).forEach(f => { if (f.type === 'number' && v[f.key] !== undefined && v[f.key] !== '') so.push(f.label + ' ' + v[f.key]); }); });
+            return h('div', { className: 'alert-row', key: t.id, onClick: () => onOpenTask(t.id) },
+              h('span', { className: 'task-name' }, t.title,
+                h('div', { style: { fontSize: 12, color: 'var(--text-dim)', marginTop: 2 } },
+                  (PEOPLE[t.owner] ? PEOPLE[t.owner].name : 'chưa ai nhận') + (so.length ? ' — ' + so.join(' · ') : ' — chưa báo số nào'))),
+              ok ? h('span', { className: 'pill' }, 'Đã xong')
+                 : h('span', { className: 'pill unowned' }, den + '/' + t.pipeline.length + ' khâu'));
+          }),
+          h('div', { style: { padding: '10px 12px' } },
+            h('button', {
+              className: 'btn primary', disabled: !duHet,
+              style: duHet ? null : { opacity: .5, cursor: 'not-allowed' },
+              onClick: () => { if (duHet && onChotCa) onChotCa(me.name); },
+            }, duHet ? '✅ Chốt ca & gửi báo cáo lên sếp' : 'Chờ đủ ' + chuoi.length + ' việc mới chốt được'))));
+    })(),
 
     leadOfDepts.length > 0 && h('div', { className: 'emp-section' },
       h('h3', null, '★ Tổng quan cả nhóm — ' + leadOfDepts.map(dk => DEPTS[dk].name).join(' / ') + ' (' + teamTasks.length + ')'),
@@ -1982,6 +2019,63 @@ function App() {
     }]);
     pushFeed(actorName, 'thêm việc phát sinh', data.title, DEPTS[data.dept].color);
   }
+  /* ===== TRUONG NHOM CHOT CA ROI MOI DAY BAO CAO LEN SEP (22/09/2026) =====
+     Chu yeu cau: moi nhan vien lo dung mot loai don va chi thay loai cua minh;
+     ket qua chay ve truong nhom; truong nhom gom du ca 3 loai moi chot, chot xong
+     mot ban bao cao duy nhat moi len den sep — khong de sep phai doc 3 manh roi. */
+  function chotCaVanHanhSan(actorName) {
+    const chuoi = tasks.filter(t => t.dept === 'vs' && t.pipeline && t.status !== 'done');
+    if (!chuoi.length) return;
+    const chuaXong = chuoi.filter(t => t.pipeline.some(st => !st.filled));
+    if (chuaXong.length) return;                 // nut da bi khoa, day chi la chot chan
+    const hom = new Date();
+    const hai = n => String(n).padStart(2, '0');
+    const ngay = hai(hom.getDate()) + '/' + hai(hom.getMonth() + 1);
+    const dong = chuoi.map(t => {
+      const so = [];
+      t.pipeline.forEach(st => {
+        const v = st.filled || {};
+        (st.fields || []).forEach(f => {
+          if (f.type === 'number' && v[f.key] !== undefined && v[f.key] !== '') so.push(f.label + ': ' + v[f.key]);
+        });
+      });
+      return '• ' + t.title + ' (' + (PEOPLE[t.owner] ? PEOPLE[t.owner].name : 'chưa ai nhận') + ') — ' + (so.join(' · ') || 'không có số');
+    });
+    setTasks(prev => prev.map(t => (chuoi.some(c => c.id === t.id)
+      ? { ...t, status: 'done', doneAt: Date.now(), log: [...t.log, 'Trưởng nhóm chốt ca ' + ngay + ' — vừa xong'] }
+      : t)));
+    setTasks(prev => [...prev, {
+      id: Date.now(), title: 'Báo cáo ca ngày ' + ngay + ' — Vận hành sàn', dept: 'gd', owner: null,
+      due: '', status: 'done', doneAt: Date.now(), priority: 'vua',
+      desc: 'Trưởng nhóm ' + actorName + ' đã gom đủ ' + chuoi.length + ' việc và chốt ca.' + String.fromCharCode(10)
+        + dong.join(String.fromCharCode(10)),
+      checklist: [], images: [],
+      log: ['Trưởng nhóm ' + actorName + ' chốt ca ' + ngay + ' và gửi lên Ban giám đốc — vừa xong'],
+    }]);
+    pushFeed(actorName, 'chốt ca và gửi báo cáo lên sếp', 'Vận hành sàn ngày ' + ngay, DEPTS.vs.color);
+  }
+  /* ===== DON NOI DUNG MAU DE BAT DAU DUNG THAT (22/09/2026) =====
+     Chu yeu cau "khi len chinh thuc thi cac noi dung mau phai xoa het". Khac han
+     nut "ve mau goc" ben tren — nut do NAP LAI mau, nut nay XOA mau di.
+     Giu lai: 9 viec that chuyen tu bang cu sang (id 201-209), 4 tai khoan that
+     NV01-04, Chu va Vo chu. Bo: moi viec mau va nhung nguoi chi de demo. */
+  function donNoiDungMau() {
+    const giuNguoi = ['linh', 'hai', 'trang', 'duy', 'giamdoc', 'phogiamdoc'];
+    const xd = String.fromCharCode(10);
+    const soViecMau = tasks.filter(t => !(t.id >= 201 && t.id <= 209)).length;
+    const soNguoiMau = Object.keys(PEOPLE).filter(k => giuNguoi.indexOf(k) < 0).length;
+    if (!window.confirm('Sẽ xoá ' + soViecMau + ' việc mẫu và ' + soNguoiMau + ' người mẫu.' + xd + xd
+      + 'Giữ lại: 9 việc thật chuyển từ bảng cũ sang, 4 tài khoản nhân viên thật (Văn/Hằng/Ngọc/Phú), Chủ và Vợ chủ.' + xd
+      + 'Không hoàn lại được. Tiếp tục?')) return;
+    const nguoiMoi = {};
+    giuNguoi.forEach(k => { if (PEOPLE[k]) nguoiMoi[k] = PEOPLE[k]; });
+    PEOPLE = nguoiMoi;
+    DEPT_LEADS = { kd: null, kv: null, kt: null, mk: null, vs: null, ship: null, gd: null };
+    bumpPeople(v => v + 1);
+    setTasks(prev => prev.filter(t => t.id >= 201 && t.id <= 209).map(t => ({ ...t, owner: null })));
+    setFeed([]);
+    pushFeed('Người điều hành', 'dọn sạch nội dung mẫu', 'bắt đầu dùng thật', DEPTS.gd.color);
+  }
   function deleteTask(id) {
     const t = tasks.find(x => x.id === id);
     if (t) pushFeed('Người điều hành', 'xoá việc', t.title, DEPTS[t.dept].color);
@@ -2036,6 +2130,7 @@ function App() {
         onSwitchPerson: () => { setEmployeeId(null); try { localStorage.setItem(REMEMBER_KEY, JSON.stringify({ role: 'employee' })); } catch (e) {} },
         onBackToRoleGate: forgetAndGoToRoleGate,
         onQuickAddTask: quickAddTask,
+        onChotCa: chotCaVanHanhSan,
       }),
       taskDetailEl);
   }
@@ -2045,7 +2140,7 @@ function App() {
       'BẢN DEMO — dữ liệu tự lưu tạm trên máy này, chưa nối dữ liệu thật',
       h('button', { className: 'mockbar-switch', onClick: forgetAndGoToRoleGate }, '⇄ Về màn chọn vai trò')),
     h('div', { className: 'app' },
-      h(Sidebar, { view, setView: goToView, alertCount, onSelectDept: k => jumpToBoard({ dept: k }), onPreviewEmployee: () => setRole('employee'), onBackToRoleGate: forgetAndGoToRoleGate, onResetData: resetToSeedData }),
+      h(Sidebar, { view, setView: goToView, alertCount, onSelectDept: k => jumpToBoard({ dept: k }), onPreviewEmployee: () => setRole('employee'), onBackToRoleGate: forgetAndGoToRoleGate, onResetData: resetToSeedData, onDonMau: donNoiDungMau }),
       h('div', { className: 'main' },
         viewStack.length > 1 && h('button', { className: 'backbar', onClick: goBack }, '← Quay lại'),
         view === 'dash' && h(Dashboard, { tasks, onOpenTask: setOpenTaskId, onAddTask: () => setModal({ mode: 'add' }), onJumpBoard: jumpToBoard, onGoReport: () => pushView('report') }),

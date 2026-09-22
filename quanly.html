@@ -332,7 +332,7 @@ body.ks-chi *{cursor:crosshair!important}
     <button id="tb-so" onclick="tab('so')">Sổ cái</button>
     <button id="tb-gia" onclick="tab('gia')">Bảng giá</button>
     <button id="tb-ts" onclick="tab('ts')">Tính giá sàn</button>
-    <button id="tb-vc" onclick="tab('vc')">✅ Việc cần làm</button>
+    <button id="tb-vc" onclick="tab('vc')">Điều hành công việc</button>
     <button id="tb-in" onclick="tab('in')">Nạp đơn</button>
     <button id="tb-cb" onclick="tab('cb')">Cảnh báo <span id="cbSo"></span></button>
     <button id="tb-vh" onclick="tab('vh')">Vận hành <span id="vhSo"></span></button>
@@ -751,7 +751,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260922b';
+var APP_VER='20260922c';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -5239,6 +5239,14 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260922c', ngay:'22/09/2026', ten:'Điều hành công việc: chốt ca Vận hành sàn, dọn nội dung mẫu',
+  vaPhieu:[],
+  muc:[
+   ['moi','Nhóm <b>Vận hành sàn</b>: mỗi nhân viên chỉ lo <b>một loại đơn</b> (Cồng kềnh / Hoả tốc / Nhanh) và chỉ thấy đúng loại của mình — báo xong số thì kết quả chạy về trưởng nhóm.'],
+   ['moi','<b>Trưởng nhóm</b> có khung <b>Chốt ca</b>: gom đủ kết quả cả nhóm mới bấm chốt được, chốt xong tự sinh <b>một bản báo cáo duy nhất</b> gửi lên Ban giám đốc — sếp không phải đọc từng mảnh rời.'],
+   ['moi','Nút <b>🧹 Dọn nội dung mẫu</b>: xoá sạch việc và người mẫu khi bắt đầu dùng thật, giữ lại 9 việc thật và 4 tài khoản nhân viên thật.'],
+   ['sua','Đổi tên: tab <b>Điều hành công việc</b> (trước là "Việc cần làm"), mục <b>Báo cáo</b> (trước là "Báo cáo với sếp").'],
+  ]},
  {ban:'20260922b', ngay:'22/09/2026', ten:'Tab Việc cần làm đổi màu theo nút sáng/tối',
   vaPhieu:[],
   muc:[
