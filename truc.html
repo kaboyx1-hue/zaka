@@ -359,6 +359,45 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 600; letter-spacing: -
 
 .app { display: flex; min-height: 100vh; }
 
+/* cap tai khoan rieng cho tung nguoi (trong phan quan ly) */
+.tk-mo { margin-top: 8px; width: 100%; text-align: left; border: 1px dashed var(--border);
+  background: none; color: var(--text-faint); border-radius: 9px; padding: 7px 10px;
+  font-size: 12px; cursor: pointer; font-family: inherit; }
+.tk-khung { margin-top: 8px; border: 1px solid var(--border); border-radius: 10px; padding: 10px 11px; background: var(--panel-2); }
+.tk-hang { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+.tk-hang label { flex: none; width: 108px; font-size: 12px; color: var(--text-soft); }
+.tk-hang input { flex: 1; min-width: 0; border: 1px solid var(--border); background: var(--panel);
+  color: var(--text); border-radius: 8px; padding: 6px 9px; font-size: 12.5px; font-family: inherit; }
+.tk-nut { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.tk-ghi { margin-top: 8px; font-size: 11.5px; color: var(--text-faint); line-height: 1.45; }
+
+/* man dang nhap cua nhan vien */
+.dn-form { max-width: 340px; margin: 18px auto 0; text-align: left; }
+.dn-form label { display: block; font-size: 12px; font-weight: 600; color: var(--text-soft); margin-bottom: 5px; }
+.dn-form input { width: 100%; box-sizing: border-box; border: 1px solid var(--border); background: var(--panel-2);
+  color: var(--text); border-radius: 10px; padding: 10px 12px; font-size: 14px; font-family: inherit; }
+.dn-form input:focus { outline: none; border-color: var(--gold); }
+.dn-loi { margin-top: 10px; background: var(--rose-soft, rgba(220,80,80,.14)); color: var(--rose, #d64545);
+  border-radius: 9px; padding: 8px 11px; font-size: 12.5px; line-height: 1.45; }
+.dn-ghi { margin-top: 10px; font-size: 11.5px; color: var(--text-faint); text-align: center; }
+
+/* chon bo phan khi mot nguoi kiem nhieu bo phan */
+.phong-chon { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.phong-chon button { border: 1px solid var(--border); background: var(--panel-2); color: var(--text-soft);
+  border-radius: 999px; padding: 6px 13px; font-size: 12.5px; cursor: pointer; font-family: inherit; }
+.phong-chon button.on { font-weight: 600; }
+
+/* chon truong phong — nhieu nguoi cung phu trach mot bo phan */
+.lead-pick { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.lead-chip { border: 1px solid var(--border); background: var(--panel-2); color: var(--text-soft);
+  border-radius: 999px; padding: 4px 11px; font-size: 12px; cursor: pointer; font-family: inherit; }
+.lead-chip.on { font-weight: 600; }
+.lead-note { font-size: 11.5px; color: var(--text-faint); }
+
+/* o gui y kien cua nhan vien */
+.ykien-o { width: 100%; min-height: 64px; resize: vertical; border-radius: 10px; border: 1px solid var(--border);
+  background: var(--panel-2); color: var(--text); padding: 9px 11px; font-family: 'Inter', sans-serif; font-size: 13px; }
+.ykien-o:focus { outline: none; border-color: var(--gold); }
 /* mock-mode banner */
 .mockbar { background: var(--gold-soft); color: var(--gold);
   font-size: 11.5px; font-weight: 600; padding: 5px 8px;
@@ -728,21 +767,66 @@ function viecTuBang_(ds) {
 }
 function nhanSuSangBang_(people, leads) {
   return Object.keys(people).map(k => ({
-    key: k, name: people[k].name, code: people[k].code || '',
+    key: k, name: people[k].name, code: people[k].code || '', mk: people[k].mk || '',
     depts: goiJSON_(people[k].depts || []), real: people[k].real ? 1 : 0,
-    leadOf: Object.keys(leads).filter(d => leads[d] === k).join(','),
+    leadOf: Object.keys(leads).filter(d => {
+      const v = leads[d];
+      return Array.isArray(v) ? v.indexOf(k) >= 0 : v === k;
+    }).join(','),
   }));
 }
 function nhanSuTuBang_(ds) {
-  const people = {}, leads = { kd: null, kv: null, kt: null, mk: null, vs: null, ship: null, gd: null };
+  const people = {}, leads = { kd: [], kv: [], kt: [], mk: [], vs: [], ship: [], gd: [] };
   (ds || []).forEach(n => {
     if (!n.key) return;
     people[n.key] = { name: n.name || '', depts: moJSON_(n.depts, ['tv']) };
     if (n.code) people[n.key].code = n.code;
+    if (n.mk) people[n.key].mk = String(n.mk);
     if (Number(n.real)) people[n.key].real = true;
-    String(n.leadOf || '').split(',').filter(Boolean).forEach(d => { leads[d] = n.key });
+    String(n.leadOf || '').split(',').filter(Boolean).forEach(d => {
+      if (!leads[d]) leads[d] = [];
+      if (leads[d].indexOf(n.key) < 0) leads[d].push(n.key);
+    });
   });
   return { people, leads };
+}
+
+/* ===== CUA RIENG CUA NHAN VIEN (22/09/2026) =====
+   Nhan vien mo dung trang nay ngoai phan mem quan ly, dang nhap bang MA DANG NHAP
+   + MAT KHAU RIENG cua ho. Dia chi duoi day la dia chi cong khai cua Sheet (da
+   nam san trong seed_nv.js/seed_ql.js tren GitHub Pages) — no KHONG phai chia
+   khoa: khong co ma + mat khau thi cua nay tra ve dung mot cau tu choi.
+   May da dang nhap thi nho lai, lan sau mo la vao thang, khong hoi lai. */
+const API_TRUC = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+  ? location.origin + '/exec'          /* may thu cua ky su — Sheet gia, khong phai that */
+  : 'https://script.google.com/macros/s/AKfycbwZuyw-OJizrNiMQgCxE9DI7aKsaTB548Uf6fV98eow-JWyBaVEfnkmh62QqaH8dqaRIA/exec';
+const NV_DN_KEY = 'zaka_truc_dangnhap';
+function dnDoc_() { try { return JSON.parse(localStorage.getItem(NV_DN_KEY) || 'null') } catch (e) { return null } }
+function dnLuu_(o) { try { localStorage.setItem(NV_DN_KEY, JSON.stringify(o)) } catch (e) {} }
+function dnXoa_() { try { localStorage.removeItem(NV_DN_KEY) } catch (e) {} }
+function dnTuUrl_() {
+  try {
+    const q = new URLSearchParams(location.search);
+    const ma = (q.get('ma') || '').trim();
+    return ma ? { ma: ma } : null;
+  } catch (e) { return null }
+}
+function dnThamSo_(dn) {
+  if (dn.ma) return 'ma=' + encodeURIComponent(dn.ma);
+  return 'code=' + encodeURIComponent(dn.code || '') + '&mk=' + encodeURIComponent(dn.mk || '');
+}
+async function nvDocViec_(dn) {
+  const r = await fetch(API_TRUC + '?trucnv=1&' + dnThamSo_(dn));
+  return await r.json();
+}
+async function nvGhiViec_(dn, viec) {
+  const goi = Object.assign({ may: 'LINK', hanhdong: 'trucnv', viec: viec },
+    dn.ma ? { ma: dn.ma } : { code: dn.code, mk: dn.mk });
+  const r = await fetch(API_TRUC, {
+    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(goi),
+  });
+  return await r.json();
 }
 
 const REMEMBER_KEY = 'zaka_whoami';
@@ -837,7 +921,18 @@ let PEOPLE = {
 };
 // Trưởng nhóm theo TỪNG phòng ban (tách khỏi PEOPLE vì 1 người giờ có thể thuộc
 // nhiều phòng — "lead" không còn là thuộc tính cố định của người mà của (người, phòng)).
-let DEPT_LEADS = { kd: null, kv: null, kt: null, mk: null, vs: 'qc1', ship: null, gd: null };
+/* 22/09/2026 — chu chot: "trong ban su do se co dong so huu vai truong phong chu
+   khong rieng mot truong phong". Nen DEPT_LEADS[phong] gio la MANG khoa nguoi, mot
+   phong co bao nhieu truong cung duoc, va mot nguoi lam truong may phong cung duoc.
+   Du lieu cu (moi phong mot chuoi) van doc duoc nho dsTruong_ tu boc ra thanh mang. */
+let DEPT_LEADS = { kd: [], kv: [], kt: [], mk: [], vs: ['qc1'], ship: [], gd: [] };
+function dsTruong_(dk) {
+  const v = DEPT_LEADS[dk];
+  if (!v) return [];
+  return (Array.isArray(v) ? v : [v]).filter(k => k && PEOPLE[k]);
+}
+function laTruong_(dk, key) { return !!key && dsTruong_(dk).indexOf(key) >= 0; }
+function truongCua_(key) { return Object.keys(DEPT_LEADS).filter(dk => laTruong_(dk, key)); }
 const STATUS_COLS = [
   { key: 'todo', label: 'Cần làm' },
   { key: 'doing', label: 'Đang làm' },
@@ -1133,6 +1228,24 @@ function Dashboard({ tasks, onOpenTask, onAddTask, onJumpBoard, onGoReport }) {
         h('div', { className: 'stat-card amber clickable', onClick: () => onJumpBoard({ onlyUnowned: true }) }, h('div', { className: 'n' }, tasks.filter(t => !t.owner && t.status !== 'done').length), h('div', { className: 'l' }, 'Chưa có người chịu trách nhiệm')),
         h('div', { className: 'stat-card clickable', onClick: () => onJumpBoard({}) }, h('div', { className: 'n' }, inProgress), h('div', { className: 'l' }, 'Đang được xử lý')),
         h('div', { className: 'stat-card ok clickable', onClick: onGoReport }, h('div', { className: 'n' }, doneThisWeek), h('div', { className: 'l' }, 'Hoàn thành 7 ngày qua'))),
+      /* Y kien nhan vien gui len — gom tu nhat ky cac viec, moi nhat truoc.
+         Chu dat luat 22/09/2026: nhan vien khong tu doi duoc gi, chi co quyen
+         y kien — nen y kien cua ho phai noi len cho chu thay, khong chim. */
+      (() => {
+        const ds = [];
+        tasks.forEach(t => (t.log || []).forEach((l, i) => {
+          if (String(l).indexOf('💬 Ý kiến') === 0) ds.push({ t, l, i });
+        }));
+        if (!ds.length) return null;
+        return h('div', { className: 'panel', style: { borderColor: 'var(--gold)', marginBottom: 14 } },
+          h('h3', null, '💬 Ý kiến nhân viên gửi lên (' + ds.length + ')'),
+          h('div', { className: 'panel-sub' }, 'Họ không tự sửa bố cục việc được — chỗ nào thấy chưa hợp lý thì gửi lên đây.'),
+          ds.slice(-6).reverse().map((x, k) => h('div', { className: 'alert-row', key: k, onClick: () => onOpenTask(x.t.id) },
+            h('span', { className: 'dept-dot', style: { background: DEPTS[x.t.dept].color } }),
+            h('span', { className: 'task-name' }, String(x.l).replace('💬 Ý kiến của ', ''),
+              h('div', { style: { fontSize: 11.5, color: 'var(--text-faint)', marginTop: 2 } }, 'ở việc: ' + x.t.title)))));
+      })(),
+
       h('div', { className: 'two-col' },
         h('div', { className: 'panel' },
           h('h3', null, 'Cần chú ý ngay'),
@@ -1362,18 +1475,24 @@ function AddPersonModal({ onCancel, onSave }) {
 
 function DeptLeadSettings({ onSetLead }) {
   return h('div', { className: 'panel' },
-    h('h3', null, '⚙ Cài đặt trưởng nhóm theo phòng ban'),
-    h('div', { className: 'panel-sub' }, 'Gắn trực tiếp ai là người quản lý (trưởng nhóm) của từng phòng — người này có thêm quyền điều phối việc, xem tổng quan cả nhóm, sửa lại khâu đã khoá. 1 người có thể là trưởng nhóm của nhiều phòng nếu họ thuộc cả 2.'),
+    h('h3', null, '⚙ Trưởng phòng của từng bộ phận'),
+    h('div', { className: 'panel-sub' }, 'Bấm tên để gắn/bỏ ghế trưởng phòng. Một bộ phận có thể có NHIỀU trưởng phòng cùng phụ trách, và một người có thể làm trưởng của nhiều bộ phận — bấm tên họ ở từng dòng là xong. Trưởng phòng có thêm quyền điều phối việc, xem tổng quan cả nhóm, sửa lại khâu đã khoá.'),
     Object.entries(DEPTS).filter(([k]) => k !== 'tv').map(([dk, d]) => {
       const deptPeople = Object.entries(PEOPLE).filter(([, p]) => p.depts.includes(dk));
+      const ds = dsTruong_(dk);
       return h('div', { className: 'dept-lead-row', key: dk },
         h('span', { className: 'dept-dot', style: { background: d.color } }),
         h('span', { className: 'dlr-name' }, d.name),
         deptPeople.length === 0
           ? h('span', { style: { color: 'var(--text-faint)', fontSize: 12 } }, 'Chưa có ai trong phòng')
-          : h('select', { value: DEPT_LEADS[dk] || '', onChange: e => onSetLead(dk, e.target.value || null) },
-              h('option', { value: '' }, '— Chưa gắn —'),
-              deptPeople.map(([k, p]) => h('option', { key: k, value: k }, p.name))));
+          : h('div', { className: 'lead-pick' },
+              deptPeople.map(([k, p]) => h('button', {
+                type: 'button', key: k,
+                className: 'lead-chip' + (ds.indexOf(k) >= 0 ? ' on' : ''),
+                style: ds.indexOf(k) >= 0 ? { borderColor: d.color, color: d.color, background: d.color + '22' } : {},
+                onClick: () => onSetLead(dk, k),
+              }, (ds.indexOf(k) >= 0 ? '★ ' : '') + p.name)),
+              ds.length > 1 && h('span', { className: 'lead-note' }, ds.length + ' người cùng phụ trách')));
     }));
 }
 
@@ -1387,7 +1506,49 @@ function DeptChips({ depts, onToggle }) {
     }, d.name)));
 }
 
-function People({ tasks, onTogglePersonDept, onAddPerson, onJumpBoard, onSetLead }) {
+/* Cap tai khoan rieng cho mot nguoi: ma dang nhap + mat khau, va duong link de
+   gui cho ho. Chu tu go mat khau — phan mem KHONG tu dat mat khau ho.
+   Mat khau nam trong bang chung tren Sheet (cot "Mat khau rieng"), cung cach ma
+   ma dang nhap cua nhan viem ban hang van nam o trang NHAN_VIEN tu truoc. */
+function CapTaiKhoan({ pkey, p, onSetField }) {
+  const [mo, setMo] = useState(false);
+  const daCap = !!(p.code && p.mk);
+  const duongLink = location.origin + location.pathname;
+
+  function chep(gi, nhan) {
+    try {
+      navigator.clipboard.writeText(gi);
+      window.alert('Đã chép ' + nhan + '.');
+    } catch (e) { window.alert(nhan + ':' + String.fromCharCode(10) + gi); }
+  }
+
+  if (!mo) {
+    return h('button', { type: 'button', className: 'tk-mo', onClick: () => setMo(true) },
+      daCap ? '🔑 Mã đăng nhập: ' + p.code + ' · đã có mật khẩu' : '🔑 Chưa cấp tài khoản — bấm để cấp');
+  }
+  return h('div', { className: 'tk-khung' },
+    h('div', { className: 'tk-hang' },
+      h('label', null, 'Mã đăng nhập'),
+      h('input', { value: p.code || '', placeholder: 'ví dụ DG1',
+        onChange: e => onSetField(pkey, 'code', e.target.value.trim().toUpperCase()) })),
+    h('div', { className: 'tk-hang' },
+      h('label', null, 'Mật khẩu riêng'),
+      h('input', { value: p.mk || '', placeholder: 'chủ tự đặt',
+        onChange: e => onSetField(pkey, 'mk', e.target.value.trim()) })),
+    h('div', { className: 'tk-nut' },
+      h('button', { type: 'button', className: 'btn', onClick: () => chep(duongLink, 'đường link') }, '🔗 Chép link'),
+      h('button', { type: 'button', className: 'btn',
+        disabled: !daCap,
+        onClick: () => chep('Link: ' + duongLink + String.fromCharCode(10)
+          + 'Mã đăng nhập: ' + p.code + String.fromCharCode(10) + 'Mật khẩu: ' + p.mk, 'cả 3 dòng') },
+        '📋 Chép cả link + mã + mật khẩu'),
+      h('button', { type: 'button', className: 'btn', onClick: () => setMo(false) }, 'Thu lại')),
+    h('div', { className: 'tk-ghi' }, daCap
+      ? 'Gửi 3 dòng trên cho ' + p.name + '. Họ mở link, nhập mã + mật khẩu một lần, máy của họ sẽ nhớ. Họ chỉ thấy việc của mình và việc chưa ai nhận trong bộ phận của họ.'
+      : 'Phải điền CẢ mã đăng nhập và mật khẩu mới vào được — để trống một trong hai thì cửa vẫn khoá.'));
+}
+
+function People({ tasks, onTogglePersonDept, onAddPerson, onJumpBoard, onSetLead, onSetPersonField }) {
   const [showAdd, setShowAdd] = useState(false);
   const chuaPhanBo = Object.entries(PEOPLE).filter(([, p]) => p.depts.includes('tv')).length;
   return h('div', { className: 'view' },
@@ -1420,7 +1581,7 @@ function People({ tasks, onTogglePersonDept, onAddPerson, onJumpBoard, onSetLead
           const done = mine.filter(t => t.status === 'done').length;
           const overload = active > 3;
           const primaryDept = DEPTS[p.depts[0]];
-          const leadOfDepts = p.depts.filter(dk => DEPT_LEADS[dk] === key);
+          const leadOfDepts = truongCua_(key);
           return h('div', { className: 'person-card' + (overload ? ' overload' : ''), key },
             h('div', { className: 'person-head' },
               h('span', { className: 'avatar', style: { background: primaryDept.color + '22', color: primaryDept.color } }, initials(p.name)),
@@ -1436,7 +1597,8 @@ function People({ tasks, onTogglePersonDept, onAddPerson, onJumpBoard, onSetLead
               h('div', { className: 'clickable', onClick: () => onJumpBoard({ owner: key }) }, h('b', null, active), 'đang làm'),
               h('div', { className: 'clickable' + (late > 0 ? ' bad' : ''), onClick: () => onJumpBoard({ owner: key, onlyOverdue: true }) }, h('b', null, late), 'trễ hạn'),
               h('div', { className: 'clickable', onClick: () => onJumpBoard({ owner: key }) }, h('b', null, done), 'hoàn thành')),
-            h(DeptChips, { depts: p.depts, onToggle: dk => onTogglePersonDept(key, dk) }));
+            h(DeptChips, { depts: p.depts, onToggle: dk => onTogglePersonDept(key, dk) }),
+            h(CapTaiKhoan, { pkey: key, p, onSetField: onSetPersonField }));
         }))));
 }
 
@@ -1552,8 +1714,8 @@ function PipelineStageForm({ stage, prevFilled, defaultNguoiNhan, defaultNguoiGi
 }
 
 function PipelineSection({ task, onSubmitStage, viewerName, canManageTeam, onReopenStage }) {
-  const leadKey = DEPT_LEADS[task.dept];
-  const deptLeadName = leadKey && PEOPLE[leadKey] ? PEOPLE[leadKey].name : '';
+  const dsLead = dsTruong_(task.dept);
+  const deptLeadName = dsLead.map(k => PEOPLE[k].name).join(' / ');
   const personOptions = Object.entries(PEOPLE).filter(([, p]) => p.depts.includes(task.dept));
   const stages = task.pipeline;
   const doneCount = stages.filter(s => s.filled).length;
@@ -1588,7 +1750,12 @@ function PipelineSection({ task, onSubmitStage, viewerName, canManageTeam, onReo
 }
 
 /* ---------- Task detail (drawer) ---------- */
-function TaskDetail({ task, onClose, onSetStatus, onClaim, onEdit, onRemind, onToggleCheck, onAddCheck, onRemoveCheck, onAddImages, onRemoveImage, viewerPersonKey, onSubmitStage, canManageTeam, onReopenStage, onReassign }) {
+/* duocDoiCauTruc = co duoc doi BO CUC cua viec khong (them/bot muc, sua viec,
+   mo lai khau da khoa). Chu va truong nhom: co. Nhan viec thuong: KHONG — ho chi
+   nhap so lieu theo bo cuc da dat san, muon doi thi gui y kien len. */
+function TaskDetail({ task, onClose, onSetStatus, onClaim, onEdit, onRemind, onToggleCheck, onAddCheck, onRemoveCheck, onAddImages, onRemoveImage, viewerPersonKey, onSubmitStage, canManageTeam, onReopenStage, onReassign, onGuiYKien }) {
+  const duocDoiCauTruc = !!canManageTeam;
+  const [yKien, setYKien] = useState('');
   const [newCheck, setNewCheck] = useState('');
   const [lightbox, setLightbox] = useState(null);
   const samesDept = task ? Object.entries(PEOPLE).filter(([, p]) => p.depts.includes(task.dept)).map(([k]) => k) : [];
@@ -1673,14 +1840,18 @@ function TaskDetail({ task, onClose, onSetStatus, onClaim, onEdit, onRemind, onT
           checklist.map(c => h('div', { className: 'check-item', key: c.id },
             h('input', { type: 'checkbox', checked: c.done, onChange: () => onToggleCheck(task.id, c.id) }),
             h('span', { className: c.done ? 'done' : '' }, c.text),
-            h('button', { type: 'button', onClick: () => onRemoveCheck(task.id, c.id), title: 'Xoá mục' }, '✕')))),
-        h('div', { className: 'add-check' },
+            /* Nhan vien thuong chi TICH duoc, khong them/xoa muc — bo cuc viec do
+               chu hoac truong nhom dat, ho lam theo (chu dat luat 22/09/2026). */
+            duocDoiCauTruc && h('button', { type: 'button', onClick: () => onRemoveCheck(task.id, c.id), title: 'Xoá mục' }, '✕')))),
+        duocDoiCauTruc && h('div', { className: 'add-check' },
           h('input', {
             type: 'text', value: newCheck, placeholder: 'Thêm mục nhỏ rồi Enter...',
             onChange: e => setNewCheck(e.target.value),
             onKeyDown: e => { if (e.key === 'Enter') { e.preventDefault(); submitCheck(); } },
           }),
-          h('button', { type: 'button', onClick: submitCheck }, 'Thêm'))),
+          h('button', { type: 'button', onClick: submitCheck }, 'Thêm')),
+        !duocDoiCauTruc && checklist.length > 0 && h('div', { style: { fontSize: 11, color: 'var(--text-faint)', marginTop: 4 } },
+          'Bạn tích hoàn thành từng mục. Muốn thêm/bớt mục thì gửi ý kiến cho trưởng nhóm ở cuối trang.')),
 
       h('div', { className: 'detail-section' },
         h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 } },
@@ -1699,6 +1870,21 @@ function TaskDetail({ task, onClose, onSetStatus, onClaim, onEdit, onRemind, onT
         h('div', { className: 'lbl' }, 'Nhật ký việc này'),
         h('div', { className: 'detail-log' },
           task.log.map((l, i) => h('div', { className: 'li', key: i }, l)))),
+
+      /* Nhan vien khong tu doi bo cuc viec duoc, nhung PHAI co cho noi len —
+         y kien gui thang vao nhat ky viec nay, chu va truong nhom doc duoc
+         (chu dat luat 22/09/2026: "ho chi co quyen y kien"). */
+      onGuiYKien && h('div', { className: 'detail-section' },
+        h('div', { className: 'lbl' }, '💬 Gửi ý kiến cho trưởng nhóm / chủ'),
+        h('div', { style: { fontSize: 11.5, color: 'var(--text-faint)', marginBottom: 6 } },
+          'Chỗ nào trong việc này làm chưa hợp lý, thiếu bước, hay cần đổi cách làm — viết vào đây. Bạn không tự sửa được bố cục việc, nhưng ý kiến sẽ tới đúng người.'),
+        h('textarea', { className: 'ykien-o', value: yKien, placeholder: 'Ví dụ: bước cân hàng nên làm trước khi dán tem thì đỡ phải bóc ra dán lại...',
+          onChange: e => setYKien(e.target.value) }),
+        h('button', {
+          className: 'btn primary', style: { marginTop: 6 },
+          disabled: !yKien.trim(),
+          onClick: () => { onGuiYKien(task.id, yKien.trim()); setYKien(''); },
+        }, 'Gửi ý kiến')),
 
       onEdit && h('div', { className: 'detail-section' },
         h('button', { className: 'btn', style: { width: '100%' }, onClick: () => onEdit(task.id) }, '✎ Sửa thông tin việc này')))),
@@ -1766,12 +1952,17 @@ function TaskModal({ mode, initial, onCancel, onSave, onDelete, restrictDepts })
 }
 
 /* ---------- Role gate (chọn xem với vai trò nào) ---------- */
+/* 22/09/2026 — man hinh toan canh (Nguoi dieu hanh) CHI con vao duoc qua phan
+   mem quan ly, noi da co mat khau that. Mo trang nay bang link rieng thi chi con
+   cua nhan vien. Truoc do ai mo link cung bam duoc vao "Nguoi dieu hanh". */
 function RoleGate({ onChoose }) {
   return h('div', { className: 'rolegate' },
-    h('h1', null, 'Bạn đang xem với vai trò nào?'),
-    h('div', { className: 'sub' }, 'Người điều hành thấy toàn bộ, nhân viên chỉ thấy đúng việc của mình.'),
+    h('h1', null, TRONG_QUAN_LY ? 'Bạn đang xem với vai trò nào?' : 'Xem việc của bạn'),
+    h('div', { className: 'sub' }, TRONG_QUAN_LY
+      ? 'Người điều hành thấy toàn bộ, nhân viên chỉ thấy đúng việc của mình.'
+      : 'Màn hình điều hành toàn bộ chỉ mở được trong phần mềm quản lý (có mật khẩu).'),
     h('div', { className: 'role-choices' },
-      h('button', { className: 'role-btn', onClick: () => onChoose('admin') },
+      TRONG_QUAN_LY && h('button', { className: 'role-btn', onClick: () => onChoose('admin') },
         h('span', { className: 'ic' }, '🧑‍💼'),
         h('div', null, h('div', { className: 't' }, 'Người điều hành / quản lý'), h('div', { className: 'd' }, 'Xem toàn bộ phòng ban, giao việc, phân bổ nhân sự'))),
       h('button', { className: 'role-btn', onClick: () => onChoose('employee') },
@@ -1798,7 +1989,7 @@ function EmployeePicker({ onPick, onBack }) {
     h('div', { className: 'picker-grid' },
       list.length === 0 && h('div', { style: { color: 'var(--text-faint)', fontSize: 13, textAlign: 'center', padding: '10px 0' } }, 'Không tìm thấy tên/mã nào khớp.'),
       list.map(([key, p]) => {
-        const isLead = p.depts.some(dk => DEPT_LEADS[dk] === key);
+        const isLead = truongCua_(key).length > 0;
         const primary = DEPTS[p.depts[0]];
         return h('button', { className: 'picker-item', key, onClick: () => onPick(key) },
           h('span', { className: 'avatar', style: { background: primary.color + '22', color: primary.color } }, initials(p.name)),
@@ -1809,17 +2000,72 @@ function EmployeePicker({ onPick, onBack }) {
     h('button', { className: 'picker-back', onClick: onBack }, '← Về màn chọn vai trò'));
 }
 
+/* Man dang nhap cua nhan vien. Khong co cho chon vai tro, khong co danh sach
+   ten de bam vao — ai co ma cua minh thi vao dung phan cua minh, het. */
+function LoginNV({ onVao, dangTuVao, loiTuVao }) {
+  const [code, setCode] = useState('');
+  const [mk, setMk] = useState('');
+  const [dang, setDang] = useState(false);
+  const [loi, setLoi] = useState(loiTuVao || '');
+
+  async function vao() {
+    if (!code.trim() || !mk.trim()) { setLoi('Nhập cả mã đăng nhập và mật khẩu.'); return; }
+    setDang(true); setLoi('');
+    try {
+      const dn = { code: code.trim(), mk: mk.trim() };
+      const kq = await nvDocViec_(dn);
+      if (!kq || !kq.ok) { setLoi((kq && kq.loi) || 'Không vào được.'); setDang(false); return; }
+      onVao(dn, kq);
+    } catch (e) {
+      setLoi('Không nối được mạng. Kiểm tra đường truyền rồi thử lại.');
+      setDang(false);
+    }
+  }
+
+  if (dangTuVao) {
+    return h('div', { className: 'role-gate' },
+      h('h1', null, 'Đang mở việc của bạn…'),
+      h('div', { className: 'sub' }, 'Máy này đã đăng nhập sẵn, chờ một chút.'));
+  }
+
+  return h('div', { className: 'role-gate' },
+    h('h1', null, 'Đăng nhập'),
+    h('div', { className: 'sub' }, 'Nhập mã đăng nhập và mật khẩu chủ đã cấp cho bạn. Máy này sẽ nhớ, lần sau mở là vào thẳng.'),
+    h('div', { className: 'dn-form' },
+      h('label', null, 'Mã đăng nhập'),
+      h('input', { value: code, autoFocus: true, placeholder: 'ví dụ DG1',
+        onChange: e => setCode(e.target.value),
+        onKeyDown: e => { if (e.key === 'Enter') vao() } }),
+      h('label', { style: { marginTop: 10 } }, 'Mật khẩu'),
+      h('input', { type: 'password', value: mk,
+        onChange: e => setMk(e.target.value),
+        onKeyDown: e => { if (e.key === 'Enter') vao() } }),
+      loi && h('div', { className: 'dn-loi' }, loi),
+      h('button', { className: 'btn primary', style: { marginTop: 12, width: '100%' },
+        disabled: dang, onClick: vao }, dang ? 'Đang kiểm…' : 'Vào việc của tôi'),
+      h('div', { className: 'dn-ghi' }, 'Quên mật khẩu thì hỏi chủ — chủ đặt lại được trong phần mềm quản lý.')));
+}
+
 function EmployeeHome({ tasks, employeeId, onOpenTask, onSwitchPerson, onBackToRoleGate, onQuickAddTask, onChotCa }) {
   const [showAdd, setShowAdd] = useState(false);
   const me = PEOPLE[employeeId];
   const primaryDept = DEPTS[me.depts[0]];
-  const leadOfDepts = me.depts.filter(dk => DEPT_LEADS[dk] === employeeId);
-  const myTasks = sortByUrgency(tasks.filter(t => t.owner === employeeId));
+  const leadOfDepts = truongCua_(employeeId);
+
+  /* Mot nguoi co the thuoc/lam truong NHIEU bo phan cung luc (chu chot 22/09/2026:
+     "truong phong thi ho se kiem luon mot so vi tri khac"). Gop het bo phan cua ho
+     lai roi cho bam chuyen qua lai — mac dinh xem tat ca cho khoi bo sot viec. */
+  const phongCuaToi = me.depts.concat(leadOfDepts.filter(dk => me.depts.indexOf(dk) < 0));
+  const [phongXem, setPhongXem] = useState('all');
+  const trongPhongXem = dk => phongXem === 'all' || dk === phongXem;
+
+  const myTasks = sortByUrgency(tasks.filter(t => t.owner === employeeId && trongPhongXem(t.dept)));
   const myLate = myTasks.filter(t => treHan(t)).length;
   const myActive = myTasks.filter(t => t.status !== 'done').length;
   const myDone = myTasks.filter(t => t.status === 'done').length;
-  const unclaimed = sortByUrgency(tasks.filter(t => !t.owner && me.depts.includes(t.dept) && t.status !== 'done'));
-  const teamTasks = leadOfDepts.length > 0 ? sortByUrgency(tasks.filter(t => leadOfDepts.includes(t.dept))) : [];
+  const unclaimed = sortByUrgency(tasks.filter(t => !t.owner && me.depts.includes(t.dept) && t.status !== 'done' && trongPhongXem(t.dept)));
+  const phongLamTruong = leadOfDepts.filter(trongPhongXem);
+  const teamTasks = phongLamTruong.length > 0 ? sortByUrgency(tasks.filter(t => phongLamTruong.includes(t.dept))) : [];
   const vsIncomplete = me.depts.includes('vs') ? vsEndOfDayIncomplete(tasks) : [];
 
   return h('div', { className: 'emp-wrap' },
@@ -1830,12 +2076,23 @@ function EmployeeHome({ tasks, employeeId, onOpenTask, onSwitchPerson, onBackToR
           h('div', { className: 'emp-name' }, me.code && h('span', { className: 'emp-code' }, me.code), (me.code ? ' ' : '') + me.name,
             leadOfDepts.length > 0 && h('span', { className: 'pipe-tag', style: { marginLeft: 6 } }, '★ Trưởng ' + leadOfDepts.map(dk => DEPTS[dk].name).join(', '))),
           h('div', { className: 'emp-dept' }, me.depts.map(dk => h('span', { className: 'role-tag', key: dk, style: { marginRight: 4 } }, roleInfo(me, dk).icon + ' ' + DEPTS[dk].name))))),
-      h('div', { className: 'emp-actions' },
+      /* Hai nut nay CHI danh cho chu xem thu trong phan mem quan ly. Nhan vien dang
+         nhap bang ma rieng thi khong duoc phep tu bien thanh nguoi khac. */
+      TRONG_QUAN_LY && h('div', { className: 'emp-actions' },
         h('button', { className: 'btn', onClick: onSwitchPerson }, '← Đổi người'),
         h('button', { className: 'btn', onClick: onBackToRoleGate }, '⇄ Đổi vai trò'))),
 
     vsIncomplete.length > 0 && h('div', { className: 'eod-alert' },
       '⏰ Gần cuối ngày (sau ' + EOD_HOUR + 'h) — còn ' + vsIncomplete.length + ' việc Vận hành sàn chưa xong chuỗi quy trình. Kiểm tra lại trước khi hết ca.'),
+
+    phongCuaToi.length > 1 && h('div', { className: 'phong-chon' },
+      h('button', { className: phongXem === 'all' ? 'on' : '', onClick: () => setPhongXem('all'),
+        style: phongXem === 'all' ? { borderColor: 'var(--gold)', color: 'var(--gold)' } : {} }, 'Tất cả bộ phận'),
+      phongCuaToi.map(dk => h('button', {
+        key: dk, className: phongXem === dk ? 'on' : '',
+        style: phongXem === dk ? { borderColor: DEPTS[dk].color, color: DEPTS[dk].color, background: DEPTS[dk].color + '22' } : {},
+        onClick: () => setPhongXem(dk),
+      }, (truongCua_(employeeId).indexOf(dk) >= 0 ? '★ ' : '') + DEPTS[dk].name))),
 
     h('div', { className: 'emp-stats' },
       h('div', { className: 'stat-card warn' }, h('div', { className: 'n' }, myLate), h('div', { className: 'l' }, 'Việc của tôi trễ hạn')),
@@ -1845,7 +2102,10 @@ function EmployeeHome({ tasks, employeeId, onOpenTask, onSwitchPerson, onBackToR
     h('div', { className: 'emp-section' },
       h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 } },
         h('h3', { style: { marginBottom: 0 } }, 'Việc của tôi (' + myTasks.length + ')'),
-        h('button', { className: 'btn', onClick: () => setShowAdd(true) }, '+ Thêm việc phát sinh')),
+        /* Chu dat luat 22/09/2026: nhan vien cap thap chi nhap lieu theo bo cuc san,
+           khong tu tao viec moi — muon them viec thi gui y kien len truong nhom. */
+        leadOfDepts.length > 0
+          && h('button', { className: 'btn', onClick: () => setShowAdd(true) }, '+ Thêm việc phát sinh')),
       myTasks.length === 0
         ? h('div', { className: 'empty-note' }, 'Chưa có việc nào giao cho bạn.')
         : myTasks.map(t => h(TaskCard, { key: t.id, t, onOpen: onOpenTask }))),
@@ -1886,8 +2146,8 @@ function EmployeeHome({ tasks, employeeId, onOpenTask, onSwitchPerson, onBackToR
             }, duHet ? '✅ Chốt ca & gửi báo cáo lên sếp' : 'Chờ đủ ' + chuoi.length + ' việc mới chốt được'))));
     })(),
 
-    leadOfDepts.length > 0 && h('div', { className: 'emp-section' },
-      h('h3', null, '★ Tổng quan cả nhóm — ' + leadOfDepts.map(dk => DEPTS[dk].name).join(' / ') + ' (' + teamTasks.length + ')'),
+    phongLamTruong.length > 0 && h('div', { className: 'emp-section' },
+      h('h3', null, '★ Tổng quan cả nhóm — ' + phongLamTruong.map(dk => DEPTS[dk].name).join(' / ') + ' (' + teamTasks.length + ')'),
       h('div', { className: 'panel-sub', style: { marginTop: -6, marginBottom: 10 } }, 'Chỉ trưởng nhóm thấy mục này — toàn bộ việc trong (các) phòng bạn quản lý, không riêng việc của bạn.'),
       teamTasks.map(t => h(TaskCard, { key: t.id, t, onOpen: onOpenTask }))),
 
@@ -1910,15 +2170,33 @@ function App() {
      rieng ngoai trinh duyet (nhan vien) thi van hoi nhu cu. */
   const trongTabQuanLy = (function () { try { return window.parent !== window; } catch (e) { return false; } })();
   const [role, setRole] = useState(
-    remembered && remembered.role ? remembered.role : (trongTabQuanLy ? 'admin' : null)); // null | 'admin' | 'employee'
+    (function () {
+      /* Trong tab quan ly thi LUON vao man dieu hanh, khong nho lai lua chon cu:
+         chu da dang nhap bang mat khau roi, khong phai chon vai tro lan hai. Nut
+         "Xem thu man nhan vien" o thanh ben van dung duoc, nhung chi trong phien
+         nay — lan sau mo lai van la man dieu hanh. */
+      if (trongTabQuanLy) return 'admin';
+      /* Mo bang link rieng: du may nay tung chon "Nguoi dieu hanh" hom truoc thi
+         cung khong cho vao lai — toan canh chi o phan mem quan ly. */
+      return remembered && remembered.role === 'employee' ? 'employee' : null;
+    })()); // null | 'admin' | 'employee'
   const [employeeId, setEmployeeId] = useState(remembered && remembered.employeeId && PEOPLE[remembered.employeeId] ? remembered.employeeId : null);
 
   useEffect(() => {
     try {
+      if (trongTabQuanLy) return;            // xem thu chi trong phien, khong ghi nho
       if (role === 'admin') localStorage.setItem(REMEMBER_KEY, JSON.stringify({ role: 'admin' }));
       else if (role === 'employee' && employeeId) localStorage.setItem(REMEMBER_KEY, JSON.stringify({ role: 'employee', employeeId }));
     } catch (e) {}
   }, [role, employeeId]);
+
+  /* Thoat khoi may dung chung: quen ma + mat khau da nho tren may nay. Dung khi
+     mot may dung chung nhieu nguoi, hoac khi chu doi mat khau. */
+  function thoatNV() {
+    if (!window.confirm('Thoát khỏi máy này? Lần sau mở lại phải nhập lại mã đăng nhập và mật khẩu.')) return;
+    dnXoa_();
+    window.location.reload();
+  }
 
   function forgetAndGoToRoleGate() {
     try { localStorage.removeItem(REMEMBER_KEY); } catch (e) {}
@@ -1949,6 +2227,63 @@ function App() {
      du lieu tren may; doi gi thi gui toan bo len (gom 1,5 giay mot lan cho khoi
      ghi lien tuc luc dang tich checklist). */
   const [dongBo, setDongBo] = useState({ trangThai: TRONG_QUAN_LY ? 'cho' : 'rieng', loi: '' });
+
+  /* ===== DANG NHAP RIENG CUA NHAN VIEN =====
+     Ngoai phan mem quan ly thi phai dang nhap moi thay gi. Nho lai tren may nen
+     lan sau mo la vao thang — dung y chu: "ho cung khong can phai dang nhap lai
+     lan nua va cung khong can chon vai tro cua minh". */
+  const [dnNV, setDnNV] = useState(() => TRONG_QUAN_LY ? null : (dnTuUrl_() || dnDoc_()));
+  const [daVaoNV, setDaVaoNV] = useState(false);
+  const [loiVaoNV, setLoiVaoNV] = useState('');
+  const dangThuVao = useRef(false);
+
+  function apDungCuaNV_(kq) {
+    const ns = nhanSuTuBang_(kq.nhansu || []);
+    if (Object.keys(ns.people).length) { PEOPLE = ns.people; DEPT_LEADS = ns.leads; bumpPeople(v => v + 1); }
+    setTasks(viecTuBang_(kq.ds || []));
+    setEmployeeId(kq.toi.key);
+    setRole('employee');
+    setDaVaoNV(true);
+    setDongBo({ trangThai: 'xong', loi: '' });
+  }
+
+  /* Da nho san thi tu vao luon, khong hien o nhap lai. Ma/mat khau da doi (chu
+     cap lai) thi xoa cai nho cu di va hien o nhap — khong de nguoi dung mac ket
+     trong man "dang mo" mai mai. */
+  useEffect(() => {
+    if (TRONG_QUAN_LY || daVaoNV || !dnNV || dangThuVao.current) return;
+    dangThuVao.current = true;
+    nvDocViec_(dnNV).then(kq => {
+      if (kq && kq.ok) { dnLuu_(dnNV); apDungCuaNV_(kq); return; }
+      dnXoa_(); setDnNV(null); setLoiVaoNV((kq && kq.loi) || 'Cần đăng nhập lại.');
+      dangThuVao.current = false;
+    }).catch(() => {
+      setLoiVaoNV('Không nối được mạng. Kiểm tra đường truyền rồi thử lại.');
+      setDnNV(null); dangThuVao.current = false;
+    });
+  }, [dnNV, daVaoNV]);
+
+  /* Doi gi thi gui nguyen viec do len bang chung. Chi gui viec THAT SU khac so
+     voi ban vua nhan — khong gui ca bang (nhan vien khong co quyen ghi ca bang,
+     va cung khong nen). */
+  const dsNVCu = useRef(null);
+  useEffect(() => {
+    if (TRONG_QUAN_LY || !daVaoNV || !dnNV) return;
+    if (dsNVCu.current === null) { dsNVCu.current = tasks; return; }
+    const truoc = dsNVCu.current;
+    dsNVCu.current = tasks;
+    const bangMoi = viecSangBang_(tasks), bangCu = viecSangBang_(truoc);
+    const doi = bangMoi.filter(v => {
+      const c = bangCu.find(x => String(x.id) === String(v.id));
+      return c && JSON.stringify(c) !== JSON.stringify(v);
+    });
+    if (!doi.length) return;
+    setDongBo({ trangThai: 'dang', loi: '' });
+    Promise.all(doi.map(v => nvGhiViec_(dnNV, v))).then(ds => {
+      const xau = ds.find(x => !x || !x.ok);
+      setDongBo(xau ? { trangThai: 'loi', loi: (xau && xau.loi) || 'Sheet từ chối' } : { trangThai: 'xong', loi: '' });
+    }).catch(() => setDongBo({ trangThai: 'loi', loi: 'mất mạng — mở lại trang để lấy bản mới nhất' }));
+  }, [tasks, daVaoNV]);
   const daNhan = useRef(false);
   const boQuaLanDau = useRef(true);
   const henGui = useRef(null);
@@ -2034,10 +2369,20 @@ function App() {
     if (has && p.depts.length === 1) return; // phải còn ít nhất 1 phòng ban
     const newDepts = has ? p.depts.filter(d => d !== dept) : [...p.depts, dept];
     PEOPLE = { ...PEOPLE, [key]: { ...p, depts: newDepts } };
-    if (has && DEPT_LEADS[dept] === key) DEPT_LEADS = { ...DEPT_LEADS, [dept]: null }; // rời phòng thì mất luôn ghế trưởng nhóm phòng đó
+    // rời phòng thì mất luôn ghế trưởng phòng của đúng phòng đó (các phòng khác giữ nguyên)
+    if (has && laTruong_(dept, key)) DEPT_LEADS = { ...DEPT_LEADS, [dept]: dsTruong_(dept).filter(k => k !== key) };
     bumpPeople(v => v + 1);
     pushFeed('Người điều hành', has ? 'bỏ khỏi phòng ban' : 'thêm vào phòng ban', p.name + ' — ' + DEPTS[dept].name, DEPTS[dept].color);
   }
+  /* Sua mot o thong tin cua mot nguoi (ma dang nhap, mat khau). Khong ghi nhat ky
+     gia tri mat khau — chi ghi la da doi. */
+  function setPersonField(key, field, value) {
+    const p = PEOPLE[key]; if (!p) return;
+    PEOPLE = { ...PEOPLE, [key]: { ...p, [field]: value } };
+    bumpPeople(v => v + 1);
+    if (field === 'mk') pushFeed('Người điều hành', 'đặt lại mật khẩu', p.name, DEPTS[p.depts[0]].color);
+  }
+
   function addPerson(name, dept) {
     const key = 'p' + Date.now();
     const code = nextEmployeeCode();
@@ -2045,11 +2390,16 @@ function App() {
     bumpPeople(v => v + 1);
     pushFeed('Người điều hành', 'thêm nhân viên mới', code + ' · ' + name + ' — ' + DEPTS[dept].name, DEPTS[dept].color);
   }
+  /* Bat/tat ghe truong phong cua mot nguoi — khong con "mot phong mot truong" nua:
+     them nguoi thu hai la ca hai cung phu trach, khong ai bi day ra. */
   function setLead(dept, personKey) {
-    DEPT_LEADS = { ...DEPT_LEADS, [dept]: personKey };
+    if (!personKey) return;
+    const dang = dsTruong_(dept);
+    const co = dang.indexOf(personKey) >= 0;
+    DEPT_LEADS = { ...DEPT_LEADS, [dept]: co ? dang.filter(k => k !== personKey) : [...dang, personKey] };
     bumpPeople(v => v + 1);
-    const name = personKey ? PEOPLE[personKey].name : null;
-    pushFeed('Người điều hành', 'gắn trưởng nhóm', (name || 'Bỏ trưởng nhóm') + ' — ' + DEPTS[dept].name, DEPTS[dept].color);
+    pushFeed('Người điều hành', co ? 'bỏ ghế trưởng phòng' : 'gắn thêm trưởng phòng',
+      PEOPLE[personKey].name + ' — ' + DEPTS[dept].name, DEPTS[dept].color);
   }
   function remindTask(id) {
     setTasks(prev => prev.map(t => {
@@ -2175,11 +2525,22 @@ function App() {
     const nguoiMoi = {};
     giuNguoi.forEach(k => { if (PEOPLE[k]) nguoiMoi[k] = PEOPLE[k]; });
     PEOPLE = nguoiMoi;
-    DEPT_LEADS = { kd: null, kv: null, kt: null, mk: null, vs: null, ship: null, gd: null };
+    DEPT_LEADS = { kd: [], kv: [], kt: [], mk: [], vs: [], ship: [], gd: [] };
     bumpPeople(v => v + 1);
     setTasks(prev => prev.filter(t => t.id >= 201 && t.id <= 209).map(t => ({ ...t, owner: null })));
     setFeed([]);
     pushFeed('Người điều hành', 'dọn sạch nội dung mẫu', 'bắt đầu dùng thật', DEPTS.gd.color);
+  }
+  /* Y kien cua nhan vien: ghi thang vao nhat ky cua viec do, danh dau bang 💬 de
+     man Tong quan cua chu loc ra duoc. Khong tao bang rieng — nhat ky la cho tu
+     nhien nhat de doc lai boi canh, va duong dong bo da co san. */
+  function guiYKien(id, noi) {
+    const ai = role === 'employee' && employeeId && PEOPLE[employeeId] ? PEOPLE[employeeId].name : 'Người điều hành';
+    setTasks(prev => prev.map(t => (t.id === id
+      ? { ...t, log: [...t.log, '💬 Ý kiến của ' + ai + ': ' + noi] }
+      : t)));
+    const t = tasks.find(x => x.id === id);
+    pushFeed(ai, 'gửi ý kiến', t ? t.title : '', DEPTS[t ? t.dept : 'gd'].color);
   }
   function deleteTask(id) {
     const t = tasks.find(x => x.id === id);
@@ -2195,6 +2556,16 @@ function App() {
     setTasks(prev => prev.map(t => t.id !== taskId ? t : { ...t, images: (t.images || []).filter(im => im.id !== imageId) }));
   }
 
+  /* Ngoai phan mem quan ly: chi co MOT cua, la dang nhap bang ma + mat khau
+     rieng. Khong con man chon vai tro, khong con danh sach ten de bam vao. */
+  if (!TRONG_QUAN_LY && !daVaoNV) {
+    return h(LoginNV, {
+      dangTuVao: !!dnNV,
+      loiTuVao: loiVaoNV,
+      onVao: (dn, kq) => { dnLuu_(dn); setDnNV(dn); apDungCuaNV_(kq); },
+    });
+  }
+
   if (!role) {
     return h(RoleGate, { onChoose: setRole });
   }
@@ -2203,7 +2574,7 @@ function App() {
     return h(EmployeePicker, { onPick: setEmployeeId, onBack: () => setRole(null) });
   }
 
-  const canManageTeam = role === 'admin' || (role === 'employee' && employeeId && openTask && DEPT_LEADS[openTask.dept] === employeeId);
+  const canManageTeam = role === 'admin' || (role === 'employee' && employeeId && openTask && laTruong_(openTask.dept, employeeId));
 
   const taskDetailEl = openTask && h(TaskDetail, {
     key: openTask.id,
@@ -2220,6 +2591,7 @@ function App() {
     onRemoveImage: removeImage,
     onSubmitStage: submitStage,
     onReassign: reassignTask,
+    onGuiYKien: guiYKien,
     onReopenStage: reopenStage,
     canManageTeam,
     viewerPersonKey: role === 'employee' ? employeeId : null,
@@ -2233,8 +2605,12 @@ function App() {
             : dongBo.trangThai === 'dang' ? 'Đang lưu lên bảng chung…'
             : dongBo.trangThai === 'xong' ? '✓ Đang dùng bảng chung — mọi máy thấy cùng một danh sách'
             : 'Đang lấy dữ liệu chung…')
-          : 'Mở riêng ngoài phần mềm quản lý — dữ liệu chỉ lưu trên máy này',
-        h('button', { className: 'mockbar-switch', onClick: forgetAndGoToRoleGate }, '⇄ Về màn chọn vai trò')),
+          : (dongBo.trangThai === 'loi' ? '⚠ Chưa lưu được lên bảng chung: ' + dongBo.loi
+            : dongBo.trangThai === 'dang' ? 'Đang lưu lên bảng chung…'
+            : '✓ Đã nối bảng chung — chủ và trưởng nhóm thấy ngay khi bạn cập nhật'),
+        TRONG_QUAN_LY
+          ? h('button', { className: 'mockbar-switch', onClick: forgetAndGoToRoleGate }, '⇄ Về màn chọn vai trò')
+          : h('button', { className: 'mockbar-switch', onClick: thoatNV }, 'Thoát')),
       h(EmployeeHome, {
         tasks, employeeId, onOpenTask: setOpenTaskId,
         onSwitchPerson: () => { setEmployeeId(null); try { localStorage.setItem(REMEMBER_KEY, JSON.stringify({ role: 'employee' })); } catch (e) {} },
@@ -2263,7 +2639,7 @@ function App() {
           key: JSON.stringify(boardFilters), tasks, onOpenTask: setOpenTaskId, onAddTask: () => setModal({ mode: 'add' }),
           initialDept: boardFilters.dept, initialOwner: boardFilters.owner, initialOnlyOverdue: boardFilters.onlyOverdue, initialOnlyUnowned: boardFilters.onlyUnowned,
         }),
-        view === 'people' && h(People, { tasks, onTogglePersonDept: togglePersonDept, onAddPerson: addPerson, onJumpBoard: jumpToBoard, onSetLead: setLead }),
+        view === 'people' && h(People, { tasks, onTogglePersonDept: togglePersonDept, onAddPerson: addPerson, onJumpBoard: jumpToBoard, onSetLead: setLead, onSetPersonField: setPersonField }),
         view === 'feed' && h(Feed, { feed }),
         view === 'report' && h(ReportView, { tasks })),
       h(BottomNav, { view, setView: goToView, alertCount }),
