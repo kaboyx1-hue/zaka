@@ -388,10 +388,12 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 600; letter-spacing: -
 .phong-chon button.on { font-weight: 600; }
 
 /* chon truong phong — nhieu nguoi cung phu trach mot bo phan */
+.dlr-canhbao { font-size: 12px; font-weight: 600; color: var(--gold); margin: 2px 0 8px; }
 .lead-pick { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.lead-chip { border: 1px solid var(--border); background: var(--panel-2); color: var(--text-soft);
-  border-radius: 999px; padding: 4px 11px; font-size: 12px; cursor: pointer; font-family: inherit; }
-.lead-chip.on { font-weight: 600; }
+.lead-chip { border: 1.5px dashed var(--border); background: var(--panel-2); color: var(--text-soft);
+  border-radius: 999px; padding: 5px 13px; font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.lead-chip:hover { border-color: var(--text-faint); }
+.lead-chip.on { border-style: solid; border-color: currentColor; }
 .lead-note { font-size: 11.5px; color: var(--text-faint); }
 
 /* o gui y kien cua nhan vien */
@@ -465,9 +467,11 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 600; letter-spacing: -
 .stat-num-link { cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
 .eod-alert { background: var(--coral-soft); color: var(--coral); border: 1px solid var(--coral); border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; font-size: 13px; font-weight: 600; cursor: pointer; }
 .role-tag { font-size: 10.5px; font-weight: 700; color: var(--text-dim); background: var(--panel-3); padding: 2px 8px; border-radius: 20px; display: inline-flex; align-items: center; gap: 3px; }
-.dept-lead-row { display: flex; align-items: center; gap: 10px; padding: 9px 2px; border-bottom: 1px solid var(--border); font-size: 13px; }
+.dept-lead-row { padding: 12px 2px; border-bottom: 1px solid var(--border); font-size: 13px; }
 .dept-lead-row:last-child { border-bottom: none; }
-.dept-lead-row .dlr-name { flex: 1; }
+.dept-lead-row.thieu { background: var(--gold-soft); margin: 0 -14px; padding: 12px 14px; border-radius: 10px; border-bottom-color: transparent; }
+.dlr-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.dept-lead-row .dlr-name { font-weight: 600; }
 .dept-lead-row select { font: 500 12.5px 'Inter', sans-serif; padding: 6px 9px; border-radius: 7px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); max-width: 220px; }
 .stat-card .n { font-family: 'Fraunces', serif; font-size: 34px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
 .stat-card .l { font-size: 12.5px; color: var(--text-dim); margin-top: 8px; }
@@ -485,6 +489,7 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 600; letter-spacing: -
 .alert-row { display: flex; align-items: center; gap: 12px; padding: 11px 4px; border-bottom: 1px solid var(--border); font-size: 13.5px; cursor: pointer; }
 .alert-row:last-child { border-bottom: none; }
 .dept-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.card-dept { font-size: 11px; font-weight: 700; margin-bottom: 4px; }
 .alert-row .task-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pill { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; flex-shrink: 0; }
 .pill.late { background: var(--coral-soft); color: var(--coral); }
@@ -859,14 +864,14 @@ function restoreFromStorage() {
 
 /* ---------- data (mock, cơ cấu chung) ---------- */
 const DEPTS = {
-  kd: { name: 'Kinh doanh', color: '#D8A24A' },
-  kv: { name: 'Kho vận', color: '#6C93B8' },
-  kt: { name: 'Kế toán', color: '#B589B0' },
-  mk: { name: 'Marketing', color: '#E2664F' },
-  vs: { name: 'Vận hành sàn (Shopee/TikTok)', color: '#C97B3D' },
-  ship: { name: 'Shipper', color: '#7C93C9' },
-  gd: { name: 'Ban giám đốc', color: '#4F7A5B' },
-  tv: { name: 'Chưa phân bổ', color: '#7C8A82' },
+  kd: { name: 'Kinh doanh', color: '#D8A24A', icon: '💼' },
+  kv: { name: 'Kho vận', color: '#6C93B8', icon: '🏭' },
+  kt: { name: 'Kế toán', color: '#B589B0', icon: '🧾' },
+  mk: { name: 'Marketing', color: '#E2664F', icon: '📣' },
+  vs: { name: 'Vận hành sàn (Shopee/TikTok)', color: '#C97B3D', icon: '🛒' },
+  ship: { name: 'Shipper', color: '#7C93C9', icon: '🚚' },
+  gd: { name: 'Ban giám đốc', color: '#4F7A5B', icon: '👔' },
+  tv: { name: 'Chưa phân bổ', color: '#7C8A82', icon: '👤' },
 };
 // let (không phải const): cho phép đổi phòng ban của 1 người khi admin "phân bổ" họ
 // — xem togglePersonDept() trong App(). Từ 22/09: 1 người có thể thuộc NHIỀU phòng
@@ -1170,7 +1175,7 @@ function Sidebar({ view, setView, alertCount, onSelectDept, onPreviewEmployee, o
         className: 'nav-item', key,
         onClick: () => onSelectDept(key),
       },
-        h('span', { className: 'dept-dot', style: { background: d.color } }), ' ' + d.name)),
+        h('span', { className: 'dept-dot', style: { background: d.color } }), ' ' + d.icon + ' ' + d.name)),
       h('div', { className: 'sec-note' }, '🔒 Ban giám đốc xem/giao việc mọi phòng ban — cần đăng nhập thật để giới hạn quyền xem, bản demo này chưa có.')),
     h('button', { className: 'nav-item', style: { marginBottom: 6 }, onClick: onPreviewEmployee },
       '📦 Xem thử giao diện Nhân viên'),
@@ -1242,6 +1247,7 @@ function Dashboard({ tasks, onOpenTask, onAddTask, onJumpBoard, onGoReport }) {
           h('div', { className: 'panel-sub' }, 'Họ không tự sửa bố cục việc được — chỗ nào thấy chưa hợp lý thì gửi lên đây.'),
           ds.slice(-6).reverse().map((x, k) => h('div', { className: 'alert-row', key: k, onClick: () => onOpenTask(x.t.id) },
             h('span', { className: 'dept-dot', style: { background: DEPTS[x.t.dept].color } }),
+            h('span', { style: { fontSize: 13 }, title: DEPTS[x.t.dept].name }, DEPTS[x.t.dept].icon),
             h('span', { className: 'task-name' }, String(x.l).replace('💬 Ý kiến của ', ''),
               h('div', { style: { fontSize: 11.5, color: 'var(--text-faint)', marginTop: 2 } }, 'ở việc: ' + x.t.title)))));
       })(),
@@ -1255,6 +1261,7 @@ function Dashboard({ tasks, onOpenTask, onAddTask, onJumpBoard, onGoReport }) {
             const d = DEPTS[t.dept];
             return h('div', { className: 'alert-row', key: t.id, onClick: () => onOpenTask(t.id) },
               h('span', { className: 'dept-dot', style: { background: d.color } }),
+              h('span', { style: { fontSize: 13 }, title: d.name }, d.icon),
               h('span', { className: 'task-name' }, t.title),
               treHan(t)
                 ? h('span', { className: 'pill late' }, 'Trễ hạn')
@@ -1267,7 +1274,7 @@ function Dashboard({ tasks, onOpenTask, onAddTask, onJumpBoard, onGoReport }) {
             const d = DEPTS[k];
             const pct = Math.round((v / max) * 100);
             return h('div', { className: 'dept-bar-row', key: k, style: { cursor: 'pointer' }, onClick: () => onJumpBoard({ dept: k }) },
-              h('div', { className: 'dept-bar-head' }, h('span', null, d.name), h('span', null, v + ' việc')),
+              h('div', { className: 'dept-bar-head' }, h('span', null, d.icon + ' ' + d.name), h('span', null, v + ' việc')),
               h('div', { className: 'dept-bar-track' }, h('div', { className: 'dept-bar-fill', style: { width: pct + '%', background: d.color } })));
           })))));
 }
@@ -1282,6 +1289,7 @@ function TaskCard({ t, onOpen }) {
     style: { borderLeftColor: d.color },
     onClick: () => onOpen(t.id),
   },
+    h('div', { className: 'card-dept', style: { color: d.color } }, d.icon + ' ' + d.name),
     h('div', { className: 't' }, t.title, t.recurring && h('span', { className: 'recur-tag', title: 'Việc lặp lại hằng ngày' }, ' 🔁')),
     cl.length > 0 && h('div', { className: 'progress-row' },
       h('div', { className: 'pbar' }, h('i', { style: { width: Math.round(doneCount / cl.length * 100) + '%' } })),
@@ -1407,7 +1415,7 @@ function Board({ tasks, onOpenTask, onAddTask, initialDept, initialOwner, initia
         h('input', { type: 'search', value: q, onChange: e => setQ(e.target.value), placeholder: 'Tìm theo tên việc...' }),
         h('select', { value: fDept, onChange: e => setFDept(e.target.value) },
           h('option', { value: '' }, 'Tất cả bộ phận'),
-          Object.entries(DEPTS).map(([k, d]) => h('option', { key: k, value: k }, d.name))),
+          Object.entries(DEPTS).map(([k, d]) => h('option', { key: k, value: k }, d.icon + ' ' + d.name))),
         h('select', { value: fOwner, onChange: e => setFOwner(e.target.value) },
           h('option', { value: '' }, 'Tất cả người phụ trách'),
           Object.entries(PEOPLE).map(([k, p]) => h('option', { key: k, value: k }, p.name))),
@@ -1480,19 +1488,24 @@ function DeptLeadSettings({ onSetLead }) {
     Object.entries(DEPTS).filter(([k]) => k !== 'tv').map(([dk, d]) => {
       const deptPeople = Object.entries(PEOPLE).filter(([, p]) => p.depts.includes(dk));
       const ds = dsTruong_(dk);
-      return h('div', { className: 'dept-lead-row', key: dk },
-        h('span', { className: 'dept-dot', style: { background: d.color } }),
-        h('span', { className: 'dlr-name' }, d.name),
+      const thieuTruong = deptPeople.length > 0 && ds.length === 0;
+      return h('div', { className: 'dept-lead-row' + (thieuTruong ? ' thieu' : ''), key: dk },
+        h('div', { className: 'dlr-top' },
+          h('span', { className: 'dept-dot', style: { background: d.color } }),
+          h('span', { style: { fontSize: 14 } }, d.icon),
+          h('span', { className: 'dlr-name' }, d.name)),
         deptPeople.length === 0
           ? h('span', { style: { color: 'var(--text-faint)', fontSize: 12 } }, 'Chưa có ai trong phòng')
-          : h('div', { className: 'lead-pick' },
+          : h(React.Fragment, null,
+              thieuTruong && h('div', { className: 'dlr-canhbao' }, '⚠ Chưa có trưởng phòng — bấm một tên bên dưới để gắn'),
+              h('div', { className: 'lead-pick' },
               deptPeople.map(([k, p]) => h('button', {
                 type: 'button', key: k,
                 className: 'lead-chip' + (ds.indexOf(k) >= 0 ? ' on' : ''),
                 style: ds.indexOf(k) >= 0 ? { borderColor: d.color, color: d.color, background: d.color + '22' } : {},
                 onClick: () => onSetLead(dk, k),
               }, (ds.indexOf(k) >= 0 ? '★ ' : '') + p.name)),
-              ds.length > 1 && h('span', { className: 'lead-note' }, ds.length + ' người cùng phụ trách')));
+              ds.length > 1 && h('span', { className: 'lead-note' }, ds.length + ' người cùng phụ trách'))));
     }));
 }
 
@@ -1503,7 +1516,7 @@ function DeptChips({ depts, onToggle }) {
       className: 'dept-chip' + (depts.includes(dk) ? ' active' : ''),
       style: depts.includes(dk) ? { borderColor: d.color, color: d.color, background: d.color + '22' } : {},
       onClick: () => onToggle(dk),
-    }, d.name)));
+    }, d.icon + ' ' + d.name)));
 }
 
 /* Cap tai khoan rieng cho mot nguoi: ma dang nhap + mat khau, va duong link de
@@ -1785,7 +1798,7 @@ function TaskDetail({ task, onClose, onSetStatus, onClaim, onEdit, onRemind, onT
       h('button', { className: 'drawer-close', onClick: onClose }, '✕'),
       h('div', { style: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' } },
         h('span', { className: 'dept-dot', style: { background: d.color } }),
-        h('span', { style: { fontSize: 12, color: 'var(--text-dim)' } }, d.name),
+        h('span', { style: { fontSize: 12, color: 'var(--text-dim)' } }, d.icon + ' ' + d.name),
         h('span', { className: 'tag-priority ' + task.priority }, priorityLabel(task.priority))),
       h('h3', null, task.title),
       task.recurring && h('div', { className: 'recur-note' }, '🔁 Việc lặp lại mỗi ngày, trừ khi có phát sinh thêm.'),
@@ -1924,7 +1937,7 @@ function TaskModal({ mode, initial, onCancel, onSave, onDelete, restrictDepts })
         h('div', { className: 'field' },
           h('label', null, 'Phòng ban' + (restrictDepts && deptOptions.length === 1 ? ' (không đổi được)' : '')),
           h('select', { value: dept, disabled: !!(restrictDepts && deptOptions.length === 1), onChange: e => setDept(e.target.value) },
-            deptOptions.map(k => h('option', { key: k, value: k }, DEPTS[k].name)))),
+            deptOptions.map(k => h('option', { key: k, value: k }, DEPTS[k].icon + ' ' + DEPTS[k].name)))),
         h('div', { className: 'field' },
           h('label', null, 'Ưu tiên'),
           h('select', { value: priority, onChange: e => setPriority(e.target.value) },
