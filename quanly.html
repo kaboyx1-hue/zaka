@@ -390,6 +390,7 @@ body.ks-chi *{cursor:crosshair!important}
         <option value="chuaThu">Chưa thu</option>
         <option value="daHuy">Đã huỷ</option>
       </select>
+      <span id="scDemNho" class="tag w" style="align-self:center;font-weight:700"></span>
       <input id="locLaiTu" inputmode="numeric" placeholder="Lãi từ… (đ)" style="max-width:140px" oninput="dinhDangTien(this)" onchange="veSo()">
       <button class="btn-nho" id="btnBoLocLaiSo" onclick="document.getElementById('locLaiTu').value='';veSo()" style="display:none">Bỏ lọc lãi</button>
       <button class="btn-nho" onclick="kiemTraTrungMa()" style="background:var(--badBg);color:var(--bad)" title="Quét toàn bộ sổ cái tìm mã đơn xuất hiện nhiều hơn 1 lần">Kiểm tra đơn trùng mã</button>
@@ -751,7 +752,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260922d';
+var APP_VER='20260923a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -3122,6 +3123,16 @@ function veSo(){
   }
   var nutBoLocLai=$('btnBoLocLaiSo'); if(nutBoLocLai) nutBoLocLai.style.display=coLocLai?'':'none';
   veKenhLocSo(); veNVLocSo();
+  // Ô nhỏ đếm "còn bao nhiêu đơn chưa thu" ngay trong danh sách ĐANG LỌC — chủ báo
+  // chọn "Chưa thu" ở ô tình trạng vẫn phải tự đếm bằng mắt. Tính lại mỗi lần lọc,
+  // dựa đúng trên ds cuối cùng (sau cả LOCMA) nên luôn khớp số dòng hiện trong bảng.
+  (function(){
+    var dsCho = LOCMA ? ds.filter(function(d){return LOCMA.indexOf(d.ma)>=0}) : ds;
+    var chuaThu = dsCho.filter(function(d){return !d.huy && conThuDon(d)>0});
+    var tongChuaThu = chuaThu.reduce(function(a,d){return a+conThuDon(d)},0);
+    var o = $('scDemNho');
+    if(o){ o.innerHTML = chuaThu.length ? chuaThu.length+' đơn chưa thu · '+tien(tongChuaThu) : ''; o.style.display = chuaThu.length?'':'none'; }
+  })();
   var kyBar='<div class="card"><div class="chips" style="margin:-4px 0 8px">'+
     KYS_CHUNG.map(function(k){return '<button class="chip'+(KY===k[0]?' on':'')+'" onclick="datKy(\''+k[0]+'\')">'+k[1]+'</button>'}).join('')+
     '</div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+
