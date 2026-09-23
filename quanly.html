@@ -538,28 +538,18 @@ body.ks-chi *{cursor:crosshair!important}
     <button class="btn-nho mt" onclick="luuNguongHuyHieu()">Lưu ngưỡng này</button>
   </div>
 
-  <div class="card"><h2>Danh sách shipper</h2>
-    <div class="sm" style="margin-bottom:8px">Tên, lương theo giờ, biển số xe — chỉ máy quản lý sửa được. Nhân viên chỉ xem để chọn khi gán người giao đơn.</div>
-    <div id="shipMsg"></div>
+  <div class="card" id="cardNhanSu"><h2>Nhân sự</h2>
+    <div class="sm" style="margin-bottom:8px">Danh sách <b>duy nhất</b> của cả phần mềm. Thêm/sửa ở đây là
+    tab Điều hành công việc, ô chọn shipper trên máy nhân viên và bảng tính giá tự theo — không phải sửa chỗ nào khác.
+    Người có 🔒 là tài khoản bán hàng (ngưng/duyệt ở ô "Tài khoản nhân viên" phía trên). Bấm ★ cạnh bộ phận để đặt làm trưởng bộ phận đó.</div>
+    <div id="nsMsg"></div>
     <div class="row">
-      <input id="spShTen" placeholder="Tên shipper">
-      <input id="spShLuong" inputmode="numeric" placeholder="Lương/giờ (đ)" oninput="dinhDangTien(this)">
-      <input id="spShBien" placeholder="Biển số xe">
+      <input id="nsTen" placeholder="Tên người mới">
+      <select id="nsPhongMoi"></select>
+      <button class="btn-nho" onclick="themNhanSu()">Thêm người</button>
     </div>
-    <button class="btn-nho mt" onclick="themShipper()">Thêm vào danh sách</button>
-    <div id="dsShipperQL" style="margin-top:10px"></div>
-    <button class="btn mt" id="btnLuuShip" onclick="luuShipperLenSheet()" style="color:#fff;font-weight:600">Lưu danh sách lên Sheet</button>
-  </div>
-
-  <div class="card"><h2>Danh sách nhân sự</h2>
-    <div class="sm" style="margin-bottom:8px">
-      <b>Đây từng là danh sách rời cho tab "Việc cần làm" cũ</b> — tab đó đã được thay bằng
-      <b>Điều hành công việc</b>, nơi có đủ nhân sự thật (mã đăng nhập, phòng ban, mật khẩu),
-      nên danh sách rời này không còn tác dụng gì nữa (đã kiểm — không nơi nào trong hệ thống
-      còn đọc nó). Sửa tên, thêm người, cấp mã/mật khẩu thì làm ở đúng một chỗ:
-      tab <b>Điều hành công việc → Theo người phụ trách</b>.
-    </div>
-    <button class="btn-nho" onclick="tab('vc')">Mở Điều hành công việc</button>
+    <div id="dsNhanSu" style="margin-top:10px"></div>
+    <div id="shipMsg"></div>
   </div>
 
   <div class="card"><h2>Tài khoản nhận chuyển khoản</h2>
@@ -753,7 +743,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260923d';
+var APP_VER='20260923e';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -2208,6 +2198,7 @@ function apDungKeoVe(j, luc){
   if(j.trucNhanSu){ TRUC_NS=j.trucNhanSu; set('trucns',TRUC_NS) }
   if(TRUC_DA_NAP) guiTrucChoIframe();
   NVS=j.nvs||[]; set('nvs',NVS);
+  if(TRUC_DA_NAP&&TRUC_NS.length&&nsGop_()) nsLuu_();   // nhân sự một nguồn — xem nsGop_
   KTRUONG=j.khaiTruong||''; set('ktruong',KTRUONG);
   VERQL={don:j.donVer||'',von:j.vonVer||'',sv:j.svVer||'',nv:VERQL.nv,kt:VERQL.kt,ship:j.shipVer||'',tk:j.tkVer||'',cp:j.cpVer||'',tg:j.tgVer||'',vc:j.vcVer||'',trv:j.trvVer||'',trn:j.trnVer||''};
   set('verql',VERQL);
@@ -2217,7 +2208,7 @@ function apDungKeoVe(j, luc){
   $('keoInfo').innerHTML='Kéo lúc '+(luc||nowStr())+' — nhận <b>'+(j.don||[]).length+'</b> đơn'+
     (soHuy?', trong đó <b style="color:var(--bad)">'+soHuy+' đơn đã huỷ</b>':'')+
     ' · <b>'+NVS.length+'</b> tài khoản nhân viên.';
-  veNV(); veKhaiTruong(); veMayGui(); veShipperQL(); veCongTac();
+  veNV(); veKhaiTruong(); veMayGui(); veNhanSu(); veCongTac();
 }
 async function keoDon(im){
   luuQCfg();
@@ -2297,7 +2288,7 @@ function khoiDongQL(){
         'đã chuyển sang <b>ngừng bán</b>, KHÔNG xoá. Bấm nút "Hàng ngừng bán" bên dưới để xem.':'')+
       '<br><span class="sm">Đơn đã bán không đổi — mỗi đơn giữ giá vốn của chính ngày bán.</span>','ok'); },400);
   }
-  veSo();veBC();nhanCB();veGia();veGhiNhan();veShipperQL();veTaiKhoanQL();
+  veSo();veBC();nhanCB();veGia();veGhiNhan();veNhanSu();veTaiKhoanQL();
   nhacSaoLuu();
 }
 
@@ -4668,7 +4659,7 @@ function napVonTuSheet(ds,ver){
    THÊM và HIỆN BẢNG vẫn để riêng cho từng loại, vì cột/ô nhập khác nhau thật,
    gộp sẽ làm code khó đọc hơn lợi ích mang lại. */
 var DS_NHO_CAUHINH = {
-  ship: {tenBien:'SHIP', msgId:'shipMsg', hanhdong:'shipper', btnId:'btnLuuShip', nhanXoa:function(x){return x.ten}, veLai:function(){veShipperQL();guiLuongShipperChoTs()}},
+  ship: {tenBien:'SHIP', msgId:'shipMsg', hanhdong:'shipper', btnId:'btnLuuShip', nhanXoa:function(x){return x.ten}, veLai:function(){veNhanSu();guiLuongShipperChoTs()}},
   tk:   {tenBien:'TK',   msgId:'tkMsg',   hanhdong:'taikhoan', btnId:'btnLuuTk',  nhanXoa:function(x){return x.ten}, veLai:function(){veTaiKhoanQL()}}
 };
 function xoaDanhSachNho(loai,i){
@@ -4723,28 +4714,168 @@ function luuNguongHuyHieu(){
 /* ══════════════════════ DANH SÁCH SHIPPER ══════════════════════
    Chỉ máy quản lý thêm/sửa/xoá. Lưu đè toàn bộ danh sách lên Sheet mỗi lần bấm Lưu
    (giống cách làm với bảng giá vốn) — danh sách nhỏ, không cần đồng bộ từng dòng. */
-function themShipper(){
-  var ten=$('spShTen').value.trim();
-  if(!ten){ bao('shipMsg','Phải có tên.','er'); return }
-  var luongGio=n2($('spShLuong').value), bienSo=$('spShBien').value.trim();
-  SHIP.push({ten:ten,luongGio:luongGio,bienSo:bienSo,gc:''});
-  set('ship',SHIP);
-  $('spShTen').value=''; $('spShLuong').value=''; $('spShBien').value='';
-  veShipperQL(); guiLuongShipperChoTs();
-  bao('shipMsg','Đã thêm <b>'+esc(ten)+'</b> vào danh sách — nhớ bấm <b>Lưu lên Sheet</b> để 3 máy nhân viên thấy.','wa');
+/* ══════════════════════ NHÂN SỰ — MỘT NGUỒN (23/09/2026) ══════════════════════
+   Chủ yêu cầu "mọi thứ tập trung một chỗ, mở 1 tab hay 100 tab đều lấy từ 1 nguồn".
+   Nguồn DUY NHẤT = bảng TRUC_NHAN_SU (TRUC_NS). Hai thứ còn lại tự SUY RA từ đó:
+   - 4 tài khoản bán hàng (NVS, trang NHAN_VIEN): tự có mặt trong TRUC_NS theo mã
+     NV (real=1); tên của họ lấy theo NHAN_VIEN, sửa tên ở đây thì ghi cả 2 nơi.
+   - Danh sách shipper (trang SHIPPER, máy NV + tính giá đang đọc): = những người
+     thuộc bộ phận 'ship'. Lương/giờ + biển số vẫn nằm ở cột cũ của SHIPPER, cột
+     "gc" giữ khoá người bên TRUC_NS để nối 2 bên — KHÔNG thêm cột nào trên Sheet. */
+var NS_PHONG={kd:'💼 Kinh doanh',kv:'🏭 Kho vận',kt:'🧾 Kế toán',mk:'📣 Marketing',vs:'🛒 Vận hành sàn',ship:'🚚 Shipper',gd:'👔 Ban giám đốc'};
+function nsPhong_(p){ try{ var d=typeof p.depts==='string'?JSON.parse(p.depts||'[]'):p.depts; return Array.isArray(d)?d.filter(function(x){return x!=='tv'}):[] }catch(e){ return [] } }
+function nsDatPhong_(p,ds){ p.depts=JSON.stringify(ds.length?ds:['tv']) }
+function nsTruong_(p){ return String(p.leadOf||'').split(',').filter(Boolean) }
+function nsMaMoi_(){
+  var so=TRUC_NS.map(function(p){return p.code}).concat(NVS.map(function(x){return x.ma}))
+    .map(function(c){return parseInt(String(c||'').replace(/^NV/i,''),10)}).filter(function(n){return !isNaN(n)});
+  return 'NV'+String((so.length?Math.max.apply(null,so):0)+1).padStart(2,'0');
 }
-function xoaShipper(i){ xoaDanhSachNho('ship',i) }
-function luuShipperLenSheet(){ return luuDanhSachNhoLenSheet('ship') }
-function veShipperQL(){
-  var e=$('dsShipperQL'); if(!e) return;
-  if(!SHIP.length){ e.innerHTML='<div class="empty">Chưa có shipper nào.</div>'; return }
-  e.innerHTML='<table><tr><th>Tên</th><th class="r">Lương/giờ</th><th>Biển số</th><th></th></tr>'+
-    SHIP.map(function(s,i){return '<tr>'+
-      '<td><input value="'+esc(s.ten)+'" style="width:100%" onchange="suaDanhSachNho(\'ship\','+i+',\'ten\',this.value)"></td>'+
-      '<td><input value="'+(s.luongGio||0).toLocaleString('vi-VN')+'" class="r" style="width:100%;text-align:right" '+
-        'oninput="dinhDangTien(this)" onchange="suaDanhSachNho(\'ship\','+i+',\'luongGio\',this.value)"></td>'+
-      '<td><input value="'+esc(s.bienSo||'')+'" style="width:100%" onchange="suaDanhSachNho(\'ship\','+i+',\'bienSo\',this.value)"></td>'+
-      '<td><button class="btn-nho" style="color:var(--bad)" onclick="xoaShipper('+i+')">Xoá</button></td></tr>'}).join('')+'</table>';
+function nsTen_(s){ return String(s||'').trim().toLowerCase() }
+/* Gộp NVS + SHIP cũ vào TRUC_NS (chạy mỗi lần kéo về). Trả true nếu có đổi. Khoá
+   người tạo ra ở đây là TẤT ĐỊNH (nv_NV01, sh_ten) để 2 máy quản lý cùng gộp không
+   sinh ra 2 bản trùng. */
+function nsGop_(){
+  var doi=false;
+  NVS.forEach(function(x){
+    if(!x.ma||x.trangthai==='TU CHOI'||x.trangthai==='CHO DUYET') return;
+    var p=TRUC_NS.filter(function(q){return q.code===x.ma})[0];
+    if(!p){ p={key:'nv_'+x.ma,name:x.ten,code:x.ma,mk:'',depts:'["tv"]',real:1,leadOf:'',malink:''}; TRUC_NS.push(p); doi=true }
+    if(p.name!==x.ten||!Number(p.real)){ p.name=x.ten; p.real=1; doi=true }
+  });
+  SHIP.forEach(function(s){
+    if(!s.ten||s.gc) return;   // đã nối rồi thì TRUC_NS quyết định (bỏ khỏi bộ phận Shipper = hết là shipper)
+    var p=TRUC_NS.filter(function(q){return q.key===s.gc})[0]||TRUC_NS.filter(function(q){return nsTen_(q.name)===nsTen_(s.ten)})[0];
+    if(!p){ p={key:'sh_'+nsTen_(s.ten).replace(/\s+/g,'_'),name:s.ten,code:nsMaMoi_(),mk:'',depts:'["ship"]',real:0,leadOf:'',malink:''}; TRUC_NS.push(p); doi=true }
+    var ds=nsPhong_(p); if(ds.indexOf('ship')<0){ ds.push('ship'); nsDatPhong_(p,ds); doi=true }
+    if(s.gc!==p.key){ s.gc=p.key; doi=true }
+  });
+  return doi;
+}
+/* SHIP suy ra từ TRUC_NS; giữ lương/biển số cũ theo khoá (gc) rồi theo tên. */
+function nsShipTuNS_(){
+  return TRUC_NS.filter(function(p){return nsPhong_(p).indexOf('ship')>=0}).map(function(p){
+    var cu=SHIP.filter(function(s){return s.gc===p.key})[0]||SHIP.filter(function(s){return nsTen_(s.ten)===nsTen_(p.name)})[0]||{};
+    return {ten:p.name,luongGio:n2(cu.luongGio||0),bienSo:cu.bienSo||'',gc:p.key};
+  });
+}
+async function nsGhi_(hanhdong, ds){
+  var r=await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:hanhdong,ds:ds})});
+  var j=JSON.parse(await r.text());
+  if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
+  return j;
+}
+/* Ghi nhân sự (+ shipper nếu đổi) lên Sheet. Xếp hàng nối tiếp: sửa dồn dập nhiều
+   ô liền nhau thì các lần ghi đi lần lượt, lần sau luôn mang trạng thái mới nhất. */
+var NS_CHUOI=Promise.resolve();
+function nsLuu_(coViec){
+  set('trucns',TRUC_NS);
+  var shipMoi=nsShipTuNS_(), doiShip=JSON.stringify(shipMoi)!==JSON.stringify(SHIP);
+  if(doiShip){ SHIP=shipMoi; set('ship',SHIP) }
+  veNhanSu(); guiTrucChoIframe(); guiLuongShipperChoTs();
+  if(!QCFG.url||!QCFG.key){ bao('nsMsg','Cần link và mật khẩu quản lý ở tab Nạp đơn.','er'); return NS_CHUOI }
+  bao('nsMsg','Đang lưu…','wa');
+  NS_CHUOI=NS_CHUOI.then(async function(){
+    try{
+      if(coViec){ await nsGhi_('trucviec',TRUC_VIEC); set('trucviec',TRUC_VIEC) }
+      await nsGhi_('trucnhansu',TRUC_NS);
+      if(doiShip){ var j=await nsGhi_('shipper',SHIP); VERQL.ship=j.ver; set('verql',VERQL) }
+      bao('nsMsg','Đã lưu — mọi máy tự thấy trong vòng một phút.','ok');
+    }catch(e){ bao('nsMsg','Chưa lưu được: '+esc(e.message)+' — sửa lại một ô bất kỳ để thử lưu lại.','er') }
+  });
+  return NS_CHUOI;
+}
+function themNhanSu(){
+  var ten=$('nsTen').value.trim(), ph=$('nsPhongMoi').value;
+  if(!ten){ bao('nsMsg','Phải có tên.','er'); return }
+  if(!TRUC_DA_NAP){ bao('nsMsg','Chưa kéo được danh sách từ Sheet — sang tab Nạp đơn bấm <b>Kéo đơn mới</b> trước.','er'); return }
+  TRUC_NS.push({key:'p'+Date.now(),name:ten,code:nsMaMoi_(),mk:'',depts:JSON.stringify([ph||'tv']),real:0,leadOf:'',malink:''});
+  $('nsTen').value='';
+  nsLuu_();
+}
+function nsSua(i,field,v){
+  var p=TRUC_NS[i]; if(!p) return;
+  v=String(v).trim();
+  if(field==='name'){
+    if(!v){ veNhanSu(); return }
+    p.name=v;
+    var x=NVS.filter(function(y){return y.ma===p.code})[0];
+    if(Number(p.real)&&x){   // tài khoản bán hàng: ghi luôn tên sang trang NHAN_VIEN
+      x.ten=v; set('nvs',NVS); veNV();
+      nsGhiNV_({nvs:[{ma:x.ma,trangthai:x.trangthai,ten:v}]});
+    }
+  } else p[field]=v;
+  nsLuu_();
+}
+function nsGhiNV_(them){
+  NS_CHUOI=NS_CHUOI.then(function(){
+    return fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify(Object.assign({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'duyetnv'},them))})
+      .catch(function(){ bao('nsMsg','Chưa đổi được tên bên tài khoản bán hàng — thử lại.','er') });
+  });
+}
+function nsPhong(i,dk){
+  var p=TRUC_NS[i]; if(!p) return;
+  var ds=nsPhong_(p), k=ds.indexOf(dk);
+  if(k>=0){ ds.splice(k,1); p.leadOf=nsTruong_(p).filter(function(d){return d!==dk}).join(',') } else ds.push(dk);
+  nsDatPhong_(p,ds); nsLuu_();
+}
+function nsTruongBat(i,dk){
+  var p=TRUC_NS[i]; if(!p) return;
+  var ds=nsTruong_(p), k=ds.indexOf(dk);
+  if(k>=0) ds.splice(k,1); else ds.push(dk);
+  p.leadOf=ds.join(','); nsLuu_();
+}
+function nsShipSua(i,field,v){
+  var p=TRUC_NS[i]; if(!p) return;
+  var s=SHIP.filter(function(x){return x.gc===p.key})[0]; if(!s) return;
+  s[field]=field==='luongGio'?n2(v):String(v).trim();
+  set('ship',SHIP);
+  // SHIP vừa đổi mà nsShipTuNS_ giữ nguyên số cũ theo gc -> ép ghi shipper
+  bao('nsMsg','Đang lưu…','wa');
+  NS_CHUOI=NS_CHUOI.then(async function(){
+    try{ var j=await nsGhi_('shipper',SHIP); VERQL.ship=j.ver; set('verql',VERQL); bao('nsMsg','Đã lưu — mọi máy tự thấy trong vòng một phút.','ok') }
+    catch(e){ bao('nsMsg','Chưa lưu được: '+esc(e.message),'er') }
+  });
+  guiLuongShipperChoTs();
+}
+function nsXoa(i){
+  var p=TRUC_NS[i]; if(!p||Number(p.real)) return;
+  var soViec=TRUC_VIEC.filter(function(t){return t.owner===p.key}).length;
+  if(!confirm('Xoá "'+p.name+'" khỏi danh sách nhân sự?'+(soViec?'\n\n'+soViec+' việc đang giao cho người này sẽ về "chưa ai nhận".':'')))return;
+  TRUC_NS.splice(i,1);
+  if(soViec) TRUC_VIEC.forEach(function(t){ if(t.owner===p.key) t.owner='' });
+  nsLuu_(soViec>0);
+}
+function veNhanSu(){
+  var e=$('dsNhanSu'); if(!e) return;
+  var sel=$('nsPhongMoi');
+  if(sel&&!sel.options.length) sel.innerHTML='<option value="tv">Chưa phân bộ phận</option>'+
+    Object.keys(NS_PHONG).map(function(k){return '<option value="'+k+'">'+NS_PHONG[k]+'</option>'}).join('');
+  if(!TRUC_NS.length){ e.innerHTML='<div class="empty">Chưa kéo về. Sang tab Nạp đơn bấm <b>Kéo đơn mới</b>.</div>'; return }
+  e.innerHTML=TRUC_NS.map(function(p,i){
+    var ds=nsPhong_(p), tr=nsTruong_(p), that=Number(p.real)>0;
+    var s=SHIP.filter(function(x){return x.gc===p.key})[0];
+    return '<div style="border-top:1px solid var(--line);padding:10px 0">'+
+      '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">'+
+        '<span class="tag">'+esc(p.code||'—')+'</span>'+
+        '<input value="'+esc(p.name)+'" style="flex:1;min-width:140px" onchange="nsSua('+i+',\'name\',this.value)">'+
+        (that?'<span class="sm" title="Tài khoản bán hàng">🔒 TK bán hàng</span>'
+             :'<button class="btn-nho" style="color:var(--bad)" onclick="nsXoa('+i+')">Xoá</button>')+
+      '</div>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:7px">'+
+        Object.keys(NS_PHONG).map(function(dk){
+          var co=ds.indexOf(dk)>=0, laTr=tr.indexOf(dk)>=0;
+          return '<span style="display:inline-flex;gap:2px"><button class="chip'+(co?' on':'')+'" onclick="nsPhong('+i+',\''+dk+'\')">'+NS_PHONG[dk]+'</button>'+
+            (co?'<button class="chip'+(laTr?' on':'')+'" title="Trưởng bộ phận" onclick="nsTruongBat('+i+',\''+dk+'\')">★</button>':'')+'</span>'}).join('')+
+      '</div>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;margin-top:7px">'+
+        '<label class="sm">Mật khẩu vào trang công việc</label>'+
+        '<input value="'+esc(p.mk||'')+'" placeholder="chưa đặt" style="max-width:160px" onchange="nsSua('+i+',\'mk\',this.value)">'+
+        (s?'<label class="sm">Lương/giờ</label><input value="'+(s.luongGio||0).toLocaleString('vi-VN')+'" inputmode="numeric" style="max-width:110px;text-align:right" oninput="dinhDangTien(this)" onchange="nsShipSua('+i+',\'luongGio\',this.value)">'+
+           '<label class="sm">Biển số</label><input value="'+esc(s.bienSo||'')+'" style="max-width:120px" onchange="nsShipSua('+i+',\'bienSo\',this.value)">':'')+
+      '</div></div>'}).join('');
 }
 
 /* ══════════════════════ DANH SÁCH NGƯỜI PHỤ TRÁCH ══════════════════════
@@ -4832,6 +4963,8 @@ async function nhanLuuTrucTuIframe_(dsViec, dsNhanSu){
     TRUC_VIEC=dsViec||[]; set('trucviec',TRUC_VIEC); TRUC_DA_NAP=true;
     TRUC_NS=dsNhanSu||[]; set('trucns',TRUC_NS);
     traLoi(true);
+    // shipper suy ra từ bộ phận Shipper — TRỤC thêm/bớt người ở đó thì máy NV cũng theo
+    if(JSON.stringify(nsShipTuNS_())!==JSON.stringify(SHIP)) nsLuu_(); else veNhanSu();
   }catch(e){ traLoi(false, 'Chưa lưu được: '+e.message) }
 }
 
@@ -5342,6 +5475,12 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260923e', ngay:'23/09/2026', ten:'Nhân sự gom về một chỗ',
+  vaPhieu:[],
+  muc:[
+   ['moi','Tab <b>Vận hành</b> có ô <b>Nhân sự</b> duy nhất: 4 tài khoản bán hàng, shipper, đóng gói… cùng một danh sách. Mã NV tự cấp, sửa tên ngay trên dòng, đặt mật khẩu, bấm chọn bộ phận và ★ trưởng bộ phận.'],
+   ['moi','Người ở bộ phận <b>Shipper</b> tự hiện trong ô chọn người giao trên máy nhân viên và trong Điều hành công việc — không phải khai 2 lần.']
+  ]},
  {ban:'20260922d', ngay:'22/09/2026', ten:'Điều hành công việc dùng chung một danh sách cho mọi máy',
   vaPhieu:[],
   muc:[
