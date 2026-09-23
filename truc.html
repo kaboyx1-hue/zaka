@@ -575,6 +575,9 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 600; letter-spacing: -
 .person-card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; }
 .person-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .person-name { font-weight: 600; font-size: 14.5px; }
+.person-name-edit { font: inherit; font-weight: 600; font-size: 14.5px; background: none; border: 1px solid transparent; border-radius: 6px; padding: 1px 5px; color: var(--text); width: 150px; }
+.person-name-edit:hover { border-color: var(--border); }
+.person-name-edit:focus { outline: none; border-color: var(--gold); background: var(--panel-2); }
 .emp-code { font: 700 11px ui-monospace, monospace; color: var(--gold); background: var(--gold-soft); padding: 1px 6px; border-radius: 5px; letter-spacing: .02em; }
 .person-dept { font-size: 12px; color: var(--text-dim); }
 .person-stats { display: flex; gap: 16px; font-size: 12px; color: var(--text-dim); border-top: 1px solid var(--border); padding-top: 10px; }
@@ -1600,7 +1603,19 @@ function People({ tasks, onTogglePersonDept, onAddPerson, onJumpBoard, onSetLead
               h('span', { className: 'avatar', style: { background: primaryDept.color + '22', color: primaryDept.color } }, initials(p.name)),
               h('div', null,
                 h('div', { className: 'person-name' },
-                  p.code && h('span', { className: 'emp-code' }, p.code), (p.code ? ' ' : '') + p.name,
+                  p.code && h('span', { className: 'emp-code' }, p.code), p.code ? ' ' : '',
+                  /* 23/09/2026: chủ chốt "thiếu tính năng sửa tên trực tiếp" — người
+                     THẬT (4 tài khoản NV01-04) vẫn KHÔNG sửa được ở đây (tên/mã đó
+                     sống ở Sheet NHAN_VIEN, sửa nhầm ở đây sẽ lệch với máy bán hàng
+                     thật) — chỉ người do chính trang này tạo (!p.real) mới sửa được
+                     thẳng tên tại chỗ, không cần mở form riêng. */
+                  p.real
+                    ? p.name
+                    : h('input', {
+                        className: 'person-name-edit', value: p.name,
+                        onClick: e => e.stopPropagation(),
+                        onChange: e => onSetPersonField(key, 'name', e.target.value),
+                      }),
                   p.real && h('span', { className: 'pipe-tag', style: { marginLeft: 6 }, title: 'Có tài khoản đăng nhập app bán hàng — đổi tên/mã ở phần mềm quản lý' }, '🔒 Tài khoản thật'),
                   leadOfDepts.length > 0 && h('span', { className: 'pipe-tag', style: { marginLeft: 6 } }, '★ Trưởng ' + leadOfDepts.map(dk => DEPTS[dk].name).join(', '))),
                 h('div', { className: 'person-dept' },

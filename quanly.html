@@ -551,14 +551,15 @@ body.ks-chi *{cursor:crosshair!important}
     <button class="btn mt" id="btnLuuShip" onclick="luuShipperLenSheet()" style="color:#fff;font-weight:600">Lưu danh sách lên Sheet</button>
   </div>
 
-  <div class="card"><h2>Danh sách người phụ trách</h2>
-    <div class="sm" style="margin-bottom:8px">Tên hiện trong ô "Người phụ trách" ở tab Việc cần làm. Chỉ lưu trên máy này (Việc cần làm hiện cũng đang lưu cục bộ, chưa nối Sheet), không cần nút Lưu lên Sheet như shipper.</div>
-    <div id="npMsg"></div>
-    <div class="row">
-      <input id="spNpTen" placeholder="Tên người phụ trách (VD: Vợ chủ, Nhân viên kho...)">
+  <div class="card"><h2>Danh sách nhân sự</h2>
+    <div class="sm" style="margin-bottom:8px">
+      <b>Đây từng là danh sách rời cho tab "Việc cần làm" cũ</b> — tab đó đã được thay bằng
+      <b>Điều hành công việc</b>, nơi có đủ nhân sự thật (mã đăng nhập, phòng ban, mật khẩu),
+      nên danh sách rời này không còn tác dụng gì nữa (đã kiểm — không nơi nào trong hệ thống
+      còn đọc nó). Sửa tên, thêm người, cấp mã/mật khẩu thì làm ở đúng một chỗ:
+      tab <b>Điều hành công việc → Theo người phụ trách</b>.
     </div>
-    <button class="btn-nho mt" onclick="themNguoiPhuTrach()">Thêm vào danh sách</button>
-    <div id="dsNguoiPTQL" style="margin-top:10px"></div>
+    <button class="btn-nho" onclick="tab('vc')">Mở Điều hành công việc</button>
   </div>
 
   <div class="card"><h2>Tài khoản nhận chuyển khoản</h2>
@@ -752,7 +753,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260923a';
+var APP_VER='20260923b';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1105,6 +1106,15 @@ function dauVetBan_(sku){
 
 function veTrungTen(){
   var nhom=nhomTrungTen();
+  /* Phòng hờ: DEM_TRUNG là bộ nhớ đệm, xoaDemNang_() phải xoá đúng lúc bảng giá
+     đổi (xem set()) — nhưng lỡ có đường ghi GIA nào trong tương lai QUÊN đi qua
+     set(), nhóm cũ có thể còn trỏ tới mã đã bị gộp/xoá mất. Lọc bỏ nhóm nào có mã
+     không còn trong GIA (còn lại <2 mã thì nhóm không còn nghĩa gì để gộp nữa),
+     tránh đọc .ten của mã đã biến mất — đúng dạng lỗi chủ báo 23/09/2026. */
+  nhom = nhom.filter(function(ds){
+    var con = ds.filter(function(k){ return !!GIA[k] });
+    return con.length >= 2;
+  });
   if(!nhom.length) return '';
   var soChac=nhom.filter(function(a){return a.chac}).length;
   return '<div class="card"><h2>Mã gần giống nhau cần dọn — '+nhom.length+' nhóm</h2>'+
@@ -1403,6 +1413,13 @@ async function nhanSP(i){
   if(!von){ bao('dsErr','Chưa điền giá nhập cho <b>'+esc(x.ten)+'</b>. Không có giá nhập thì đơn bán món này sẽ treo, không tính được lời.','er'); return }
   try{
     await guiDuyetSP_(x.sku,'DA DUYET','');
+  }catch(e){ bao('dsErr','Không ghi được lên Sheet: '+esc(e.message),'er'); return }
+  /* Ghi lên Sheet đã XONG ở trên — từ đây chỉ còn cập nhật màn hình máy này.
+     Tách riêng try/catch: lỗi ở đoạn vẽ lại (nếu có) không được phép báo nhầm
+     thành "Không ghi được lên Sheet" — Sheet đã nhận đúng rồi, chỉ là màn hình
+     chưa kịp vẽ lại, bấm lại nút "Duyệt sản phẩm chờ" hoặc tải lại trang là thấy
+     đúng. Bug thật chủ gặp 23/09/2026: thông báo sai khiến tưởng mất dữ liệu. */
+  try{
     GIA[x.sku]={sku:x.sku, ten:x.ten, brand:x.brand||'', nhom:x.nhom||'KHÁC',
       dvt:x.dvt||'', gb:Number(x.gb)||0, von:von, suaTay:true, vonLuc:nowStr(),
       vonLyDo:'duyệt hàng nhân viên thêm', qd_dv:'', qd_sl:0, qd_gb:0, qd_von:0, moi:false};
@@ -1410,7 +1427,10 @@ async function nhanSP(i){
     veGia(); veCB(); veSo(); veBC(); vePhat(); veLam(); moDuyetSP();
     bao('giaMsg','Đã nhận <b>'+esc(x.ten)+'</b> vào bảng giá, giá nhập '+tien(von)+'. '+
       '<b>Bấm "Phát bảng giá" ở tab Bảng giá</b> thì ba máy nhân viên bán được ngay.','ok');
-  }catch(e){ bao('dsErr','Không ghi được lên Sheet: '+esc(e.message),'er') }
+  }catch(e){
+    console.error('Loi ve lai giao dien sau khi duyet SP (da ghi Sheet xong):', e);
+    bao('dsErr','Đã ghi lên Sheet thành công, nhưng màn hình chưa vẽ lại đúng ('+esc(e.message)+'). Tải lại trang để xem đúng.','wa');
+  }
 }
 async function tuChoiSP(i){
   var ds=spChoDuyet_(), x=ds[i]; if(!x) return;
@@ -1418,9 +1438,14 @@ async function tuChoiSP(i){
   if(!ly){ bao('dsErr','Ghi giúp một câu lý do — nhân viên đọc được, để lần sau khỏi thêm nhầm nữa.','er'); return }
   try{
     await guiDuyetSP_(x.sku,'TU CHOI',ly);
+  }catch(e){ bao('dsErr','Không ghi được lên Sheet: '+esc(e.message),'er'); return }
+  try{
     veLam(); moDuyetSP();
     bao('lamMsg','Đã từ chối <b>'+esc(x.ten)+'</b>. Máy nhân viên sẽ gỡ món đó và hiện lý do của anh/chị.','ok');
-  }catch(e){ bao('dsErr','Không ghi được lên Sheet: '+esc(e.message),'er') }
+  }catch(e){
+    console.error('Loi ve lai giao dien sau khi tu choi SP (da ghi Sheet xong):', e);
+    bao('dsErr','Đã ghi lên Sheet thành công, nhưng màn hình chưa vẽ lại đúng ('+esc(e.message)+'). Tải lại trang để xem đúng.','wa');
+  }
 }
 /* Chủ tự gõ để tìm món cũ trong bảng giá — không phụ thuộc vào việc máy có
    đoán ra tên gần giống hay không. Dùng đúng kiểu tìm của công cụ gộp sẵn có:
@@ -1456,17 +1481,27 @@ async function gopSPCho(i, skuChinhCu){
   if(!confirm('Món "'+x.ten+'" chính là "'+GIA[skuChinhCu].ten+'"?\n\n'+
     'Máy sẽ gộp mã tạm về mã cũ, dọn mã tạm khỏi bảng giá, và báo nhân viên dùng mã cũ đó.\n\n'+
     'Đơn cũ lỡ bán bằng mã tạm vẫn tính đúng theo mã cũ. Gộp nhầm thì bấm Hoàn tác ở tab Cần làm.')) return;
+  /* Chốt tên món chính TRƯỚC khi gộp — gomVaDon_ không đụng GIA[skuChinhCu], nhưng
+     nếu mã tạm của nhân viên lỡ trùng đúng skuChinhCu (hiếm, sinh mã đụng nhau) thì
+     đọc lại GIA[skuChinhCu] SAU khi gộp có thể ra undefined vì nó vừa bị gộp mất —
+     chốt tên trước loại hẳn khả năng đó. */
+  var tenChinh = GIA[skuChinhCu].ten;
   try{
-    await guiDuyetSP_(x.sku,'TU CHOI','Món này đã có rồi — dùng "'+GIA[skuChinhCu].ten+'" (mã '+skuChinhCu+')');
+    await guiDuyetSP_(x.sku,'TU CHOI','Món này đã có rồi — dùng "'+tenChinh+'" (mã '+skuChinhCu+')');
+  }catch(e){ bao('dsErr','Không ghi được lên Sheet: '+esc(e.message),'er'); return }
+  try{
     /* Đi qua ĐÚNG cơ chế gộp sẵn có (gomVaDon_) thay vì tự ghi ALIAS:
        được luôn phần dọn mã thừa khỏi bảng giá, ghi nhật ký, và Hoàn tác. */
     if(!GIA[x.sku]) GIA[x.sku]={sku:x.sku,ten:x.ten,brand:x.brand||'',nhom:x.nhom||'KHÁC',
       dvt:x.dvt||'',gb:Number(x.gb)||0,von:null,qd_dv:'',qd_sl:0,qd_gb:0,qd_von:0,moi:true};
     gomVaDon_(x.sku, skuChinhCu, 'Nhân viên thêm trùng — chủ chỉ về món cũ lúc duyệt');
     veGia(); veCB(); veSo(); veBC(); vePhat(); veLam(); moDuyetSP();
-    bao('lamMsg','Đã gộp <b>'+esc(x.ten)+'</b> về <b>'+esc(GIA[skuChinhCu].ten)+'</b>. '+
+    bao('lamMsg','Đã gộp <b>'+esc(x.ten)+'</b> về <b>'+esc(tenChinh)+'</b>. '+
       'Đơn cũ lỡ dùng mã tạm vẫn tính đúng. Gộp nhầm thì bấm <b>Hoàn tác</b> ở cuối tab Cần làm.','ok');
-  }catch(e){ bao('dsErr','Không ghi được lên Sheet: '+esc(e.message),'er') }
+  }catch(e){
+    console.error('Loi ve lai giao dien sau khi gop SP (da ghi Sheet xong):', e);
+    bao('dsErr','Đã ghi lên Sheet thành công, nhưng màn hình chưa vẽ lại đúng ('+esc(e.message)+'). Tải lại trang để xem đúng.','wa');
+  }
 }
 /* Công tắc ban đêm — mặc định TẮT */
 async function datChoBan(bat){
@@ -2509,7 +2544,7 @@ function veTab_(t){
   if(t==='lam')veLam();
   if(t==='bc')veBC(); if(t==='so')veSo(); if(t==='gia'){veGia();vePhat()} if(t==='cb')veCB();
   if(t==='ts'){guiCatalogChoTs();guiTinhGiaChoTs();guiLuongShipperChoTs()}
-  if(t==='vc'){guiNguoiPTChoVc();guiViecChoVc()}
+  if(t==='vc'){guiViecChoVc()}  // guiNguoiPTChoVc() bo hang 23/09 — khong con ai ben truc.html nghe
   if(t==='vh'){veNV();veMayGui();veNhatKy();veKhaiTruong();nhacSaoLuu();veNvXemLS();veNguongHuyHieu();veNguoiPhuTrachQL()}
 }
 /* Gửi danh mục sản phẩm đang bán (SKU/tên/giá lẻ/giá vốn) cho tool tính giá
@@ -2529,7 +2564,7 @@ window.addEventListener('message', function(e){
   if (e.data && e.data.type === 'ts-ready'){ guiCatalogChoTs(); guiTinhGiaChoTs(); guiLuongShipperChoTs() }
   if (e.data && e.data.type === 'tg-luu') nhanLuuTinhGiaTuTs_(e.data.item);
   if (e.data && e.data.type === 'tg-xoa') nhanXoaTinhGiaTuTs_(e.data.ma);
-  if (e.data && e.data.type === 'vc-ready'){ guiNguoiPTChoVc(); guiViecChoVc() }
+  if (e.data && e.data.type === 'vc-ready'){ guiViecChoVc() }
   if (e.data && e.data.type === 'vc-luu') nhanLuuViecTuVc_(e.data.items);
   if (e.data && e.data.type === 'truc-ready') guiTrucChoIframe();
   if (e.data && e.data.type === 'truc-luu') nhanLuuTrucTuIframe_(e.data.viec, e.data.nhansu);
