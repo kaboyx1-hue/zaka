@@ -2086,12 +2086,12 @@ function LoginNV({ onVao, dangTuVao, loiTuVao }) {
 
   return h('div', { className: 'rolegate' },
     h('h1', null, 'Đăng nhập'),
-    h('div', { className: 'sub' }, 'Nhập mã đăng nhập và mật khẩu chủ đã cấp cho bạn. Máy này sẽ nhớ, lần sau mở là vào thẳng.'),
+    h('div', { className: 'sub' }, 'Nhập mã nhân viên (hoặc số điện thoại) và mật khẩu chủ đã cấp cho bạn. Máy này sẽ nhớ, lần sau mở là vào thẳng.'),
     h('div', { className: 'dn-form' },
-      h('label', null, 'Mã đăng nhập'),
+      h('label', null, 'Mã nhân viên hoặc số điện thoại'),
       /* Ban phim dien thoai: go chu HOA san, tat tu sua chu (tu sua co the doi
          "DG1" thanh chu khac), de trinh duyet nho ma/mat khau cho lan sau. */
-      h('input', { value: code, autoFocus: true, placeholder: 'ví dụ DG1',
+      h('input', { value: code, autoFocus: true, placeholder: 'ví dụ NV05 hoặc 0901234567',
         autoCapitalize: 'characters', autoCorrect: 'off', spellCheck: false, autoComplete: 'username',
         onChange: e => setCode(e.target.value),
         onKeyDown: e => { if (e.key === 'Enter') vao() } }),

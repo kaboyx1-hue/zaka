@@ -775,7 +775,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260923h';
+var APP_VER='20260923i';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -885,7 +885,7 @@ var TU_NGAY=get('tungay',''), DEN_NGAY=get('denngay','');   // khoảng ngày tu
      'giao'     = chỉ cần giao đủ                                   */
 var GHINHAN=get('ghinhan','giao_thu');
 var HAN_GIAO=14;   // don giao do qua bao nhieu ngay thi canh bao do
-var HAN_THU=7;     // giao du roi ma qua bao nhieu ngay chua thu duoc tien   // don giao do qua bao nhieu ngay thi canh bao
+var HAN_THU=get('hanthu',7);     // giao du roi ma qua bao nhieu ngay chua thu duoc tien   // don giao do qua bao nhieu ngay thi canh bao
 
 function khoaDong(x){ return String(x.sku||'')+'|'+String(x.dv||'') }
 function daGiaoDong(d,x){
@@ -2246,6 +2246,7 @@ function apDungKeoVe(j, luc){
     (soHuy?', trong đó <b style="color:var(--bad)">'+soHuy+' đơn đã huỷ</b>':'')+
     ' · <b>'+NVS.length+'</b> tài khoản nhân viên.';
   veNV(); veKhaiTruong(); veMayGui(); veNhanSu(); veCongTac();
+  ksGuiLenSheet_();   // phiếu kỹ sư của máy này còn kẹt thì gửi bù
 }
 async function keoDon(im){
   luuQCfg();
@@ -3099,7 +3100,47 @@ function cnChonNguoi_(nguon, ds){
     '<select id="cnXuatCho_'+nguon+'" style="width:auto"><option value="">Tất cả ('+ds.length+' đơn)</option>'+
     Object.keys(ng).sort().map(function(k){return '<option value="'+esc(k)+'">'+esc(k)+' ('+ng[k]+' đơn)</option>'}).join('')+'</select>'+
     '<button class="mini" onclick="xuatCongNo(\''+nguon+'\',\'xlsx\')">⬇ Excel</button>'+
-    '<button class="mini" onclick="xuatCongNo(\''+nguon+'\',\'png\')">🖼 Ảnh</button></div>';
+    '<button class="mini" onclick="xuatCongNo(\''+nguon+'\',\'png\')">🖼 Ảnh</button></div>'+
+    '<div class="row" style="gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap">'+
+    '<span class="sm">Giao người đi thu (hiện ngay trên trang công việc của họ):</span>'+
+    '<select id="cnNguoiThu_'+nguon+'" style="width:auto">'+nsChonNguoiThu_()+'</select>'+
+    '<button class="mini" onclick="giaoThuNo_(\''+nguon+'\')">📨 Giao việc thu nợ</button></div>';
+}
+/* 23/09/2026 — phiếu chủ: "chỉ định nhân viên thu hồi công nợ, gửi thông báo trực tiếp tới
+   nhân viên". Dùng lại đúng đường có sẵn: tạo 1 VIỆC trong Điều hành công việc giao cho người
+   đó, mỗi đơn cần thu là 1 dòng checklist — họ mở trang công việc trên điện thoại là thấy,
+   thu được đơn nào tích đơn đó; chủ thấy tiến độ ngay trong Điều hành công việc. */
+function nsChonNguoiThu_(){
+  var ds=TRUC_NS.filter(function(p){ return p.key!=='giamdoc' && nsDangLam_(p) });
+  ds.sort(function(a,b){ var sa=nsPhong_(a).indexOf('ship')>=0?0:1, sb=nsPhong_(b).indexOf('ship')>=0?0:1; return sa-sb || String(a.name).localeCompare(String(b.name)) });
+  return '<option value="">— chọn người —</option>'+ds.map(function(p){
+    return '<option value="'+esc(p.key)+'">'+esc(p.name)+(nsPhong_(p).indexOf('ship')>=0?' 🚚':'')+(String(p.mk||'')?'':' (chưa có mật khẩu)')+'</option>' }).join('');
+}
+function datHanThu_(v){ HAN_THU=Math.max(1,parseInt(v,10)||7); set('hanthu',HAN_THU); veCB(); veLam() }
+function giaoThuNo_(nguon){
+  var key=($('cnNguoiThu_'+nguon)||{}).value, p=nsNguoi_(key);
+  if(!p){ alert('Chọn người đi thu trước.'); return }
+  if(!TRUC_DA_NAP){ alert('Chưa kéo được danh sách việc từ Sheet — sang tab Nạp đơn bấm Kéo đơn mới trước.'); return }
+  var ds=nguon==='cb' ? (CB_DU_CHUA_THU||[]) : SO.filter(function(d){ return !d.huy && conThuDon(d)>0 && (CN_PHAM==='ky'?trongKy(d):true) });
+  var ai=($('cnXuatCho_'+nguon)||{}).value||'';
+  if(ai) ds=ds.filter(function(d){ return (d.nguoiGiao||'(chưa gán)')===ai });
+  if(!ds.length){ alert('Không có đơn nào để giao.'); return }
+  var dong=cnDong_(ds), tong=dong.reduce(function(a,d){return a+d.no},0);
+  if(!confirm('Giao cho '+p.name+' đi thu '+dong.length+' đơn, tổng '+tien(tong)+'?\n\n'+p.name+' sẽ thấy việc này trên trang công việc của mình.')) return;
+  var han=new Date(Date.now()+2*864e5).toISOString().slice(0,10), dp=nsPhong_(p);
+  TRUC_VIEC.push({id:Date.now(), title:'Thu công nợ: '+dong.length+' đơn · '+tien(tong),
+    desc:'Chủ giao lúc '+nowStr()+(nguon==='cb'?' — đơn đã giao đủ, quá '+HAN_THU+' ngày chưa thu':'')+(ai?' — đơn do '+ai+' giao':'')+
+      '. Thu được đơn nào thì tích đơn đó; khách hẹn ngày khác thì ghi vào ô ý kiến.',
+    dept:dp.indexOf('ship')>=0?'ship':(dp[0]||'kd'), owner:p.key, due:han, status:'todo', priority:'cao', recurring:0, doneAt:'',
+    checklist:JSON.stringify(dong.map(function(d,i){ return {id:'c'+i, text:(d.khach||'Khách')+(d.sdt?' · '+d.sdt:'')+(d.dc?' · '+d.dc:'')+' — đơn '+d.ma+' ('+d.tuoi+' ngày) — '+tien(d.no), done:false} })),
+    log:'[]', pipeline:''});
+  set('trucviec',TRUC_VIEC); guiTrucChoIframe();
+  if(!QCFG.url||!QCFG.key){ bao('nsMsg','Cần link và mật khẩu quản lý.','er'); return }
+  NS_CHUOI=NS_CHUOI.then(async function(){
+    try{ await nsGhi_('trucviec',TRUC_VIEC);
+      alert('Đã giao cho '+p.name+' '+dong.length+' đơn cần thu.'+(String(p.mk||'')?'':'\n\nLưu ý: '+p.name+' CHƯA có mật khẩu trang công việc nên chưa mở xem được — đặt ở tab Nhân sự.'));
+    }catch(e){ alert('Chưa lưu được việc lên Sheet: '+e.message) }
+  });
 }
 
 var CB_DU_CHUA_THU=[];
@@ -4625,6 +4666,8 @@ function cbGiao(){
     var t2=duChuaThu.reduce(function(a,d){return a+conThuDon(d)},0);
     h+='<div class="card" style="border-color:var(--warn)"><h2 style="color:var(--warn)">'+
       'Đã giao đủ, quá '+HAN_THU+' ngày chưa thu tiền — '+duChuaThu.length+' đơn</h2>'+
+      '<div class="row" style="gap:6px;align-items:center;margin-bottom:8px"><span class="sm">Báo khi quá</span>'+
+        '<input type="number" min="1" value="'+HAN_THU+'" style="width:70px" onchange="datHanThu_(this.value)"><span class="sm">ngày chưa thu</span></div>'+
       '<div class="sm" style="margin-bottom:8px">Tổng còn phải thu <b>'+tien(t2)+'</b>. '+
       (GHINHAN==='giao_thu'?'Với điều kiện đang đặt, những đơn này <b>chưa vào doanh thu</b>.'
         :'Với điều kiện đang đặt, những đơn này <b>đã vào doanh thu</b> dù chưa thu tiền.')+'</div>'+
@@ -5092,7 +5135,11 @@ function nsGhiNV_(them){
 }
 function nsPhong(key,dk){
   var p=nsNguoi_(key); if(!p) return;
-  if(nsPhong_(p).indexOf(dk)>=0){ NS_HD={loai:'boPhong',dk:dk}; veNsHoSo_(); return }   // bỏ bộ phận: xem trước hệ quả
+  if(nsPhong_(p).indexOf(dk)>=0){
+    var hq=nsHauQua_(p,{loai:'boPhong',dk:dk});
+    if(hq.length===1 && /Không kéo theo gì/.test(hq[0])){ NS_HD={loai:'boPhong',dk:dk}; nsLam(); return }   // không ảnh hưởng gì: bỏ luôn
+    NS_HD={loai:'boPhong',dk:dk}; veNsHoSo_(); nsCuonToiHq_(); return   // có hệ quả: xem trước rồi mới làm
+  }
   var ds=nsPhong_(p); ds.push(dk); nsDatPhong_(p,ds); nsLuu_();
 }
 function nsTruongBat(key,dk){
@@ -5112,7 +5159,14 @@ function nsShipSua(key,field,v){
   });
 }
 function nsHuy(){ NS_HD=null; veNsHoSo_() }
-function nsXemTruoc(loai){ NS_HD={loai:loai}; veNsHoSo_() }
+function nsXemTruoc(loai){ NS_HD={loai:loai}; veNsHoSo_(); nsCuonToiHq_() }
+function nsXemDon_(key,loai){
+  var p=nsNguoi_(key); if(!p) return; var L=nsLienKet_(p), ds=loai==='len'?L.donLen:loai==='giao'?L.donGiao:L.chuaThu;
+  LOCMA=ds.map(function(d){return d.ma}); LOCTEN={len:'đơn '+p.name+' đã lên',giao:'đơn '+p.name+' cầm đi giao',no:'đơn '+p.name+' giao còn nợ'}[loai];
+  LOC_TOANBO_KY=true; $('fso').value=''; tab('so'); window.scrollTo({top:0,behavior:'smooth'});
+}
+function nsCuonToiHq_(){ var e=document.querySelector('#nsHoSo .ns-hq'); if(e) e.scrollIntoView({behavior:'smooth',block:'center'}) }
+function nsCapMa(key){ var p=nsNguoi_(key); if(!p||p.code) return; p.code=nsMaMoi_(); nsLuu_(); bao('nsMsg','Đã cấp mã <b>'+esc(p.code)+'</b> cho '+esc(p.name)+'. Đặt thêm mật khẩu là đăng nhập được.','ok') }
 async function nsLam(){
   var p=nsNguoi_(NS_CHON), hd=NS_HD; if(!p||!hd) return;
   var coViec=false;
@@ -5172,11 +5226,11 @@ function veNsHoSo_(){
   }
   h+='<div class="card"><div class="ns-who"><span class="ns-av big">'+esc((p.name||'?')[0])+'</span><div style="flex:1;min-width:0">'+
     '<input class="ns-ten" value="'+esc(p.name)+'" onchange="nsSua('+k+',\'name\',this.value)" aria-label="Tên">'+
-    '<div class="sm">'+esc(p.code||'không có mã NV')+(Number(p.real)?' · 🔒 có tài khoản máy bán hàng — đổi tên ở đây là đổi luôn bên đó':'')+'</div></div>'+
+    '<div class="sm">'+(p.code?esc(p.code):(p.key==='giamdoc'?'không cần mã NV':'chưa có mã NV <button class="mini" onclick="nsCapMa('+k+')">Cấp mã tự động</button>'))+(Number(p.real)?' · 🔒 có tài khoản máy bán hàng — đổi tên ở đây là đổi luôn bên đó':'')+'</div></div>'+
     '<span class="tag '+(lam?'':'w')+'">'+(lam?'Đang làm':'Đã ngưng')+'</span></div>'+
     '<div class="ns-f"><label class="sm">Số điện thoại<input value="'+esc(p.sdt||'')+'" inputmode="tel" onchange="nsSua('+k+',\'sdt\',this.value)"></label>'+
     '<label class="sm">Mật khẩu trang công việc<input value="'+esc(p.mk==null?'':p.mk)+'" placeholder="chưa đặt" onchange="nsSua('+k+',\'mk\',this.value)"></label>'+
-    (sh?'<label class="sm">Lương/giờ (đ)<input value="'+(sh.luongGio||0).toLocaleString('vi-VN')+'" inputmode="numeric" oninput="dinhDangTien(this)" onchange="nsShipSua('+k+',\'luongGio\',this.value)"></label>'+
+    (sh&&ds.indexOf('ship')>=0?'<label class="sm">Lương/giờ (đ)<input value="'+(sh.luongGio||0).toLocaleString('vi-VN')+'" inputmode="numeric" oninput="dinhDangTien(this)" onchange="nsShipSua('+k+',\'luongGio\',this.value)"></label>'+
         '<label class="sm">Biển số xe<input value="'+esc(sh.bienSo||'')+'" onchange="nsShipSua('+k+',\'bienSo\',this.value)"></label>':'')+'</div>'+
     '<div class="sm" style="margin-top:12px">Bộ phận — bấm để thêm/bỏ · ★ = trưởng bộ phận</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:5px">'+
     Object.keys(NS_PHONG).map(function(dk){ var co=ds.indexOf(dk)>=0, laTr=tr.indexOf(dk)>=0;
@@ -5187,11 +5241,12 @@ function veNsHoSo_(){
   h+='</div>';
   h+='<div class="card"><h2>Quy trình vào làm — còn thiếu gì</h2>'+nsQuyTrinh_(p).map(function(s){
     return '<div class="ns-st '+(s.ok?'ok':'thieu')+'"><span>'+(s.ok?'✓':'!')+'</span><div><b>'+s.t+'</b><div class="sm">'+s.h+'</div></div></div>'}).join('')+'</div>';
-  var lk=[[L.viec.length,'việc đang giao',L.tre.length?L.tre.length+' việc trễ: '+L.tre.map(function(t){return esc(t.title)+' ('+nsTre_(t)+' ngày)'}).join('; '):'không có việc trễ','Điều hành công việc',L.tre.length?'bad':''],
-    [L.donLen.length,'đơn đã lên','','Máy bán hàng',''],
-    [L.donGiao.length,'đơn đã giao','','Sổ cái — theo người giao',''],
-    [VN(L.tienChuaThu)+'đ','chưa thu từ đơn người này giao',L.chuaThu.length+' đơn','Sổ cái — công nợ',L.chuaThu.length?'w':'']];
-  h+='<div class="card"><h2>Đang nối với</h2><div class="ns-lk">'+lk.map(function(x){return '<div class="'+x[4]+'"><b>'+x[0]+'</b><span>'+x[1]+'</span>'+(x[2]?'<span>'+x[2]+'</span>':'')+'<small>↳ '+x[3]+'</small></div>'}).join('')+'</div>'+veNsMap_(p,L)+'</div>';
+  var lk=[[L.viec.length,'việc đang giao chưa xong',L.tre.length?L.tre.length+' việc đã quá hạn: '+L.tre.map(function(t){return esc(t.title)+' (trễ '+nsTre_(t)+' ngày)'}).join('; '):'không có việc nào quá hạn','Mở Điều hành công việc',L.tre.length?'bad':'',"tab('vc')"],
+    [L.donLen.length,'đơn người này đã lên (bán)','','Xem các đơn ở Sổ cái','',"nsXemDon_('"+p.key+"','len')"],
+    [L.donGiao.length,'đơn người này cầm đi giao','','Xem các đơn ở Sổ cái','',"nsXemDon_('"+p.key+"','giao')"],
+    [VN(L.tienChuaThu)+'đ','tiền khách còn nợ ở các đơn người này giao',L.chuaThu.length+' đơn chưa thu','Xem các đơn còn nợ',L.chuaThu.length?'w':'',"nsXemDon_('"+p.key+"','no')"]];
+  h+='<div class="card"><h2>Người này đang dính tới những gì</h2><div class="sm" style="margin:-6px 0 10px">Số việc, số đơn đang gắn tên người này ở các phần khác của phần mềm — '+
+    'để biết trước nếu đổi bộ phận hay cho nghỉ thì ảnh hưởng tới đâu. Bấm vào một ô để xem chi tiết.</div><div class="ns-lk">'+lk.map(function(x){return '<div class="'+x[4]+'" role="button" tabindex="0" style="cursor:pointer" onclick="'+x[5]+'"><b>'+x[0]+'</b><span>'+x[1]+'</span>'+(x[2]?'<span>'+x[2]+'</span>':'')+'<small>↳ '+x[3]+'</small></div>'}).join('')+'</div>'+veNsMap_(p,L)+'</div>';
   if(p.key!=='giamdoc') h+='<div class="card"><h2>Thay đổi lớn — xem trước hệ quả rồi mới làm</h2><div class="row" style="gap:6px">'+
     (Number(p.real)?(lam?'<button class="btn-nho" onclick="nsXemTruoc(\'nghi\')">Cho nghỉ (ngưng tài khoản)</button>':'<button class="btn-nho" onclick="nsLamLai('+k+')">Cho làm lại</button>')+
       '<span class="sm">Tài khoản bán hàng không xoá hẳn — để đơn cũ vẫn khớp tên.</span>'
@@ -5578,6 +5633,30 @@ var KS_TEN_APP=(typeof MAT_KHAU_QUANLY!=='undefined'||typeof QCFG!=='undefined')
 var KS_PHIEU=[], KS_LOI=[], KS_DANG_CHI=false, KS_CHON=null;
 try{ KS_PHIEU=JSON.parse(localStorage.getItem('ks_phieu')||'[]') }catch(e){ KS_PHIEU=[] }
 function ksLuu(){ try{ localStorage.setItem('ks_phieu',JSON.stringify(KS_PHIEU)) }catch(e){} }
+/* 23/09/2026 — chủ hỏi "tại sao kỹ sư không nhận được các phiếu này": phiếu ghi ở MÁY
+   QUẢN LÝ trước giờ chỉ nằm trong bộ nhớ trình duyệt máy đó, phải tự bấm "Tải file gửi
+   kỹ sư" rồi đưa file — không bấm là kỹ sư không bao giờ thấy (phiếu máy nhân viên thì
+   đi thẳng lên Sheet). Nay ghi xong là gửi luôn lên Sheet (trang PHIEU_KY_SU, trạng thái
+   DA DUYET vì chủ tự báo), phiếu cũ chưa gửi thì tự gửi bù mỗi lần kéo dữ liệu về.
+   Máy chủ tự chặn gửi trùng (cùng máy + cùng nội dung) nên gửi lại không sinh bản đôi. */
+var KS_DANG_GUI=false;
+async function ksGuiLenSheet_(){
+  if(KS_DANG_GUI || !QCFG.url || !QCFG.key) return;
+  var chua=KS_PHIEU.filter(function(o){ return !o.daGui && !o.daVa });
+  if(!chua.length) return;
+  KS_DANG_GUI=true;
+  try{
+    for(var i=0;i<chua.length;i++){ var o=chua[i];
+      try{
+        var r=await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+          body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'phieuks',
+            p:{noi:o.noi,ban:o.ban,man:o.man,cho:o.cho,khung:o.khung,ma:o.ma,loiMay:(o.loiMay||[]).join?JSON.stringify(o.loiMay):o.loiMay}})});
+        var j=JSON.parse(await r.text());
+        if(j.ok){ o.daGui=nowStr(); ksLuu() }
+      }catch(e){ break }   // mất mạng: để lần sau gửi bù
+    }
+  } finally { KS_DANG_GUI=false }
+}
 
 /* Ghi lại lỗi máy tự phát sinh — thường chủ không thấy, nhưng kỹ sư cần */
 window.addEventListener('error',function(e){
@@ -5706,7 +5785,7 @@ function ksGhiPhieu(){
     ma:ksTrichMa(KS_CHON),
     loiMay:KS_LOI.slice(-5)
   });
-  ksLuu(); KS_CHON=null;
+  ksLuu(); KS_CHON=null; ksGuiLenSheet_();
   $('ksDan').innerHTML='<div class="msg ok"><b>Đã ghi phiếu thứ '+KS_PHIEU.length+'.</b><br>'+
     'Cứ tiếp tục dùng bình thường. Gặp chỗ nào nữa thì bấm nút <b>🛠 Kỹ sư</b> ở góc dưới bên trái. '+
     'Khi nào muốn gửi thì mở lại nút đó, bấm <b>Xem phiếu &amp; gửi cho kỹ sư</b> để tải một file về, '+
@@ -5742,7 +5821,7 @@ function ksXemPhieu(){
 
   $('ksDan').innerHTML = cho.length
     ? 'Còn <b>'+cho.length+' phiếu chờ kỹ sư</b>'+(daVa.length?' — '+daVa.length+' phiếu khác đã được sửa rồi.':'.')+
-      ' Bấm <b>Tải file gửi kỹ sư</b> rồi đưa file đó cho kỹ sư ở phiên làm việc sau.'
+      ' Phiếu tự gửi lên máy chủ cho kỹ sư ngay khi ghi (cần mạng) — nút tải file bên dưới chỉ để dự phòng.'
     : (daVa.length
         ? '<b style="color:var(--ok)">Không còn phiếu nào chờ.</b> '+daVa.length+' phiếu đã được sửa xong, '+
           'máy giữ thêm ít ngày phòng khi bản vá chưa chuẩn rồi tự dọn. Anh/chị không phải làm gì cả.'
@@ -5800,6 +5879,14 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260923i', ngay:'23/09/2026', ten:'Phiếu kỹ sư máy quản lý + giao việc thu nợ',
+  vaPhieu:[],
+  muc:[
+   ['sua','<b>Phiếu gửi kỹ sư từ máy quản lý giờ tự lên máy chủ</b> — trước đây chỉ nằm trong máy này, phải tải file gửi tay nên kỹ sư không nhận được. Phiếu cũ còn kẹt sẽ tự gửi bù.'],
+   ['moi','Tab <b>Cảnh báo</b>: tự đặt số ngày quá hạn chưa thu; chọn người rồi bấm <b>📨 Giao việc thu nợ</b> — người đó thấy ngay danh sách đơn cần thu trên trang công việc của mình (có cả ở mục Công nợ bên Báo cáo).'],
+   ['moi','Nhân viên đăng nhập trang công việc bằng <b>mã NV hoặc số điện thoại</b>.'],
+   ['sua','Tab <b>Nhân sự</b>: bỏ bộ phận không vướng gì thì bỏ luôn (có vướng thì hiện khung báo trước và cuộn tới đó); nút <b>Cấp mã tự động</b> cho người chưa có mã; lương/biển số chỉ hiện với shipper; mục "đang dính tới những gì" có giải thích và bấm được để xem đơn.']
+  ]},
  {ban:'20260923h', ngay:'23/09/2026', ten:'Làm nốt phiếu kỹ sư',
   vaPhieu:[],
   muc:[
