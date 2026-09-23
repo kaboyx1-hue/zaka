@@ -801,6 +801,10 @@ body.ks-chi *{cursor:crosshair!important}
     <input id="ttNhanhShipper" list="dsShip" placeholder="Để trống nếu bạn tự giao">
     <div class="sm" style="opacity:.7;margin-top:3px" id="ttNhanhShipperHint"></div>
   </div>
+  <div class="mt"><label>Phí chành / nhà xe shop trả (không bắt buộc)</label>
+    <input id="ttNhanhChanh" inputmode="numeric" value="0" oninput="dinhDangTien(this)">
+    <div class="sm" style="opacity:.7;margin-top:3px">Tiền gửi chành mà cửa hàng chịu — ghi vào đơn để trừ vào chi phí ở báo cáo. Không đổi tổng tiền khách trả.</div>
+  </div>
   <button class="btn mt" onclick="xacNhanThuTienNhanh()" style="background:var(--acc);color:#03121f;font-weight:600">Xác nhận đã thu</button>
 </dialog>
 
@@ -958,7 +962,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260923a';
+var APP_VER='20260923b';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -4486,7 +4490,11 @@ function ganShipper(ma,ten){
   d.sualan=(d.sualan||0)+1; d.lichSu=d.lichSu||[];
   d.lichSu.push({lan:d.sualan,luc:nowStr(),nguoi:CFG.ten,td:['Người giao: '+(ten||'(bỏ trống)')]});
   if(d.xuat) d.guiLai=true;
-  set('don',DON);
+  /* SỬA 23/09/2026 — thiếu dòng này: đơn ĐÃ gửi lên Sheet (d.day) mà đổi người giao
+     thì chuaDay() không nhặt lại đơn → tên người giao chỉ nằm trên máy này, Sheet
+     và máy quản lý (báo cáo "theo người giao", công nợ theo người giao) không thấy. */
+  if(d.day) d.suaSauDay=true;
+  set('don',DON); dayLen(false);
   bao('pgMsg','Đã gán <b>'+esc(ten||'(bỏ trống)')+'</b> giao đơn <b>'+esc(ma)+'</b>.','ok');
 }
 function veShipperList(){
@@ -4623,6 +4631,7 @@ function doiTT(ma){
   $('ttNhanhTen').textContent='Đơn '+ma+' — '+(d.khach||'')+' · còn phải thu '+tien(conThuDon(d));
   $('ttNhanhHt').value='Tiền mặt';
   $('ttNhanhShipper').value=d.nguoiGiao||'';
+  $('ttNhanhChanh').value=so(d.phiChanh||0).toLocaleString('vi-VN');
   $('ttNhanhShipperHint').textContent=d.nguoiGiao
     ?'Đơn đã gán sẵn "'+d.nguoiGiao+'" — để nguyên hoặc đổi nếu khác người.'
     :'Dùng chung danh sách shipper đã khai ở tab Vận hành (máy quản lý).';
@@ -4638,10 +4647,20 @@ function xacNhanThuTienNhanh(){
   d.tt='DA'; d.ttHt=$('ttNhanhHt').value||'Tiền mặt'; d.daTra=d.tong;
   d.ttChuaDay=true; set('don',DON);
   var shipper=($('ttNhanhShipper').value||'').trim();
+  /* 23/09/2026 — chị Hằng báo qua phiếu kỹ sư: cần ghi tiền chành ngay lúc thu tiền
+     (lúc lên đơn thường chưa biết). Dùng lại ĐÚNG trường phiChanh sẵn có (Sổ cái/Báo
+     cáo đã đọc nó là chi phí shop chịu) — sửa như một lần "Sửa đơn": tăng lần sửa, ghi
+     lịch sử, đánh dấu gửi lại để Sheet nhận. */
+  var chanh=so($('ttNhanhChanh').value);
+  if(chanh!==(d.phiChanh||0)){
+    d.lichSu=d.lichSu||[]; d.sualan=(d.sualan||0)+1;
+    d.lichSu.push({lan:d.sualan,luc:nowStr(),nguoi:CFG.ten,td:['Phí giao chành: '+tien(d.phiChanh||0)+' → '+tien(chanh)]});
+    d.phiChanh=chanh; if(d.xuat) d.guiLai=true; if(d.day) d.suaSauDay=true; set('don',DON);
+  }
   if(shipper!==(d.nguoiGiao||'')) ganShipper(ma,shipper);
-  vePG(); veDon(); dayTT();
+  vePG(); veDon(); dayTT(); dayLen(false);
   bao('pgMsg','Đơn <b>'+esc(ma)+'</b> → <b style="color:var(--ok)">ĐÃ THANH TOÁN</b> ('+esc(d.ttHt)+')'+
-    (shipper?' · Người giao: <b>'+esc(shipper)+'</b>':''),'ok');
+    (shipper?' · Người giao: <b>'+esc(shipper)+'</b>':'')+(chanh?' · Chành: <b>'+tien(chanh)+'</b>':''),'ok');
 }
 /* ĐÁNH DẤU ĐÃ THU HÀNG LOẠT — thêm 13/09/2026 theo yêu cầu của chủ, để khỏi
    phải mở dropdown từng đơn một lúc thu tiền mặt cuối ca. Mặc định hình thức
@@ -5523,6 +5542,12 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260923b', ngay:'23/09/2026', ten:'Ghi tiền chành lúc thu tiền',
+  vaPhieu:[],
+  muc:[
+   ['moi','Hộp "Đánh dấu đã thu" có thêm ô <b>Phí chành / nhà xe shop trả</b> — ghi luôn lúc giao, khỏi phải mở Sửa đơn.'],
+   ['sua','Đổi người giao cho đơn đã gửi lên máy chủ giờ được gửi lại đúng — trước đây tên người giao mới chỉ nằm trên máy mình.']
+  ]},
  {ban:'20260918b', ngay:'18/09/2026', ten:'Sửa lỗi không thêm được sản phẩm khi Sửa đơn',
   vaPhieu:[],
   muc:[

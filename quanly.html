@@ -85,7 +85,7 @@ header b{font-size:17px}header div{font-size:12.5px;color:var(--brandTx);opacity
 nav{display:flex;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:19;overflow-x:auto}
 nav button{flex:1;background:none;color:var(--tx2);border-radius:0;padding:12px 10px;font-size:14px;white-space:nowrap;border-bottom:3px solid transparent}
 nav button.on{color:var(--acc);background:color-mix(in srgb, var(--acc) 14%, transparent);border-bottom-color:var(--acc);font-weight:600}
-main{padding:15px;max-width:1060px;margin:0 auto;padding-bottom:60px}
+main{padding:15px 20px;max-width:none;width:100%;box-sizing:border-box;margin:0;padding-bottom:60px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow)}
 h2{font-size:15px;margin:0 0 11px}
 .btn{background:linear-gradient(135deg,var(--acc) 0%,var(--acc2) 100%);color:#fff;font-weight:600;box-shadow:var(--btnGlow)}
@@ -775,7 +775,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260923f';
+var APP_VER='20260923g';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -2850,6 +2850,7 @@ function veBC(){
   if(cho.length)h+='<div class="msg wa mt"><b>'+cho.length+' đơn chưa tính được vốn</b> — doanh thu '+tien(chotien)+
     ' chưa nằm trong con số lãi ở trên. Điền giá vốn rồi bấm Tính lại.</div>';
   h+='<div class="msg wa mt">Lãi gộp CHƯA trừ phí sàn (~22,5% với Shopee/TikTok), ship thực trả và chi phí vận hành.</div></div>';
+  h+=veCongNoBC_();
 
   function bang(tieude,obj,cot,khoa){
     var gon=THU_GON_BC[khoa];
@@ -2921,46 +2922,191 @@ function veBC(){
         '</td><td class="r" style="color:var(--bad)">'+tien(Number(x.tien)||0)+'</td></tr>'}).join('')+
       '</table></div>';
   }
-  /* ═══ CÔNG NỢ THEO KHÁCH — thêm 12/09/2026 theo yêu cầu của chủ ═══
-     Gom "còn phải thu" (conThuDon, y hệt cách Sổ cái đang tính) theo TỪNG
-     KHÁCH trong đúng kỳ đang xem ở trên, thay vì chỉ xem được từng đơn lẻ.
-     Dùng lại đúng bộ lọc trongKy() — không có khái niệm kỳ riêng thứ hai. */
-  CONGNO_LIST=congNoTheoKy_();
-  (function(){
-    var tongNo=CONGNO_LIST.reduce(function(a,x){return a+x.tong},0);
-    h+='<div class="card"><h2 style="margin-bottom:4px">Công nợ theo khách'+
-      (CONGNO_LIST.length?' <a href="#" class="lnk" style="font-size:13px;font-weight:400" '+
-        'onclick="toggleCongNoBC();return false">'+(HIEN_CONGNO_BC?'Thu gọn':'Xem danh sách')+'</a>':'')+'</h2>'+
-      '<div class="sm" style="margin-bottom:8px">Gom còn phải thu theo từng khách trong kỳ đang xem ở trên — khác Sổ cái chỉ xem được từng đơn riêng lẻ.</div>'+
-      (CONGNO_LIST.length
-        ? '<div class="kpi" style="grid-template-columns:1fr 1fr">'+
-            '<div><small>Số khách còn nợ</small><b>'+CONGNO_LIST.length+'</b></div>'+
-            '<div><small>Tổng còn phải thu</small><b style="color:var(--warn)">'+tien(tongNo)+'</b></div></div>'
-        : '<div class="empty">Không có khách nào còn nợ trong kỳ này.</div>')+
-      (HIEN_CONGNO_BC&&CONGNO_LIST.length
-        ? '<table class="mt"><tr><th>Khách</th><th>Kênh</th><th class="r">Số đơn nợ</th><th class="r">Còn phải thu</th><th></th></tr>'+
-          CONGNO_LIST.map(function(n,i){
-            return '<tr><td>'+esc(n.ten||n.sdt)+huyHieuHTML_(n.sdt,SO)+'</td><td>'+esc(n.kenh||'')+'</td>'+
-              '<td class="r">'+n.soDon+'</td><td class="r" style="color:var(--warn);font-weight:700">'+tien(n.tong)+'</td>'+
-              '<td class="r"><button class="mini" onclick="inCongNo('+i+')">In</button></td></tr>'
-          }).join('')+'</table>'
-        : '')+
-    '</div>';
-  })();
   $('bc').innerHTML=h;
 }
 function toggleChiPhiBC(){ HIEN_CHI_PHI_BC=!HIEN_CHI_PHI_BC; veBC(); }
-function toggleCongNoBC(){ HIEN_CONGNO_BC=!HIEN_CONGNO_BC; veBC(); }
+
+/* ═══ BÁO CÁO CÔNG NỢ CHƯA THU — làm lại 23/09/2026 ═══
+   Chủ báo "thiếu phần báo cáo công nợ chưa thu": thẻ cũ nằm tận cuối trang, thu
+   gọn sẵn và chỉ tính trong kỳ đang chọn — nợ tháng trước chưa trả thì không thấy.
+   Nay đặt ngay dưới ô CÒN PHẢI THU, mặc định xem TOÀN BỘ nợ tới hôm nay (bấm để chỉ
+   xem trong kỳ), có tuổi nợ + gom theo khách / kênh / người lên đơn / người giao.
+   Số tiền = conThuDon() — y hệt Sổ cái và ô CÒN PHẢI THU. */
+var CN_PHAM='toanbo', CN_HET=false;
+function cnTuoi_(d){ var i=String(d.iso||'').slice(0,10); if(!/^\d{4}-\d{2}-\d{2}$/.test(i)) return 0;
+  var t=new Date(i+'T00:00:00'), n=new Date(); n.setHours(0,0,0,0); return Math.max(0,Math.round((n-t)/864e5)) }
 function congNoTheoKy_(){
   var theo={};
-  SO.filter(trongKy).forEach(function(d){
-    var no=conThuDon(d); if(!no) return;
-    var sdt=String(d.sdt||'').trim(); if(!sdt) return;
-    var o=theo[sdt]||(theo[sdt]={sdt:sdt,ten:d.khach,kenh:d.kenh,soDon:0,tong:0,ds:[]});
-    o.soDon++; o.tong+=no; o.ten=d.khach||o.ten; o.kenh=d.kenh||o.kenh;
+  SO.filter(function(d){ return !d.huy && conThuDon(d)>0 && (CN_PHAM==='ky'?trongKy(d):true) }).forEach(function(d){
+    var no=conThuDon(d), sdt=String(d.sdt||'').trim(), key=sdt||('ten:'+(d.khach||'(không tên)'));
+    var o=theo[key]||(theo[key]={sdt:sdt,ten:d.khach,kenh:d.kenh,soDon:0,tong:0,lauNhat:0,ds:[]});
+    o.soDon++; o.tong+=no; o.ten=d.khach||o.ten; o.kenh=d.kenh||o.kenh; o.lauNhat=Math.max(o.lauNhat,cnTuoi_(d));
     o.ds.push({ma:d.ma,iso:d.iso,ngay:d.ngay,no:no});
   });
   return Object.keys(theo).map(function(s){return theo[s]}).sort(function(a,b){return b.tong-a.tong});
+}
+function veCongNoBC_(){
+  var ds=SO.filter(function(d){ return !d.huy && conThuDon(d)>0 && (CN_PHAM==='ky'?trongKy(d):true) });
+  CONGNO_LIST=congNoTheoKy_();
+  var tong=ds.reduce(function(a,d){return a+conThuDon(d)},0);
+  var nut='<span style="font-size:12.5px;font-weight:400;margin-left:8px">'+
+    '<button class="mini'+(CN_PHAM==='toanbo'?' on':'')+'" onclick="CN_PHAM=\'toanbo\';veBC()">Toàn bộ tới hôm nay</button> '+
+    '<button class="mini'+(CN_PHAM==='ky'?' on':'')+'" onclick="CN_PHAM=\'ky\';veBC()">Chỉ trong kỳ đang xem</button></span>';
+  var h='<div class="card" id="bcCongNo"><h2 style="margin-bottom:4px">Công nợ chưa thu'+nut+'</h2>';
+  if(!ds.length) return h+'<div class="empty">Không còn đơn nào chưa thu '+(CN_PHAM==='ky'?'trong kỳ này':'')+'.</div></div>';
+  // tuổi nợ
+  var NHOM=[['≤ 7 ngày',0,7,'var(--ok)'],['8–30 ngày',8,30,'var(--info)'],['31–60 ngày',31,60,'var(--warn)'],['> 60 ngày',61,1e9,'var(--bad)']];
+  var tuoi=NHOM.map(function(g){ var x=ds.filter(function(d){var t=cnTuoi_(d);return t>=g[1]&&t<=g[2]});
+    return {ten:g[0],mau:g[3],don:x.length,tien:x.reduce(function(a,d){return a+conThuDon(d)},0)} });
+  var qua30=tuoi[2].tien+tuoi[3].tien, qua30Don=tuoi[2].don+tuoi[3].don;
+  h+='<div class="sm" style="margin-bottom:8px">'+(CN_PHAM==='toanbo'?'Mọi đơn còn nợ, bất kể đơn tháng nào — đây mới là số tiền khách đang giữ của mình.':'Chỉ đơn nằm trong kỳ đang chọn ở trên.')+' Số liệu giống ô CÒN PHẢI THU và Sổ cái.</div>'+
+    '<div class="kpi"><div class="kpiclick" onclick="xemNoTatCa_()"><small>Tổng còn phải thu <span class="mui">↗</span></small><b style="color:var(--warn)">'+tien(tong)+'</b><div class="sm">'+ds.length+' đơn</div></div>'+
+    '<div><small>Số khách đang nợ</small><b>'+CONGNO_LIST.length+'</b></div>'+
+    '<div><small>Nợ quá 30 ngày</small><b style="color:'+(qua30?'var(--bad)':'var(--ok)')+'">'+tien(qua30)+'</b><div class="sm">'+qua30Don+' đơn</div></div>'+
+    '<div><small>Khách nợ nhiều nhất</small><b style="font-size:15px">'+esc(CONGNO_LIST[0].ten||CONGNO_LIST[0].sdt)+'</b><div class="sm">'+tien(CONGNO_LIST[0].tong)+'</div></div></div>'+
+    cnChonNguoi_('bc', ds);
+  // thanh tuổi nợ
+  h+='<div class="mt"><div class="sm" style="margin-bottom:4px"><b>Tuổi nợ</b> — nợ càng lâu càng khó đòi</div>'+
+    '<div style="display:flex;height:16px;border-radius:6px;overflow:hidden;background:var(--c2)">'+
+    tuoi.filter(function(g){return g.tien>0}).map(function(g){return '<div title="'+g.ten+': '+tien(g.tien)+'" style="width:'+(g.tien/tong*100)+'%;background:'+g.mau+'"></div>'}).join('')+'</div>'+
+    '<div style="display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:6px;font-size:12.5px">'+tuoi.map(function(g){
+      return '<span><i style="display:inline-block;width:10px;height:10px;border-radius:2px;background:'+g.mau+';margin-right:5px"></i>'+g.ten+': <b>'+tien(g.tien)+'</b> · '+g.don+' đơn</span>'}).join('')+'</div></div>';
+  if(tuoi[3].don) h+='<div class="msg er mt"><b>'+tuoi[3].don+' đơn đã nợ quá 60 ngày ('+tien(tuoi[3].tien)+')</b> — nên gọi đòi ngay, để lâu càng khó thu.</div>';
+  // theo khách
+  var hien=CN_HET?CONGNO_LIST:CONGNO_LIST.slice(0,15);
+  h+='<h3 class="mt" style="font-size:14px;margin-bottom:6px">Theo khách</h3><div style="overflow-x:auto"><table><tr><th>Khách</th><th>Kênh</th><th class="r">Số đơn nợ</th><th class="r">Nợ lâu nhất</th><th class="r">Còn phải thu</th><th></th></tr>'+
+    hien.map(function(n){ var i=CONGNO_LIST.indexOf(n);
+      return '<tr><td>'+esc(n.ten||n.sdt)+(n.sdt?huyHieuHTML_(n.sdt,SO):'')+(n.sdt?'<div class="sm">'+esc(n.sdt)+'</div>':'')+'</td><td>'+esc(n.kenh||'')+'</td>'+
+        '<td class="r">'+n.soDon+'</td><td class="r" style="color:'+(n.lauNhat>60?'var(--bad)':n.lauNhat>30?'var(--warn)':'var(--tx)')+'">'+n.lauNhat+' ngày</td>'+
+        '<td class="r" style="color:var(--warn);font-weight:700">'+tien(n.tong)+'</td>'+
+        '<td class="r" style="white-space:nowrap"><button class="mini" onclick="xemNoKhach_('+i+')">Xem đơn</button> <button class="mini" onclick="inCongNo('+i+')">In</button></td></tr>'}).join('')+'</table></div>'+
+    (CONGNO_LIST.length>15?'<button class="btn-nho mt" onclick="CN_HET=!CN_HET;veBC()">'+(CN_HET?'Thu gọn':'Xem hết '+CONGNO_LIST.length+' khách')+'</button>':'');
+  // gom theo kênh / người lên đơn / người giao
+  function gom(fn){ var o={}; ds.forEach(function(d){ var k=fn(d)||'(chưa rõ)'; o[k]=o[k]||{don:0,tien:0}; o[k].don++; o[k].tien+=conThuDon(d) });
+    return Object.keys(o).sort(function(a,b){return o[b].tien-o[a].tien}).map(function(k){
+      return '<tr><td>'+esc(k)+'</td><td class="r">'+o[k].don+'</td><td class="r">'+tien(o[k].tien)+'</td><td class="r sm">'+Math.round(o[k].tien/tong*100)+'%</td></tr>'}).join('') }
+  var bangNho=function(tieu,cot,fn){ return '<div style="flex:1 1 260px;min-width:0"><h3 style="font-size:14px;margin:0 0 6px">'+tieu+'</h3><table><tr><th>'+cot+'</th><th class="r">Đơn</th><th class="r">Còn nợ</th><th class="r">Tỉ lệ</th></tr>'+gom(fn)+'</table></div>' };
+  h+='<div class="mt" style="display:flex;flex-wrap:wrap;gap:14px">'+
+    bangNho('Theo kênh','Kênh',function(d){return d.kenh})+
+    bangNho('Theo người lên đơn','Nhân viên',function(d){return d.nv})+
+    bangNho('Theo người giao (ai cầm đơn đi)','Người giao',function(d){return d.nguoiGiao||'(chưa gán người giao)'})+'</div>';
+  return h+'</div>';
+}
+/* ══════════════════════ XUẤT DANH SÁCH CÔNG NỢ (23/09/2026) ══════════════════════
+   Phiếu kỹ sư của anh Văn: "xuất ra excel hoặc hình ảnh để gửi cho nhân viên đi thu
+   hồi công nợ". Một bộ dùng chung cho mục Công nợ (Báo cáo) và thẻ quá hạn (Cảnh báo).
+   Excel = file .xlsx THẬT (tự đóng gói, không thư viện ngoài) — CSV dễ vỡ cột trên
+   Excel tiếng Việt (dấu phẩy thập phân). Ảnh = PNG vẽ bằng canvas, gửi Zalo được ngay. */
+function cnDong_(ds){
+  return ds.slice().sort(function(a,b){ return String(a.nguoiGiao||'').localeCompare(String(b.nguoiGiao||''))
+      || String(a.khach||'').localeCompare(String(b.khach||'')) || cnTuoi_(b)-cnTuoi_(a) })
+    .map(function(d){ return {ma:d.ma, ngay:String(d.ngay||d.iso||'').split(' ')[0], tuoi:cnTuoi_(d), khach:d.khach||'', sdt:d.sdt||'',
+      dc:d.dc||'', kenh:d.kenh||'', giao:d.nguoiGiao||'', no:conThuDon(d)} });
+}
+function cnTenFile_(tieu){ return ('cong-no-'+tieu+'-'+new Date().toISOString().slice(0,10)).replace(/[^\p{L}\p{N}\-]+/gu,'-').replace(/-+/g,'-') }
+function cnTai_(blob, ten){
+  var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=ten; document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove() }, 1500);
+}
+/* ── .xlsx tối giản: 1 sheet, chữ inline, số là số thật (cộng/lọc được trong Excel) ── */
+var CN_CRC=null;
+function cnCrc_(u){ if(!CN_CRC){ CN_CRC=[]; for(var n=0;n<256;n++){ var c=n; for(var k=0;k<8;k++) c=c&1?0xEDB88320^(c>>>1):c>>>1; CN_CRC[n]=c>>>0 } }
+  var x=0xFFFFFFFF; for(var i=0;i<u.length;i++) x=CN_CRC[(x^u[i])&255]^(x>>>8); return (x^0xFFFFFFFF)>>>0 }
+function cnZip_(files){   // [{ten, noi (chuỗi)}] -> Blob zip không nén
+  var enc=new TextEncoder(), phan=[], trungTam=[], vt=0;
+  function u16(v){return [v&255,(v>>8)&255]} function u32(v){return [v&255,(v>>8)&255,(v>>16)&255,(v>>>24)&255]}
+  files.forEach(function(f){ var ten=enc.encode(f.ten), du=enc.encode(f.noi), crc=cnCrc_(du);
+    var dau=[].concat([0x50,0x4b,3,4],u16(20),u16(0x800),u16(0),u16(0),u16(0),u32(crc),u32(du.length),u32(du.length),u16(ten.length),u16(0));
+    phan.push(new Uint8Array(dau),ten,du);
+    trungTam.push(new Uint8Array([].concat([0x50,0x4b,1,2],u16(20),u16(20),u16(0x800),u16(0),u16(0),u16(0),u32(crc),u32(du.length),u32(du.length),u16(ten.length),u16(0),u16(0),u16(0),u16(0),u32(0),u32(vt))),ten);
+    vt+=dau.length+ten.length+du.length });
+  var dai=trungTam.reduce(function(a,x){return a+x.length},0);
+  var het=new Uint8Array([].concat([0x50,0x4b,5,6],u16(0),u16(0),u16(files.length),u16(files.length),u32(dai),u32(vt),u16(0)));
+  return new Blob(phan.concat(trungTam,[het]),{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+function cnXlsx_(tieu, dong){
+  var x=function(s){ return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]}) };
+  var cot='ABCDEFGHI', r=0;
+  function hang(vals, kieu){ r++; return '<row r="'+r+'">'+vals.map(function(v,i){ var o=cot[i]+r;
+    return typeof v==='number' ? '<c r="'+o+'"'+(kieu?' s="'+kieu+'"':'')+'><v>'+v+'</v></c>' : '<c r="'+o+'" t="inlineStr"'+(kieu?' s="'+kieu+'"':'')+'><is><t xml:space="preserve">'+x(v)+'</t></is></c>' }).join('')+'</row>' }
+  var tong=dong.reduce(function(a,d){return a+d.no},0);
+  var rows=hang([tieu],'1')+hang(['Xuất lúc '+nowStr()+' · '+dong.length+' đơn · tổng '+tien(tong)])+hang([])+
+    hang(['Người giao','Khách','SĐT','Địa chỉ','Kênh','Mã đơn','Ngày đơn','Số ngày nợ','Còn phải thu (đ)'],'1')+
+    dong.map(function(d){ return hang([d.giao||'(chưa gán)',d.khach,d.sdt,d.dc,d.kenh,d.ma,d.ngay,d.tuoi,d.no]) }).join('')+
+    hang(['','','','','','','','Tổng',tong],'1');
+  var sheet='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+
+    '<cols><col min="1" max="1" width="16" customWidth="1"/><col min="2" max="2" width="26" customWidth="1"/><col min="3" max="3" width="13" customWidth="1"/><col min="4" max="4" width="34" customWidth="1"/><col min="5" max="7" width="12" customWidth="1"/><col min="8" max="8" width="11" customWidth="1"/><col min="9" max="9" width="17" customWidth="1"/></cols>'+
+    '<sheetData>'+rows+'</sheetData></worksheet>';
+  var styles='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+
+    '<numFmts count="1"><numFmt numFmtId="164" formatCode="#,##0"/></numFmts>'+
+    '<fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts>'+
+    '<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>'+
+    '<borders count="1"><border/></borders><cellStyleXfs count="1"><xf/></cellStyleXfs>'+
+    '<cellXfs count="2"><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="164" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1" applyNumberFormat="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+  return cnZip_([
+    {ten:'[Content_Types].xml', noi:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'},
+    {ten:'_rels/.rels', noi:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'},
+    {ten:'xl/workbook.xml', noi:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Cong no" sheetId="1" r:id="rId1"/></sheets></workbook>'},
+    {ten:'xl/_rels/workbook.xml.rels', noi:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'},
+    {ten:'xl/worksheets/sheet1.xml', noi:sheet},
+    {ten:'xl/styles.xml', noi:styles}]);
+}
+/* ── ảnh PNG: bảng gọn đọc được trên điện thoại ── */
+function cnAnh_(tieu, dong, xong){
+  var cot=[['Khách',240],['SĐT',120],['Địa chỉ',250],['Mã đơn',110],['Ngày nợ',90],['Còn phải thu',140]];
+  var W=cot.reduce(function(a,c){return a+c[1]},0)+40, RH=34, H=110+RH*(dong.length+2)+40, S=2;
+  var cv=document.createElement('canvas'); cv.width=W*S; cv.height=H*S; var g=cv.getContext('2d'); g.scale(S,S);
+  g.fillStyle='#ffffff'; g.fillRect(0,0,W,H);
+  var tong=dong.reduce(function(a,d){return a+d.no},0), font='-apple-system,Segoe UI,Roboto,Arial,sans-serif';
+  g.fillStyle='#1a1208'; g.font='700 20px '+font; g.fillText(tieu,20,38);
+  g.font='14px '+font; g.fillStyle='#5b5040'; g.fillText(dong.length+' đơn · tổng còn phải thu '+tien(tong)+' · '+nowStr(),20,64);
+  function cat(t,w){ t=String(t); if(g.measureText(t).width<=w) return t; while(t.length&&g.measureText(t+'…').width>w) t=t.slice(0,-1); return t+'…' }
+  var y=90; g.fillStyle='#1F5B44'; g.fillRect(20,y,W-40,RH); g.fillStyle='#fff'; g.font='700 13px '+font;
+  var x=20; cot.forEach(function(c,i){ g.textAlign=i>=4?'right':'left'; g.fillText(c[0], i>=4?x+c[1]-10:x+10, y+22); x+=c[1] });
+  var nhomTruoc=null;
+  dong.forEach(function(d,k){ y+=RH;
+    g.fillStyle=k%2?'#f6f3ec':'#ffffff'; g.fillRect(20,y,W-40,RH);
+    if(d.giao!==nhomTruoc){ g.fillStyle='#1F5B44'; g.fillRect(20,y,4,RH); nhomTruoc=d.giao }
+    g.font='13.5px '+font; x=20;
+    [d.khach+(d.giao?'  · '+d.giao:''),d.sdt,d.dc,d.ma,d.tuoi+' ngày',tien(d.no)].forEach(function(v,i){
+      g.fillStyle=i===4&&d.tuoi>30?'#b42f24':'#1a1208'; g.textAlign=i>=4?'right':'left';
+      g.fillText(cat(v,cot[i][1]-20), i>=4?x+cot[i][1]-10:x+10, y+22); x+=cot[i][1] }) });
+  y+=RH; g.fillStyle='#1a1208'; g.fillRect(20,y,W-40,2); g.font='700 15px '+font; g.textAlign='right';
+  g.fillText('Tổng còn phải thu: '+tien(tong), W-30, y+26);
+  cv.toBlob(xong,'image/png');
+}
+/* nguon: 'bc' (mục Công nợ ở Báo cáo) | 'cb' (thẻ quá hạn ở Cảnh báo); kieu: 'xlsx' | 'png' */
+function xuatCongNo(nguon, kieu){
+  var ds, tieu;
+  if(nguon==='cb'){ ds=CB_DU_CHUA_THU||[]; tieu='Công nợ đã giao đủ, quá '+HAN_THU+' ngày chưa thu' }
+  else { ds=SO.filter(function(d){ return !d.huy && conThuDon(d)>0 && (CN_PHAM==='ky'?trongKy(d):true) }); tieu='Công nợ chưa thu' }
+  var ai=($('cnXuatCho_'+nguon)||{}).value||'';
+  if(ai) { ds=ds.filter(function(d){ return (d.nguoiGiao||'(chưa gán)')===ai }); tieu+=' — giao cho '+ai }
+  if(!ds.length){ alert('Không có đơn nào để xuất.'); return }
+  var dong=cnDong_(ds), ten=cnTenFile_(ai||'tat-ca');
+  if(kieu==='xlsx') cnTai_(cnXlsx_(tieu,dong), ten+'.xlsx');
+  else cnAnh_(tieu, dong, function(b){ cnTai_(b, ten+'.png') });
+}
+function cnChonNguoi_(nguon, ds){
+  var ng={}; ds.forEach(function(d){ var k=d.nguoiGiao||'(chưa gán)'; ng[k]=(ng[k]||0)+1 });
+  return '<div class="row" style="gap:6px;align-items:center;margin-top:10px;flex-wrap:wrap">'+
+    '<span class="sm">Xuất danh sách để gửi đi thu:</span>'+
+    '<select id="cnXuatCho_'+nguon+'" style="width:auto"><option value="">Tất cả ('+ds.length+' đơn)</option>'+
+    Object.keys(ng).sort().map(function(k){return '<option value="'+esc(k)+'">'+esc(k)+' ('+ng[k]+' đơn)</option>'}).join('')+'</select>'+
+    '<button class="mini" onclick="xuatCongNo(\''+nguon+'\',\'xlsx\')">⬇ Excel</button>'+
+    '<button class="mini" onclick="xuatCongNo(\''+nguon+'\',\'png\')">🖼 Ảnh</button></div>';
+}
+
+var CB_DU_CHUA_THU=[];
+function xemNoTatCa_(){
+  var ds=SO.filter(function(d){ return !d.huy && conThuDon(d)>0 && (CN_PHAM==='ky'?trongKy(d):true) }).sort(function(a,b){return conThuDon(b)-conThuDon(a)});
+  LOCMA=ds.map(function(d){return d.ma}); LOCTEN='đơn còn phải thu'+(CN_PHAM==='toanbo'?' (toàn bộ)':'')+' — '+tien(ds.reduce(function(a,d){return a+conThuDon(d)},0));
+  LOC_TOANBO_KY=CN_PHAM==='toanbo'; $('fso').value=''; tab('so'); window.scrollTo({top:0,behavior:'smooth'});
+}
+function xemNoKhach_(i){
+  var n=CONGNO_LIST[i]; if(!n) return;
+  LOCMA=n.ds.map(function(x){return x.ma}); LOCTEN='đơn '+(n.ten||n.sdt)+' còn nợ — '+tien(n.tong);
+  LOC_TOANBO_KY=CN_PHAM==='toanbo'; $('fso').value=''; tab('so'); window.scrollTo({top:0,behavior:'smooth'});
 }
 var CONGNO_LIST=[];
 function inCongNo(i){
@@ -4468,6 +4614,7 @@ function cbGiao(){
           '<td class="r" style="color:var(--bad);font-weight:700">'+soNgay(d.iso)+' ngày</td></tr>'
       }).join('')+'</table></div>';
   }
+  CB_DU_CHUA_THU=duChuaThu;
   if(duChuaThu.length){
     var t2=duChuaThu.reduce(function(a,d){return a+conThuDon(d)},0);
     h+='<div class="card" style="border-color:var(--warn)"><h2 style="color:var(--warn)">'+
@@ -4475,7 +4622,8 @@ function cbGiao(){
       '<div class="sm" style="margin-bottom:8px">Tổng còn phải thu <b>'+tien(t2)+'</b>. '+
       (GHINHAN==='giao_thu'?'Với điều kiện đang đặt, những đơn này <b>chưa vào doanh thu</b>.'
         :'Với điều kiện đang đặt, những đơn này <b>đã vào doanh thu</b> dù chưa thu tiền.')+'</div>'+
-      '<table><tr><th>Mã đơn</th><th>Ngày</th><th>Khách</th><th class="r">Còn phải thu</th><th class="r">Số ngày</th></tr>'+
+      cnChonNguoi_('cb', duChuaThu)+
+      '<table class="mt"><tr><th>Mã đơn</th><th>Ngày</th><th>Khách</th><th class="r">Còn phải thu</th><th class="r">Số ngày</th></tr>'+
       duChuaThu.sort(function(a,b){return soNgay(b.iso)-soNgay(a.iso)}).map(function(d){
         return '<tr><td>'+esc(d.ma)+'</td><td>'+esc(d.ngay)+'</td><td>'+esc(d.khach)+'</td>'+
           '<td class="r">'+tien(conThuDon(d))+'</td>'+
@@ -5630,6 +5778,13 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260923g', ngay:'23/09/2026', ten:'Báo cáo công nợ + xuất danh sách đi thu',
+  vaPhieu:[],
+  muc:[
+   ['moi','Tab <b>Báo cáo</b> có mục <b>Công nợ chưa thu</b> ngay dưới ô Còn phải thu: tổng nợ tới hôm nay, tuổi nợ (≤7 / 8–30 / 31–60 / >60 ngày), theo khách, theo kênh, theo người lên đơn, theo người giao.'],
+   ['moi','Nút <b>⬇ Excel</b> và <b>🖼 Ảnh</b> để xuất danh sách công nợ gửi nhân viên đi thu — chọn được riêng từng người giao. Có ở cả Báo cáo lẫn thẻ quá hạn ở Cảnh báo.'],
+   ['sua','Phần mềm quản lý giờ dàn hết bề ngang màn hình, không bóp vào giữa nữa.']
+  ]},
  {ban:'20260923f', ngay:'23/09/2026', ten:'Tab Nhân sự riêng',
   vaPhieu:[],
   muc:[
