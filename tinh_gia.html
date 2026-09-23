@@ -942,7 +942,7 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
           <div class="si-sub">Quy cách vận chuyển <span>chọn cách đóng cho đơn này</span></div>
           <div id="siQc"></div>
           <button class="si-btn" id="siThemQc" type="button">+ Thêm quy cách (bao, tải, pallet…)</button>
-          <p class="si-note" id="siQcNote">Xe chở tới khi hết TẢI (kg) hoặc hết CHỖ (m³) — cái nào hết trước thì dừng.</p>
+          <p class="si-note" id="siQcNote"></p>
         </div>
       </section>
 
@@ -984,12 +984,6 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
           <div class="si-why" id="siWhy"></div>
         </div>
         <div class="scroll"><table class="si-tb" id="siSoSanh"></table></div>
-        <p class="si-note" style="padding:0 15px 12px">"Chi phí thật" = tiền bỏ ra − VAT được khấu trừ − phần thuế TNDN tiết kiệm được nhờ chi phí hợp lệ. Chi phí không chứng từ không được trừ khi quyết toán nên đắt hơn đúng phần thuế đó.</p>
-      </div>
-      <div class="si-card">
-        <header><h2>Giao / đơn vị theo cỡ đơn</h2><span class="si-hint">phương án rẻ nhất ở từng cỡ</span></header>
-        <div class="chartwrap"><svg id="siChart" viewBox="0 0 900 250" role="img" aria-label="Chi phí giao mỗi đơn vị theo số kiện"></svg></div>
-        <p class="si-note" style="padding:0 15px 14px" id="siChartNote"></p>
       </div>
       <div class="si-card">
         <header><h2>Các cách chở</h2><span class="si-hint">bật/tắt, sửa số theo báo giá thật</span></header>
@@ -1010,15 +1004,18 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
 
     <section class="si-col si-col-gia" id="siB4">
       <div class="si-card">
+        <header><span class="si-step">✓</span><h2>Lợi nhuận</h2><span class="si-hint" id="siLnNhan"></span></header>
+        <div class="scroll"><table class="si-tb" id="siLoiNhuan"></table></div>
+      </div>
+      <div class="si-card">
         <header><span class="si-step">4</span><h2>Giá bán theo bậc</h2><span class="si-hint">ô giá để trống = máy tự tính theo margin</span></header>
         <div class="si-body">
           <div id="siTiers"></div>
           <button class="si-btn" id="siAddTier" type="button">+ Thêm bậc</button>
-          <p class="si-note">Margin tính trên <b>lãi ròng sau VAT + TNDN</b>, chia cho giá bán đã gồm VAT. Giá đã tính cả chi phí giao ở cỡ đơn đang nhập (bước 2).</p>
         </div>
       </div>
       <div class="si-card">
-        <header><h2>Giá được ghép từ những khoản nào</h2><span class="si-hint">bấm một thanh để xem từng bước</span></header>
+        <header><h2>Giá được ghép từ những khoản nào</h2><span class="si-hint">bấm một thanh để xem chi tiết</span></header>
         <div class="si-body">
           <div id="siStack"></div>
           <div class="si-legend" id="siLegend"></div>
@@ -1028,7 +1025,6 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
       <div class="si-card">
         <header><h2>Chiết khấu chồng lên nhau</h2><span class="si-hint">đại lý giỏi sẽ lấy cả hai</span></header>
         <div class="scroll"><table class="si-tb" id="si-t-ck"><thead><tr><th>Bậc</th><th>Giá</th><th>Không CK</th><th>CK sớm</th><th>Rebate</th><th>Lấy cả hai</th></tr></thead><tbody></tbody></table></div>
-        <p class="si-note" style="padding:0 15px 14px">Các khoản này <b>không</b> tự trừ vào bảng giá — cột cuối mới là con số mang đi ký hợp đồng.</p>
       </div>
     </section>
   </div>
@@ -2286,7 +2282,7 @@ function siRender_(){
     if (l){ e.textContent='Không dùng được: '+l; e.className='st bad' }
     else { var c=siSucCho_(m); e.textContent = c.cap===Infinity ? 'Gửi một lần cả đơn' : 'Tối đa '+siF_(c.cap)+' '+q.ten+'/chuyến — hết '+c.boi+' trước'; e.className='st' } });
   var canhBao = (!(q.kg>0) && !(siM3_(q)>0)) ? ' <b style="color:var(--bad)">Chưa khai kg và kích thước kiện — xe sẽ coi như chở không giới hạn.</b>' : '';
-  $('siQcNote').innerHTML = 'Xe chở tới khi hết TẢI (kg) hoặc hết CHỖ (m³) — cái nào hết trước thì dừng.'+canhBao;
+  $('siQcNote').innerHTML = canhBao;
   var le = SI_S.theo==='dv' ? U-(N-1)*siSlKien_(q) : siSlKien_(q);
   $('siDonNote').innerHTML = N ? '= <b>'+siF_(N)+' '+qT+'</b> ('+siF_(U)+' '+dvT+(N>0&&le<siSlKien_(q)?', kiện cuối chỉ '+siF_(le)+'/'+siSlKien_(q):'')+') · '+siF_(N*q.kg,1)+' kg · '+siF_(N*siM3_(q),2)+' m³' : 'Nhập số lượng để tính.';
   if (!N){ siVeTrong_('Nhập số lượng đơn ở bước 2.'); siLuu_(); return }
@@ -2301,12 +2297,12 @@ function siRender_(){
   var tot = hang.filter(function(h){return h.o}).sort(function(a,b){return a.o.r.that-b.o.r.that});
   var motBest = tot[0], tiet = motBest ? motBest.o.r.that-K.tong.that : 0;
   $('siSoSanh').innerHTML = '<thead><tr><th>Dùng một mình</th><th>Chuyến</th><th>Tiền bỏ ra</th>'+(dn?'<th>VAT khấu trừ</th><th>Không được trừ</th>':'')+'<th>Chi phí thật</th><th>/ '+dvT+'</th><th>Giờ</th></tr></thead><tbody>'+
-    hang.map(function(h){
-      if (!h.o) return '<tr class="na"><td>'+esc_(h.m.ten)+'<small>'+esc_(h.l)+'</small></td><td colspan="'+(dn?7:5)+'"></td></tr>';
+    hang.filter(function(h){ return h.o }).map(function(h){
       var r=h.o.r;
       return '<tr'+(h===motBest?' class="best"':'')+'><td>'+esc_(h.m.ten)+(h===motBest?' <span class="pill good">rẻ nhất</span>':'')+'</td><td>'+siF_(h.o.chuyen)+'</td><td>'+vnd(r.tien)+'</td>'+
         (dn?'<td>'+(r.vat?'−'+vnd(r.vat):'—')+'</td><td>'+(r.non?vnd(r.non):'—')+'</td>':'')+
-        '<td><b>'+vnd(r.that)+'</b></td><td>'+vnd(r.that/U)+'</td><td>'+siF_(r.gio,1)+'</td></tr>' }).join('')+'</tbody>';
+        '<td><b>'+vnd(r.that)+'</b></td><td>'+vnd(r.that/U)+'</td><td>'+siF_(r.gio,1)+'</td></tr>' }).join('')+'</tbody>'+
+    (function(){ var kd=hang.filter(function(h){ return !h.o }); return kd.length ? '<tfoot><tr class="na"><td colspan="'+(dn?8:6)+'" style="font-family:inherit;text-align:left">Không dùng: '+kd.map(function(h){ return esc_(h.m.ten)+(h.l==='đang tắt'?'':' ('+esc_(h.l)+')') }).join(', ')+'</td></tr></tfoot>' : '' })();
   $('siVcNhan').textContent = siF_(N)+' '+q.ten+' · '+siF_(SI_S.km)+' km';
   $('siPlan').className = 'si-plan';
   $('siPlan').innerHTML = '<div class="lbl">Phương án rẻ nhất</div><div class="big">'+vnd(K.tong.that)+' <small>chi phí thật · '+vnd(gi.that)+'/'+dvT+' · xong trong ~'+siF_(K.tong.gio,1)+' giờ</small></div><ul>'+
@@ -2314,17 +2310,12 @@ function siRender_(){
       var tomKs = ks.length>6 ? siF_(ks.length)+' chuyến (mỗi chuyến tối đa '+siF_(ks[0])+')' : ks.map(function(k){return siF_(k)}).join(' + ')+' '+qT;
       return '<li><b>'+g.ks.length+' '+(g.m.loai==='xe'||g.m.loai==='chuyen'?'chuyến':'lần gửi')+' '+esc_(g.m.ten)+'</b> — '+tomKs+' — '+vnd(g.that)+'</li>' }).join('')+
     '</ul><div class="si-note" style="margin-top:6px">Tiền bỏ ra '+vnd(K.tong.tien)+(dn&&K.tong.vat?' · VAT được khấu trừ '+vnd(K.tong.vat):'')+(dn&&K.tong.non?' · <b style="color:var(--bad)">'+vnd(K.tong.non)+' không được trừ khi quyết toán</b>':'')+'</div>';
-  var ly = ['Đơn '+siF_(U)+' '+dvT+' đóng '+qT+' '+siSlKien_(q)+' '+dvT+' → <b>'+siF_(N)+' kiện</b>, '+siF_(N*q.kg,0)+' kg, '+siF_(N*siM3_(q),2)+' m³.'];
-  tot.slice(0,3).forEach(function(h){ var c=h.o.cap;
-    ly.push(esc_(h.m.ten)+': '+(c===Infinity?'gửi 1 lần':'chở '+siF_(c)+' kiện/chuyến → '+siF_(h.o.chuyen)+' chuyến'+(h.o.chuyen>1&&N%c?' (chuyến cuối chỉ '+(N%c)+'/'+c+', chạy vơi)':''))+' → '+vnd(h.o.r.that)+'.') });
+  var ly = [];
   if (K.nhom.length>1 && tiet>0.5) ly.push('Ghép <b>'+K.nhom.map(function(g){return esc_(g.m.ten)}).join(' + ')+'</b> thay vì chạy thêm chuyến vơi → rẻ hơn cách tốt nhất dùng một mình <b>'+vnd(tiet)+'</b>.');
   else ly.push('Dùng <b>'+esc_(K.nhom[0].m.ten)+'</b> là rẻ nhất — ghép thêm cách khác không lợi hơn'+(+SI_S.ghep===1?' (đang giới hạn 1 cách chở)':'')+'.');
-  var khongCT = SI_S.pt.filter(function(m){ return !siKhongDung_(m) && m.loai!=='xe' && m.ct==='khong' });
-  if (dn && khongCT.length) ly.push('Lưu ý: '+khongCT.map(function(m){return esc_(m.ten)}).join(', ')+' không chứng từ — khi quyết toán không được trừ, nên máy đã cộng thêm '+Math.round(thueChung_().tndn*100)+'% thuế vào chi phí thật của cách đó.');
-  $('siWhy').innerHTML = '<b>Vì sao ra phương án này</b><ol>'+ly.map(function(x){return '<li>'+x+'</li>'}).join('')+'</ol>';
-
-  // biểu đồ theo cỡ đơn
-  siVeChart_(T, N, q);
+  var khongCT = K.nhom.map(function(g){ return g.m }).filter(function(m){ return m.loai!=='xe' && m.ct==='khong' });
+  if (dn && khongCT.length) ly.push('⚠ '+khongCT.map(function(m){return esc_(m.ten)}).join(', ')+' không chứng từ — không được trừ khi quyết toán thuế.');
+  $('siWhy').innerHTML = ly.map(function(x){return '<div>'+x+'</div>'}).join('');
 
   // bậc giá
   var hv = siGiaMargin_(0, gi);
@@ -2335,6 +2326,15 @@ function siRender_(){
     e.innerHTML = (tay?'✎ <b>tự đặt tay</b> · <a data-tireset="'+i+'">↺ tính lại theo margin</a> · ':'tự tính · ')+'giá <b>'+vnd(g)+'</b> · lãi <b>'+vnd(L.lnst)+'</b>/'+dvT+' · thực <b class="'+(m>=siSo_(t.margin)/100-0.0005?'strong':'weak')+'">'+pct(m)+'</b>' });
   if (SI_S.chon >= rows.length) SI_S.chon = rows.length-1;
   siVeStack_(rows, gi, dvT);
+  // Kết quả chính chủ cần xem: lãi mỗi đơn vị nhỏ nhất + lãi cả đơn, từng bậc
+  $('siLnNhan').textContent = 'đơn '+siF_(U)+' '+(SI_S.dv||'đv')+' ('+siF_(N)+' '+q.ten+')';
+  $('siLoiNhuan').innerHTML = '<thead><tr><th>Bậc</th><th>Giá bán / '+dvT+'</th><th>Lãi / '+dvT+'</th><th>Biên</th><th>Doanh thu cả đơn</th><th>Lãi cả đơn</th></tr></thead><tbody>'+
+    rows.slice(1).map(function(r){
+      if (r.g===null) return '<tr class="na"><td>'+esc_(r.ten)+'</td><td colspan="5">không đạt được margin này</td></tr>';
+      var L=siLaiDv_(r.g,gi), cls=L.lnst<0?'weak':'strong';
+      return '<tr><td><b>'+esc_(r.ten)+'</b></td><td>'+vnd(r.g)+'</td><td><b class="'+cls+'">'+vnd(L.lnst)+'</b></td><td class="'+cls+'">'+pct(L.lnst/r.g)+'</td>'+
+        '<td>'+vnd(r.g*U)+'</td><td><b class="'+cls+'" style="font-size:15px">'+vnd(L.lnst*U)+'</b></td></tr>' }).join('')+
+    (rows[0].g!==null?'<tr class="na"><td>Hoà vốn</td><td>'+vnd(rows[0].g)+'</td><td>0đ</td><td>—</td><td>'+vnd(rows[0].g*U)+'</td><td>0đ</td></tr>':'')+'</tbody>';
 
   // chiết khấu chồng
   var ck=siDuong_(SI_S.ck)/100, rb=siDuong_(SI_S.rb)/100;
@@ -2356,40 +2356,17 @@ function siRender_(){
     ['#siB3','Vận chuyển', vnd(gi.that)+'/'+dvT, K.nhom.map(function(g){return g.ks.length+'× '+esc_(g.m.ten)}).join(' + '), ''],
     ['#siB4','Giá thành', giaThanh?vnd(giaThanh.vonThuan+giaThanh.dgThuan+gi.ded+gi.non):'—', 'hoà vốn '+(hv?vnd(hv):'—')+(dn?' (gồm VAT)':''), ''],
     ['#siB4','Giá bán', SI_S.tiers.map(function(t,i){ return rows[i+1].g!==null?vnd(rows[i+1].g):'—' }).join(' · '),
-      dmin ? 'có lãi từ '+dmin+' '+qT+(hoFs?' — freeship từ '+siF_(SI_S.fs)+' '+dvT+' thì đơn dưới '+dmin+' '+qT+' là LỖ':'') : 'bậc đầu chưa có lãi', (hoFs||!dmin)?'bad':'chot']];
+      rows[1]&&rows[1].g!==null ? 'lãi '+vnd(siLaiDv_(rows[1].g,gi).lnst)+'/'+dvT+' · cả đơn '+vnd(siLaiDv_(rows[1].g,gi).lnst*U) : 'bậc đầu chưa có lãi', (hoFs||!dmin)?'bad':'chot']];
   $('siFlow').innerHTML = buoc.map(function(b,i){
     return '<a class="si-fs '+b[4]+'" href="'+b[0]+'"><span class="box"><span class="t">'+(i+1)+' · '+b[1]+'</span><span class="v">'+b[2]+'</span><span class="s">'+b[3]+'</span></span>'+(i<buoc.length-1?'<span class="ar" aria-hidden="true">→</span>':'')+'</a>' }).join('');
   siLuu_();
 }
 function siVeTrong_(loi){
   $('siPlan').className='si-plan bad'; $('siPlan').innerHTML='<b>'+loi+'</b>';
-  ['siWhy','siSoSanh','siStack','siChain','siLegend','siChartNote'].forEach(function(id){ $(id).innerHTML='' });
-  $('siChart').innerHTML=''; $('si-t-ck').tBodies[0].innerHTML='';
+  ['siWhy','siSoSanh','siStack','siChain','siLegend','siLoiNhuan'].forEach(function(id){ $(id).innerHTML='' });
+  $('si-t-ck').tBodies[0].innerHTML='';
   $('siFlow').innerHTML='<a class="si-fs bad" href="#siB2"><span class="box"><span class="t">Chưa tính được</span><span class="s">'+loi+'</span></span></a>';
   SI_KQ = null;
-}
-function siVeChart_(T, N, q){
-  var W=900,H=250,L=62,R=16,Tp=18,B=30, Nmax=T.Nmax, sl=siSlKien_(q), pts=[];
-  for (var k=1;k<=Nmax;k++) if (isFinite(T.best[k])) pts.push([k, T.best[k]/(k*sl)]);
-  if (pts.length<2){ $('siChart').innerHTML=''; $('siChartNote').textContent=''; return }
-  var vs = pts.map(function(p){return p[1]}).sort(function(a,b){return a-b}), hi = (vs[Math.floor(vs.length*0.97)]||vs[vs.length-1])*1.12 || 1;
-  var X=function(k){return L+(k-1)/Math.max(1,Nmax-1)*(W-L-R)}, Y=function(v){return Tp+(1-Math.min(v,hi)/hi)*(H-Tp-B)};
-  var s='';
-  for (var i=0;i<=4;i++){ var v=hi*i/4; s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="var(--si-line)" stroke-width="1"/><text x="'+(L-8)+'" y="'+(Y(v)+4)+'" text-anchor="end" fill="var(--muted)" font-size="11">'+siF_(v)+'</text>' }
-  for (i=0;i<=6;i++){ var kk=Math.round(1+(Nmax-1)*i/6); s+='<text x="'+X(kk)+'" y="'+(H-9)+'" text-anchor="middle" fill="var(--muted)" font-size="11">'+siF_(kk)+'</text>' }
-  var d = pts.map(function(p,j){ return (j?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1) }).join(' ');
-  s += '<path d="'+d+' L'+X(pts[pts.length-1][0]).toFixed(1)+' '+(H-B)+' L'+X(pts[0][0]).toFixed(1)+' '+(H-B)+' Z" fill="var(--acc)" fill-opacity=".08"/>';
-  s += '<path d="'+d+'" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linejoin="round"/>';
-  // đáy cục bộ = cỡ đơn đầy chuyến (rẻ nhất quanh đó)
-  for (var j=1;j<pts.length-1;j++){ if (pts[j][1]<pts[j-1][1] && pts[j][1]<=pts[j+1][1] && pts[j+1][1]>pts[j][1]*1.02)
-    s += '<circle cx="'+X(pts[j][0])+'" cy="'+Y(pts[j][1])+'" r="3.5" fill="var(--good)"/>' }
-  if (N<=Nmax && isFinite(T.best[N])) s += '<circle cx="'+X(N)+'" cy="'+Y(T.best[N]/(N*sl))+'" r="6" fill="var(--warn)" stroke="var(--surface)" stroke-width="2"/>';
-  s += '<text x="'+(W-R)+'" y="'+(Tp-4)+'" text-anchor="end" fill="var(--muted)" font-size="11">đ / '+esc_(SI_S.dv||'đv')+' · trục ngang: số '+esc_(q.ten)+' · ● cam = đơn đang tính · ● xanh = đầy chuyến</text>';
-  $('siChart').innerHTML = s;
-  var cur = N<=Nmax ? T.best[N]/N : null, goi=null;
-  if (cur!==null) for (var n2=N+1;n2<=Math.min(Nmax,N*2);n2++){ if (T.best[n2]/n2 < cur*0.9){ goi=n2; break } }
-  $('siChartNote').innerHTML = goi ? 'Đặt thêm <b>'+(goi-N)+' '+esc_(q.ten)+'</b> (lên '+siF_(goi)+') thì chi phí giao mỗi '+esc_(SI_S.dv)+' giảm còn <b>'+vnd(T.best[goi]/(goi*sl))+'</b> (−'+siF_((1-T.best[goi]/goi/cur)*100)+'%) — dùng để thương lượng với đại lý.'
-    : 'Cỡ đơn này đã gần mức rẻ nhất quanh đây.';
 }
 /* Thanh ghép giá: mỗi bậc một thanh, chia đúng từng khoản — cùng thang đo. */
 function siThanhPhan_(g, gi){ var L=siLaiDv_(g,gi), dn=siDN_();
