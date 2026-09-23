@@ -372,7 +372,8 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 600; letter-spacing: -
 .tk-ghi { margin-top: 8px; font-size: 11.5px; color: var(--text-faint); line-height: 1.45; }
 
 /* man dang nhap cua nhan vien */
-.dn-form { max-width: 340px; margin: 18px auto 0; text-align: left; }
+.dn-form { width: 100%; max-width: 340px; margin: 6px auto 0; text-align: left; }
+.dn-form input { font-size: 16px !important; } /* duoi 16px iPhone tu phong to trang khi bam vao o */
 .dn-form label { display: block; font-size: 12px; font-weight: 600; color: var(--text-soft); margin-bottom: 5px; }
 .dn-form input { width: 100%; box-sizing: border-box; border: 1px solid var(--border); background: var(--panel-2);
   color: var(--text); border-radius: 10px; padding: 10px 12px; font-size: 14px; font-family: inherit; }
@@ -619,7 +620,11 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 600; letter-spacing: -
   .detail-panel { width: 100%; max-width: 100%; max-height: 85vh; border-left: none; border: 1px solid var(--border); border-bottom: none; border-radius: 18px 18px 0 0; padding: 10px 20px calc(24px + env(safe-area-inset-bottom, 0px)); }
 }
 .sheet-handle { display: none; width: 36px; height: 4px; border-radius: 3px; background: var(--panel-3); margin: 6px auto 14px; }
-@media (max-width: 859px) { .sheet-handle { display: block; } .drawer-close { display: none; } }
+@media (max-width: 859px) {
+  .sheet-handle { display: block; }
+  .drawer-close { position: sticky; top: 0; z-index: 3; float: right; width: 40px; height: 40px; margin: -6px -8px 0 0;
+    border-radius: 50%; background: var(--panel-3); color: var(--text); font-size: 17px; }
+}
 .drawer-close { float: right; background: none; border: none; color: var(--text-dim); font-size: 18px; cursor: pointer; }
 .detail-panel h3 { font-size: 19px; margin: 6px 0 4px; padding-right: 20px; }
 .detail-meta { font-size: 12.5px; color: var(--text-dim); margin-bottom: 16px; }
@@ -636,6 +641,14 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 600; letter-spacing: -
 .check-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
 .check-item { display: flex; align-items: center; gap: 8px; background: var(--panel-2); border-radius: 8px; padding: 7px 9px; }
 .check-item input[type=checkbox] { width: 16px; height: 16px; flex-shrink: 0; }
+@media (max-width: 859px) {
+  .detail-panel input:not([type=checkbox]), .detail-panel select, .detail-panel textarea,
+  .detail-panel .field input, .detail-panel .field select, .detail-panel .field textarea { font-size: 16px; }
+  .check-item { padding: 11px 12px; cursor: pointer; }
+  .check-item input[type=checkbox] { width: 22px; height: 22px; }
+  .check-item span { font-size: 14.5px; }
+  .mockbar-switch { padding: 6px 14px; font-size: 12px; }
+}
 .check-item span { flex: 1; font-size: 12.5px; }
 .check-item span.done { text-decoration: line-through; color: var(--text-faint); }
 .check-item button { background: none; border: 0; color: var(--text-faint); cursor: pointer; font-size: 13px; padding: 2px 4px; }
@@ -1763,6 +1776,7 @@ function PipelineStageForm({ stage, prevFilled, defaultNguoiNhan, defaultNguoiGi
             personOptions.map(([k, p]) => h('option', { key: k, value: p.name }, p.name)))
         : h('input', {
             type: f.type === 'number' ? 'number' : 'text',
+            inputMode: f.type === 'number' ? 'numeric' : undefined,
             value: vals[f.key],
             onChange: e => setVals({ ...vals, [f.key]: e.target.value }),
           }))),
@@ -1847,7 +1861,7 @@ function TaskDetail({ task, onClose, onSetStatus, onClaim, onEdit, onRemind, onT
         h('span', { className: 'tag-priority ' + task.priority }, priorityLabel(task.priority))),
       h('h3', null, task.title),
       task.recurring && h('div', { className: 'recur-note' }, '🔁 Việc lặp lại mỗi ngày, trừ khi có phát sinh thêm.'),
-      h('div', { className: 'detail-meta' }, 'Hạn: ' + task.due + '  ·  Người phụ trách: ' + ownerLabel),
+      h('div', { className: 'detail-meta' }, 'Hạn: ' + (task.due ? hienHan(task.due) : 'không đặt') + '  ·  Người phụ trách: ' + ownerLabel),
 
       task.desc && h('div', { className: 'detail-section' },
         h('div', { className: 'lbl' }, 'Mô tả'),
@@ -1884,7 +1898,7 @@ function TaskDetail({ task, onClose, onSetStatus, onClaim, onEdit, onRemind, onT
           h('button', { className: 'btn claim-btn', onClick: () => onReassign(task.id, safeReassignTo) }, 'Chuyển việc cho người này'));
       })(),
 
-      treHan(task) && h('div', { className: 'detail-section' },
+      treHan(task) && canManageTeam && h('div', { className: 'detail-section' },
         h('button', { className: 'btn claim-btn', style: { borderColor: 'var(--coral)', color: 'var(--coral)' }, onClick: () => onRemind(task.id) }, '🔔 Nhắc lại người phụ trách')),
 
       h('div', { className: 'detail-section' },
@@ -1895,7 +1909,7 @@ function TaskDetail({ task, onClose, onSetStatus, onClaim, onEdit, onRemind, onT
           h('div', { className: 'pbar' }, h('i', { style: { width: Math.round(doneCount / checklist.length * 100) + '%' } }))),
         h('div', { className: 'check-list' },
           checklist.length === 0 && h('div', { style: { fontSize: 12, color: 'var(--text-faint)' } }, 'Chưa có mục nhỏ nào.'),
-          checklist.map(c => h('div', { className: 'check-item', key: c.id },
+          checklist.map(c => h('label', { className: 'check-item', key: c.id },
             h('input', { type: 'checkbox', checked: c.done, onChange: () => onToggleCheck(task.id, c.id) }),
             h('span', { className: c.done ? 'done' : '' }, c.text),
             /* Nhan vien thuong chi TICH duoc, khong them/xoa muc — bo cuc viec do
@@ -2081,21 +2095,24 @@ function LoginNV({ onVao, dangTuVao, loiTuVao }) {
   }
 
   if (dangTuVao) {
-    return h('div', { className: 'role-gate' },
+    return h('div', { className: 'rolegate' },
       h('h1', null, 'Đang mở việc của bạn…'),
       h('div', { className: 'sub' }, 'Máy này đã đăng nhập sẵn, chờ một chút.'));
   }
 
-  return h('div', { className: 'role-gate' },
+  return h('div', { className: 'rolegate' },
     h('h1', null, 'Đăng nhập'),
     h('div', { className: 'sub' }, 'Nhập mã đăng nhập và mật khẩu chủ đã cấp cho bạn. Máy này sẽ nhớ, lần sau mở là vào thẳng.'),
     h('div', { className: 'dn-form' },
       h('label', null, 'Mã đăng nhập'),
+      /* Ban phim dien thoai: go chu HOA san, tat tu sua chu (tu sua co the doi
+         "DG1" thanh chu khac), de trinh duyet nho ma/mat khau cho lan sau. */
       h('input', { value: code, autoFocus: true, placeholder: 'ví dụ DG1',
+        autoCapitalize: 'characters', autoCorrect: 'off', spellCheck: false, autoComplete: 'username',
         onChange: e => setCode(e.target.value),
         onKeyDown: e => { if (e.key === 'Enter') vao() } }),
       h('label', { style: { marginTop: 10 } }, 'Mật khẩu'),
-      h('input', { type: 'password', value: mk,
+      h('input', { type: 'password', value: mk, autoComplete: 'current-password',
         onChange: e => setMk(e.target.value),
         onKeyDown: e => { if (e.key === 'Enter') vao() } }),
       loi && h('div', { className: 'dn-loi' }, loi),
