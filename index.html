@@ -378,7 +378,9 @@ body.sang .badge.breeder{background:#e9f3e0;color:#5c8a3a}
   .na{flex:1 1 46%}
   .na-them{margin-left:0}
 }
-.edt{background:#141d27;border:1px solid var(--acc);border-radius:11px;padding:12px;margin-top:9px}
+.ckNhan{display:flex;flex-direction:column;align-items:center;gap:1px;font-size:10px;line-height:1;color:var(--tx2);cursor:pointer;flex:none}
+.ckNhan.huy{color:var(--bad)}
+.edt{background:var(--card);border:1px solid var(--acc);border-radius:11px;padding:12px;margin-top:9px}
 .edt h3{font-size:12.5px;color:var(--acc);margin:0 0 9px;letter-spacing:.04em;text-transform:uppercase}
 .el{display:flex;gap:8px;align-items:center;background:var(--c2);border-radius:9px;padding:8px 9px;margin-bottom:6px}
 .el .nm{flex:1;min-width:0;font-size:13px;line-height:1.35}
@@ -962,7 +964,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260923b';
+var APP_VER='20260923c';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -3752,10 +3754,10 @@ function veDon(){
     var conThuLS=conThuDon(d);
     return '<div class="don'+(gon?' gon':'')+'" id="pgw_'+d.ma+'">'+
       '<div class="dgon" onclick="chiTietGon(\''+d.ma+'\')">'+
-        '<input type="checkbox" class="ckinls" value="'+d.ma+'" onchange="demInLS()" '+
-          'onclick="event.stopPropagation()" title="Chọn để in">'+
-        (homNay?'<input type="checkbox" class="ckdon" value="'+d.ma+'" onchange="demHuy()" '+
-          'onclick="event.stopPropagation()" title="Chọn để huỷ" style="accent-color:var(--bad)">':'')+
+        '<label class="ckNhan" onclick="event.stopPropagation()"><input type="checkbox" class="ckinls" value="'+d.ma+'" onchange="demInLS()" '+
+          'onclick="event.stopPropagation()" title="Chọn để in">In</label>'+
+        (homNay?'<label class="ckNhan huy" onclick="event.stopPropagation()"><input type="checkbox" class="ckdon" value="'+d.ma+'" onchange="demHuy()" '+
+          'onclick="event.stopPropagation()" title="Chọn để huỷ" style="accent-color:var(--bad)">Huỷ</label>':'')+
         '<div class="dg-giua">'+
           '<div class="dg-ten">'+esc(d.khach||'KHÁCH LẺ')+
             '<span class="dg-sdt">'+esc(d.sdt||'')+'</span></div>'+
@@ -5542,6 +5544,12 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260923c', ngay:'23/09/2026', ten:'Làm nốt phiếu kỹ sư',
+  vaPhieu:[],
+  muc:[
+   ['sua','Hai ô tích trên mỗi đơn ở tab Lịch sử có chữ <b>In</b> / <b>Huỷ</b> ngay bên dưới — điện thoại không hiện chú thích khi rê chuột.'],
+   ['sua','Khung Sửa đơn (ô tìm sản phẩm) không còn nền đen khó nhìn — theo đúng màu sáng/tối của máy.']
+  ]},
  {ban:'20260923b', ngay:'23/09/2026', ten:'Ghi tiền chành lúc thu tiền',
   vaPhieu:[],
   muc:[

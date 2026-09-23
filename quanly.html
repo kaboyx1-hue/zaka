@@ -775,7 +775,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260923g';
+var APP_VER='20260923h';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1597,7 +1597,10 @@ function veLam(){
 
   // ── Việc: nhân viên báo có chỗ trục trặc ──
   var cho=phieuNVChoDuyet();
-  if(cho.length) viec.push({
+  /* 23/09/2026 — phiếu kỹ sư 10/09: "chỗ này nên thêm nút X để thoát". Bấm ✕ là ẩn
+     việc này cho tới khi có thêm phiếu mới (số phiếu đổi thì tự hiện lại). */
+  if(cho.length && get('anviec',{}).ks!==cho.length) viec.push({
+    an:['ks',cho.length],
     do:true,
     ten:'Nhân viên báo '+cho.length+' chỗ đang trục trặc',
     vi:'Nhân viên bấm nút Kỹ sư trên máy của họ để báo về. Anh/chị đọc xem có đúng là lỗi không, '+
@@ -1644,7 +1647,9 @@ function veLam(){
     '<div class="sm">Cứ làm từ trên xuống. Việc nào cũng <b>không đụng tới đơn hàng đã bán</b>, '+
     'và cái nào lỡ bấm nhầm cũng sửa lại được.</div></div>'+
     (viec.length?viec.map(function(v,i){
-      return '<div class="card" style="border-left:4px solid '+(v.nhe?'var(--info)':'var(--warn)')+'">'+
+      return '<div class="card" style="border-left:4px solid '+(v.nhe?'var(--info)':'var(--warn)')+';position:relative">'+
+        (v.an?'<button class="dlgX" style="position:absolute;top:10px;right:10px" title="Ẩn tới khi có phiếu mới" '+
+          'onclick="anViec_(\''+v.an[0]+'\','+v.an[1]+')">✕</button>':'')+
         '<div style="display:flex;gap:10px;align-items:flex-start">'+
           '<div style="flex:none;width:26px;height:26px;border-radius:50%;background:var(--c2);'+
             'display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px">'+(i+1)+'</div>'+
@@ -3614,6 +3619,7 @@ function luuVon(){
   }
 
   set('so',SO); $('dlgVon').close(); veSo(); veBC(); veCB(); veGia(); vePhat(); nhanCB(); daySuaVon();
+  if(rong) dayVon(false);   // 23/09: giá vốn 'dùng cho mọi nơi' phải lên Sheet ngay, máy kia mới thấy
   if(rong){
     bao('soMsg','Đã lưu giá vốn cho đơn <b>'+esc(d.ma)+'</b>, ghi vào <b>bảng giá</b>'+
       (lanToa?(', và điền luôn cho <b>'+lanToa+' đơn khác</b> đang treo vì thiếu giá vốn'):'')+'. '+
@@ -4688,11 +4694,27 @@ function veCB(){
     }).join('')+'</table></div>';
   $('cb').innerHTML=gia+tt+h; nhanCB();
 }
+function anViec_(k,n){ var a=get('anviec',{}); a[k]=n; set('anviec',a); veLam() }
 function vonNhanh(sku,v){
   if(!GIA[sku]) return;
   GIA[sku].von=n2(v)||null; GIA[sku].moi=false;
   GIA[sku].suaTay=true; GIA[sku].vonLuc=nowStr(); set('gia',GIA);
-  bao('inMsg','Đã điền giá vốn cho '+esc(sku)+'. Bấm "Tính lại" để đưa đơn vào báo cáo.','ok');
+  vonNhanhHen_();
+}
+/* SỬA 23/09/2026 — phiếu kỹ sư 10/09: "chỉnh giá ở đây có cập nhật toàn hệ thống không,
+   cảnh báo có tự hết không?". Trước: chỉ ghi vào máy này, phải tự bấm Tính lại và tự
+   bấm "Lưu giá vốn lên Sheet" ở tab khác. Nay: điền xong (rời ô) là tự tính lại đơn đang
+   chờ + tự lưu lên Sheet (máy quản lý kia, bảng giá cùng nhận). Đợi tới khi con trỏ rời
+   hẳn các ô giá vốn mới vẽ lại — vẽ lại giữa chừng sẽ làm văng ô đang gõ kế tiếp. */
+var VON_NHANH_HEN=0;
+function vonNhanhHen_(){
+  clearTimeout(VON_NHANH_HEN);
+  VON_NHANH_HEN=setTimeout(function(){
+    var a=document.activeElement;
+    if(a && a.tagName==='INPUT' && a.closest && a.closest('#cb')){ vonNhanhHen_(); return }   // còn đang gõ ô khác
+    tinhLai(); dayVon(false);
+    bao('giaMsg','Đã lưu giá vốn lên Sheet và tính lại các đơn đang chờ.','ok');
+  }, 1200);
 }
 
 
@@ -5778,6 +5800,12 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260923h', ngay:'23/09/2026', ten:'Làm nốt phiếu kỹ sư',
+  vaPhieu:[],
+  muc:[
+   ['sua','Sửa giá vốn ở tab <b>Cảnh báo</b> (ô điền nhanh) hoặc chọn "dùng cho mọi nơi" ở Sổ cái giờ <b>tự lưu lên Sheet và tự tính lại đơn</b> — cảnh báo tự hết, máy quản lý kia cũng thấy. Trước phải tự bấm Tính lại + Lưu giá vốn.'],
+   ['moi','Việc "Nhân viên báo … chỗ trục trặc" ở tab Cần làm có nút <b>✕</b> để ẩn — có phiếu mới thì tự hiện lại.']
+  ]},
  {ban:'20260923g', ngay:'23/09/2026', ten:'Báo cáo công nợ + xuất danh sách đi thu',
   vaPhieu:[],
   muc:[
