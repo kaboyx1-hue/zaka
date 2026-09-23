@@ -775,7 +775,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260923j';
+var APP_VER='20260923k';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -5084,9 +5084,10 @@ function nsQuyTrinh_(p){
   if(p.key==='giamdoc') return [{id:'dn',t:'Đăng nhập',ok:true,bb:false,h:'Chủ vào bằng mật khẩu quản lý — không cần mã NV hay mật khẩu trang công việc'}];
   s.push({id:'ma',t:'Mã nhân viên',ok:!!p.code,bb:true,h:p.code?'Mã '+p.code+' — dùng để đăng nhập':'Chưa có mã → không đăng nhập được trang công việc'});
   s.push({id:'bophan',t:'Xếp vào bộ phận',ok:ds.length>0,bb:true,h:ds.length?'Thấy việc của: '+ds.map(function(k){return NS_PHONG[k]}).join(', '):'Chưa có bộ phận → không thấy việc nào, không ai giao việc được cho người này'});
-  s.push({id:'mk',t:'Mật khẩu trang công việc',ok:!!String(p.mk||''),bb:true,h:String(p.mk||'')?'Đăng nhập được trên điện thoại':'Chưa đặt → mở link công việc sẽ bị từ chối'});
-  if(Number(p.real)) s.push({id:'maybh',t:'Tài khoản máy bán hàng',ok:!!x&&x.trangthai!=='NGUNG',bb:false,h:x?(x.trangthai==='NGUNG'?'Đang bị ngưng → không lên đơn được':'Mã đăng nhập máy bán hàng: '+esc(x.key||'')):'Không thấy trên danh sách tài khoản'});
-  s.push({id:'sdt',t:'Số điện thoại',ok:!!String(p.sdt||''),bb:qtBatBuoc_('sdt'),h:String(p.sdt||'')?esc(p.sdt)+' — đăng nhập bằng số này cũng được':'Chưa có → khó liên lạc, không gửi link Zalo được'});
+  if(Number(p.real)) s.push({id:'mk',t:'Đăng nhập trang công việc',ok:!!x&&x.trangthai==='HOAT DONG',bb:true,h:'Dùng mã '+esc(p.code||'')+' + mã đăng nhập máy bán hàng'});
+  else s.push({id:'mk',t:'Mật khẩu trang công việc',ok:!!String(p.mk||''),bb:true,h:String(p.mk||'')?'Đăng nhập được trên điện thoại':'Chưa đặt → mở link công việc sẽ bị từ chối'});
+  if(false) s.push({id:'maybh',t:'Tài khoản máy bán hàng',ok:!!x&&x.trangthai!=='NGUNG',bb:false,h:x?(x.trangthai==='NGUNG'?'Đang bị ngưng → không lên đơn được':'Mã đăng nhập máy bán hàng: '+esc(x.key||'')):'Không thấy trên danh sách tài khoản'});
+  if(!Number(p.real)) s.push({id:'sdt',t:'Số điện thoại',ok:!!String(p.sdt||''),bb:qtBatBuoc_('sdt'),h:String(p.sdt||'')?esc(p.sdt)+' — đăng nhập bằng số này cũng được':'Chưa có → khó liên lạc, không gửi link Zalo được'});
   if(ship){ s.push({id:'luong',t:'Lương/giờ shipper',ok:!!(sh&&sh.luongGio>0),bb:qtBatBuoc_('luong'),h:sh&&sh.luongGio>0?VN(sh.luongGio)+'đ/giờ → tính vào chi phí giao ở Tính giá sàn':'Chưa khai → bảng tính giá đang tính tiền công giao = 0đ'});
     s.push({id:'bien',t:'Biển số xe',ok:!!(sh&&sh.bienSo),bb:qtBatBuoc_('bien'),h:sh&&sh.bienSo?esc(sh.bienSo):'Chưa có → phiếu nhà xe in thiếu biển số'}) }
   // công đoạn chủ tự thêm: chung mọi bộ phận + riêng từng bộ phận người này thuộc về
@@ -5149,13 +5150,12 @@ function veQuyTrinhBp_(bp){
     '<div class="sm" style="margin:6px 0 10px">Các công đoạn một người '+(bp==='*'?'':'ở '+ten+' ')+'phải qua. Công đoạn <b>bắt buộc</b> mà chưa xong thì người đó <b>không đăng nhập được trang công việc, không nhận được việc</b>. '+
     tv.length+' người trong phạm vi · <b style="color:'+(chan.length?'var(--bad)':'var(--ok)')+'">'+chan.length+' người đang bị chặn</b>'+(chan.length?' ('+chan.map(function(p){return esc(p.name)}).join(', ')+')':'')+'.</div>';
   // bước có sẵn
-  h+='<div class="sm" style="font-weight:700;margin:4px 0">Bước có sẵn</div>';
-  [['ma','Mã nhân viên'],['bophan','Xếp vào bộ phận'],['mk','Mật khẩu trang công việc']].forEach(function(b){
-    h+='<div class="ns-st ok"><span>🔒</span><div><b>'+b[1]+'</b> <span class="tag">luôn bắt buộc</span></div></div>' });
+  h+='<div class="sm" style="font-weight:700;margin:4px 0">Bước có sẵn — chọn cái nào bắt buộc</div>';
+  h+='<div class="sm" style="margin-bottom:6px">Mã NV, bộ phận và cách đăng nhập máy tự kiểm sẵn — không cần thiết lập ở đây.</div>';
   Object.keys(QT_TUY_CHON).forEach(function(id){ if((id==='luong'||id==='bien') && bp!=='ship' && bp!=='*') return;
     var bat=qtBatBuoc_(id), n=qtAnhHuong_(id,bp==='*'?'*':bp).length;
     h+='<div class="ns-st '+(bat?'thieu':'ok')+'"><span>'+(bat?'!':'·')+'</span><div><b>'+QT_TUY_CHON[id]+'</b> '+
-      '<label class="sm" style="margin-left:8px"><input type="checkbox" '+(bat?'checked':'')+' onchange="qtBatTuyChon(\''+id+'\',this.checked)"> bắt buộc</label>'+
+      '<label class="sm" style="margin-left:8px"><input type="checkbox" '+(bat?'checked':'')+' onchange="qtBatTuyChon(\''+id+'\',this.checked)"> Bắt buộc <span title="Chưa có thì người đó chưa được làm việc">(chưa có thì chưa cho làm việc)</span></label>'+
       '<div class="sm">'+(id!=='sdt'?'Chỉ áp dụng cho shipper. ':'')+'Áp dụng mọi bộ phận. '+n+' người đang thiếu'+(bat&&n?' → đang bị chặn':'')+'.</div></div></div>' });
   // công đoạn tự thêm
   var ds=qtCuaBp_(bp), chung=bp==='*'?[]:qtCuaBp_('*');
@@ -5164,11 +5164,11 @@ function veQuyTrinhBp_(bp){
   ds.forEach(function(c,i){ var n=qtAnhHuong_(c.id,bp).length;
     h+='<div class="ns-st '+(Number(c.batBuoc)?'thieu':'ok')+'"><span>'+(i+1)+'</span><div>'+
       '<div class="row" style="gap:6px;align-items:center;flex-wrap:wrap">'+
-      '<input value="'+esc(c.ten)+'" style="flex:1 1 180px;font-weight:700" onchange="qtSua(\''+c.id+'\',\'ten\',this.value)">'+
-      '<label class="sm"><input type="checkbox" '+(Number(c.batBuoc)?'checked':'')+' onchange="qtSua(\''+c.id+'\',\'batBuoc\',this.checked)"> bắt buộc</label>'+
+      '<label class="sm" style="flex:1 1 180px">Tên công đoạn<input value="'+esc(c.ten)+'" style="font-weight:700;width:100%" onchange="qtSua(\''+c.id+'\',\'ten\',this.value)"></label>'+
+      '<label class="sm"><input type="checkbox" '+(Number(c.batBuoc)?'checked':'')+' onchange="qtSua(\''+c.id+'\',\'batBuoc\',this.checked)"> Bắt buộc (chưa xong thì chưa cho làm việc)</label>'+
       '<button class="mini" onclick="qtDoiCho(\''+c.id+'\',-1)" title="Lên">↑</button><button class="mini" onclick="qtDoiCho(\''+c.id+'\',1)" title="Xuống">↓</button>'+
       '<button class="mini" style="color:var(--bad)" onclick="qtXoa(\''+c.id+'\')">Xoá</button></div>'+
-      '<input value="'+esc(c.moTa||'')+'" placeholder="Mô tả / hướng dẫn (không bắt buộc)" style="margin-top:4px;width:100%" onchange="qtSua(\''+c.id+'\',\'moTa\',this.value)">'+
+      '<label class="sm" style="display:block;margin-top:4px">Hướng dẫn cho nhân viên (không bắt buộc)<input value="'+esc(c.moTa||'')+'" placeholder="Ví dụ: xem video hướng dẫn, làm thử 3 đơn có người kèm" style="width:100%" onchange="qtSua(\''+c.id+'\',\'moTa\',this.value)"></label>'+
       '<div class="sm">'+n+' người chưa xong'+(Number(c.batBuoc)&&n?' → đang bị chặn':'')+'. Tích "đã xong" cho từng người trong hồ sơ của họ.</div></div></div>' });
   if(chung.length) h+='<div class="sm" style="margin-top:6px">Cộng thêm '+chung.length+' công đoạn chung mọi bộ phận: '+chung.map(function(c){return esc(c.ten)+(Number(c.batBuoc)?' (bắt buộc)':'')}).join(', ')+' — sửa ở nút "⚙ Quy trình chung".</div>';
   // thêm mới
@@ -5176,7 +5176,7 @@ function veQuyTrinhBp_(bp){
     '<div class="row" style="gap:6px;margin-top:6px;flex-wrap:wrap;align-items:center">'+
     '<input id="qtTenMoi" placeholder="Ví dụ: Học quy trình soạn hàng, Ký hợp đồng thử việc…" style="flex:1 1 220px">'+
     '<select id="qtPvMoi" style="width:auto"><option value="'+bp+'">'+(bp==='*'?'Mọi bộ phận':'Chỉ '+ten)+'</option>'+(bp==='*'?'':'<option value="*">Mọi bộ phận</option>')+'</select>'+
-    '<label class="sm"><input type="checkbox" id="qtBbMoi"> bắt buộc</label>'+
+    '<label class="sm"><input type="checkbox" id="qtBbMoi"> Bắt buộc (chưa xong thì chưa cho làm việc)</label>'+
     '<button class="btn-nho" onclick="qtThem(\''+bp+'\')">Thêm</button></div>'+
     '<input id="qtMtMoi" placeholder="Mô tả / hướng dẫn (không bắt buộc)" style="margin-top:6px;width:100%"></div>';
   return h+'</div>';
@@ -5206,7 +5206,8 @@ function nsHauQua_(p,hd){
   }
   return out }
 function nsLinkCv_(){ try{ return new URL('truc.html', location.href).href }catch(e){ return 'truc.html' } }
-function nsChep3_(key){ var p=nsNguoi_(key); nsChep_('Link: '+nsLinkCv_()+'\nMã đăng nhập: '+p.code+'\nMật khẩu: '+p.mk,'link + mã + mật khẩu') }
+function nsChep3_(key){ var p=nsNguoi_(key), x=nsNV_(p), mk=Number(p.real)&&x?x.key:p.mk;
+  nsChep_('Link: '+nsLinkCv_()+'\nMã đăng nhập: '+p.code+'\nMật khẩu: '+mk+(Number(p.real)?' (mã đăng nhập máy bán hàng)':''),'link + mã + mật khẩu') }
 function nsChep_(txt,nhan){
   function lo(){ prompt('Chép thủ công '+nhan+':', txt) }
   try{ navigator.clipboard.writeText(txt).then(function(){ bao('nsMsg','Đã chép '+nhan+'.','ok') }, lo) }catch(e){ lo() } }
@@ -5243,12 +5244,22 @@ function nsGhiNV_(them){
 function nsPhong(key,dk){
   var p=nsNguoi_(key); if(!p) return;
   if(nsPhong_(p).indexOf(dk)>=0){
-    var hq=nsHauQua_(p,{loai:'boPhong',dk:dk});
-    if(hq.length===1 && /Không kéo theo gì/.test(hq[0])){ NS_HD={loai:'boPhong',dk:dk}; nsLam(); return }   // không ảnh hưởng gì: bỏ luôn
-    NS_HD={loai:'boPhong',dk:dk}; veNsHoSo_(); nsCuonToiHq_(); return   // có hệ quả: xem trước rồi mới làm
+    /* SỬA 23/09/2026 (chủ báo 2 lần "không bỏ chọn được"): trước mở khung xem trước ở đầu hồ sơ
+       và chờ bấm Đồng ý — nhìn như bấm không ăn. Nay bỏ NGAY; hệ quả hiện ngay dưới hàng bộ phận,
+       kèm nút Hoàn tác (trả lại bộ phận, vai trò trưởng và người phụ trách các việc). */
+    var hq=nsHauQua_(p,{loai:'boPhong',dk:dk}).filter(function(x){ return !/Không kéo theo gì/.test(x) });
+    NS_HOANTAC={key:key, dk:dk, depts:p.depts, leadOf:p.leadOf,
+      viec:TRUC_VIEC.filter(function(t){ return t.owner===p.key&&t.dept===dk&&t.status!=='done' }).map(function(t){ return t.id })};
+    NS_BAO_PHONG={key:key, html:'Đã bỏ khỏi <b>'+NS_PHONG[dk]+'</b>'+(hq.length?' — kéo theo: '+hq.join(' '):'.')};
+    NS_HD={loai:'boPhong',dk:dk}; NS_CHON=key; nsLam(); return
   }
   var ds=nsPhong_(p); ds.push(dk); nsDatPhong_(p,ds); nsLuu_();
 }
+var NS_HOANTAC=null, NS_BAO_PHONG=null;
+function nsHoanTac(){ var h=NS_HOANTAC, p=h&&nsNguoi_(h.key); if(!p) return;
+  p.depts=h.depts; p.leadOf=h.leadOf;
+  TRUC_VIEC.forEach(function(t){ if(h.viec.indexOf(t.id)>=0) t.owner=p.key });
+  NS_HOANTAC=null; NS_BAO_PHONG={key:h.key, html:'Đã hoàn tác — trả lại '+NS_PHONG[h.dk]+'.'}; nsLuu_(h.viec.length>0) }
 function nsTruongBat(key,dk){
   var p=nsNguoi_(key); if(!p) return;
   var ds=nsTruong_(p), k=ds.indexOf(dk);
@@ -5343,15 +5354,17 @@ function veNsHoSo_(){
     '<input class="ns-ten" value="'+esc(p.name)+'" onchange="nsSua('+k+',\'name\',this.value)" aria-label="Tên">'+
     '<div class="sm">'+(p.code?esc(p.code):(p.key==='giamdoc'?'không cần mã NV':'chưa có mã NV <button class="mini" onclick="nsCapMa('+k+')">Cấp mã tự động</button>'))+(Number(p.real)?' · 🔒 có tài khoản máy bán hàng — đổi tên ở đây là đổi luôn bên đó':'')+'</div></div>'+
     '<span class="tag '+(lam?'':'w')+'">'+(lam?'Đang làm':'Đã ngưng')+'</span></div>'+
-    '<div class="ns-f"><label class="sm">Số điện thoại<input value="'+esc(p.sdt||'')+'" inputmode="tel" onchange="nsSua('+k+',\'sdt\',this.value)"></label>'+
-    '<label class="sm">Mật khẩu trang công việc<input value="'+esc(p.mk==null?'':p.mk)+'" placeholder="chưa đặt" onchange="nsSua('+k+',\'mk\',this.value)"></label>'+
+    (Number(p.real)?'<div class="sm" style="margin-top:10px">Đăng nhập trang công việc bằng <b>'+esc(p.code||'')+'</b> + <b>mã đăng nhập máy bán hàng</b> — không cần số điện thoại hay mật khẩu riêng.</div><div class="ns-f">'
+     :'<div class="ns-f"><label class="sm">Số điện thoại<input value="'+esc(p.sdt||'')+'" inputmode="tel" onchange="nsSua('+k+',\'sdt\',this.value)"></label>'+
+    '<label class="sm">Mật khẩu trang công việc<input value="'+esc(p.mk==null?'':p.mk)+'" placeholder="chưa đặt" onchange="nsSua('+k+',\'mk\',this.value)"></label>')+
     (sh&&ds.indexOf('ship')>=0?'<label class="sm">Lương/giờ (đ)<input value="'+(sh.luongGio||0).toLocaleString('vi-VN')+'" inputmode="numeric" oninput="dinhDangTien(this)" onchange="nsShipSua('+k+',\'luongGio\',this.value)"></label>'+
         '<label class="sm">Biển số xe<input value="'+esc(sh.bienSo||'')+'" onchange="nsShipSua('+k+',\'bienSo\',this.value)"></label>':'')+'</div>'+
     '<div class="sm" style="margin-top:12px">Bộ phận — bấm để thêm/bỏ · ★ = trưởng bộ phận</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:5px">'+
     Object.keys(NS_PHONG).map(function(dk){ var co=ds.indexOf(dk)>=0, laTr=tr.indexOf(dk)>=0;
       return '<span style="display:inline-flex;gap:2px"><button class="chip'+(co?' on':'')+'" aria-pressed="'+co+'" onclick="nsPhong('+k+',\''+dk+'\')">'+NS_PHONG[dk]+'</button>'+
-        (co?'<button class="chip'+(laTr?' on':'')+'" aria-pressed="'+laTr+'" title="Trưởng bộ phận" onclick="nsTruongBat('+k+',\''+dk+'\')">★</button>':'')+'</span>'}).join('')+'</div>';
-  if(p.code&&String(p.mk||'')) h+='<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px"><button class="btn-nho" onclick="nsChep_(nsLinkCv_(),\'đường link\')">🔗 Chép link trang công việc</button>'+
+        (co?'<button class="chip'+(laTr?' on':'')+'" aria-pressed="'+laTr+'" title="Trưởng bộ phận" onclick="nsTruongBat('+k+',\''+dk+'\')">★</button>':'')+'</span>'}).join('')+'</div>'+
+    (NS_BAO_PHONG&&NS_BAO_PHONG.key===p.key?'<div class="msg wa" style="margin-top:8px">'+NS_BAO_PHONG.html+(NS_HOANTAC&&NS_HOANTAC.key===p.key?' <button class="mini" onclick="nsHoanTac()">↶ Hoàn tác</button>':'')+'</div>':'');
+  if(p.code&&(String(p.mk||'')||Number(p.real))) h+='<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px"><button class="btn-nho" onclick="nsChep_(nsLinkCv_(),\'đường link\')">🔗 Chép link trang công việc</button>'+
     '<button class="btn-nho" onclick="nsChep3_('+k+')">📋 Chép link + mã + mật khẩu (gửi Zalo)</button></div>';
   h+='</div>';
   var thieuBB=nsThieuBB_(p);
@@ -5382,7 +5395,7 @@ function veNsMap_(p,L){
     ['Ô chọn người giao',ship?'có tên':'không phải shipper',ship,!ship],
     ['Tính giá sàn (lương)',ship?(sh&&sh.luongGio?VN(sh.luongGio)+'đ/giờ':'thiếu lương'):'không tính',ship&&sh&&sh.luongGio>0,!ship],
     ['Sổ cái',(L.donLen.length+L.donGiao.length)+' đơn',true,false]];
-  var W=640,H=230,cx=320,cy=115,pos=[[110,40],[530,40],[90,190],[550,190],[320,205]], s='<svg viewBox="0 0 640 230" style="width:100%;height:auto;margin-top:10px" role="img" aria-label="Những nơi đang dùng hồ sơ này">';
+  var W=640,H=230,cx=320,cy=115,pos=[[110,40],[530,40],[90,190],[550,190],[320,205]], s='<svg viewBox="0 0 640 230" style="width:100%;max-width:420px;height:auto;margin:8px auto 0;display:block" role="img" aria-label="Những nơi đang dùng hồ sơ này">';
   function mau(n){return n[3]?'var(--line)':n[2]?'var(--ok)':'var(--bad)'}
   nut.forEach(function(n,i){s+='<line x1="'+cx+'" y1="'+cy+'" x2="'+pos[i][0]+'" y2="'+pos[i][1]+'" stroke="'+mau(n)+'" stroke-width="2"'+(n[2]||n[3]?'':' stroke-dasharray="5 5"')+'/>'});
   s+='<circle cx="'+cx+'" cy="'+cy+'" r="30" fill="var(--c2)" stroke="var(--acc)" stroke-width="2"/><text x="'+cx+'" y="'+(cy+4)+'" text-anchor="middle" fill="var(--tx)" font-size="12" font-weight="700">'+esc(p.name)+'</text>';
@@ -5567,7 +5580,7 @@ function veMayGui(){
      đi (NV04…) không bao giờ hiện ở bảng này — chủ không thấy được máy đó còn
      sống hay đã im. Nay lấy đúng những máy Sheet báo về (MAYGUI), hợp thêm 3 máy
      gốc để bảng không bị trống khi chưa máy nào kịp gửi lần nào. */
-  var mays=Object.keys(MAYGUI).concat(['NV01','NV02','NV03'])
+  var mays=Object.keys(MAYGUI).filter(function(m){ return !/^KiemTra|^TEST/i.test(String((MAYGUI[m]||{}).nv||'')) })
     .filter(function(m,i,a){ return m && a.indexOf(m)===i })
     .sort();
   $('dsMay').innerHTML='<table><tr><th>Máy</th><th>Người gửi cuối</th><th>Lúc</th><th></th></tr>'+
@@ -5578,10 +5591,11 @@ function veMayGui(){
       return '<tr><td><b>'+m+'</b></td><td>'+(thu?'<span class="sm">gói thử kết nối lúc cài đặt — chưa có đơn thật nào gửi từ máy này</span>':esc(x?x.nv:'—'))+'</td>'+
         '<td>'+esc(x?mayGuiLuc_(x.luc):'chưa gửi lần nào')+'</td>'+
         '<td class="r">'+(!x?'<span style="color:var(--tx2)">—</span>'
-          : tre>24?'<span style="color:var(--bad)">im '+Math.round(tre)+' giờ</span>'
-          : tre>4 ?'<span style="color:var(--warn)">im '+Math.round(tre)+' giờ</span>'
+          : tre>48?'<span style="color:var(--bad)">offline '+Math.round(tre/24)+' ngày</span>'
+          : tre>24?'<span style="color:var(--bad)">offline '+Math.round(tre)+' giờ</span>'
+          : tre>4 ?'<span style="color:var(--warn)">offline '+Math.round(tre)+' giờ</span>'
           :'<span style="color:var(--ok)">ổn</span>')+'</td></tr>'}).join('')+'</table>'+
-    '<div class="sm mt">Máy nào im quá lâu thì hoặc đang tắt, hoặc đang kẹt không đẩy được đơn lên.</div>';
+    '<div class="sm mt">Máy nào offline quá lâu thì hoặc đang tắt, hoặc đang kẹt không đẩy được đơn lên.</div>';
 }
 /* Giờ gửi có lúc về dạng ISO (Sheets tự đổi "05/09/2026 09:.." thành ngày) — đổi lại cho dễ đọc. */
 function mayGuiLuc_(luc){ var s=String(luc||''); if(/^\d{4}-\d{2}-\d{2}T/.test(s)){ var d=new Date(s); if(!isNaN(d)) return d.toLocaleString('vi-VN') } return s }
@@ -6018,6 +6032,15 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260923k', ngay:'23/09/2026', ten:'Sửa theo 9 phiếu tab Nhân sự',
+  vaPhieu:[],
+  vaNoi:["tôi không thể bỏ chọn được", "không rõ ràng", "không hiểu cái này", "chẳng phải trước đó ở cấu hình đã làm sẵn rồi sao ?", "nếu đã là nhân viên thuộc kinh doanh thì không cần phải điền cái này vì nó đã được tích hợp sẵn trong file Nhân viên rồi cần gì làm nữa, cái này chỉ dành cho các bộ phận khác thôi", "cái bảng này kích thước quá lớn một cách không cần thiết", "vậy nó ở đây với mục đích gì", "thay từ im bằng offline", "lỗi không thể bỏ chọn ở nhiều tag khác nhau"],
+  muc:[
+   ['sua','Tab <b>Nhân sự</b>: bấm bỏ một bộ phận là <b>bỏ ngay</b> — hệ quả hiện ngay bên dưới kèm nút <b>↶ Hoàn tác</b> (trước phải bấm Đồng ý ở khung phía trên nên nhìn như không bỏ được).'],
+   ['moi','Nhân viên có tài khoản máy bán hàng (kinh doanh) <b>không cần số điện thoại hay mật khẩu riêng</b> — vào trang công việc bằng mã NV + mã đăng nhập máy bán hàng.'],
+   ['sua','Thiết lập quy trình: bỏ các dòng "luôn bắt buộc" gây rối, ghi rõ "Bắt buộc = chưa xong thì chưa cho làm việc", có nhãn cho từng ô. Sơ đồ trong hồ sơ nhỏ gọn lại.'],
+   ['sua','Máy bán hàng: bỏ dòng gói thử kết nối; "im" đổi thành <b>offline</b> (lâu thì tính theo ngày).']
+  ]},
  {ban:'20260923j', ngay:'23/09/2026', ten:'Quy trình theo bộ phận + bước bắt buộc',
   vaPhieu:[],
   vaNoi:["không thể bỏ chọn các tag đã bấm vào", "Không có cách nào khởi tạo mã nhân viên", "tích hợp số điện thoại thành tài khoản đăng nhập luôn", "bỏ phần này", "chỉ có khi nào được gắn tag là shipper thì tự động nhảy ra lương/giờ + biển số xe còn lại không cần", "Đối với các ban sự, cho phép admin tự thiết lập quy trình làm việc và khởi tạo các công đoạn bổ sung nếu cần thiết", "Nếu còn thiếu thì không thể hoạt động được, đây là bắt buộc", "chỗ này tôi khoogn hiểu bạn đang làm gì ?", "cho phép lọc các đơn quá số ngày mà mình thiết lập chọn, sau đó gửi thông báo trực tiếp tới nhân viên để thông báo đi thu hồi công nợ, cho phép chỉ định nhân viên thu hồi công nợ", "chưa có nút chụp hình lại dữ liệu trước và sau khi lọc", "cái này là gì ?", "đã có tab nhân sự cái này đâu cần để ở đây nữa, tích hợp vào đó đi", "lần trước đã xóa hết, sau bản cập nhật nó lại tự động dựng lại toàn bộ bản demo các việc làm mô phỏng  kỹ sư không thể trỏ chi tiết các mục, chỉ có thể trỏ tới phần khung ngoài cùng", "ở đây nên thêm tính năng : thay vì có 2 lựa chọn gộp hoặc không gộp thì phải có thêm mục có thể nêu ra được lý do để có thể sửa theo mong muốn", "Nút này có đẩy dữ liệu giá vốn lên mục bảng giá không , để tránh sau này phải cập nhật trên bảng giá 1 lần nữa", "ở mục sổ cái, thiếu phần mục chọn nhân viên để lọc ra đơn", "nếu xử lý sản phẩm ở cần làm rồi thì cảnh báo có cần thao tác lặp lại không.", "phần phí tiền chành xe và chi phí kiểm tra xem có bị mất liên kết với bên phía nhân viên không, tôi chỉ sợ họ có điền nhưng ở đây không nhảy dữ liệu", "Đổi màu sắc và công tắc này trông đẹp và hiện đại hơn , đồng điệu với toàn bộ hệ thống", "thêm mục theo sản phẩm, thay vì chỉ báo về thương hiệu. mặc định các mục này luôn thu gọn lại, chỉ khi nào cần mới mở ra", "ở mục này, chỉ có thể xem được dữ liệu tổng, còn chi tiết hơn thì không thể xem được, tôi cần có sự chi tiết hơn , mở rộng tính năng này, liên kết qua bên sổ cái", "Tôi cần các khổ in đều mặc định theo khổ 10x15cm", "phải có 1 cách nào đó để limit hiển thị đơn trong một trang, không thể dàn tất cả đơn ra giao diện này, kéo mệt nghỉ", "ở mục sửa giá vốn, giá vốn áp dụng cho toàn bộ hệ thống , nhưng nút bấm lại ghi là \"chỉ lưu đơn này\" là sai", "ví dụ trong đây có 2 đơn 14 và 15 có cùng mua 1 sản phẩm, khác khách, thì tôi chỉ cần biết là tôi chỉnh giá vốn 1 chỗ tất cả những chỗ khác có thể áp dụng được", "chỗ này nên thêm nút x để thoát ra ở phần top", "nếu tôi chỉnh giá ở đây, thì nó có cập nhật giá vốn ở toàn bộ hệ thống không, lúc này các hệ thống thông báo sẽ không hiển thị nữa đúng không ?", "lỗi tương tác với bảng, khó tìm được chỗ để mở ra xem chi tiết", "có vài trường hợp đã nhấn nút hai sản phẩm này khác nhau, nó vẫn hiện tiếp mà không có cách nào biến mất", "dạ khôi phục lại dùm em cái chỗ ghi tiền chành để trừ chi phí cho chị ạ", "Cần thêm tính năng tạo danh sách xuất ra dưới dạng excel hoặc hình ảnh để gửi cho nhân viên để đi thu hồi công nợ"],
@@ -6623,6 +6646,7 @@ function chuanNoi_(t){
 }
 function khoaPhieuNV_(x){ return String(x.may||'')+'|'+chuanNoi_(x.noi) }
 
+var KS_DA_GUI_VA={};
 function ksDoiChieuBanVa(){
   var tra={};
   CAP_NHAT.forEach(function(b){ (b.vaPhieu||[]).forEach(function(l){ tra[String(l).trim()]=b }) });
@@ -6657,7 +6681,10 @@ function ksDoiChieuBanVa(){
       var g = traNoi[chuanNoi_(x.noi)] || null;
       if(!b && !g) return;
       var k=khoaPhieuNV_(x);
-      if(KS_XONG[k]) return;
+      /* SỬA 23/09/2026 — phiếu máy này đã ẩn từ trước (KS_XONG) trước đây bị bỏ qua luôn nên Sheet
+         vẫn "CHO DUYET" mãi (35 phiếu cũ). Nay vẫn gửi đánh dấu DA VA — mỗi phiên 1 lần. */
+      if(KS_XONG[k]){ if(!KS_DA_GUI_VA[k]){ KS_DA_GUI_VA[k]=1; guiVa.push({luc:x.luc||'', may:x.may||'', noi:x.noi||'', tt:'DA VA', chuGhi:'Đã vá'}) } return }
+      KS_DA_GUI_VA[k]=1;
       KS_XONG[k]={luc:x.luc||'', noi:x.noi||'', ban:(b&&b.ban)||(g&&g.vaBan)||'', danhDau:nay};
       guiVa.push({luc:x.luc||'', may:x.may||'', noi:x.noi||'', tt:'DA VA', chuGhi:'Đã vá ở bản '+((b&&b.ban)||(g&&g.vaBan)||'')});
       doiNV=true;
