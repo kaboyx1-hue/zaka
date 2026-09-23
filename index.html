@@ -958,7 +958,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260918b';
+var APP_VER='20260923a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -2539,17 +2539,28 @@ function huyHieuKhach_(sdt, ds){
   cua.forEach(function(d){ tongChiK+=Number(d.tong)||0; var k=d.kenh||'?'; dem[k]=(dem[k]||0)+1 });
   var kenh='', max=0;
   Object.keys(dem).forEach(function(k){ if(dem[k]>max){ max=dem[k]; kenh=k } });
-  var mang=[];
-  if(cua.length<=1) mang.push({loai:'moi',nhan:'Khách mới'});
+  /* SUA 23/09/2026 — chu bao "da Khach quen sao con la Khach moi nua": "moi"
+     truoc day gan doc lap theo SO DON (<=1), khong biet gi den cac huy hieu
+     theo CHI TIEU (quen/vip/vvip) o duoi — mot khach MOI mua LAN DAU nhung
+     mua mot don LON (vd 4,6tr) da du nguong "quen" thi dinh CA HAI huy hieu
+     cung luc, mau thuan nhau (vua moi vua quen). Gio tinh bac chi tieu TRUOC,
+     "moi" CHI hien khi KHONG dinh bac nao (quen/vip/vvip) — con neu la kenh
+     Si/Breeder (chua toi bac nao) thi "moi" van hien binh thuong, khong doi
+     y nghia "lan dau mua kenh nay". */
+  var mang=[], dinhBac=false;
+  var theKenh=null;
   if(kenh==='Sỉ'){
-    mang.push({loai:'si',nhan:'Sỉ'});
+    theKenh={loai:'si',nhan:'Sỉ'};
   } else if(kenh==='Breeder'){
-    mang.push({loai:'breeder',nhan:'Breeder'});
-    if(tongChiK>=NGUONG_VVIP_BREEDER_) mang.push({loai:'vvip',nhan:'VVIP'});
+    theKenh={loai:'breeder',nhan:'Breeder'};
+    if(tongChiK>=NGUONG_VVIP_BREEDER_) dinhBac={loai:'vvip',nhan:'VVIP'};
   } else {
-    if(tongChiK>=NGUONG_VIP_) mang.push({loai:'vip',nhan:'VIP'});
-    else if(tongChiK>=NGUONG_QUEN_) mang.push({loai:'quen',nhan:'Khách quen'});
+    if(tongChiK>=NGUONG_VIP_) dinhBac={loai:'vip',nhan:'VIP'};
+    else if(tongChiK>=NGUONG_QUEN_) dinhBac={loai:'quen',nhan:'Khách quen'};
   }
+  if(cua.length<=1 && !dinhBac) mang.push({loai:'moi',nhan:'Khách mới'});
+  if(theKenh) mang.push(theKenh);
+  if(dinhBac) mang.push(dinhBac);
   return {mang:mang,soDon:cua.length,tongChi:tongChiK,kenh:kenh};
 }
 function huyHieuHTML_(sdt, ds){

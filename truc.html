@@ -489,7 +489,12 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 600; letter-spacing: -
 .alert-row { display: flex; align-items: center; gap: 12px; padding: 11px 4px; border-bottom: 1px solid var(--border); font-size: 13.5px; cursor: pointer; }
 .alert-row:last-child { border-bottom: none; }
 .dept-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.card-dept { font-size: 11px; font-weight: 700; margin-bottom: 4px; }
+.card-dept { font-size: 11px; font-weight: 700; margin-bottom: 4px; padding-right: 22px; }
+.card { position: relative; }
+.card-chon { position: absolute; top: 9px; right: 9px; width: 16px; height: 16px; cursor: pointer; accent-color: var(--coral); }
+.chon-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 12px; }
+.chon-bar.co { padding: 8px 10px; border-radius: 10px; background: var(--coral-soft); }
+.chon-dem { font-size: 12.5px; font-weight: 600; color: var(--coral); }
 .alert-row .task-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pill { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; flex-shrink: 0; }
 .pill.late { background: var(--coral-soft); color: var(--coral); }
@@ -1283,7 +1288,7 @@ function Dashboard({ tasks, onOpenTask, onAddTask, onJumpBoard, onGoReport }) {
 }
 
 /* ---------- Board ---------- */
-function TaskCard({ t, onOpen }) {
+function TaskCard({ t, onOpen, chon, setChon }) {
   const d = DEPTS[t.dept];
   const cl = t.checklist || [];
   const doneCount = cl.filter(c => c.done).length;
@@ -1292,6 +1297,9 @@ function TaskCard({ t, onOpen }) {
     style: { borderLeftColor: d.color },
     onClick: () => onOpen(t.id),
   },
+    chon && h('input', { type: 'checkbox', className: 'card-chon', checked: chon.indexOf(t.id) >= 0,
+      onClick: e => e.stopPropagation(),
+      onChange: e => setChon(e.target.checked ? chon.concat(t.id) : chon.filter(x => x !== t.id)) }),
     h('div', { className: 'card-dept', style: { color: d.color } }, d.icon + ' ' + d.name),
     h('div', { className: 't' }, t.title, t.recurring && h('span', { className: 'recur-tag', title: 'Việc lặp lại hằng ngày' }, ' 🔁')),
     cl.length > 0 && h('div', { className: 'progress-row' },
@@ -1387,8 +1395,9 @@ function roleInfo(p, deptKey) {
   return { icon: '👤', label: DEPTS[dk] ? DEPTS[dk].name : '' };
 }
 
-function Board({ tasks, onOpenTask, onAddTask, initialDept, initialOwner, initialOnlyOverdue, initialOnlyUnowned }) {
+function Board({ tasks, onOpenTask, onAddTask, onDeleteMany, initialDept, initialOwner, initialOnlyOverdue, initialOnlyUnowned }) {
   const [mobileStatus, setMobileStatus] = useState('todo');
+  const [chon, setChon] = useState([]);   // id viec dang tich de xoa hang loat
   const [q, setQ] = useState('');
   const [fDept, setFDept] = useState(initialDept || '');
   const [fOwner, setFOwner] = useState(initialOwner || '');
@@ -1431,13 +1440,34 @@ function Board({ tasks, onOpenTask, onAddTask, initialDept, initialOwner, initia
           h('input', { type: 'checkbox', checked: onlyUnowned, onChange: e => setOnlyUnowned(e.target.checked) }), 'Chỉ xem chưa nhận')),
       hasFilter && h('div', { className: 'filter-count' }, 'Đang lọc: ' + filtered.length + '/' + tasks.length + ' việc'),
 
+      /* Chon tat ca / xoa hang loat — "chon tat ca" chi tich nhung viec DANG HIEN
+         (theo bo loc), khong tich ngam viec bi loc an di. */
+      onDeleteMany && (() => {
+        const hienIds = filtered.map(t => t.id);
+        const chonCon = chon.filter(id => tasks.some(t => t.id === id));
+        const tichHet = hienIds.length > 0 && hienIds.every(id => chonCon.indexOf(id) >= 0);
+        return h('div', { className: 'chon-bar' + (chonCon.length ? ' co' : '') },
+          h('label', { className: 'chip-toggle' },
+            h('input', { type: 'checkbox', checked: tichHet,
+              onChange: e => setChon(e.target.checked
+                ? Array.from(new Set(chonCon.concat(hienIds)))
+                : chonCon.filter(id => hienIds.indexOf(id) < 0)) }),
+            'Chọn tất cả đang hiện (' + hienIds.length + ')'),
+          chonCon.length > 0 && h('span', { className: 'chon-dem' }, 'Đã chọn ' + chonCon.length + ' việc'),
+          chonCon.length > 0 && h('button', { className: 'btn danger-text', onClick: () => {
+            if (!window.confirm('Xoá ' + chonCon.length + ' việc đã chọn? Không hoàn lại được.')) return;
+            onDeleteMany(chonCon); setChon([]);
+          } }, '🗑 Xoá ' + chonCon.length + ' việc'),
+          chonCon.length > 0 && h('button', { className: 'btn', onClick: () => setChon([]) }, 'Bỏ chọn'));
+      })(),
+
       h('div', { className: 'board-desktop' },
         STATUS_COLS.map(col => {
           const items = sortByUrgency(filtered.filter(t => t.status === col.key));
           return h('div', { className: 'col', key: col.key },
             h('div', { className: 'col-head' }, h('h4', null, col.label), h('span', { className: 'col-count' }, items.length)),
             items.length === 0 && h('div', { className: 'empty-note' }, 'Không có việc nào.'),
-            items.map(t => h(TaskCard, { key: t.id, t, onOpen: onOpenTask })));
+            items.map(t => h(TaskCard, { key: t.id, t, onOpen: onOpenTask, chon: onDeleteMany ? chon : null, setChon })));
         })),
       h('div', { className: 'board-mobile' },
         h('div', { className: 'seg' },
@@ -1453,7 +1483,7 @@ function Board({ tasks, onOpenTask, onAddTask, initialDept, initialOwner, initia
           const items = sortByUrgency(filtered.filter(t => t.status === mobileStatus));
           return items.length === 0
             ? h('div', { className: 'empty-note' }, 'Không có việc nào ở mục này.')
-            : items.map(t => h(TaskCard, { key: t.id, t, onOpen: onOpenTask }));
+            : items.map(t => h(TaskCard, { key: t.id, t, onOpen: onOpenTask, chon: onDeleteMany ? chon : null, setChon }));
         })())));
 }
 
@@ -2542,22 +2572,43 @@ function App() {
      nut "ve mau goc" ben tren — nut do NAP LAI mau, nut nay XOA mau di.
      Giu lai: 9 viec that chuyen tu bang cu sang (id 201-209), 4 tai khoan that
      NV01-04, Chu va Vo chu. Bo: moi viec mau va nhung nguoi chi de demo. */
+  /* SUA 23/09/2026 — ban cu GIU LAI dung id 201..209 va XOA MOI THU KHAC. Nhung
+     viec chu tao moi co id = Date.now(), nguoi chu them moi co key 'p'+Date.now()
+     — bam nut nay la XOA SACH ca viec that lan nhan vien that (kem ma/mat khau)
+     chu da tao ke tu luc bat dau dung. Nguy hiem, da vá: gio chi xoa DUNG nhung
+     muc co trong ban mau goc (danh sach id/key co dinh ben duoi), con lai giu
+     het. Nguoi mau nao chu da CAP MA + MAT KHAU (tuc la da bien thanh nguoi
+     that) cung giu lai. Khong cham toi truong phong cua nguoi con lai, khong
+     go nguoi phu trach cua viec con lai. */
   function donNoiDungMau() {
-    const giuNguoi = ['linh', 'hai', 'trang', 'duy', 'giamdoc', 'phogiamdoc'];
+    const ID_VIEC_MAU = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 107, 108, 109, 110, 111];
+    const KEY_NGUOI_MAU = ['nga', 'phong', 'pk1', 'pk2', 'pk3', 'qc1'];
     const xd = String.fromCharCode(10);
-    const soViecMau = tasks.filter(t => !(t.id >= 201 && t.id <= 209)).length;
-    const soNguoiMau = Object.keys(PEOPLE).filter(k => giuNguoi.indexOf(k) < 0).length;
-    if (!window.confirm('Sẽ xoá ' + soViecMau + ' việc mẫu và ' + soNguoiMau + ' người mẫu.' + xd + xd
-      + 'Giữ lại: 9 việc thật chuyển từ bảng cũ sang, 4 tài khoản nhân viên thật (Văn/Hằng/Ngọc/Phú), Chủ và Vợ chủ.' + xd
-      + 'Không hoàn lại được. Tiếp tục?')) return;
+    const viecXoa = tasks.filter(t => ID_VIEC_MAU.indexOf(t.id) >= 0);
+    const nguoiXoa = KEY_NGUOI_MAU.filter(k => PEOPLE[k] && !(PEOPLE[k].code && PEOPLE[k].mk));
+    if (!viecXoa.length && !nguoiXoa.length) { window.alert('Không còn nội dung mẫu nào — đã dọn sạch từ trước.'); return; }
+    if (!window.confirm('Sẽ xoá ' + viecXoa.length + ' việc mẫu và ' + nguoiXoa.length + ' người mẫu.' + xd + xd
+      + 'CHỈ xoá nội dung mẫu có sẵn từ bản demo. Mọi việc anh/chị tự tạo, mọi nhân viên anh/chị tự thêm '
+      + 'hoặc đã cấp mã đăng nhập đều GIỮ NGUYÊN.' + xd + xd + 'Không hoàn lại được. Tiếp tục?')) return;
     const nguoiMoi = {};
-    giuNguoi.forEach(k => { if (PEOPLE[k]) nguoiMoi[k] = PEOPLE[k]; });
+    Object.keys(PEOPLE).forEach(k => { if (nguoiXoa.indexOf(k) < 0) nguoiMoi[k] = PEOPLE[k]; });
     PEOPLE = nguoiMoi;
-    DEPT_LEADS = { kd: [], kv: [], kt: [], mk: [], vs: [], ship: [], gd: [] };
+    const leads = {};
+    Object.keys(DEPT_LEADS).forEach(dk => { leads[dk] = dsTruong_(dk); });
+    DEPT_LEADS = leads;
     bumpPeople(v => v + 1);
-    setTasks(prev => prev.filter(t => t.id >= 201 && t.id <= 209).map(t => ({ ...t, owner: null })));
+    setTasks(prev => prev
+      .filter(t => ID_VIEC_MAU.indexOf(t.id) < 0)
+      .map(t => (t.owner && !PEOPLE[t.owner] ? { ...t, owner: null } : t)));
     setFeed([]);
     pushFeed('Người điều hành', 'dọn sạch nội dung mẫu', 'bắt đầu dùng thật', DEPTS.gd.color);
+  }
+  /* Xoa nhieu viec mot lan — tu o "Chon tat ca" tren Bang nhiem vu. */
+  function deleteMany(ids) {
+    if (!ids.length) return;
+    setTasks(prev => prev.filter(x => ids.indexOf(x.id) < 0));
+    pushFeed('Người điều hành', 'xoá ' + ids.length + ' việc cùng lúc', '', DEPTS.gd.color);
+    setOpenTaskId(null);
   }
   /* Y kien cua nhan vien: ghi thang vao nhat ky cua viec do, danh dau bang 💬 de
      man Tong quan cua chu loc ra duoc. Khong tao bang rieng — nhat ky la cho tu
@@ -2665,6 +2716,7 @@ function App() {
         view === 'dash' && h(Dashboard, { tasks, onOpenTask: setOpenTaskId, onAddTask: () => setModal({ mode: 'add' }), onJumpBoard: jumpToBoard, onGoReport: () => pushView('report') }),
         view === 'board' && h(Board, {
           key: JSON.stringify(boardFilters), tasks, onOpenTask: setOpenTaskId, onAddTask: () => setModal({ mode: 'add' }),
+          onDeleteMany: role === 'admin' ? deleteMany : null,
           initialDept: boardFilters.dept, initialOwner: boardFilters.owner, initialOnlyOverdue: boardFilters.onlyOverdue, initialOnlyUnowned: boardFilters.onlyUnowned,
         }),
         view === 'people' && h(People, { tasks, onTogglePersonDept: togglePersonDept, onAddPerson: addPerson, onJumpBoard: jumpToBoard, onSetLead: setLead, onSetPersonField: setPersonField }),
