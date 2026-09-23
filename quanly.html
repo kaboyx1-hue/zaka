@@ -753,7 +753,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260923b';
+var APP_VER='20260923c';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -5682,9 +5682,24 @@ async function duyetPhieuNV(i,dung){
     var r=await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'duyetks',
         ks:(x.ban||[x]).map(function(b){
-          return {luc:b.luc,may:b.may,tt:dung?'DA DUYET':'BO QUA',chuGhi:ghi} })})});
+          return {luc:b.luc,may:b.may,noi:b.noi||'',tt:dung?'DA DUYET':'BO QUA',chuGhi:ghi} })})});
     var j=JSON.parse(await r.text());
     if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
+    /* 23/09/2026: chủ báo phiếu cũ "chết" trong danh sách — dò ra Sheet có
+       khi KHÔNG khớp được dòng nào (lệch định dạng ô "Lúc") mà trước đây vẫn
+       báo thành công, khiến phiếu bị đánh dấu xong ở máy này nhưng Sheet vẫn
+       y nguyên "CHO DUYET" — mở máy khác lại thấy nó "sống lại". Từ nay: có
+       mục nào Sheet báo không khớp (j.khongKhop) thì KHÔNG coi là đã xong —
+       để nguyên trong danh sách, báo rõ cho chủ tự vào Sheet xử lý tay dòng
+       đó (đừng để nó biến mất khỏi tầm mắt trong khi vẫn treo thật). */
+    var khongKhop = j.khongKhop || [];
+    if(khongKhop.length === (x.ban||[x]).length){
+      $('ksErr').innerHTML='<div class="msg er">Sheet không tìm thấy đúng dòng để đánh dấu (có thể dòng đã bị sửa/xoá thủ công trên Sheet). '+
+        'Phiếu này vẫn còn "chờ duyệt" — anh/chị cần mở Google Sheet, tìm trang PHIEU_KY_SU, sửa tay cột Trạng thái đúng dòng '+
+        'lúc <b>'+esc(x.luc||'')+'</b>, máy <b>'+esc(x.may||'')+'</b>.</div>';
+      if(o) o.style.opacity='1';
+      return;
+    }
     (x.ban||[x]).forEach(function(b){ b.tt=dung?'DA DUYET':'BO QUA'; b.chuGhi=ghi });
     set('phieunv',PHIEU_NV);
     // Đánh dấu cục bộ NGAY (giống boQuaHetPhieuNV) — phòng khi lần đồng bộ kế
@@ -5705,7 +5720,8 @@ async function duyetPhieuNV(i,dung){
     if(o) o.remove();
     $('ksErr').innerHTML='<div class="msg ok">'+(dung
       ? 'Đã nhận. Phiếu này nằm trong tập gửi kỹ sư — bấm nút <b>🛠 Kỹ sư</b> rồi <b>Tải file gửi kỹ sư</b> khi muốn gửi.'
-      : 'Đã bỏ qua. Nhân viên không bị làm phiền gì thêm.')+'</div>';
+      : 'Đã bỏ qua. Nhân viên không bị làm phiền gì thêm.')+
+      (khongKhop.length?' <span style="color:var(--warn)">('+khongKhop.length+' bản trùng của phiếu này Sheet không khớp được dòng — có thể đã bị xoá/sửa tay từ trước, không sao cả.)</span>':'')+'</div>';
     veLam();
     if(!phieuNVChoDuyet().length) setTimeout(function(){ moPhieuNV() },600);
   }catch(e){
@@ -5941,19 +5957,28 @@ async function boQuaHetPhieuNV(){
   // ở cuối hàm (khi thành công) vẽ lại toàn bộ hộp thoại nên nút cũ (đang
   // khoá) bị thay hẳn bằng nút mới (đã mở); nhánh lỗi bên dưới tự mở lại.
   var bBQ=$('btnBoQuaHetPhieuNV'); if(bBQ) bBQ.disabled=true;
+  var khongKhop=[];
   try{
     var r=await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'duyetks',
-        ks:tatCa.map(function(b){ return {luc:b.luc,may:b.may,tt:'BO QUA',chuGhi:''} })})});
+        ks:tatCa.map(function(b){ return {luc:b.luc,may:b.may,noi:b.noi||'',tt:'BO QUA',chuGhi:''} })})});
     var j=JSON.parse(await r.text());
     if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
+    khongKhop=j.khongKhop||[];
   }catch(e){ if(bBQ) bBQ.disabled=false; alert('Không gửi lên Sheet được: '+e.message+'\n\nThử lại sau, chưa bỏ qua gì cả.'); return }
-  tatCa.forEach(function(b){ b.tt='BO QUA' });
+  var trongKho={}; khongKhop.forEach(function(k){ trongKho[String(k.luc||'')+'|'+String(k.may||'')]=1 });
+  tatCa.forEach(function(b){ if(!trongKho[String(b.luc||'')+'|'+String(b.may||'')]) b.tt='BO QUA' });
   set('phieunv',PHIEU_NV);
-  ds.forEach(function(x){ KS_XONG[khoaPhieuNV_(x)]={luc:x.luc||'',noi:x.noi||'',ban:'(chủ bỏ qua)',danhDau:Date.now()} });
+  var soSot=0;
+  ds.forEach(function(x){
+    var conKet = (x.ban||[x]).some(function(b){ return trongKho[String(b.luc||'')+'|'+String(b.may||'')] });
+    if(conKet){ soSot++; return }
+    KS_XONG[khoaPhieuNV_(x)]={luc:x.luc||'',noi:x.noi||'',ban:'(chủ bỏ qua)',danhDau:Date.now()};
+  });
   set('ksxong',KS_XONG);
   veLam();
   if($('dlgKS')&&$('dlgKS').open) moPhieuNV();
+  if(soSot) alert(soSot+' phiếu Sheet không khớp được dòng để đánh dấu — vẫn còn "chờ duyệt", anh/chị tự sửa tay trên Sheet (trang PHIEU_KY_SU) hoặc thử bỏ qua lại từng phiếu đó riêng.');
 }
 function ksVuaVa(){ return KS_PHIEU.filter(function(p){return p.daVa}) }
 function ksConGiu_(p){
