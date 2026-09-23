@@ -2367,7 +2367,10 @@ function App() {
         const ns = nhanSuTuBang_(d.nhansu);
         /* Bang chung con TRONG ma may nay dang co du lieu that thi DAY LEN lam
            ban dau, khong im lang xoa trang — dung bai hoc su co 18/09/2026. */
-        if (!dsViec.length && tasksRef.current.length) {
+        /* SỬA 23/09/2026 — chủ báo "đã xoá hết, cập nhật xong lại tự dựng lại toàn bộ việc demo":
+           bảng chung trống vì CHỦ XOÁ HẾT (đã từng ghi) thì phải nhận trống, không đẩy việc có sẵn
+           trong máy (thường là việc demo mẫu) lên. Chỉ đẩy khi bảng chung CHƯA TỪNG được ghi. */
+        if (!dsViec.length && tasksRef.current.length && !d.daTungGhi) {
           daNhan.current = true; boQuaLanDau.current = false;
           guiLen(tasksRef.current, PEOPLE, DEPT_LEADS);
           return;
