@@ -581,6 +581,8 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 600; letter-spacing: -
 .person-card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; }
 .person-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .person-name { font-weight: 600; font-size: 14.5px; }
+.link-ten { font: inherit; font-weight: 600; background: none; border: 0; padding: 0; color: var(--text); cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
+.link-ten:hover { color: var(--gold); }
 .person-name-edit { font: inherit; font-weight: 600; font-size: 14.5px; background: none; border: 1px solid transparent; border-radius: 6px; padding: 1px 5px; color: var(--text); width: 150px; }
 .person-name-edit:hover { border-color: var(--border); }
 .person-name-edit:focus { outline: none; border-color: var(--gold); background: var(--panel-2); }
@@ -1607,31 +1609,25 @@ function CapTaiKhoan({ pkey, p, onSetField }) {
       : 'Phải điền CẢ mã đăng nhập và mật khẩu mới vào được — để trống một trong hai thì cửa vẫn khoá.'));
 }
 
-function People({ tasks, onTogglePersonDept, onAddPerson, onJumpBoard, onSetLead, onSetPersonField }) {
-  const [showAdd, setShowAdd] = useState(false);
-  const chuaPhanBo = Object.entries(PEOPLE).filter(([, p]) => p.depts.includes('tv')).length;
+/* 23/09/2026 — chủ chốt: nhân sự CHỈ sửa ở tab "Nhân sự" của phần mềm quản lý.
+   Trang này chỉ còn XEM tải việc từng người; bấm vào một người là mở đúng hồ sơ
+   của họ bên tab Nhân sự (trước đây sửa được ở cả 2 nơi — workflow lộn xộn). */
+function moHoSoNS_(key) {
+  if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'mo-ns', key: key || '' }, '*');
+}
+function People({ tasks, onJumpBoard }) {
+  const trongQL = window.parent && window.parent !== window;
   return h('div', { className: 'view' },
     h('div', { className: 'topbar' },
       h('div', null,
         h('h1', null, 'Theo người phụ trách'),
-        h('div', { className: 'sub' }, 'Nhìn tải việc thật của từng người, không cần tự tổng hợp bằng Excel — kể cả nhân viên văn phòng, kho/đóng gói lẫn shipper')),
-      h('button', { className: 'btn primary', onClick: () => setShowAdd(true) }, '+ Thêm nhân viên mới')),
-    showAdd && h(AddPersonModal, {
-      onCancel: () => setShowAdd(false),
-      onSave: (name, dept) => { onAddPerson(name, dept); setShowAdd(false); },
-    }),
+        h('div', { className: 'sub' }, 'Tải việc thật của từng người — bấm số để xem việc, bấm tên để mở hồ sơ')),
+      trongQL && h('button', { className: 'btn primary', onClick: () => moHoSoNS_('') }, '👥 Quản lý nhân sự')),
     h('div', { className: 'content' },
       h('div', { className: 'panel', style: { borderColor: 'var(--accent)' } },
-        h('h3', null, '🔒 Bốn người có tài khoản đăng nhập'),
+        h('h3', null, 'Thêm người, sửa tên, xếp bộ phận, chọn trưởng, đặt mật khẩu'),
         h('div', { className: 'panel-sub', style: { marginBottom: 0 } },
-          'Văn, Hằng, Ngọc, Phú (mã NV01–NV04) là bốn người đang đăng nhập app bán hàng thật. ',
-          'Tên và mã đăng nhập của họ sửa bên phần mềm quản lý, không sửa ở đây — ở đây chỉ xếp họ vào phòng ban. ',
-          h('br'),
-          'Những người còn lại là danh sách riêng của trang này, thêm bớt thoải mái bằng nút "+ Thêm nhân viên mới".')),
-      h(DeptLeadSettings, { onSetLead }),
-      chuaPhanBo > 0 && h('div', { className: 'panel', style: { borderColor: 'var(--gold)' } },
-        h('h3', null, '👤 ' + chuaPhanBo + ' người đang ở "Chưa phân bổ"'),
-        h('div', { className: 'panel-sub', style: { marginBottom: 0 } }, 'Bấm chọn phòng ban ngay dưới mỗi thẻ để xếp họ vào Kho vận, Vận hành sàn hay phòng khác — chọn được nhiều phòng cùng lúc nếu người đó làm cả 2.')),
+          'Làm ở tab ', h('b', null, 'Nhân sự'), ' của phần mềm quản lý — một chỗ duy nhất. Đổi ở đó thì trang này tự cập nhật.')),
       h('div', { className: 'people-grid' },
         Object.entries(PEOPLE).map(([key, p]) => {
           const mine = tasks.filter(t => t.owner === key);
@@ -1639,7 +1635,7 @@ function People({ tasks, onTogglePersonDept, onAddPerson, onJumpBoard, onSetLead
           const late = mine.filter(t => treHan(t)).length;
           const done = mine.filter(t => t.status === 'done').length;
           const overload = active > 3;
-          const primaryDept = DEPTS[p.depts[0]];
+          const primaryDept = DEPTS[p.depts[0]] || DEPTS.tv;
           const leadOfDepts = truongCua_(key);
           return h('div', { className: 'person-card' + (overload ? ' overload' : ''), key },
             h('div', { className: 'person-head' },
@@ -1647,29 +1643,17 @@ function People({ tasks, onTogglePersonDept, onAddPerson, onJumpBoard, onSetLead
               h('div', null,
                 h('div', { className: 'person-name' },
                   p.code && h('span', { className: 'emp-code' }, p.code), p.code ? ' ' : '',
-                  /* 23/09/2026: chủ chốt "thiếu tính năng sửa tên trực tiếp" — người
-                     THẬT (4 tài khoản NV01-04) vẫn KHÔNG sửa được ở đây (tên/mã đó
-                     sống ở Sheet NHAN_VIEN, sửa nhầm ở đây sẽ lệch với máy bán hàng
-                     thật) — chỉ người do chính trang này tạo (!p.real) mới sửa được
-                     thẳng tên tại chỗ, không cần mở form riêng. */
-                  p.real
-                    ? p.name
-                    : h('input', {
-                        className: 'person-name-edit', value: p.name,
-                        onClick: e => e.stopPropagation(),
-                        onChange: e => onSetPersonField(key, 'name', e.target.value),
-                      }),
-                  p.real && h('span', { className: 'pipe-tag', style: { marginLeft: 6 }, title: 'Có tài khoản đăng nhập app bán hàng — đổi tên/mã ở phần mềm quản lý' }, '🔒 Tài khoản thật'),
+                  trongQL
+                    ? h('button', { type: 'button', className: 'link-ten', title: 'Mở hồ sơ bên tab Nhân sự', onClick: () => moHoSoNS_(key) }, p.name)
+                    : p.name,
                   leadOfDepts.length > 0 && h('span', { className: 'pipe-tag', style: { marginLeft: 6 } }, '★ Trưởng ' + leadOfDepts.map(dk => DEPTS[dk].name).join(', '))),
                 h('div', { className: 'person-dept' },
-                  p.depts.map(dk => h('span', { className: 'role-tag', key: dk, style: { marginRight: 4 } }, roleInfo(p, dk).icon + ' ' + DEPTS[dk].name)))),
+                  p.depts.map(dk => h('span', { className: 'role-tag', key: dk, style: { marginRight: 4 } }, roleInfo(p, dk).icon + ' ' + (DEPTS[dk] || DEPTS.tv).name)))),
               overload && h('span', { className: 'wip-warn' }, '⚠ Quá tải')),
             h('div', { className: 'person-stats' },
               h('div', { className: 'clickable', onClick: () => onJumpBoard({ owner: key }) }, h('b', null, active), 'đang làm'),
               h('div', { className: 'clickable' + (late > 0 ? ' bad' : ''), onClick: () => onJumpBoard({ owner: key, onlyOverdue: true }) }, h('b', null, late), 'trễ hạn'),
-              h('div', { className: 'clickable', onClick: () => onJumpBoard({ owner: key }) }, h('b', null, done), 'hoàn thành')),
-            h(DeptChips, { depts: p.depts, onToggle: dk => onTogglePersonDept(key, dk) }),
-            h(CapTaiKhoan, { pkey: key, p, onSetField: onSetPersonField }));
+              h('div', { className: 'clickable', onClick: () => onJumpBoard({ owner: key }) }, h('b', null, done), 'hoàn thành')));
         }))));
 }
 
@@ -2736,7 +2720,7 @@ function App() {
           onDeleteMany: role === 'admin' ? deleteMany : null,
           initialDept: boardFilters.dept, initialOwner: boardFilters.owner, initialOnlyOverdue: boardFilters.onlyOverdue, initialOnlyUnowned: boardFilters.onlyUnowned,
         }),
-        view === 'people' && h(People, { tasks, onTogglePersonDept: togglePersonDept, onAddPerson: addPerson, onJumpBoard: jumpToBoard, onSetLead: setLead, onSetPersonField: setPersonField }),
+        view === 'people' && h(People, { tasks, onJumpBoard: jumpToBoard }),
         view === 'feed' && h(Feed, { feed }),
         view === 'report' && h(ReportView, { tasks })),
       h(BottomNav, { view, setView: goToView, alertCount }),

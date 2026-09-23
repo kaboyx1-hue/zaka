@@ -33,6 +33,32 @@ button:active{transform:scale(.98)}
   padding:6px 11px;font-size:12px;border-radius:8px}
 .chip{background:var(--c2);color:var(--tx);border:1px solid var(--line);
   padding:6px 12px;border-radius:999px;font-size:12.5px;white-space:nowrap}
+.ns-dept{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:12px}
+.ns-d{display:flex;flex-direction:column;gap:2px;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px;color:var(--tx);cursor:pointer;font:inherit}
+.ns-d span{font-size:12px;color:var(--tx2)} .ns-d i{font-style:normal;font-size:12px;color:var(--bad);font-weight:600}
+.ns-d.on{border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}
+.ns-main{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:12px;align-items:start}
+@media(max-width:860px){.ns-main{grid-template-columns:1fr}}
+.ns-p{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:9px 10px;color:var(--tx);cursor:pointer;font:inherit;border-radius:0}
+.ns-p:hover{background:var(--c2)} .ns-p.on{background:var(--okBg)} .ns-p.nghi{opacity:.55}
+.ns-p small{display:block;font-size:12px;color:var(--tx2)}
+.ns-p em{display:inline-block;font-style:normal;font-size:11.5px;font-weight:700;padding:0 6px;border-radius:99px;background:var(--warnBg);color:var(--warn);margin:2px 4px 0 0}
+.ns-p em.bad{background:var(--badBg);color:var(--bad)}
+.ns-av{flex:none;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--infoBg);color:var(--info)}
+.ns-av.big{width:46px;height:46px;font-size:18px}
+.ns-who{display:flex;gap:10px;align-items:center}
+.ns-ten{font-size:18px;font-weight:700;width:100%;background:transparent;border:1px solid transparent}
+.ns-ten:hover,.ns-ten:focus{border-color:var(--line)}
+.ns-f{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-top:10px}
+.ns-f label{display:flex;flex-direction:column;gap:3px}
+.ns-st{display:grid;grid-template-columns:24px 1fr;gap:8px;padding:7px 0;border-bottom:1px dashed var(--line)}
+.ns-st>span{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:12px;background:var(--okBg);color:var(--ok)}
+.ns-st.thieu>span{background:var(--badBg);color:var(--bad)} .ns-st.thieu .sm{color:var(--bad)}
+.ns-lk{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
+.ns-lk>div{border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column}
+.ns-lk b{font-size:19px} .ns-lk span{font-size:12px;color:var(--tx2)} .ns-lk small{font-size:11.5px;color:var(--tx2);margin-top:3px}
+.ns-lk .bad{border-color:var(--bad);background:var(--badBg)} .ns-lk .w{border-color:var(--warn);background:var(--warnBg)}
+.ns-hq{border:2px solid var(--warn);background:var(--warnBg)} .ns-hq ul{margin:6px 0 8px;padding-left:18px} .ns-hq li{margin:3px 0}
 .chip.on{background:var(--acc);color:var(--bg);border-color:var(--acc);font-weight:700}
 input,select{font:inherit;width:100%;padding:11px 12px;border-radius:14px;border:1px solid var(--line);background:var(--c2);color:var(--tx)}
 input:focus,select:focus{outline:none;border-color:var(--acc)}
@@ -333,6 +359,7 @@ body.ks-chi *{cursor:crosshair!important}
     <button id="tb-gia" onclick="tab('gia')">Bảng giá</button>
     <button id="tb-ts" onclick="tab('ts')">Tính giá sàn</button>
     <button id="tb-vc" onclick="tab('vc')">Điều hành công việc</button>
+    <button id="tb-ns" onclick="tab('ns')">Nhân sự <span id="nsSo"></span></button>
     <button id="tb-in" onclick="tab('in')">Nạp đơn</button>
     <button id="tb-cb" onclick="tab('cb')">Cảnh báo <span id="cbSo"></span></button>
     <button id="tb-vh" onclick="tab('vh')">Vận hành <span id="vhSo"></span></button>
@@ -470,6 +497,23 @@ body.ks-chi *{cursor:crosshair!important}
   <iframe id="ifVc" src="truc.html" onload="baoSangToiChoVc()" style="width:100%;height:100%;border:0;border-radius:12px"></iframe>
 </section>
 
+<section id="pg-ns" class="hide">
+  <div id="nsMsg"></div>
+  <div id="nsCho"></div>
+  <div class="ns-dept" id="nsDept"></div>
+  <div class="ns-main">
+    <div class="card" style="padding:0;overflow:hidden">
+      <div class="row" style="padding:10px;border-bottom:1px solid var(--line);gap:6px">
+        <input id="nsTim" placeholder="Tìm tên, mã NV…" oninput="veNsDs_()" style="flex:1 1 120px">
+        <input id="nsTen" placeholder="Tên người mới" style="flex:1 1 120px">
+        <button class="btn-nho" onclick="themNhanSu()">+ Thêm</button>
+      </div>
+      <div id="nsDs"></div>
+    </div>
+    <div id="nsHoSo"></div>
+  </div>
+</section>
+
 <section id="pg-cb" class="hide"><div id="cb"></div></section>
 
 <section id="pg-vh" class="hide">
@@ -499,13 +543,14 @@ body.ks-chi *{cursor:crosshair!important}
     </div>
   </div>
 
-  <div class="card"><h2>Tài khoản nhân viên</h2><div id="dsNV"></div>
+  <div class="card"><h2>Đăng nhập cửa hàng</h2>
+    <div class="sm">Thêm người, duyệt người mới đăng ký, cho nghỉ, đặt mật khẩu, xếp bộ phận: làm ở tab
+    <b>Nhân sự</b>. <button class="btn-nho" onclick="tab('ns')">Mở tab Nhân sự</button></div>
     <div class="row mt">
       <button class="btn2" onclick="doiMaDangKy()">Đổi mã đăng ký cửa hàng</button>
       <button class="btn2" onclick="doiMkQL()">Đổi mật khẩu máy quản lý</button>
     </div>
-    <div class="sm">Ngưng một người là <b>cả ba máy khoá người đó trong vòng một phút</b>,
-    kể cả bản file họ mang về nhà.</div></div>
+</div>
 
   <div class="card"><h2>Điều kiện ghi nhận doanh thu</h2>
     <div class="sm">Đơn giao nhiều đợt thì lúc nào mới được tính vào doanh thu?
@@ -538,19 +583,6 @@ body.ks-chi *{cursor:crosshair!important}
     <button class="btn-nho mt" onclick="luuNguongHuyHieu()">Lưu ngưỡng này</button>
   </div>
 
-  <div class="card" id="cardNhanSu"><h2>Nhân sự</h2>
-    <div class="sm" style="margin-bottom:8px">Danh sách <b>duy nhất</b> của cả phần mềm. Thêm/sửa ở đây là
-    tab Điều hành công việc, ô chọn shipper trên máy nhân viên và bảng tính giá tự theo — không phải sửa chỗ nào khác.
-    Người có 🔒 là tài khoản bán hàng (ngưng/duyệt ở ô "Tài khoản nhân viên" phía trên). Bấm ★ cạnh bộ phận để đặt làm trưởng bộ phận đó.</div>
-    <div id="nsMsg"></div>
-    <div class="row">
-      <input id="nsTen" placeholder="Tên người mới">
-      <select id="nsPhongMoi"></select>
-      <button class="btn-nho" onclick="themNhanSu()">Thêm người</button>
-    </div>
-    <div id="dsNhanSu" style="margin-top:10px"></div>
-    <div id="shipMsg"></div>
-  </div>
 
   <div class="card"><h2>Tài khoản nhận chuyển khoản</h2>
     <div class="sm" style="margin-bottom:8px">Tách "CK HKD"/"CK Cty" thành từng số tài khoản cụ thể — nhân viên chọn đúng
@@ -743,7 +775,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260923e';
+var APP_VER='20260923f';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -2536,7 +2568,7 @@ function tab(t){
      nhịp: đổi tab hiện ra NGAY, rồi nhường cho trình duyệt vẽ xong màn hình,
      xong mới tính nội dung. Tổng thời gian y như cũ nhưng cảm giác nhanh hẳn
      vì tab phản hồi tức thì và có chữ "Đang tính…" trong lúc chờ. */
-  ['lam','in','bc','so','gia','ts','vc','cb','vh'].forEach(function(x){
+  ['lam','in','bc','so','gia','ts','vc','ns','cb','vh'].forEach(function(x){
     $('pg-'+x).classList.toggle('hide',x!==t);$('tb-'+x).classList.toggle('on',x===t)});
   var oCho={lam:'lamDs',bc:'bc',so:'dsSo',cb:'cb'}[t];
   if(oCho && $(oCho) && !$(oCho).innerHTML) $(oCho).innerHTML='<div class="card"><div class="empty">Đang tính…</div></div>';
@@ -2546,7 +2578,8 @@ function veTab_(t){
   if(t==='lam')veLam();
   if(t==='bc')veBC(); if(t==='so')veSo(); if(t==='gia'){veGia();vePhat()} if(t==='cb')veCB();
   if(t==='ts'){guiCatalogChoTs();guiTinhGiaChoTs();guiLuongShipperChoTs()}
-  if(t==='vc'){guiViecChoVc()}  // guiNguoiPTChoVc() bo hang 23/09 — khong con ai ben truc.html nghe
+  if(t==='vc'){guiViecChoVc()}
+  if(t==='ns'){veNV();veNhanSu()}  // guiNguoiPTChoVc() bo hang 23/09 — khong con ai ben truc.html nghe
   if(t==='vh'){veNV();veMayGui();veNhatKy();veKhaiTruong();nhacSaoLuu();veNvXemLS();veNguongHuyHieu();veNguoiPhuTrachQL()}
 }
 /* Gửi danh mục sản phẩm đang bán (SKU/tên/giá lẻ/giá vốn) cho tool tính giá
@@ -2570,6 +2603,7 @@ window.addEventListener('message', function(e){
   if (e.data && e.data.type === 'vc-luu') nhanLuuViecTuVc_(e.data.items);
   if (e.data && e.data.type === 'truc-ready') guiTrucChoIframe();
   if (e.data && e.data.type === 'truc-luu') nhanLuuTrucTuIframe_(e.data.viec, e.data.nhansu);
+  if (e.data && e.data.type === 'mo-ns'){ if(e.data.key&&nsNguoi_(e.data.key)){NS_CHON=e.data.key;NS_HD=null} tab('ns') }
 });
 /* Lương trung bình đội shipper (chỉ tính người ĐÃ khai lương/giờ > 0) — gửi
    cho tool tính giá sàn dùng làm gợi ý lương cho logistics tab Sỉ/Phân phối,
@@ -4659,7 +4693,7 @@ function napVonTuSheet(ds,ver){
    THÊM và HIỆN BẢNG vẫn để riêng cho từng loại, vì cột/ô nhập khác nhau thật,
    gộp sẽ làm code khó đọc hơn lợi ích mang lại. */
 var DS_NHO_CAUHINH = {
-  ship: {tenBien:'SHIP', msgId:'shipMsg', hanhdong:'shipper', btnId:'btnLuuShip', nhanXoa:function(x){return x.ten}, veLai:function(){veNhanSu();guiLuongShipperChoTs()}},
+  ship: {tenBien:'SHIP', msgId:'nsMsg', hanhdong:'shipper', btnId:'btnLuuShip', nhanXoa:function(x){return x.ten}, veLai:function(){veNhanSu();guiLuongShipperChoTs()}},
   tk:   {tenBien:'TK',   msgId:'tkMsg',   hanhdong:'taikhoan', btnId:'btnLuuTk',  nhanXoa:function(x){return x.ten}, veLai:function(){veTaiKhoanQL()}}
 };
 function xoaDanhSachNho(loai,i){
@@ -4740,13 +4774,13 @@ function nsGop_(){
   NVS.forEach(function(x){
     if(!x.ma||x.trangthai==='TU CHOI'||x.trangthai==='CHO DUYET') return;
     var p=TRUC_NS.filter(function(q){return q.code===x.ma})[0];
-    if(!p){ p={key:'nv_'+x.ma,name:x.ten,code:x.ma,mk:'',depts:'["tv"]',real:1,leadOf:'',malink:''}; TRUC_NS.push(p); doi=true }
+    if(!p){ p={key:'nv_'+x.ma,name:x.ten,code:x.ma,mk:'',depts:'["tv"]',real:1,leadOf:'',malink:'',sdt:''}; TRUC_NS.push(p); doi=true }
     if(p.name!==x.ten||!Number(p.real)){ p.name=x.ten; p.real=1; doi=true }
   });
   SHIP.forEach(function(s){
     if(!s.ten||s.gc) return;   // đã nối rồi thì TRUC_NS quyết định (bỏ khỏi bộ phận Shipper = hết là shipper)
     var p=TRUC_NS.filter(function(q){return q.key===s.gc})[0]||TRUC_NS.filter(function(q){return nsTen_(q.name)===nsTen_(s.ten)})[0];
-    if(!p){ p={key:'sh_'+nsTen_(s.ten).replace(/\s+/g,'_'),name:s.ten,code:nsMaMoi_(),mk:'',depts:'["ship"]',real:0,leadOf:'',malink:''}; TRUC_NS.push(p); doi=true }
+    if(!p){ p={key:'sh_'+nsTen_(s.ten).replace(/\s+/g,'_'),name:s.ten,code:nsMaMoi_(),mk:'',depts:'["ship"]',real:0,leadOf:'',malink:'',sdt:''}; TRUC_NS.push(p); doi=true }
     var ds=nsPhong_(p); if(ds.indexOf('ship')<0){ ds.push('ship'); nsDatPhong_(p,ds); doi=true }
     if(s.gc!==p.key){ s.gc=p.key; doi=true }
   });
@@ -4786,25 +4820,94 @@ function nsLuu_(coViec){
   });
   return NS_CHUOI;
 }
+/* ══════════════════════ TAB NHÂN SỰ (23/09/2026) ══════════════════════
+   Chủ chốt: nhân sự CHỈ sửa ở tab này — Vận hành và Điều hành công việc không còn
+   chỗ sửa người nữa (2-3 nơi cùng sửa = workflow lộn xộn). Khuôn chủ duyệt qua demo
+   "Nhân sự": quy trình vào làm còn thiếu gì, đang nối với những gì, và mọi thay đổi
+   lớn (bỏ bộ phận / cho nghỉ / xoá) đều XEM TRƯỚC HỆ QUẢ rồi mới làm. */
+var NS_CHON='', NS_HD=null, NS_LOC='';
+function VN(x){ return (Math.round(x)||0).toLocaleString('vi-VN') }
+function nsNguoi_(k){ return TRUC_NS.filter(function(p){return p.key===k})[0] }
+function nsNV_(p){ return NVS.filter(function(x){return x.ma===p.code})[0] }
+function nsDangLam_(p){ var x=nsNV_(p); return !(Number(p.real)&&x&&x.trangthai==='NGUNG') }
+function nsHan_(s){ if(!s) return null; s=String(s).trim(); var m;
+  if((m=s.match(/^(\d{4})-(\d{2})-(\d{2})/))) return new Date(+m[1],+m[2]-1,+m[3]);
+  if((m=s.match(/^(\d{1,2})[-\/](\d{1,2})([-\/](\d{2,4}))?$/))) return new Date(m[4]?(+m[4]<100?2000+ +m[4]:+m[4]):new Date().getFullYear(),+m[2]-1,+m[1]);
+  return null }
+function nsTre_(t){ if(!t||t.status==='done') return 0; var h=nsHan_(t.due); if(!h) return 0;
+  var nay=new Date(); nay.setHours(0,0,0,0); return Math.max(0,Math.round((nay-h)/864e5)) }
+function nsThanhVien_(dk){ return TRUC_NS.filter(function(p){return nsDangLam_(p)&&nsPhong_(p).indexOf(dk)>=0}) }
+function nsTruongCua_(dk){ return TRUC_NS.filter(function(p){return nsDangLam_(p)&&nsTruong_(p).indexOf(dk)>=0}) }
+function nsShipCua_(p){ return SHIP.filter(function(s){return s.gc===p.key})[0] }
+/* Mọi thứ đang nối với một người — tính thẳng từ dữ liệu thật (việc TRỤC, đơn SO). */
+function nsLienKet_(p){
+  var viec=TRUC_VIEC.filter(function(t){return t.owner===p.key&&t.status!=='done'});
+  var tre=viec.filter(function(t){return nsTre_(t)>0});
+  var ten=nsTen_(p.name), don=SO.filter(function(d){return !d.huy});
+  var donLen=don.filter(function(d){return nsTen_(d.nv)===ten}), donGiao=don.filter(function(d){return nsTen_(d.nguoiGiao)===ten});
+  var chuaThu=donGiao.filter(function(d){return conThuDon(d)>0});
+  return {viec:viec,tre:tre,donLen:donLen,donGiao:donGiao,chuaThu:chuaThu,
+    tienChuaThu:chuaThu.reduce(function(a,d){return a+conThuDon(d)},0)} }
+/* Quy trình vào làm: bước nào đủ, bước nào thiếu — thiếu thì hỏng chỗ nào. */
+function nsQuyTrinh_(p){
+  var ds=nsPhong_(p), ship=ds.indexOf('ship')>=0, s=[], sh=nsShipCua_(p), x=nsNV_(p);
+  if(p.key==='giamdoc') return [{t:'Đăng nhập',ok:true,h:'Chủ vào bằng mật khẩu quản lý — không cần mã NV hay mật khẩu trang công việc'}];
+  s.push({t:'Mã nhân viên',ok:!!p.code,h:p.code?'Mã '+p.code+' — dùng để đăng nhập':'Chưa có mã → không đăng nhập được trang công việc'});
+  s.push({t:'Xếp vào bộ phận',ok:ds.length>0,h:ds.length?'Thấy việc của: '+ds.map(function(k){return NS_PHONG[k]}).join(', '):'Chưa có bộ phận → không thấy việc nào, không ai giao việc được cho người này'});
+  s.push({t:'Mật khẩu trang công việc',ok:!!String(p.mk||''),h:String(p.mk||'')?'Đăng nhập được trên điện thoại':'Chưa đặt → mở link công việc sẽ bị từ chối, việc giao cho họ không ai cập nhật'});
+  if(Number(p.real)) s.push({t:'Tài khoản máy bán hàng',ok:!!x&&x.trangthai!=='NGUNG',h:x?(x.trangthai==='NGUNG'?'Đang bị ngưng → không lên đơn được':'Mã đăng nhập máy bán hàng: '+esc(x.key||'')):'Không thấy trên danh sách tài khoản'});
+  if(ship){ s.push({t:'Lương/giờ shipper',ok:!!(sh&&sh.luongGio>0),h:sh&&sh.luongGio>0?VN(sh.luongGio)+'đ/giờ → tính vào chi phí giao ở Tính giá sàn':'Chưa khai → bảng tính giá đang tính tiền công giao = 0đ, giá hoà vốn thấp hơn thật'});
+    s.push({t:'Biển số xe',ok:!!(sh&&sh.bienSo),h:sh&&sh.bienSo?esc(sh.bienSo):'Chưa có → phiếu nhà xe in thiếu biển số'}) }
+  s.push({t:'Số điện thoại',ok:!!String(p.sdt||''),h:String(p.sdt||'')?esc(p.sdt):'Chưa có → khó liên lạc, không gửi link Zalo được'});
+  return s }
+function nsThieu_(p){ return nsQuyTrinh_(p).filter(function(x){return !x.ok}).length }
+/* Liệt kê TRƯỚC hệ quả của một thay đổi lớn. */
+function nsHauQua_(p,hd){
+  var L=nsLienKet_(p), out=[], ds=nsPhong_(p), x=nsNV_(p);
+  if(hd.loai==='nghi'||hd.loai==='xoa'){
+    if(hd.loai==='nghi'&&x) out.push('Máy bán hàng khoá tài khoản <b>'+esc(p.name)+'</b> trong vòng 1 phút (kể cả bản họ mang về nhà).');
+    if(L.viec.length) out.push('<b>'+L.viec.length+' việc</b> đang giao cho '+esc(p.name)+(L.tre.length?' ('+L.tre.length+' việc đã trễ)':'')+' → chuyển cho người chọn bên dưới, hoặc về "chưa ai nhận".');
+    nsTruong_(p).forEach(function(dk){ var con=nsTruongCua_(dk).filter(function(q){return q.key!==p.key});
+      out.push(con.length?NS_PHONG[dk]+' vẫn còn trưởng: '+con.map(function(q){return esc(q.name)}).join(', ')+'.':'<b>'+NS_PHONG[dk]+' không còn trưởng</b> → ý kiến nhân viên phòng này chỉ còn chủ đọc.') });
+    if(ds.indexOf('ship')>=0){ out.push(esc(p.name)+' biến khỏi ô chọn người giao trên máy nhân viên.');
+      if(!nsThanhVien_('ship').filter(function(q){return q.key!==p.key}).length) out.push('<b>Không còn shipper nào</b> → đơn mới không gán được người giao.') }
+    if(L.chuaThu.length) out.push('<b>'+L.chuaThu.length+' đơn</b> '+esc(p.name)+' giao còn chưa thu '+VN(L.tienChuaThu)+'đ — vẫn nằm trong công nợ, tên người giao trên đơn giữ nguyên.');
+    if(L.donLen.length+L.donGiao.length) out.push('<span style="color:var(--ok)">Đơn cũ không đổi: '+(L.donLen.length+L.donGiao.length)+' đơn vẫn ghi đúng tên '+esc(p.name)+'.</span>');
+    if(hd.loai==='xoa') out.push('Xoá hẳn hồ sơ — <b>không hoàn lại được</b>.');
+    if(hd.loai==='nghi') out.push('Hồ sơ vẫn giữ; bấm "Cho làm lại" là mở khoá lại.');
+  } else if(hd.loai==='boPhong'){ var dk=hd.dk;
+    var v=L.viec.filter(function(t){return t.dept===dk});
+    if(v.length) out.push('<b>'+v.length+' việc</b> '+NS_PHONG[dk]+' đang giao cho '+esc(p.name)+' → về "chưa ai nhận" trong bộ phận đó.');
+    if(nsTruong_(p).indexOf(dk)>=0) out.push('Mất luôn vai trò trưởng '+NS_PHONG[dk]+(nsTruongCua_(dk).length<=1?' → <b>bộ phận không còn trưởng</b>.':'.'));
+    if(dk==='ship'){ out.push(esc(p.name)+' biến khỏi ô chọn người giao trên máy nhân viên; lương/giờ không còn tính vào chi phí giao.');
+      if(nsThanhVien_('ship').length<=1) out.push('<b>Không còn shipper nào</b> → đơn mới không gán được người giao.') }
+    if(ds.length===1) out.push('Đây là bộ phận cuối → thành "Chưa phân bộ phận", không thấy việc nào.');
+    if(!out.length) out.push('Không kéo theo gì khác.');
+  }
+  return out }
+function nsLinkCv_(){ try{ return new URL('truc.html', location.href).href }catch(e){ return 'truc.html' } }
+function nsChep3_(key){ var p=nsNguoi_(key); nsChep_('Link: '+nsLinkCv_()+'\nMã đăng nhập: '+p.code+'\nMật khẩu: '+p.mk,'link + mã + mật khẩu') }
+function nsChep_(txt,nhan){
+  function lo(){ prompt('Chép thủ công '+nhan+':', txt) }
+  try{ navigator.clipboard.writeText(txt).then(function(){ bao('nsMsg','Đã chép '+nhan+'.','ok') }, lo) }catch(e){ lo() } }
+
+/* ── thao tác ── */
 function themNhanSu(){
-  var ten=$('nsTen').value.trim(), ph=$('nsPhongMoi').value;
-  if(!ten){ bao('nsMsg','Phải có tên.','er'); return }
+  var ten=$('nsTen').value.trim();
+  if(!ten){ bao('nsMsg','Gõ tên người mới trước.','er'); return }
   if(!TRUC_DA_NAP){ bao('nsMsg','Chưa kéo được danh sách từ Sheet — sang tab Nạp đơn bấm <b>Kéo đơn mới</b> trước.','er'); return }
-  TRUC_NS.push({key:'p'+Date.now(),name:ten,code:nsMaMoi_(),mk:'',depts:JSON.stringify([ph||'tv']),real:0,leadOf:'',malink:''});
-  $('nsTen').value='';
+  var p={key:'p'+Date.now(),name:ten,code:nsMaMoi_(),mk:'',depts:'["tv"]',real:0,leadOf:'',malink:'',sdt:''};
+  TRUC_NS.push(p); $('nsTen').value=''; NS_CHON=p.key; NS_HD=null;
   nsLuu_();
 }
-function nsSua(i,field,v){
-  var p=TRUC_NS[i]; if(!p) return;
+function nsSua(key,field,v){
+  var p=nsNguoi_(key); if(!p) return;
   v=String(v).trim();
   if(field==='name'){
     if(!v){ veNhanSu(); return }
     p.name=v;
-    var x=NVS.filter(function(y){return y.ma===p.code})[0];
-    if(Number(p.real)&&x){   // tài khoản bán hàng: ghi luôn tên sang trang NHAN_VIEN
-      x.ten=v; set('nvs',NVS); veNV();
-      nsGhiNV_({nvs:[{ma:x.ma,trangthai:x.trangthai,ten:v}]});
-    }
+    var x=nsNV_(p);
+    if(Number(p.real)&&x){ x.ten=v; set('nvs',NVS); nsGhiNV_({nvs:[{ma:x.ma,trangthai:x.trangthai,ten:v}]}) }
   } else p[field]=v;
   nsLuu_();
 }
@@ -4812,71 +4915,135 @@ function nsGhiNV_(them){
   NS_CHUOI=NS_CHUOI.then(function(){
     return fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify(Object.assign({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'duyetnv'},them))})
-      .catch(function(){ bao('nsMsg','Chưa đổi được tên bên tài khoản bán hàng — thử lại.','er') });
+      .then(function(r){return r.json()}).then(function(j){ if(!j.ok) throw new Error(j.loi) })
+      .catch(function(e){ bao('nsMsg','Chưa ghi được sang tài khoản bán hàng: '+esc(e.message||'mất mạng')+' — thử lại.','er') });
   });
+  return NS_CHUOI;
 }
-function nsPhong(i,dk){
-  var p=TRUC_NS[i]; if(!p) return;
-  var ds=nsPhong_(p), k=ds.indexOf(dk);
-  if(k>=0){ ds.splice(k,1); p.leadOf=nsTruong_(p).filter(function(d){return d!==dk}).join(',') } else ds.push(dk);
-  nsDatPhong_(p,ds); nsLuu_();
+function nsPhong(key,dk){
+  var p=nsNguoi_(key); if(!p) return;
+  if(nsPhong_(p).indexOf(dk)>=0){ NS_HD={loai:'boPhong',dk:dk}; veNsHoSo_(); return }   // bỏ bộ phận: xem trước hệ quả
+  var ds=nsPhong_(p); ds.push(dk); nsDatPhong_(p,ds); nsLuu_();
 }
-function nsTruongBat(i,dk){
-  var p=TRUC_NS[i]; if(!p) return;
+function nsTruongBat(key,dk){
+  var p=nsNguoi_(key); if(!p) return;
   var ds=nsTruong_(p), k=ds.indexOf(dk);
   if(k>=0) ds.splice(k,1); else ds.push(dk);
   p.leadOf=ds.join(','); nsLuu_();
 }
-function nsShipSua(i,field,v){
-  var p=TRUC_NS[i]; if(!p) return;
-  var s=SHIP.filter(function(x){return x.gc===p.key})[0]; if(!s) return;
+function nsShipSua(key,field,v){
+  var p=nsNguoi_(key), s=p&&nsShipCua_(p); if(!s) return;
   s[field]=field==='luongGio'?n2(v):String(v).trim();
-  set('ship',SHIP);
-  // SHIP vừa đổi mà nsShipTuNS_ giữ nguyên số cũ theo gc -> ép ghi shipper
+  set('ship',SHIP); guiLuongShipperChoTs(); veNsHoSo_();
   bao('nsMsg','Đang lưu…','wa');
   NS_CHUOI=NS_CHUOI.then(async function(){
     try{ var j=await nsGhi_('shipper',SHIP); VERQL.ship=j.ver; set('verql',VERQL); bao('nsMsg','Đã lưu — mọi máy tự thấy trong vòng một phút.','ok') }
     catch(e){ bao('nsMsg','Chưa lưu được: '+esc(e.message),'er') }
   });
-  guiLuongShipperChoTs();
 }
-function nsXoa(i){
-  var p=TRUC_NS[i]; if(!p||Number(p.real)) return;
-  var soViec=TRUC_VIEC.filter(function(t){return t.owner===p.key}).length;
-  if(!confirm('Xoá "'+p.name+'" khỏi danh sách nhân sự?'+(soViec?'\n\n'+soViec+' việc đang giao cho người này sẽ về "chưa ai nhận".':'')))return;
-  TRUC_NS.splice(i,1);
-  if(soViec) TRUC_VIEC.forEach(function(t){ if(t.owner===p.key) t.owner='' });
-  nsLuu_(soViec>0);
+function nsHuy(){ NS_HD=null; veNsHoSo_() }
+function nsXemTruoc(loai){ NS_HD={loai:loai}; veNsHoSo_() }
+async function nsLam(){
+  var p=nsNguoi_(NS_CHON), hd=NS_HD; if(!p||!hd) return;
+  var coViec=false;
+  if(hd.loai==='boPhong'){
+    var ds=nsPhong_(p).filter(function(x){return x!==hd.dk}); nsDatPhong_(p,ds);
+    p.leadOf=nsTruong_(p).filter(function(x){return x!==hd.dk}).join(',');
+    TRUC_VIEC.forEach(function(t){ if(t.owner===p.key&&t.dept===hd.dk&&t.status!=='done'){ t.owner=''; coViec=true } });
+  } else {
+    var sang=$('nsGiaoLai')?$('nsGiaoLai').value:'';
+    TRUC_VIEC.forEach(function(t){ if(t.owner===p.key&&t.status!=='done'){ t.owner=sang; coViec=true } });
+    p.leadOf='';
+    if(hd.loai==='nghi'){ var x=nsNV_(p); if(x){ x.trangthai='NGUNG'; set('nvs',NVS); nsGhiNV_({nvs:[{ma:x.ma,trangthai:'NGUNG'}]}) } }
+    if(hd.loai==='xoa'){ TRUC_NS=TRUC_NS.filter(function(q){return q.key!==p.key}); NS_CHON='' }
+  }
+  NS_HD=null; nsLuu_(coViec); veNV();
 }
-function veNhanSu(){
-  var e=$('dsNhanSu'); if(!e) return;
-  var sel=$('nsPhongMoi');
-  if(sel&&!sel.options.length) sel.innerHTML='<option value="tv">Chưa phân bộ phận</option>'+
-    Object.keys(NS_PHONG).map(function(k){return '<option value="'+k+'">'+NS_PHONG[k]+'</option>'}).join('');
+function nsLamLai(key){
+  var p=nsNguoi_(key), x=p&&nsNV_(p); if(!x) return;
+  x.trangthai='HOAT DONG'; set('nvs',NVS);
+  nsGhiNV_({nvs:[{ma:x.ma,trangthai:'HOAT DONG'}]}).then(function(){ bao('nsMsg','Đã mở lại tài khoản '+esc(p.name)+' — máy bán hàng nhận trong một phút.','ok') });
+  veNV(); veNhanSu();
+}
+
+/* ── vẽ ── */
+function veNhanSu(){ if(!$('nsDs')) return; veNsDept_(); veNsDs_(); veNsHoSo_() }
+function veNsDept_(){
+  $('nsDept').innerHTML='<button class="ns-d'+(NS_LOC===''?' on':'')+'" onclick="NS_LOC=\'\';veNhanSu()"><b>Tất cả</b><span>'+TRUC_NS.filter(nsDangLam_).length+' người</span></button>'+
+    Object.keys(NS_PHONG).map(function(k){
+      var tv=nsThanhVien_(k), tr=nsTruongCua_(k);
+      var vo=TRUC_VIEC.filter(function(t){return t.dept===k&&!t.owner&&t.status!=='done'}).length;
+      var tre=TRUC_VIEC.filter(function(t){return t.dept===k&&nsTre_(t)>0}).length;
+      var w=!tv.length?'Chưa có ai':!tr.length?'Chưa có trưởng':vo?vo+' việc chưa ai nhận':tre?tre+' việc trễ':'';
+      return '<button class="ns-d'+(NS_LOC===k?' on':'')+'" onclick="NS_LOC=\''+k+'\';veNhanSu()"><b>'+NS_PHONG[k]+'</b><span>'+tv.length+' người · trưởng: '+(tr.map(function(q){return esc(q.name)}).join(', ')||'—')+'</span>'+(w?'<i>⚠ '+w+'</i>':'')+'</button>'}).join('') }
+function veNsDs_(){
+  var e=$('nsDs'); if(!e) return;
   if(!TRUC_NS.length){ e.innerHTML='<div class="empty">Chưa kéo về. Sang tab Nạp đơn bấm <b>Kéo đơn mới</b>.</div>'; return }
-  e.innerHTML=TRUC_NS.map(function(p,i){
-    var ds=nsPhong_(p), tr=nsTruong_(p), that=Number(p.real)>0;
-    var s=SHIP.filter(function(x){return x.gc===p.key})[0];
-    return '<div style="border-top:1px solid var(--line);padding:10px 0">'+
-      '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">'+
-        '<span class="tag">'+esc(p.code||'—')+'</span>'+
-        '<input value="'+esc(p.name)+'" style="flex:1;min-width:140px" onchange="nsSua('+i+',\'name\',this.value)">'+
-        (that?'<span class="sm" title="Tài khoản bán hàng">🔒 TK bán hàng</span>'
-             :'<button class="btn-nho" style="color:var(--bad)" onclick="nsXoa('+i+')">Xoá</button>')+
-      '</div>'+
-      '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:7px">'+
-        Object.keys(NS_PHONG).map(function(dk){
-          var co=ds.indexOf(dk)>=0, laTr=tr.indexOf(dk)>=0;
-          return '<span style="display:inline-flex;gap:2px"><button class="chip'+(co?' on':'')+'" onclick="nsPhong('+i+',\''+dk+'\')">'+NS_PHONG[dk]+'</button>'+
-            (co?'<button class="chip'+(laTr?' on':'')+'" title="Trưởng bộ phận" onclick="nsTruongBat('+i+',\''+dk+'\')">★</button>':'')+'</span>'}).join('')+
-      '</div>'+
-      '<div style="display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;margin-top:7px">'+
-        '<label class="sm">Mật khẩu vào trang công việc</label>'+
-        '<input value="'+esc(p.mk||'')+'" placeholder="chưa đặt" style="max-width:160px" onchange="nsSua('+i+',\'mk\',this.value)">'+
-        (s?'<label class="sm">Lương/giờ</label><input value="'+(s.luongGio||0).toLocaleString('vi-VN')+'" inputmode="numeric" style="max-width:110px;text-align:right" oninput="dinhDangTien(this)" onchange="nsShipSua('+i+',\'luongGio\',this.value)">'+
-           '<label class="sm">Biển số</label><input value="'+esc(s.bienSo||'')+'" style="max-width:120px" onchange="nsShipSua('+i+',\'bienSo\',this.value)">':'')+
-      '</div></div>'}).join('');
-}
+  var q=nsTen_($('nsTim').value);
+  var ds=TRUC_NS.filter(function(p){return (!NS_LOC||nsPhong_(p).indexOf(NS_LOC)>=0)&&(!q||nsTen_(p.name+' '+p.code).indexOf(q)>=0)});
+  if(!NS_CHON||!nsNguoi_(NS_CHON)) NS_CHON=(ds[0]||TRUC_NS[0]).key;
+  e.innerHTML=ds.map(function(p){
+    var L=nsLienKet_(p), th=nsThieu_(p), lam=nsDangLam_(p);
+    return '<button class="ns-p'+(p.key===NS_CHON?' on':'')+(lam?'':' nghi')+'" onclick="NS_CHON=\''+p.key+'\';NS_HD=null;veNsDs_();veNsHoSo_()">'+
+      '<span class="ns-av">'+esc((p.name||'?')[0])+'</span><span><b>'+esc(p.name)+'</b>'+(Number(p.real)?' 🔒':'')+
+      '<small>'+esc(p.code||'—')+' · '+(lam?(nsPhong_(p).map(function(k){return NS_PHONG[k].split(' ')[0]+(nsTruong_(p).indexOf(k)>=0?'★':'')}).join(' ')||'chưa bộ phận')+' · '+L.viec.length+' việc':'đã ngưng')+'</small>'+
+      (L.tre.length?'<em class="bad">'+L.tre.length+' trễ</em>':'')+(th&&lam?'<em>thiếu '+th+' bước</em>':'')+'</span></button>'}).join('')||'<div class="empty">Không có ai khớp.</div>' }
+function veNsHoSo_(){
+  var e=$('nsHoSo'); if(!e) return;
+  var p=nsNguoi_(NS_CHON); if(!p){ e.innerHTML=''; return }
+  var L=nsLienKet_(p), ds=nsPhong_(p), tr=nsTruong_(p), lam=nsDangLam_(p), sh=nsShipCua_(p), h='';
+  var k="'"+p.key+"'";
+  if(NS_HD){
+    var ten={nghi:'Cho '+esc(p.name)+' nghỉ',xoa:'Xoá hẳn hồ sơ '+esc(p.name),boPhong:'Bỏ '+esc(p.name)+' khỏi '+(NS_PHONG[NS_HD.dk]||'')}[NS_HD.loai];
+    h+='<div class="card ns-hq"><b>'+ten+' — sẽ kéo theo:</b><ul>'+nsHauQua_(p,NS_HD).map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul>';
+    if(NS_HD.loai!=='boPhong'&&L.viec.length) h+='<label class="sm">Chuyển '+L.viec.length+' việc cho</label><select id="nsGiaoLai" style="max-width:320px"><option value="">Chưa ai nhận</option>'+
+      TRUC_NS.filter(function(q){return q.key!==p.key&&nsDangLam_(q)}).map(function(q){return '<option value="'+esc(q.key)+'">'+esc(q.name)+' ('+(nsPhong_(q).map(function(d){return NS_PHONG[d]}).join(', ')||'chưa bộ phận')+')</option>'}).join('')+'</select>';
+    h+='<div class="row mt"><button class="btn-nho" style="'+(NS_HD.loai==='xoa'?'color:var(--bad)':'font-weight:700')+'" onclick="nsLam()">Đồng ý, làm</button><button class="btn-nho" onclick="nsHuy()">Thôi</button></div></div>';
+  }
+  h+='<div class="card"><div class="ns-who"><span class="ns-av big">'+esc((p.name||'?')[0])+'</span><div style="flex:1;min-width:0">'+
+    '<input class="ns-ten" value="'+esc(p.name)+'" onchange="nsSua('+k+',\'name\',this.value)" aria-label="Tên">'+
+    '<div class="sm">'+esc(p.code||'không có mã NV')+(Number(p.real)?' · 🔒 có tài khoản máy bán hàng — đổi tên ở đây là đổi luôn bên đó':'')+'</div></div>'+
+    '<span class="tag '+(lam?'':'w')+'">'+(lam?'Đang làm':'Đã ngưng')+'</span></div>'+
+    '<div class="ns-f"><label class="sm">Số điện thoại<input value="'+esc(p.sdt||'')+'" inputmode="tel" onchange="nsSua('+k+',\'sdt\',this.value)"></label>'+
+    '<label class="sm">Mật khẩu trang công việc<input value="'+esc(p.mk==null?'':p.mk)+'" placeholder="chưa đặt" onchange="nsSua('+k+',\'mk\',this.value)"></label>'+
+    (sh?'<label class="sm">Lương/giờ (đ)<input value="'+(sh.luongGio||0).toLocaleString('vi-VN')+'" inputmode="numeric" oninput="dinhDangTien(this)" onchange="nsShipSua('+k+',\'luongGio\',this.value)"></label>'+
+        '<label class="sm">Biển số xe<input value="'+esc(sh.bienSo||'')+'" onchange="nsShipSua('+k+',\'bienSo\',this.value)"></label>':'')+'</div>'+
+    '<div class="sm" style="margin-top:12px">Bộ phận — bấm để thêm/bỏ · ★ = trưởng bộ phận</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:5px">'+
+    Object.keys(NS_PHONG).map(function(dk){ var co=ds.indexOf(dk)>=0, laTr=tr.indexOf(dk)>=0;
+      return '<span style="display:inline-flex;gap:2px"><button class="chip'+(co?' on':'')+'" aria-pressed="'+co+'" onclick="nsPhong('+k+',\''+dk+'\')">'+NS_PHONG[dk]+'</button>'+
+        (co?'<button class="chip'+(laTr?' on':'')+'" aria-pressed="'+laTr+'" title="Trưởng bộ phận" onclick="nsTruongBat('+k+',\''+dk+'\')">★</button>':'')+'</span>'}).join('')+'</div>';
+  if(p.code&&String(p.mk||'')) h+='<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px"><button class="btn-nho" onclick="nsChep_(nsLinkCv_(),\'đường link\')">🔗 Chép link trang công việc</button>'+
+    '<button class="btn-nho" onclick="nsChep3_('+k+')">📋 Chép link + mã + mật khẩu (gửi Zalo)</button></div>';
+  h+='</div>';
+  h+='<div class="card"><h2>Quy trình vào làm — còn thiếu gì</h2>'+nsQuyTrinh_(p).map(function(s){
+    return '<div class="ns-st '+(s.ok?'ok':'thieu')+'"><span>'+(s.ok?'✓':'!')+'</span><div><b>'+s.t+'</b><div class="sm">'+s.h+'</div></div></div>'}).join('')+'</div>';
+  var lk=[[L.viec.length,'việc đang giao',L.tre.length?L.tre.length+' việc trễ: '+L.tre.map(function(t){return esc(t.title)+' ('+nsTre_(t)+' ngày)'}).join('; '):'không có việc trễ','Điều hành công việc',L.tre.length?'bad':''],
+    [L.donLen.length,'đơn đã lên','','Máy bán hàng',''],
+    [L.donGiao.length,'đơn đã giao','','Sổ cái — theo người giao',''],
+    [VN(L.tienChuaThu)+'đ','chưa thu từ đơn người này giao',L.chuaThu.length+' đơn','Sổ cái — công nợ',L.chuaThu.length?'w':'']];
+  h+='<div class="card"><h2>Đang nối với</h2><div class="ns-lk">'+lk.map(function(x){return '<div class="'+x[4]+'"><b>'+x[0]+'</b><span>'+x[1]+'</span>'+(x[2]?'<span>'+x[2]+'</span>':'')+'<small>↳ '+x[3]+'</small></div>'}).join('')+'</div>'+veNsMap_(p,L)+'</div>';
+  if(p.key!=='giamdoc') h+='<div class="card"><h2>Thay đổi lớn — xem trước hệ quả rồi mới làm</h2><div class="row" style="gap:6px">'+
+    (Number(p.real)?(lam?'<button class="btn-nho" onclick="nsXemTruoc(\'nghi\')">Cho nghỉ (ngưng tài khoản)</button>':'<button class="btn-nho" onclick="nsLamLai('+k+')">Cho làm lại</button>')+
+      '<span class="sm">Tài khoản bán hàng không xoá hẳn — để đơn cũ vẫn khớp tên.</span>'
+     :'<button class="btn-nho" style="color:var(--bad)" onclick="nsXemTruoc(\'xoa\')">Xoá khỏi danh sách</button>')+'</div></div>';
+  e.innerHTML=h }
+/* Sơ đồ: người ở giữa, những nơi đang đọc hồ sơ này xung quanh. Liền xanh = đang
+   nối, đứt đỏ = thiếu bước nên chưa nối, xám = không áp dụng. */
+function veNsMap_(p,L){
+  var ds=nsPhong_(p), ship=ds.indexOf('ship')>=0, sh=nsShipCua_(p), x=nsNV_(p), mk=!!String(p.mk||'');
+  var nut=[['Máy bán hàng',Number(p.real)?(x&&x.trangthai!=='NGUNG'?'đang dùng':'đang ngưng'):'không dùng',Number(p.real)&&x&&x.trangthai!=='NGUNG',!Number(p.real)],
+    ['Điều hành công việc',mk?L.viec.length+' việc':'chưa có mật khẩu',mk&&ds.length>0,false],
+    ['Ô chọn người giao',ship?'có tên':'không phải shipper',ship,!ship],
+    ['Tính giá sàn (lương)',ship?(sh&&sh.luongGio?VN(sh.luongGio)+'đ/giờ':'thiếu lương'):'không tính',ship&&sh&&sh.luongGio>0,!ship],
+    ['Sổ cái',(L.donLen.length+L.donGiao.length)+' đơn',true,false]];
+  var W=640,H=230,cx=320,cy=115,pos=[[110,40],[530,40],[90,190],[550,190],[320,205]], s='<svg viewBox="0 0 640 230" style="width:100%;height:auto;margin-top:10px" role="img" aria-label="Những nơi đang dùng hồ sơ này">';
+  function mau(n){return n[3]?'var(--line)':n[2]?'var(--ok)':'var(--bad)'}
+  nut.forEach(function(n,i){s+='<line x1="'+cx+'" y1="'+cy+'" x2="'+pos[i][0]+'" y2="'+pos[i][1]+'" stroke="'+mau(n)+'" stroke-width="2"'+(n[2]||n[3]?'':' stroke-dasharray="5 5"')+'/>'});
+  s+='<circle cx="'+cx+'" cy="'+cy+'" r="30" fill="var(--c2)" stroke="var(--acc)" stroke-width="2"/><text x="'+cx+'" y="'+(cy+4)+'" text-anchor="middle" fill="var(--tx)" font-size="12" font-weight="700">'+esc(p.name)+'</text>';
+  nut.forEach(function(n,i){var x2=pos[i][0],y=pos[i][1];
+    s+='<rect x="'+(x2-80)+'" y="'+(y-18)+'" width="160" height="36" rx="8" fill="var(--card)" stroke="'+mau(n)+'"/>'+
+      '<text x="'+x2+'" y="'+(y-3)+'" text-anchor="middle" fill="var(--tx)" font-size="12" font-weight="600">'+esc(n[0])+'</text><text x="'+x2+'" y="'+(y+12)+'" text-anchor="middle" fill="var(--tx2)" font-size="11">'+esc(n[1])+'</text>'});
+  return s+'</svg>' }
 
 /* ══════════════════════ DANH SÁCH NGƯỜI PHỤ TRÁCH ══════════════════════
    Nạp cho ô "Người phụ trách" ở tab Việc cần làm (viec_can_lam.html, chạy
@@ -4959,12 +5126,10 @@ async function nhanLuuTrucTuIframe_(dsViec, dsNhanSu){
   }
   try{
     await ghi('trucviec', dsViec||[]);
-    await ghi('trucnhansu', dsNhanSu||[]);
+    // 23/09/2026: nhân sự CHỈ sửa ở tab Nhân sự — bản nhân sự trang con gửi lên bị bỏ qua
     TRUC_VIEC=dsViec||[]; set('trucviec',TRUC_VIEC); TRUC_DA_NAP=true;
-    TRUC_NS=dsNhanSu||[]; set('trucns',TRUC_NS);
     traLoi(true);
-    // shipper suy ra từ bộ phận Shipper — TRỤC thêm/bớt người ở đó thì máy NV cũng theo
-    if(JSON.stringify(nsShipTuNS_())!==JSON.stringify(SHIP)) nsLuu_(); else veNhanSu();
+    veNhanSu();
   }catch(e){ traLoi(false, 'Chưa lưu được: '+e.message) }
 }
 
@@ -4992,42 +5157,32 @@ function veTaiKhoanQL(){
       '<td><input value="'+esc(s.gc||'')+'" style="width:100%" onchange="suaDanhSachNho(\'tk\','+i+',\'gc\',this.value)"></td>'+
       '<td><button class="btn-nho" style="color:var(--bad)" onclick="xoaTaiKhoan('+i+')">Xoá</button></td></tr>'}).join('')+'</table>';
 }
+/* 23/09/2026: danh sách tài khoản không còn bảng riêng ở Vận hành — người đã duyệt
+   hiện trong tab Nhân sự (hồ sơ có 🔒); ở đây chỉ còn khung "Chờ duyệt" đầu tab. */
 function veNV(){
   NVS=get('nvs',NVS)||[];
   var cho=NVS.filter(function(x){return x.trangthai==='CHO DUYET'});
-  var e=$('vhSo'); if(e){ e.textContent=cho.length?'('+cho.length+')':''; e.style.color=cho.length?'var(--warn)':'' }
-  if(!NVS.length){$('dsNV').innerHTML='<div class="empty">Chưa kéo về. Sang tab Nạp đơn bấm <b>Kéo đơn mới</b>.</div>';return}
-  $('dsNV').innerHTML='<div style="overflow-x:auto"><table><tr><th>Tên</th><th>Mã đăng nhập</th><th>Trạng thái</th><th>Đăng ký</th><th></th></tr>'+
-    NVS.map(function(x){
-      var cho=x.trangthai==='CHO DUYET', ngung=x.trangthai==='NGUNG';
-      return '<tr'+(cho?' style="background:var(--warnBg)"':'')+'><td><b>'+esc(x.ten)+'</b>'+
-        (cho?'<div class="tag w">CHỜ DUYỆT</div>':'')+'</td>'+
-        '<td>'+esc(x.key||'')+'</td>'+
-        '<td>'+(ngung?'<span style="color:var(--bad)">Đã ngưng</span>':
-                cho?'<span style="color:var(--warn)">Chờ anh duyệt</span>':
-                '<span style="color:var(--ok)">Đang làm</span>')+'</td>'+
-        '<td class="sm">'+esc(String(x.dangky||'').split(' ')[0])+'</td>'+
-        '<td class="r">'+(cho
-          ?'<button class="mini" style="color:var(--ok)" onclick="datNV(\''+x.ma+'\',\'HOAT DONG\')">Duyệt</button> '+
-           '<button class="mini" style="color:var(--bad)" onclick="datNV(\''+x.ma+'\',\'TU CHOI\')">Từ chối</button>'
-          : ngung
-          ?'<button class="mini" onclick="datNV(\''+x.ma+'\',\'HOAT DONG\')">Cho làm lại</button>'
-          :'<button class="mini" style="color:var(--bad)" onclick="datNV(\''+x.ma+'\',\'NGUNG\')">Ngưng</button>')+
-        '</td></tr>'}).join('')+'</table></div>';
+  var e=$('nsSo'); if(e){ e.textContent=cho.length?'('+cho.length+')':''; e.style.color=cho.length?'var(--warn)':'' }
+  var k=$('nsCho'); if(!k) return;
+  k.innerHTML=cho.length?'<div class="card" style="border-color:var(--warn)"><h2>Chờ duyệt vào máy bán hàng ('+cho.length+')</h2>'+
+    '<div class="sm" style="margin-bottom:8px">Người mới tự đăng ký trên máy nhân viên. Duyệt xong họ vào thẳng danh sách bên dưới — còn thiếu bước nào (mật khẩu, bộ phận…) máy sẽ nhắc.</div>'+
+    cho.map(function(x){return '<div class="row" style="gap:8px;padding:6px 0;border-top:1px solid var(--line)"><b style="flex:1">'+esc(x.ten)+'</b>'+
+      '<span class="sm">mã đăng nhập '+esc(x.key||'')+' · '+esc(String(x.dangky||'').split(' ')[0])+'</span>'+
+      '<button class="mini" style="color:var(--ok)" onclick="datNV(\''+x.ma+'\',\'HOAT DONG\')">Duyệt</button>'+
+      '<button class="mini" style="color:var(--bad)" onclick="datNV(\''+x.ma+'\',\'TU CHOI\')">Từ chối</button></div>'}).join('')+'</div>':'';
 }
 async function datNV(ma,tt){
   var x=NVS.filter(function(y){return y.ma===ma})[0];
-  if(tt==='NGUNG'&&!confirm('Ngưng tài khoản "'+(x?x.ten:ma)+'"?\n\n'+
-    'Trong vòng một phút cả ba máy sẽ khoá người này.\nĐơn cũ của họ giữ nguyên.'))return;
-  if(!QCFG.url||!QCFG.key){bao('vhMsg','Cần link và mật khẩu quản lý ở tab Nạp đơn.','er');return}
+  if(!QCFG.url||!QCFG.key){bao('nsMsg','Cần link và mật khẩu quản lý ở tab Nạp đơn.','er');return}
   try{
     var r=await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'duyetnv',nvs:[{ma:ma,trangthai:tt}]})});
     var j=JSON.parse(await r.text());
     if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
     if(x) x.trangthai=tt; set('nvs',NVS); veNV();
-    bao('vhMsg','Đã đặt <b>'+esc(x?x.ten:ma)+'</b> → '+tt+'. Ba máy nhận trong một phút.','ok');
-  }catch(e){ bao('vhMsg','Không gửi được: '+esc(e.message),'er') }
+    bao('nsMsg',tt==='HOAT DONG'?'Đã duyệt <b>'+esc(x?x.ten:ma)+'</b> — đã vào danh sách, xem các bước còn thiếu bên dưới.':'Đã từ chối '+esc(x?x.ten:ma)+'.','ok');
+    if(tt==='HOAT DONG'&&x){ if(TRUC_DA_NAP&&nsGop_()) nsLuu_(); var pn=TRUC_NS.filter(function(q){return q.code===x.ma})[0]; if(pn){NS_CHON=pn.key;NS_HD=null} veNhanSu() }
+  }catch(e){ bao('nsMsg','Không gửi được: '+esc(e.message),'er') }
 }
 async function doiMaDangKy(){
   var m=prompt('Mã đăng ký cửa hàng mới\n\nNgười mới phải nhập mã này mới gửi được đăng ký.\nHiện tại: '+(MADK||'(chưa kéo về)'),'');
@@ -5475,6 +5630,14 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260923f', ngay:'23/09/2026', ten:'Tab Nhân sự riêng',
+  vaPhieu:[],
+  muc:[
+   ['moi','Tab mới <b>Nhân sự</b> — nơi DUY NHẤT thêm/sửa người: hồ sơ, số điện thoại, bộ phận, ★ trưởng bộ phận, mật khẩu trang công việc, lương/biển số shipper, chép link gửi Zalo.'],
+   ['moi','Mỗi người có mục <b>"Quy trình vào làm — còn thiếu gì"</b> và <b>"Đang nối với"</b> (việc, đơn đã lên, đơn đã giao, tiền chưa thu).'],
+   ['moi','Cho nghỉ, xoá, bỏ khỏi bộ phận: máy <b>báo trước hệ quả</b> (việc nào phải giao lại, bộ phận mất trưởng, không còn shipper…) rồi mới làm.'],
+   ['sua','Người mới đăng ký máy bán hàng giờ duyệt ở đầu tab Nhân sự. Tab Vận hành và Điều hành công việc không còn chỗ sửa nhân sự.']
+  ]},
  {ban:'20260923e', ngay:'23/09/2026', ten:'Nhân sự gom về một chỗ',
   vaPhieu:[],
   muc:[
