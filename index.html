@@ -964,7 +964,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260923c';
+var APP_VER='20260924a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -3524,8 +3524,11 @@ function edXoa(i){ if(ED.dong.length<2){alert('Đơn phải còn ít nhất mộ
 function edTim(){
   var q=kd($('edQ').value.trim());
   if(q.length<2){$('edKQ').innerHTML='';return}
-  var kq=SP.filter(function(p){return kd(p.ten+' '+(p.brand||'')+' '+p.sku).indexOf(q)>=0}).slice(0,12);
-  $('edKQ').innerHTML=kq.length?'<div class="eres">'+kq.map(function(p){
+  /* SỬA 24/09/2026 — trước cắt cứng 12 kết quả đầu: gõ "hams" ra >12 loại cát hamster thì món cần
+     tìm bị cắt mất, tưởng "không có" (ô lên đơn mới thì hiện đủ). Nay hiện hết + số đếm; khung tự cuộn. */
+  var kq=SP.filter(function(p){return kd(p.ten+' '+(p.brand||'')+' '+p.sku).indexOf(q)>=0});
+  $('edKQ').innerHTML=kq.length?'<div class="sm" style="margin:4px 2px">'+kq.length+' sản phẩm khớp'+(kq.length>8?' — kéo xuống để xem hết, hoặc gõ thêm chữ cho gọn':'')+'</div>'+
+    '<div class="eres">'+kq.map(function(p){
     return '<div onclick="edThem(\''+p.sku+'\')">'+esc(p.ten)+' — <b style="color:var(--ok)">'+tien(p.gb)+
       '</b> <span style="color:var(--tx2)">/'+esc(p.dvt)+'</span></div>'}).join('')+'</div>'
     :'<div class="sm">Không tìm thấy</div>';
@@ -5544,6 +5547,11 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260924a', ngay:'24/09/2026', ten:'Sửa đơn tìm được mọi sản phẩm',
+  vaPhieu:[],
+  muc:[
+   ['sua','Ô tìm sản phẩm trong khung <b>Sửa đơn</b> trước chỉ hiện 12 món đầu — gõ "hams" có hơn 12 loại cát hamster thì món cần tìm bị cắt mất. Nay hiện đủ, kèm số món khớp; kéo xuống trong khung để xem hết.']
+  ]},
  {ban:'20260923c', ngay:'23/09/2026', ten:'Làm nốt phiếu kỹ sư',
   vaPhieu:[],
   muc:[
