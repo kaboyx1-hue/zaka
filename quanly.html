@@ -775,7 +775,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260923k';
+var APP_VER='20260924a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -2115,6 +2115,7 @@ function set(k,v){
      sót chỗ nào — mọi lần ghi đều đi qua hàm này. */
   if(k==='gia'||k==='alias'||k==='so') xoaDemNang_();
   try{localStorage.setItem(K+k,JSON.stringify(v))}catch(e){}
+  if(typeof CD_KHOA!=='undefined'&&CD_KHOA&&CD_KHOA.indexOf(k)>=0) cdHenDay_();
 }
 var DEM_TRUNG=null, DEM_BAN=null;
 /* ═══ NHỚ NHỮNG CẶP CHỦ ĐÃ NÓI "HAI MÓN KHÁC NHAU" — 10/09/2026, phiếu 34 ═══
@@ -2199,6 +2200,48 @@ var TRUC_VIEC=get('trucviec',[]), TRUC_NS=get('trucns',[]);
    trang con tuong bang chung trong that, day nguyen bo du lieu mau cua no len,
    ghi de mat ban sua cua may A. */
 var TRUC_DA_NAP=false;
+/* ══════ CÀI ĐẶT CHUNG MỌI MÁY QUẢN LÝ (24/09/2026) ══════
+   Chủ: "mobile không cập nhật như PC, như quay về quá khứ". Đúng — mấy quyết định dưới đây
+   trước chỉ lưu trên ĐÚNG máy bấm (localStorage), máy khác không hề biết. Giờ lưu chung ở trang
+   CAI_DAT_QL (1 dòng/khoá, giá trị JSON). Lần đầu một máy nối vào: GỘP phần máy đó đang có với
+   phần trên Sheet (không mất quyết định nào của máy nào) rồi đẩy lên. Từ đó Sheet là bản gốc.
+   ponytail: ghi đè cả gói — hai máy cùng sửa trong ~20 giây thì bản ghi sau thắng. */
+var CD_KHOA=['alias','khacmon','ksxong','anviec','hanthu','nguongHuyHieu','lydogom','ks_phieu'];
+var CD_DANG_NAP=false, CD_HEN=null;
+function cdDoc_(k){ if(k==='ks_phieu') return KS_PHIEU; return get(k,undefined) }
+function cdGhi_(k,v){ if(k==='ks_phieu'){ KS_PHIEU=v||[]; try{ localStorage.setItem('ks_phieu',JSON.stringify(KS_PHIEU)) }catch(e){} } else set(k,v) }
+function cdGop_(k,a,b){   // a = máy này, b = Sheet
+  if(a===undefined||a===null) return b; if(b===undefined||b===null) return a;
+  if(k==='ks_phieu'){ var co={}, o=[]; b.concat(a).forEach(function(p){ var x=String(p.luc||'')+'|'+String(p.noi||'').slice(0,80); if(!co[x]){ co[x]=1; o.push(p) } }); return o }
+  if(typeof a==='object' && typeof b==='object' && !Array.isArray(a)) return Object.assign({},a,b);
+  return b;
+}
+function napCaiDat_(ds){
+  var sv={}; (ds||[]).forEach(function(r){ try{ sv[r.k]=JSON.parse(r.v) }catch(e){} });
+  var lanDau=!get('cddanoi',false);
+  CD_DANG_NAP=true;
+  CD_KHOA.forEach(function(k){
+    var v = lanDau ? cdGop_(k, cdDoc_(k), sv[k]) : sv[k];
+    if(v!==undefined) cdGhi_(k,v);
+  });
+  CD_DANG_NAP=false;
+  // nạp lại biến đang chạy
+  ALIAS=get('alias',{}); KHAC_MON=get('khacmon',{}); KS_XONG=get('ksxong',{})||{}; LY_DO_GOM=get('lydogom',{});
+  HAN_THU=get('hanthu',7); NGUONG_HH_=get('nguongHuyHieu',NGUONG_HH_MACDINH_);
+  NGUONG_QUEN_=NGUONG_HH_.quen; NGUONG_VIP_=NGUONG_HH_.vip; NGUONG_VVIP_BREEDER_=NGUONG_HH_.vvipBreeder;
+  if(GIA){ var va=false; Object.keys(ALIAS).forEach(function(k){ if(GIA[k]&&!GIA[k].gopVao){ GIA[k].gopVao=skuChinh(k); GIA[k].ngung=true; va=true } }); if(va) set('gia',GIA) }
+  xoaDemNang_();
+  if(lanDau){ set('cddanoi',true); cdDay_() }
+  try{ veLam(); veCB(); veNguongHuyHieu() }catch(e){}
+}
+function cdHenDay_(){ if(CD_DANG_NAP||!get('cddanoi',false)) return; clearTimeout(CD_HEN); CD_HEN=setTimeout(cdDay_,1500) }
+function cdDay_(){
+  if(!QCFG.url||!QCFG.key) return;
+  var ds=CD_KHOA.map(function(k){ var v=cdDoc_(k); return v===undefined?null:{k:k,v:JSON.stringify(v)} }).filter(Boolean);
+  NS_CHUOI=NS_CHUOI.then(async function(){
+    try{ var j=await nsGhi_('caidat',ds); VERQL.cd=j.ver; set('verql',VERQL) }catch(e){}
+  });
+}
 async function hoiNhanh(){
   if(!QCFG.url||!QCFG.key) return;
   try{
@@ -2209,9 +2252,9 @@ async function hoiNhanh(){
     var doi = v.don!==VERQL.don || v.von!==VERQL.von || v.sv!==VERQL.sv ||
               v.nv!==VERQL.nv || v.kt!==VERQL.kt || v.ship!==VERQL.ship || v.tk!==VERQL.tk ||
               v.cp!==VERQL.cp || v.tg!==VERQL.tg || v.vc!==VERQL.vc ||
-              (v.trn||'')!==(VERQL.trn||'') || (v.trv||'')!==(VERQL.trv||'') || (v.qt||'')!==(VERQL.qt||'');
+              (v.trn||'')!==(VERQL.trn||'') || (v.trv||'')!==(VERQL.trv||'') || (v.qt||'')!==(VERQL.qt||'') || (v.cd||'')!==(VERQL.cd||'');
     if(!doi) return;
-    VERQL={don:v.don||'',von:v.von||'',sv:v.sv||'',nv:v.nv||'',kt:v.kt||'',ship:v.ship||'',tk:v.tk||'',cp:v.cp||'',tg:v.tg||'',vc:v.vc||'',trv:v.trv||'',trn:v.trn||'',qt:v.qt||''};
+    VERQL={don:v.don||'',von:v.von||'',sv:v.sv||'',nv:v.nv||'',kt:v.kt||'',ship:v.ship||'',tk:v.tk||'',cp:v.cp||'',tg:v.tg||'',vc:v.vc||'',trv:v.trv||'',trn:v.trn||'',qt:v.qt||'',cd:v.cd||''};
     set('verql',VERQL);
     await keoDon(0);
   }catch(e){
@@ -2235,11 +2278,12 @@ function apDungKeoVe(j, luc){
   if(j.trucViec){ TRUC_VIEC=j.trucViec; set('trucviec',TRUC_VIEC); TRUC_DA_NAP=true }
   if(j.trucNhanSu){ TRUC_NS=j.trucNhanSu; set('trucns',TRUC_NS) }
   if(j.quyTrinh){ QT_DS=j.quyTrinh; set('quytrinh',QT_DS) }
+  if(j.caiDat) napCaiDat_(j.caiDat);
   if(TRUC_DA_NAP) guiTrucChoIframe();
   NVS=j.nvs||[]; set('nvs',NVS);
   if(TRUC_DA_NAP&&TRUC_NS.length&&nsGop_()) nsLuu_();   // nhân sự một nguồn — xem nsGop_
   KTRUONG=j.khaiTruong||''; set('ktruong',KTRUONG);
-  VERQL={don:j.donVer||'',von:j.vonVer||'',sv:j.svVer||'',nv:VERQL.nv,kt:VERQL.kt,ship:j.shipVer||'',tk:j.tkVer||'',cp:j.cpVer||'',tg:j.tgVer||'',vc:j.vcVer||'',trv:j.trvVer||'',trn:j.trnVer||'',qt:j.qtVer||''};
+  VERQL={don:j.donVer||'',von:j.vonVer||'',sv:j.svVer||'',nv:VERQL.nv,kt:VERQL.kt,ship:j.shipVer||'',tk:j.tkVer||'',cp:j.cpVer||'',tg:j.tgVer||'',vc:j.vcVer||'',trv:j.trvVer||'',trn:j.trnVer||'',qt:j.qtVer||'',cd:j.cdVer||''};
   set('verql',VERQL);
   MADK=j.maDK||''; MAYGUI=j.mayGuiCuoi||{}; set('maygui',MAYGUI);
   napDon(j.don||[],'Drive');
@@ -5773,7 +5817,7 @@ function doiMkQL(){
 var KS_TEN_APP=(typeof MAT_KHAU_QUANLY!=='undefined'||typeof QCFG!=='undefined')?'May quan ly':'May nhan vien';
 var KS_PHIEU=[], KS_LOI=[], KS_DANG_CHI=false, KS_CHON=null;
 try{ KS_PHIEU=JSON.parse(localStorage.getItem('ks_phieu')||'[]') }catch(e){ KS_PHIEU=[] }
-function ksLuu(){ try{ localStorage.setItem('ks_phieu',JSON.stringify(KS_PHIEU)) }catch(e){} }
+function ksLuu(){ try{ localStorage.setItem('ks_phieu',JSON.stringify(KS_PHIEU)) }catch(e){} cdHenDay_() }
 /* 23/09/2026 — chủ hỏi "tại sao kỹ sư không nhận được các phiếu này": phiếu ghi ở MÁY
    QUẢN LÝ trước giờ chỉ nằm trong bộ nhớ trình duyệt máy đó, phải tự bấm "Tải file gửi
    kỹ sư" rồi đưa file — không bấm là kỹ sư không bao giờ thấy (phiếu máy nhân viên thì
@@ -6032,6 +6076,12 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260924a', ngay:'24/09/2026', ten:'Điện thoại và máy tính dùng chung quyết định',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['sua','Món đã gộp, cặp "hai món khác nhau", phiếu kỹ sư đã xử lý/bỏ qua, việc đã ẩn, hạn thu nợ, ngưỡng huy hiệu: trước chỉ nhớ trên máy bấm — giờ lưu lên Sheet, <b>điện thoại và máy tính thấy giống nhau</b>.'],
+   ['sua','Phiếu nhân viên đã bấm "Bỏ qua" giờ cũng được báo lên Sheet, không hiện lại ở máy khác.']
+  ]},
  {ban:'20260923k', ngay:'23/09/2026', ten:'Sửa theo 9 phiếu tab Nhân sự',
   vaPhieu:[],
   vaNoi:["tôi không thể bỏ chọn được", "không rõ ràng", "không hiểu cái này", "chẳng phải trước đó ở cấu hình đã làm sẵn rồi sao ?", "nếu đã là nhân viên thuộc kinh doanh thì không cần phải điền cái này vì nó đã được tích hợp sẵn trong file Nhân viên rồi cần gì làm nữa, cái này chỉ dành cho các bộ phận khác thôi", "cái bảng này kích thước quá lớn một cách không cần thiết", "vậy nó ở đây với mục đích gì", "thay từ im bằng offline", "lỗi không thể bỏ chọn ở nhiều tag khác nhau"],
@@ -6679,11 +6729,13 @@ function ksDoiChieuBanVa(){
       if(String(x.tt||'').trim().toUpperCase()!=='CHO DUYET') return;
       var b = tra[String(x.luc||'').trim()] || traNoiBan[chuanNoi_(x.noi)] || null;
       var g = traNoi[chuanNoi_(x.noi)] || null;
-      if(!b && !g) return;
       var k=khoaPhieuNV_(x);
-      /* SỬA 23/09/2026 — phiếu máy này đã ẩn từ trước (KS_XONG) trước đây bị bỏ qua luôn nên Sheet
-         vẫn "CHO DUYET" mãi (35 phiếu cũ). Nay vẫn gửi đánh dấu DA VA — mỗi phiên 1 lần. */
-      if(KS_XONG[k]){ if(!KS_DA_GUI_VA[k]){ KS_DA_GUI_VA[k]=1; guiVa.push({luc:x.luc||'', may:x.may||'', noi:x.noi||'', tt:'DA VA', chuGhi:'Đã vá'}) } return }
+      /* SỬA 23-24/09/2026 — phiếu đã xử lý (KS_XONG: đã vá HOẶC chủ bấm bỏ qua) mà Sheet vẫn
+         "CHO DUYET" -> gửi đúng trạng thái lên, mỗi phiên 1 lần. Trước chỉ gửi phiếu đã vá, phiếu
+         bỏ qua thì không -> máy khác (điện thoại) vẫn thấy phiếu cũ. */
+      if(KS_XONG[k]){ if(!KS_DA_GUI_VA[k]){ KS_DA_GUI_VA[k]=1; var bq=/bỏ qua/.test(KS_XONG[k].ban||'');
+        guiVa.push({luc:x.luc||'', may:x.may||'', noi:x.noi||'', tt:bq?'BO QUA':'DA VA', chuGhi:bq?'Chủ bỏ qua':'Đã vá'}) } return }
+      if(!b && !g) return;
       KS_DA_GUI_VA[k]=1;
       KS_XONG[k]={luc:x.luc||'', noi:x.noi||'', ban:(b&&b.ban)||(g&&g.vaBan)||'', danhDau:nay};
       guiVa.push({luc:x.luc||'', may:x.may||'', noi:x.noi||'', tt:'DA VA', chuGhi:'Đã vá ở bản '+((b&&b.ban)||(g&&g.vaBan)||'')});
