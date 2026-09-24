@@ -58,6 +58,9 @@ label{display:block;font-size:12.5px;color:var(--tx2);margin:0 0 6px}
 .row{display:flex;gap:10px}.row>*{flex:1;min-width:0}.mt{margin-top:12px}
 /* NÚT ✕ Ở GÓC TRÊN MỖI BẢNG — thêm 10/09/2026. */
 dialog{position:relative}
+/* SỬA 24/09/2026 — dòng trên (cho nút ✕ bám góc) làm hộp thoại mở dạng nổi bị vẽ ở ĐẦU TRANG thay vì giữa
+   màn hình -> mở hộp nào (vd thu tiền) trang cũng nhảy lên đầu. Hộp đang nổi thì phải cố định giữa màn hình. */
+dialog:modal{position:fixed}
 .dlgX{position:absolute;top:10px;right:12px;width:34px;height:34px;flex:none;padding:0;
   border-radius:50%;border:1px solid var(--line);background:var(--c2);color:var(--tx2);
   font-size:16px;line-height:1;cursor:pointer;z-index:5}
@@ -964,7 +967,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260924a';
+var APP_VER='20260924b';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -5547,6 +5550,11 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260924b', ngay:'24/09/2026', ten:'Mở hộp thoại không còn nhảy lên đầu trang',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['sua','Bấm <b>Đánh dấu ĐÃ THU</b> (và mọi hộp thoại khác) ở giữa danh sách trước đây làm trang nhảy lên đầu — hộp bị vẽ ở đầu trang thay vì nổi giữa màn hình. Nay trang đứng yên, hộp nổi giữa màn hình, chốt xong vẫn ở đúng đơn đang xem.']
+  ]},
  {ban:'20260924a', ngay:'24/09/2026', ten:'Sửa đơn tìm được mọi sản phẩm',
   vaPhieu:[],
   muc:[

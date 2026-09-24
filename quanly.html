@@ -68,6 +68,9 @@ label{display:block;font-size:12.5px;color:var(--tx2);margin:0 0 6px}
    Trước đây muốn thoát phải kéo xuống cuối tìm nút Huỷ, hoặc bấm Esc mà
    không ai biết. Nay bảng nào cũng có ✕ ngay góc phải trên. */
 dialog{position:relative}
+/* SỬA 24/09/2026 — dòng trên (cho nút ✕ bám góc) làm hộp thoại mở dạng nổi bị vẽ ở ĐẦU TRANG thay vì giữa
+   màn hình -> mở hộp nào (vd thu tiền) trang cũng nhảy lên đầu. Hộp đang nổi thì phải cố định giữa màn hình. */
+dialog:modal{position:fixed}
 .dlgX{position:absolute;top:10px;right:12px;width:34px;height:34px;flex:none;padding:0;
   border-radius:50%;border:1px solid var(--line);background:var(--c2);color:var(--tx2);
   font-size:16px;line-height:1;cursor:pointer;z-index:5}
@@ -775,7 +778,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260924a';
+var APP_VER='20260924b';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -6076,6 +6079,11 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260924b', ngay:'24/09/2026', ten:'Mở hộp thoại không còn nhảy lên đầu trang',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['sua','Bấm <b>Đánh dấu ĐÃ THU</b> (và mọi hộp thoại khác) ở giữa danh sách trước đây làm trang nhảy lên đầu — hộp bị vẽ ở đầu trang thay vì nổi giữa màn hình. Nay trang đứng yên, hộp nổi giữa màn hình, chốt xong vẫn ở đúng đơn đang xem.']
+  ]},
  {ban:'20260924a', ngay:'24/09/2026', ten:'Điện thoại và máy tính dùng chung quyết định',
   vaPhieu:[], vaNoi:[],
   muc:[
