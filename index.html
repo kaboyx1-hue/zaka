@@ -903,7 +903,7 @@ body.ks-chi *{cursor:crosshair!important}
   <div class="sm" style="margin-bottom:12px"><b>Chỉ dùng khi món này thật sự chưa có.</b>
   Nếu chỉ là bán cho khách này giá khác thì <b>đừng thêm mới</b> — cứ tìm món có sẵn, bỏ vào giỏ
   rồi sửa giá ngay tại dòng đó. Máy sẽ tự nhớ giá riêng cho đúng khách này.</div>
-  <label>Tên sản phẩm</label><input id="nTen" oninput="goiYTrung()">
+  <label>Tên sản phẩm</label><input id="nTen" oninput="goiYTrung();nDatNut_('')">
   <div id="nGoiY"></div>
   <div class="row mt">
     <div><label>Nhóm</label><select id="nNhom"></select></div>
@@ -913,7 +913,7 @@ body.ks-chi *{cursor:crosshair!important}
   <div id="nErr"></div>
   <div class="row mt">
     <button onclick="document.getElementById('dlgThem').close()" style="background:var(--c2);color:var(--tx2)">Huỷ</button>
-    <button class="btn-main" style="width:auto" onclick="luuMoi()">Thêm và bán</button>
+    <button class="btn-main" style="width:auto" id="nNutThem" onclick="luuMoi()">Thêm và bán</button>
   </div>
 </dialog>
 
@@ -967,7 +967,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260924b';
+var APP_VER='20260926a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -2847,7 +2847,13 @@ function veGio(){
 
 /* ── THÊM SẢN PHẨM MỚI ── */
 function moThem(){ $('nTen').value=$('q').value; $('nGia').value=''; $('nDvt').value='';
-  $('nErr').innerHTML=''; $('dlgThem').showModal(); goiYTrung() }
+  $('nErr').innerHTML=''; nDatNut_(''); $('dlgThem').showModal(); goiYTrung() }
+/* SỬA 26/09/2026 — chủ báo "thêm sản phẩm mới không cho thêm": gặp tên gần giống thì cảnh báo hiện ra,
+   nhưng nút TO "Thêm và bán" bấm lại chỉ hiện lại cảnh báo — phải tìm nút xám nhỏ phía trên mới thêm được.
+   Nay cảnh báo đang hiện thì nút to đổi thành "Vẫn thêm món mới", bấm là thêm luôn (đúng ý "chỉ tốn thêm
+   một cú bấm"); sửa tên thì nút về như cũ và kiểm lại từ đầu. */
+var CANH_BAO_TEN='';
+function nDatNut_(tk){ CANH_BAO_TEN=tk; var b=$('nNutThem'); if(b) b.textContent=tk?'Vẫn thêm món mới':'Thêm và bán' }
 /* Điểm giống nhau giữa 2 tên — theo tỉ lệ từ khoá trùng (Jaccard trên tuKhoa_).
    Nới lỏng hơn timTrungTen() (vốn đòi khớp TUYỆT ĐỐI sau khi chuẩn hoá) vì chỗ
    này chỉ dùng để GỢI Ý, không tự làm gì cả — nhân viên phải tự bấm "Dùng cái
@@ -2956,7 +2962,9 @@ async function luuMoi(){
   var gan=SP.map(function(p){return {p:p,d:diemGiong_(t,p.ten)}})
     .filter(function(x){return x.d>=0.5})
     .sort(function(a,b){return b.d-a.d}).slice(0,4);
+  if(gan.length && CANH_BAO_TEN && CANH_BAO_TEN===tuKhoa_(t)) XAC_NHAN_MON_KHAC=CANH_BAO_TEN;   // bấm nút to lần 2
   if(gan.length && XAC_NHAN_MON_KHAC!==tuKhoa_(t)){
+    nDatNut_(tuKhoa_(t));
     /* BÁO ĐỘNG TRÙNG TÊN — nói rõ món đã có NẰM Ở ĐÂU và MÃ SỐ là gì, để nhân
        viên tự kiểm chứng được chứ không phải tin suông. Kèm nút chỉ thẳng tới
        chỗ nó nằm trong danh sách. */
@@ -2987,7 +2995,7 @@ async function luuMoi(){
       'onclick=\'khangDinhMonKhac()\'>Không phải — đây là món khác hẳn, vẫn thêm mới</button>';
     return;
   }
-  XAC_NHAN_MON_KHAC='';
+  XAC_NHAN_MON_KHAC=''; nDatNut_('');
 
   var d0=new Date();
   var sku='MOI-'+CFG.ma+'-'+String(d0.getFullYear()).slice(2)+
@@ -5550,6 +5558,11 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260926a', ngay:'26/09/2026', ten:'Thêm món mới không còn bị kẹt',
+  vaPhieu:[],
+  muc:[
+   ['sua','Thêm món mới có tên gần giống món đã có: sau khi đọc cảnh báo, nút to đổi thành <b>Vẫn thêm món mới</b> — bấm là thêm luôn. Trước đây bấm "Thêm và bán" chỉ hiện lại cảnh báo, phải tìm nút xám nhỏ mới thêm được.']
+  ]},
  {ban:'20260924b', ngay:'24/09/2026', ten:'Mở hộp thoại không còn nhảy lên đầu trang',
   vaPhieu:[], vaNoi:[],
   muc:[
