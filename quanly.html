@@ -778,7 +778,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260924b';
+var APP_VER='20260927a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -2202,7 +2202,7 @@ var TRUC_VIEC=get('trucviec',[]), TRUC_NS=get('trucns',[]);
    nho trong, trang cha gui xuong danh sach RONG (ban chep cuc bo con trong) ->
    trang con tuong bang chung trong that, day nguyen bo du lieu mau cua no len,
    ghi de mat ban sua cua may A. */
-var TRUC_DA_NAP=false;
+var TRUC_DA_NAP=false, TRUC_LUU_LUC=0, KEO_BAT_DAU=0;
 /* ══════ CÀI ĐẶT CHUNG MỌI MÁY QUẢN LÝ (24/09/2026) ══════
    Chủ: "mobile không cập nhật như PC, như quay về quá khứ". Đúng — mấy quyết định dưới đây
    trước chỉ lưu trên ĐÚNG máy bấm (localStorage), máy khác không hề biết. Giờ lưu chung ở trang
@@ -2278,7 +2278,9 @@ function apDungKeoVe(j, luc){
   if(j.chiPhi) CHIPHI_QL=j.chiPhi; set('chiphiql',CHIPHI_QL);
   if(j.tinhGia){ TINHGIA_LUU=j.tinhGia.slice().reverse(); set('tinhgialuu',TINHGIA_LUU); guiTinhGiaChoTs() }
   if(j.viec){ VIEC_CL=j.viec; set('vieccl',VIEC_CL); guiViecChoVc() }
-  if(j.trucViec){ TRUC_VIEC=j.trucViec; set('trucviec',TRUC_VIEC); TRUC_DA_NAP=true }
+  /* 27/09/2026: lần kéo này bắt đầu TRƯỚC khi trang việc vừa lưu xong -> bản kéo về là bản cũ, bỏ qua
+     (không thì việc vừa giao biến mất khỏi màn hình). Lần đồng bộ sau tự lấy bản mới. */
+  if(j.trucViec && !(TRUC_LUU_LUC>KEO_BAT_DAU)){ TRUC_VIEC=j.trucViec; set('trucviec',TRUC_VIEC); TRUC_DA_NAP=true }
   if(j.trucNhanSu){ TRUC_NS=j.trucNhanSu; set('trucns',TRUC_NS) }
   if(j.quyTrinh){ QT_DS=j.quyTrinh; set('quytrinh',QT_DS) }
   if(j.caiDat) napCaiDat_(j.caiDat);
@@ -2301,6 +2303,7 @@ async function keoDon(im){
   luuQCfg();
   if(!QCFG.url||!QCFG.key){ if(im)bao('inMsg','Cần dán link và mật khẩu quản lý','er'); return }
   $('keoInfo').innerHTML='Đang kéo…';
+  KEO_BAT_DAU=Date.now();
   try{
     var r=await fetch(QCFG.url+'?key='+encodeURIComponent(QCFG.key));
     var j=await r.json();
@@ -5534,6 +5537,7 @@ async function nhanLuuTrucTuIframe_(dsViec, dsNhanSu){
   }
   try{
     await ghi('trucviec', dsViec||[]);
+    TRUC_LUU_LUC=Date.now();
     // 23/09/2026: nhân sự CHỈ sửa ở tab Nhân sự — bản nhân sự trang con gửi lên bị bỏ qua
     TRUC_VIEC=dsViec||[]; set('trucviec',TRUC_VIEC); TRUC_DA_NAP=true;
     traLoi(true);
@@ -6079,6 +6083,11 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260927a', ngay:'27/09/2026', ten:'Giao việc mới không còn bị mất',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['sua','Điều hành công việc: giao việc mới đúng lúc phần mềm đang tự đồng bộ thì việc đó bị bản cũ đè mất, không lên Sheet. Nay việc vừa giao luôn được giữ và gửi lên đủ.']
+  ]},
  {ban:'20260924b', ngay:'24/09/2026', ten:'Mở hộp thoại không còn nhảy lên đầu trang',
   vaPhieu:[], vaNoi:[],
   muc:[

@@ -2345,6 +2345,10 @@ function App() {
   }, [tasks, daVaoNV]);
   const daNhan = useRef(false);
   const boQuaLanDau = useRef(true);
+  /* SỬA 27/09/2026 — chủ báo "giao việc mới thì lập tức bị xoá". Vừa bấm Lưu (việc còn chờ 1,5 giây
+     mới gửi lên) mà trang cha đồng bộ trúng lúc đó -> danh sách CŨ trên Sheet đè vào máy, việc mới mất
+     hẳn, không bao giờ lên Sheet. Nay còn thay đổi chưa gửi xong thì BỎ QUA bản cũ trang cha đưa xuống. */
+  const choGui = useRef(false);
   const henGui = useRef(null);
   const tasksRef = useRef(tasks);
   tasksRef.current = tasks;
@@ -2363,6 +2367,7 @@ function App() {
     function nhan(e) {
       const d = e && e.data; if (!d) return;
       if (d.type === 'truc-list') {
+        if (choGui.current) return;
         const dsViec = viecTuBang_(d.viec);
         const ns = nhanSuTuBang_(d.nhansu);
         /* Bang chung con TRONG ma may nay dang co du lieu that thi DAY LEN lam
@@ -2380,6 +2385,7 @@ function App() {
         daNhan.current = true; boQuaLanDau.current = true;
         setDongBo({ trangThai: 'xong', loi: '' });
       }
+      if (d.type === 'truc-luu-ket-qua') choGui.current = false;
       if (d.type === 'truc-luu-ket-qua') setDongBo(d.ok ? { trangThai: 'xong', loi: '' } : { trangThai: 'loi', loi: d.loi || '' });
     }
     window.addEventListener('message', nhan);
@@ -2391,6 +2397,7 @@ function App() {
     if (!TRONG_QUAN_LY || !daNhan.current) return;
     if (boQuaLanDau.current) { boQuaLanDau.current = false; return; }
     clearTimeout(henGui.current);
+    choGui.current = true;
     henGui.current = setTimeout(() => guiLen(tasksRef.current), 1500);
     return () => clearTimeout(henGui.current);
   }, [tasks, peopleVersion]);
