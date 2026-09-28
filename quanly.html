@@ -778,7 +778,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260927a';
+var APP_VER='20260928a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1379,7 +1379,10 @@ function moDuyetSP(){
     : 'Không còn món nào chờ duyệt.';
   $('dsThan').innerHTML = ds.length ? ds.map(function(x,i){
     var g=Number(x.gb)||0;
-    var goiY=timGanGiong_(x.ten);
+    /* 28/09/2026 — bỏ CHÍNH món đang duyệt khỏi gợi ý (trước gợi ý cả chính nó, bấm là gộp vào chính nó);
+       món cũng đang chờ duyệt thì ghi rõ để khỏi tưởng là món đã có trong bảng giá. */
+    var choSku={}; ds.forEach(function(y){ choSku[y.sku]=1 });
+    var goiY=timGanGiong_(x.ten).filter(function(k){ return k!==x.sku });
     return '<div class="card" style="padding:12px;margin-bottom:10px" id="spd'+i+'">'+
       '<div class="sm" style="color:var(--tx2)">'+esc(x.luc||'')+' · máy <b>'+esc(x.mayTao||'')+'</b>'+
         ' · <b>'+esc(x.nguoiTao||'')+'</b> · mã tạm <code>'+esc(x.sku)+'</code></div>'+
@@ -1389,7 +1392,7 @@ function moDuyetSP(){
       (goiY.length
         ? '<div class="sm" style="margin-top:8px;padding:8px;border-radius:10px;background:var(--warnBg);color:var(--warn)">'+
           '<b>Coi chừng trùng.</b> Bảng giá đã có món tên gần giống:<br>'+
-          goiY.map(function(k){ return '• '+esc(GIA[k].ten)+' <code>'+esc(k)+'</code>'+
+          goiY.map(function(k){ return '• '+esc(GIA[k].ten)+' <code>'+esc(k)+'</code>'+(choSku[k]?' <i>(nhân viên cũng vừa thêm, đang chờ duyệt)</i>':'')+
             ' <button class="mini" onclick="gopSPCho('+i+',\''+esc(k)+'\')">Chính là món này</button>' }).join('<br>')+
           '</div>'
         : '')+
@@ -2078,6 +2081,16 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){
    trong bảng mã, không phải d + dấu, nên nó nằm nguyên. Người Việt gõ nhanh thì
    gõ "dau", "dong", "duong" — không ai gõ "đ". Nay đổi đ→d, Đ→D trước khi so.
    Ảnh hưởng: mọi ô tìm kiếm trong app đều dễ tìm hơn. */
+/* 28/09/2026 — chủ: 2 máy cùng lên đơn một lúc thì 3 số cuối trùng (NV02-…-584 và NV03-…-584), nhân viên
+   tìm theo số cuối dễ nhầm. HIỂN THỊ thêm số máy trước dãy số: 02.584 / 03.584. Mã đơn LƯU vẫn giữ nguyên
+   (không đổi dữ liệu, không đổi Sheet) — chỉ đổi cách hiện + tìm được bằng "02.584"/"02584". */
+function soDon_(ma){
+  var m=/^(.*)-(\d{6})-(\d+)$/.exec(String(ma||'')); if(!m) return '';
+  var so=(m[1].replace(/\D/g,'')||'0'); so=('0'+so).slice(-2);
+  return so+'.'+m[3];
+}
+function maHien_(ma){ var s=soDon_(ma); return s ? String(ma).replace(/-\d+$/,'-'+s) : String(ma||'') }
+function maTim_(ma){ var s=soDon_(ma); return s ? ' '+s+' '+s.replace('.','') : '' }
 function kd(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\u0111/g,'d').replace(/\u0110/g,'D').toLowerCase()}
 /* So khớp tên "lỏng" hơn kd() thường — dùng để TỰ GỢI Ý sản phẩm nghi trùng tên.
    kd() chỉ bỏ dấu, nên "Cát tắm thơm hamster 1kg (mix mùi)" và "Cát tấm thơm CHO
@@ -3411,7 +3424,7 @@ function tomTatLoc(ds){
 }
 function veSo(){
   var q=kd(($('fso').value||'').trim());
-  var ds=SO.filter(function(d){return !q||kd(d.ma+' '+d.khach+' '+d.nv+' '+(d.dc||'')).indexOf(q)>=0});
+  var ds=SO.filter(function(d){return !q||kd(d.ma+maTim_(d.ma)+' '+d.khach+' '+d.nv+' '+(d.dc||'')).indexOf(q)>=0});
   // Lọc theo kỳ (ngày/tháng/quý/khoảng tuỳ chỉnh) — DÙNG CHUNG với tab Báo cáo, chọn
   // kỳ ở tab nào cũng áp dụng cho cả hai — trước đây veSo() bỏ qua KY, không lọc gì.
   // Trừ khi đang xem "TOÀN BỘ lịch sử 1 nhân viên" (xemLichSuNV) — lúc đó phải
@@ -3474,7 +3487,7 @@ function veSo(){
     ds.map(function(d){
       return '<tr onclick="ctDon(\''+d.ma+'\')" style="cursor:pointer'+(d.huy?';opacity:.55':'')+'">'+
         '<td onclick="event.stopPropagation()">'+(d.huy?'':'<input type="checkbox" class="ckso" value="'+d.ma+'" onchange="demHuyQL()" style="width:17px;height:17px;accent-color:var(--bad)">')+'</td>'+
-        '<td'+(d.huy?' style="text-decoration:line-through"':'')+'>'+esc(d.ma)+
+        '<td'+(d.huy?' style="text-decoration:line-through"':'')+'>'+esc(maHien_(d.ma))+
         (d.huy?' <span class="tag" style="background:var(--badBg);color:var(--bad)">ĐÃ HUỶ</span>':'')+
         (d.thieuVon?' <span class="tag w">chờ vốn</span>':'')+
         (d.huy?'':(function(){var t=d.tt||'CHUA';
@@ -3636,7 +3649,7 @@ function moVon(ma){
      PHẠM VI RỘNG chỉ đụng những đơn ĐANG THIẾU giá vốn (chưa từng có số) —
      đơn nào đã có giá vốn thật thì giữ nguyên, vì đó là bản chụp lúc bán,
      luật cứng của hệ thống. */
-  $('vInfo').innerHTML='Đơn <b>'+esc(d.ma)+'</b> · '+esc(d.ngay)+' · '+esc(d.khach);
+  $('vInfo').innerHTML='Đơn <b>'+esc(maHien_(d.ma))+'</b> · '+esc(d.ngay)+' · '+esc(d.khach);
   $('vDong').innerHTML=d.dong.map(function(x,i){
     var lan=demDonThieuVon_(x.sku);
     return '<div style="margin-bottom:9px"><label>'+esc(x.ten)+' — '+x.sl+' '+esc(x.dv)+'</label>'+
@@ -4708,7 +4721,7 @@ function cbGiao(){
       '<table><tr><th>Mã đơn</th><th>Ngày</th><th>Khách</th><th class="r">Đã giao</th>'+
       '<th class="r">Còn phải thu</th><th class="r">Treo</th></tr>'+
       doQuaHan.sort(function(a,b){return soNgay(b.iso)-soNgay(a.iso)}).map(function(d){
-        return '<tr><td>'+esc(d.ma)+'</td><td>'+esc(d.ngay)+'</td><td>'+esc(d.khach)+'</td>'+
+        return '<tr><td>'+esc(maHien_(d.ma))+'</td><td>'+esc(d.ngay)+'</td><td>'+esc(d.khach)+'</td>'+
           '<td class="r" style="color:var(--warn)">'+tongDaGiao(d)+'/'+tongDat(d)+'</td>'+
           '<td class="r">'+tien(conThuDon(d))+'</td>'+
           '<td class="r" style="color:var(--bad);font-weight:700">'+soNgay(d.iso)+' ngày</td></tr>'
@@ -4727,7 +4740,7 @@ function cbGiao(){
       cnChonNguoi_('cb', duChuaThu)+
       '<table class="mt"><tr><th>Mã đơn</th><th>Ngày</th><th>Khách</th><th class="r">Còn phải thu</th><th class="r">Số ngày</th></tr>'+
       duChuaThu.sort(function(a,b){return soNgay(b.iso)-soNgay(a.iso)}).map(function(d){
-        return '<tr><td>'+esc(d.ma)+'</td><td>'+esc(d.ngay)+'</td><td>'+esc(d.khach)+'</td>'+
+        return '<tr><td>'+esc(maHien_(d.ma))+'</td><td>'+esc(d.ngay)+'</td><td>'+esc(d.khach)+'</td>'+
           '<td class="r">'+tien(conThuDon(d))+'</td>'+
           '<td class="r" style="color:var(--warn)">'+soNgay(d.iso)+'</td></tr>'
       }).join('')+'</table></div>';
@@ -4784,7 +4797,7 @@ function veCB(){
     '<th class="r">Doanh thu</th><th class="r">Treo</th></tr>'+
     q.sort(function(a,b){return soNgay(b.iso)-soNgay(a.iso)}).map(function(d){
       var n=soNgay(d.iso), o=n>HAN_NGAY;
-      return '<tr'+(o?' style="background:#301b18"':'')+'><td>'+esc(d.ma)+'</td><td>'+esc(d.ngay)+'</td>'+
+      return '<tr'+(o?' style="background:#301b18"':'')+'><td>'+esc(maHien_(d.ma))+'</td><td>'+esc(d.ngay)+'</td>'+
         '<td>'+esc(d.khach)+'</td><td class="r">'+tien(d.tienHang)+'</td>'+
         '<td class="r" style="color:'+(o?'var(--bad)':'var(--warn)')+';font-weight:700">'+n+' ngày'+(o?' QUÁ HẠN':'')+'</td></tr>'
     }).join('')+'</table></div>';
@@ -6083,6 +6096,12 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260928a', ngay:'28/09/2026', ten:'Mã đơn có số máy, duyệt hàng không gợi ý chính nó',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['sua','Mã đơn hiện thêm số máy trước dãy số: <b>02.584</b> (máy NV02), <b>03.584</b> (máy NV03) — hai máy lên đơn cùng lúc không còn nhìn trùng. Tìm bằng "02.584" hoặc "02584" đều ra. Mã lưu trên Sheet giữ nguyên.'],
+   ['sua','Duyệt hàng nhân viên thêm: mục "Coi chừng trùng" không còn gợi ý chính món đang duyệt; món nhân viên khác cũng vừa thêm thì ghi rõ "đang chờ duyệt".']
+  ]},
  {ban:'20260927a', ngay:'27/09/2026', ten:'Giao việc mới không còn bị mất',
   vaPhieu:[], vaNoi:[],
   muc:[

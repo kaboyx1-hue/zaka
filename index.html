@@ -967,7 +967,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260926a';
+var APP_VER='20260928a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1157,6 +1157,16 @@ function mauMay(may){
 }
 /* Tách "NV01" ra khỏi "NV01-260907-005" — lấy mọi ký tự TRƯỚC 2 cụm cuối
    (ngày 6 số, số thứ tự) để không giả định tên máy chỉ có dạng "NVxx". */
+/* 28/09/2026 — chủ: 2 máy cùng lên đơn một lúc thì 3 số cuối trùng (NV02-…-584 và NV03-…-584), nhân viên
+   tìm theo số cuối dễ nhầm. HIỂN THỊ thêm số máy trước dãy số: 02.584 / 03.584. Mã đơn LƯU vẫn giữ nguyên
+   (không đổi dữ liệu, không đổi Sheet) — chỉ đổi cách hiện + tìm được bằng "02.584"/"02584". */
+function soDon_(ma){
+  var m=/^(.*)-(\d{6})-(\d+)$/.exec(String(ma||'')); if(!m) return '';
+  var so=(m[1].replace(/\D/g,'')||'0'); so=('0'+so).slice(-2);
+  return so+'.'+m[3];
+}
+function maHien_(ma){ var s=soDon_(ma); return s ? String(ma).replace(/-\d+$/,'-'+s) : String(ma||'') }
+function maTim_(ma){ var s=soDon_(ma); return s ? ' '+s+' '+s.replace('.','') : '' }
 function mayCuaDon(ma){
   var m=/^(.*)-(\d{6})-(\d+)$/.exec(String(ma||''));
   return m?m[1]:'';
@@ -1164,7 +1174,7 @@ function mayCuaDon(ma){
 function maHTML(ma){
   var may=mayCuaDon(ma);
   if(!may) return esc(ma);
-  var mau=mauMay(may), phanSau=String(ma).slice(may.length);
+  var mau=mauMay(may), phanSau=maHien_(ma).slice(may.length);
   return '<span class="mtag" style="background:'+mau+'26;color:'+mau+';border-color:'+mau+'66">'+esc(may)+'</span>'+
     '<span style="color:var(--tx);font-weight:600">'+esc(phanSau)+'</span>';
 }
@@ -3319,7 +3329,7 @@ function vePG(epVe){
     if(chiChua&&d.inLan) return false;
     if(!locTT(d)) return false;
     if(locNV&&(d.nv||'(không rõ)')!==locNV) return false;
-    return !q||kd(d.ma+' '+d.khach+' '+d.sdt+' '+(d.dc||'')).indexOf(q)>=0});
+    return !q||kd(d.ma+maTim_(d.ma)+' '+d.khach+' '+d.sdt+' '+(d.dc||'')).indexOf(q)>=0});
   var ci=chuaIn().length;
   var bc=$('btnChuaIn'); if(bc) bc.textContent='Chọn đơn chưa in ('+ci+')';
   var chuaThu=DON.filter(function(d){return conThuDon(d)>0});
@@ -3726,7 +3736,7 @@ function veDon(){
   if(dauLoc!==LS_DAU_LOC){ LS_DAU_LOC=dauLoc; LS_HIEN=50 }
   var ds=DON.filter(function(d){
     if(nv && (d.nv||'(không rõ)')!==nv) return false;
-    return !q||kd(d.ma+' '+d.khach+' '+d.sdt).indexOf(q)>=0;
+    return !q||kd(d.ma+maTim_(d.ma)+' '+d.khach+' '+d.sdt).indexOf(q)>=0;
   });
   if(!ds.length){
     var lyDo=[];
@@ -5558,6 +5568,11 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260928a', ngay:'28/09/2026', ten:'Mã đơn có số máy',
+  vaPhieu:[],
+  muc:[
+   ['sua','Mã đơn hiện thêm số máy trước dãy số: <b>02.584</b> (máy NV02), <b>03.584</b> (máy NV03) — hai máy lên đơn cùng lúc không còn nhìn trùng. Ô tìm gõ "02.584" hoặc "02584" đều ra.']
+  ]},
  {ban:'20260926a', ngay:'26/09/2026', ten:'Thêm món mới không còn bị kẹt',
   vaPhieu:[],
   muc:[
