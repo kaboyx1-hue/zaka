@@ -253,6 +253,17 @@ h2{font-size:15px;margin:0 0 10px}
 .qty input{width:52px;text-align:center;padding:6px}
 .pr{margin-left:auto;text-align:right}.pr input{width:104px;text-align:right;padding:6px;font-size:13px}
 .tt{font-weight:600;color:var(--ok);font-size:13.5px;margin-top:3px}
+.dcwrap{position:relative}.dcwrap #dc{padding-right:112px}
+.dcnut{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:var(--acc);color:#03121f;border-radius:8px;padding:6px 10px;font-weight:700;font-size:13px;cursor:pointer}
+.dcdd{margin-top:6px;border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:hidden}
+.dcdd .hd{font-size:12px;color:var(--tx2);padding:6px 10px;background:var(--c2)}
+.dcdong{display:flex;align-items:center;gap:8px;padding:9px 10px;border-top:1px solid var(--line)}
+.dcdong.chon{background:rgba(47,125,79,.16)}
+.dcdong .nd{flex:1;min-width:0;cursor:pointer}.dcdong .ct{font-size:12px;color:var(--tx2)}
+.dcdong .x{flex:none;border:1px solid var(--line);background:var(--card);color:var(--bad);border-radius:8px;padding:5px 9px;font-weight:700;cursor:pointer}
+.dctag{display:inline-block;font-size:11px;font-weight:700;border-radius:6px;padding:1px 6px;margin-right:5px;color:#fff;background:var(--acc)}
+.dctag.tu{background:var(--tx2)}
+.dchoi{border-top:1px dashed var(--bad);padding:8px 10px;font-size:13px}
 .mtag{font-size:.82em;font-weight:800;padding:1px 6px;border-radius:6px;border:1px solid;
   letter-spacing:.02em;margin-right:1px}
 .tag{font-size:10.5px;padding:2px 7px;border-radius:6px;display:inline-block;margin-top:5px}
@@ -553,7 +564,10 @@ body.ks-chi *{cursor:crosshair!important}
       <div><label>Số điện thoại</label><input id="sdt" inputmode="tel" placeholder="Gõ số → tự ra tên" autocomplete="off"></div>
       <div><label>Tên khách</label><input id="khten" placeholder="Khách mới thì gõ tên"></div>
     </div>
-    <div class="mt"><label>Địa chỉ giao hàng</label><input id="dc" placeholder="Tự điền theo khách — sửa được nếu giao chỗ khác"></div>
+    <div class="mt"><label>Địa chỉ giao hàng</label>
+      <div class="dcwrap"><input id="dc" placeholder="Tự điền theo khách — sửa được nếu giao chỗ khác">
+        <button type="button" class="dcnut" id="dcNut" hidden onclick="dcMoDong_()"></button></div>
+      <div id="dcDs"></div></div>
     <div class="row mt">
       <div><label>Kênh bán</label><select id="kenh"></select></div>
       <div><label>Ghi chú</label><input id="ghichu"></div>
@@ -967,7 +981,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260928a';
+var APP_VER='20260929a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -2496,8 +2510,8 @@ $('sdt').addEventListener('input',function(){
   if(k){ $('khten').value=k.ten; $('kenh').value=k.kenh||'Lẻ';
     var gr=Object.keys(k.gia||{}).filter(function(x){return k.gia[x].het>=today()});
     var n=soLan(s);
-    var dsCN=dsChiNhanh_(k.dc);
-    $('dc').value=dsCN?'':(k.dc||'');
+    var dsCN=null;   // 28/09/2026: chi nhánh giờ chọn qua nút ▾ ngay ở ô địa chỉ (dcVe_)
+    var dsDc=dsDiaChi_(s); $('dc').value=dsDc.length?dsDc[0].dc:'';
     $('khInfo').innerHTML='<div class="khbox">'+huyHieuHTML_(s,DON)+
       (n?'Khách cũ · <a href="#" class="lnk" onclick="lichSuKH(\''+s+'\');return false">'+n+' lần mua</a>'
         :'<span style="color:var(--tx2)">Chưa mua lần nào tại đây</span>')+
@@ -2509,11 +2523,70 @@ $('sdt').addEventListener('input',function(){
           return '<span class="mtag" style="cursor:pointer;margin-right:6px" title="'+esc(c.dc)+'" onclick="chonChiNhanh_('+i+')">'+esc(c.nhan)+'</span>';
         }).join('')+'</div>':'')+
       '</div>';
-    CHI_NHANH_DS=dsCN;
-  } else { if(!KH[s])$('dc').value=''; CHI_NHANH_DS=null; $('khInfo').innerHTML=s.length>=9?'<div class="khbox" style="color:var(--warn)">Khách mới — gõ tên và địa chỉ, lưu đơn xong hệ thống tự thêm vào danh sách</div>':''; }
+    CHI_NHANH_DS=dsCN; DC_MO=false; DC_HOI=-1; dcVe_();
+  } else { if(!KH[s])$('dc').value=''; CHI_NHANH_DS=null; DC_MO=false; dcVe_(); $('khInfo').innerHTML=s.length>=9?'<div class="khbox" style="color:var(--warn)">Khách mới — gõ tên và địa chỉ, lưu đơn xong hệ thống tự thêm vào danh sách</div>':''; }
   veGio();   // KHÔNG dùng veLai() — nó nhả con trỏ, gõ số bị đứt sau mỗi chữ
 });
 var CHI_NHANH_DS=null;
+/* ══ DANH SÁCH ĐỊA CHỈ CỦA KHÁCH — 28/09/2026 (chủ duyệt qua demo) ══
+   Nguồn DUY NHẤT vẫn là ô Địa chỉ trong danh bạ khách (k.dc, nhiều dòng "[Tên] địa chỉ" như chi nhánh
+   15/09) — không thêm cột Sheet. Nút ▾ ở ô địa chỉ: chọn nhanh, ✕ để bỏ địa chỉ không dùng nữa (ghi lại
+   danh bạ -> máy khác cũng hết thấy). Địa chỉ mới gõ khi lưu đơn tự thêm vào (xem luu()). Nhãn: tên tự
+   đặt (vàng); tên máy tự sinh "CNx" thì hiện quận máy tự đọc từ chữ địa chỉ (xám). */
+var DC_MO=false, DC_HOI=-1;
+var QUAN_TEN_=['Bình Thạnh','Gò Vấp','Phú Nhuận','Tân Bình','Tân Phú','Bình Tân','Thủ Đức','Nhà Bè','Hóc Môn','Củ Chi','Bình Chánh','Cần Giờ','Dĩ An','Thuận An','Biên Hòa'];
+function doQuan_(dc){
+  var b=kd(dc);
+  var m=/(?:^|[^a-z0-9])(?:q|quan)\.?\s*(\d{1,2})(?![0-9])/.exec(b);
+  if(m) return 'Q'+(+m[1]);
+  for(var i=0;i<QUAN_TEN_.length;i++) if(b.indexOf(kd(QUAN_TEN_[i]))>=0) return QUAN_TEN_[i];
+  return '';
+}
+function dcDong_(k){
+  if(!k||!k.dc) return [];
+  var cn=dsChiNhanh_(k.dc); if(cn) return cn;
+  return [{nhan:'',dc:String(k.dc).trim()}];
+}
+function dsDiaChi_(sdt){
+  var k=KH[sdt]; var ds=dcDong_(k).map(function(c){return {nhan:c.nhan,dc:c.dc,don:0,cuoi:'',moi:1e9}});
+  DON.forEach(function(d,i){ if(d.sdt!==sdt||d.huy) return;   // DON xếp đơn mới nhất lên đầu -> i nhỏ = mới hơn (phân định cùng ngày)
+    ds.forEach(function(c){ if(c.dc===String(d.dc||'').trim()){ c.don++; if((d.iso||'')>c.cuoi) c.cuoi=d.iso||''; if(i<c.moi) c.moi=i } }) });
+  return ds.sort(function(a,b){ return (b.cuoi||'').localeCompare(a.cuoi||'') || a.moi-b.moi });
+}
+function dcLuu_(sdt, ds){
+  var k=KH[sdt]; if(!k) return;
+  ds=ds.filter(function(c){return c.dc});
+  k.dc = ds.length>=2 ? ghepChiNhanh_(ds.map(function(c,i){return {nhan:c.nhan||('CN'+(i+1)),dc:c.dc}})) : (ds.length?ds[0].dc:'');
+  k.canDay=true; set('kh',KH); if(CFG.url||URL_DRIVE) dayKhach();
+}
+function dcMoDong_(){ DC_MO=!DC_MO; DC_HOI=-1; dcVe_() }
+function dcVe_(){
+  var s=$('sdt').value.replace(/\D/g,''), ds=KH[s]?dsDiaChi_(s):[];
+  var nut=$('dcNut'), box=$('dcDs'); if(!nut||!box) return;
+  nut.hidden=ds.length<2; nut.textContent=ds.length+' địa chỉ '+(DC_MO?'▴':'▾');
+  if(ds.length<2||!DC_MO){ box.innerHTML=''; return }
+  var cur=$('dc').value.trim();
+  box.innerHTML='<div class="dcdd"><div class="hd">Địa chỉ khách này từng dùng — mới nhất ở trên. Bấm để chọn · ✕ để bỏ</div>'+
+    ds.map(function(c,i){
+      var tu=!c.nhan||/^CN\d+$/.test(c.nhan), nh=tu?doQuan_(c.dc):c.nhan;
+      return '<div class="dcdong'+(c.dc===cur?' chon':'')+'"><div class="nd" onclick="dcChon_('+i+')">'+
+        '<div>'+(nh?'<span class="dctag'+(tu?' tu':'')+'"'+(tu?' title="Máy tự đọc từ địa chỉ"':'')+'>'+esc(nh)+'</span>':'')+'<b>'+esc(c.dc)+'</b></div>'+
+        '<div class="ct">'+(c.don?'lần cuối '+esc(c.cuoi.split('-').reverse().join('/'))+' · '+c.don+' đơn':'chưa có đơn nào')+(c.dc===cur?' · đang chọn':'')+'</div></div>'+
+        '<button type="button" class="x" onclick="DC_HOI='+i+';dcVe_()" title="Bỏ địa chỉ này">✕</button></div>'+
+        (DC_HOI===i?'<div class="dchoi">Bỏ <b>'+esc(c.dc)+'</b> khỏi danh sách của khách này?<br><span class="sm">Đơn cũ giao tới đây vẫn giữ nguyên, chỉ không gợi ý nữa. Máy khác cũng hết thấy.</span>'+
+          '<div class="row mt" style="gap:6px"><button type="button" class="btn-nho" style="background:var(--bad);color:#fff" onclick="dcBo_('+i+')">Bỏ địa chỉ này</button>'+
+          '<button type="button" class="btn-nho" onclick="DC_HOI=-1;dcVe_()">Giữ lại</button></div></div>':'');
+    }).join('')+'</div>';
+}
+function dcChon_(i){ var s=$('sdt').value.replace(/\D/g,''), ds=dsDiaChi_(s); if(!ds[i]) return; $('dc').value=ds[i].dc; DC_HOI=-1; dcVe_(); veGio() }
+function dcBo_(i){
+  var s=$('sdt').value.replace(/\D/g,''), ds=dsDiaChi_(s); if(!ds[i]) return;
+  var bo=ds.splice(i,1)[0]; dcLuu_(s, ds);
+  if($('dc').value.trim()===bo.dc) $('dc').value=ds.length?ds[0].dc:'';
+  DC_HOI=-1; dcVe_(); veGio();
+  bao('newMsg','Đã bỏ địa chỉ <b>'+esc(bo.dc)+'</b> khỏi danh sách của khách này. Đơn cũ không đổi.','ok');
+}
+$('dc').addEventListener('input', function(){ if(DC_MO) dcVe_() });
 function chonChiNhanh_(i){
   if(!CHI_NHANH_DS||!CHI_NHANH_DS[i])return;
   $('dc').value=CHI_NHANH_DS[i].dc; veGio();
@@ -3118,14 +3191,10 @@ function luu(){
       var dsCu=dsChiNhanh_(k.dc);
       var daBiet=dsCu?dsCu.some(function(c){return c.dc===dc}):(k.dc===dc);
       if(!daBiet){
+        /* 28/09/2026 — chủ duyệt demo: địa chỉ mới tự thêm vào danh sách địa chỉ của khách (không hỏi nữa);
+           không dùng nữa thì bỏ bằng ✕ ở nút ▾. Không bao giờ ghi đè mất địa chỉ cũ. */
         if(!k.dc){ k.dc=dc }
-        else if(confirm('Địa chỉ giao đơn này khác với địa chỉ đã lưu cho '+ten+':\n"'+k.dc.replace(/\n/g,' · ')+'"\n\n'+
-          'Lưu thành CHI NHÁNH RIÊNG (giữ cả địa chỉ cũ, lần sau bấm chọn nhanh) cho khách này?\n\n'+
-          'Bấm Huỷ nếu chỉ giao đúng lần này, không lưu vào danh bạ.')){
-          var ds=dsCu||[{nhan:'CN1',dc:k.dc}];
-          ds.push({nhan:'CN'+(ds.length+1),dc:dc});
-          k.dc=ghepChiNhanh_(ds);
-        }
+        else { var ds=dsCu||[{nhan:'CN1',dc:k.dc}]; ds.push({nhan:'CN'+(ds.length+1),dc:dc}); k.dc=ghepChiNhanh_(ds) }
       }
     }
     GIO.forEach(function(g){
@@ -5568,6 +5637,12 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260929a', ngay:'29/09/2026', ten:'Chọn nhanh địa chỉ khách',
+  vaPhieu:[],
+  muc:[
+   ['moi','Lên đơn: khách có nhiều địa chỉ thì ô địa chỉ có nút <b>▾</b> — mở ra danh sách mọi địa chỉ khách từng dùng (mới nhất ở trên, kèm số đơn), bấm để chọn, bấm ✕ để bỏ địa chỉ không dùng nữa.'],
+   ['moi','Địa chỉ mới gõ khi lưu đơn tự được thêm vào danh sách của khách, không hỏi nữa. Máy tự đọc quận (Q8, Bình Thạnh…) làm nhãn.']
+  ]},
  {ban:'20260928a', ngay:'28/09/2026', ten:'Mã đơn có số máy',
   vaPhieu:[],
   muc:[
