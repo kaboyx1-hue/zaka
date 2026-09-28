@@ -2779,6 +2779,31 @@ window.addEventListener('message', function(e){
 // Báo cho trang cha (quanly.html) biết đã sẵn sàng nhận catalog — tránh việc
 // trang cha gửi postMessage trước khi listener ở đây kịp gắn (mất tin, không
 // có cách "gửi lại"). Không có trang cha (mở file lẻ) thì bỏ qua, không lỗi.
+/* 28/09/2026 — chủ: "những dữ liệu tôi làm đều không được ghi nhớ, vào coi như reset". Mọi thứ trang này
+   nhớ (Sỉ, đội xe, phí sàn, pháp nhân, các tab sản phẩm, mốc giá…) trước chỉ nằm trong trình duyệt của ĐÚNG
+   máy đó. Nay mở trong phần mềm quản lý thì gửi hết lên trang cha -> lưu lên Sheet (trang CAI_DAT_QL), mở
+   máy khác kéo về đúng. Mở lẻ ngoài phần mềm quản lý thì vẫn chỉ nhớ trên máy như cũ. */
+(function(){
+  if (!(window.parent && window.parent !== window)) return;
+  var LOAI_TRU = {zaka_tinhgia_daluu:1}, henKho = null, dangNap = false;
+  function laKho(k){ return String(k||'').indexOf('zaka_tinhgia') === 0 && !LOAI_TRU[k] }
+  function chup(){ var o = {}; for (var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i); if (laKho(k)) o[k] = localStorage.getItem(k) } return o }
+  function gui(){ try { window.parent.postMessage({type:'tg-kho-luu', data:chup()}, '*') } catch(e){} }
+  function hen(){ if (dangNap) return; clearTimeout(henKho); henKho = setTimeout(gui, 1500) }
+  var goc = Storage.prototype.setItem, gocXoa = Storage.prototype.removeItem;
+  Storage.prototype.setItem = function(k, v){ goc.call(this, k, v); if (this === localStorage && laKho(k)) hen() };
+  Storage.prototype.removeItem = function(k){ gocXoa.call(this, k); if (this === localStorage && laKho(k)) hen() };
+  window.addEventListener('message', function(e){
+    var d = e && e.data; if (!d || d.type !== 'tg-kho') return;
+    var sv = d.data || {}, doi = false, thieu = false, local = chup();
+    dangNap = true;
+    Object.keys(sv).forEach(function(k){ if (laKho(k) && localStorage.getItem(k) !== sv[k]){ goc.call(localStorage, k, sv[k]); doi = true } });
+    dangNap = false;
+    Object.keys(local).forEach(function(k){ if (!(k in sv)) thieu = true });
+    if (thieu) gui();                    // máy này có thứ Sheet chưa có -> đẩy lên
+    if (doi) location.reload();          // nạp lại để mọi ô hiện đúng bản trên Sheet
+  });
+})();
 try { window.parent.postMessage({type:'ts-ready'}, '*'); } catch(e){}
 var SP_DANG_CHON = null;
 $('timSp').addEventListener('input', function(){

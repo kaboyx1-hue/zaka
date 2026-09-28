@@ -778,7 +778,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260928a';
+var APP_VER='20260928b';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -2222,8 +2222,16 @@ var TRUC_DA_NAP=false, TRUC_LUU_LUC=0, KEO_BAT_DAU=0;
    CAI_DAT_QL (1 dòng/khoá, giá trị JSON). Lần đầu một máy nối vào: GỘP phần máy đó đang có với
    phần trên Sheet (không mất quyết định nào của máy nào) rồi đẩy lên. Từ đó Sheet là bản gốc.
    ponytail: ghi đè cả gói — hai máy cùng sửa trong ~20 giây thì bản ghi sau thắng. */
-var CD_KHOA=['alias','khacmon','ksxong','anviec','hanthu','nguongHuyHieu','lydogom','ks_phieu'];
-var CD_DANG_NAP=false, CD_HEN=null;
+var CD_KHOA=['alias','khacmon','ksxong','anviec','hanthu','nguongHuyHieu','lydogom','ks_phieu','tinhgia'];
+var CD_DANG_NAP=false, CD_HEN=null, CD_DA_NAP=false, CHO_GUI_KHO=false, CD_CHO_DAY=false, CD_SO=0;
+/* 28/09/2026 — dữ liệu trang Tính giá sàn (khoá 'tinhgia' = {khoá trình duyệt: giá trị}) lưu mỗi khoá một dòng
+   'tg:<khoá>' trên CAI_DAT_QL (tránh 1 ô quá dài). Chỉ gửi xuống trang con SAU khi đã kéo Sheet về — gửi sớm
+   (còn trống) thì trang con tưởng Sheet trống, đẩy bản của máy này lên đè bản máy khác. */
+function guiKhoChoTs_(){
+  if (!CD_DA_NAP){ CHO_GUI_KHO=true; return }
+  var f=$('ifTs'); if(!f||!f.contentWindow) return;
+  f.contentWindow.postMessage({type:'tg-kho', data:get('tinhgia',{})||{}}, '*');
+}
 function cdDoc_(k){ if(k==='ks_phieu') return KS_PHIEU; return get(k,undefined) }
 function cdGhi_(k,v){ if(k==='ks_phieu'){ KS_PHIEU=v||[]; try{ localStorage.setItem('ks_phieu',JSON.stringify(KS_PHIEU)) }catch(e){} } else set(k,v) }
 function cdGop_(k,a,b){   // a = máy này, b = Sheet
@@ -2233,8 +2241,10 @@ function cdGop_(k,a,b){   // a = máy này, b = Sheet
   return b;
 }
 function napCaiDat_(ds){
-  var sv={}; (ds||[]).forEach(function(r){ try{ sv[r.k]=JSON.parse(r.v) }catch(e){} });
+  var sv={}; (ds||[]).forEach(function(r){ try{ var v=JSON.parse(r.v); if(String(r.k).indexOf('tg:')===0){ (sv.tinhgia=sv.tinhgia||{})[String(r.k).slice(3)]=v } else sv[r.k]=v }catch(e){} });
   var lanDau=!get('cddanoi',false);
+  /* còn thay đổi của máy này chưa gửi xong thì đừng để bản trên Sheet (cũ hơn) đè vào — lần sau nạp lại */
+  if(CD_CHO_DAY && !lanDau){ CD_DA_NAP=true; return }
   CD_DANG_NAP=true;
   CD_KHOA.forEach(function(k){
     var v = lanDau ? cdGop_(k, cdDoc_(k), sv[k]) : sv[k];
@@ -2249,13 +2259,17 @@ function napCaiDat_(ds){
   xoaDemNang_();
   if(lanDau){ set('cddanoi',true); cdDay_() }
   try{ veLam(); veCB(); veNguongHuyHieu() }catch(e){}
+  CD_DA_NAP=true; if(CHO_GUI_KHO){ CHO_GUI_KHO=false; guiKhoChoTs_() }
 }
-function cdHenDay_(){ if(CD_DANG_NAP||!get('cddanoi',false)) return; clearTimeout(CD_HEN); CD_HEN=setTimeout(cdDay_,1500) }
+function cdHenDay_(){ if(CD_DANG_NAP||!get('cddanoi',false)) return; CD_CHO_DAY=true; CD_SO++; clearTimeout(CD_HEN); CD_HEN=setTimeout(cdDay_,1500) }
 function cdDay_(){
-  if(!QCFG.url||!QCFG.key) return;
-  var ds=CD_KHOA.map(function(k){ var v=cdDoc_(k); return v===undefined?null:{k:k,v:JSON.stringify(v)} }).filter(Boolean);
+  if(!QCFG.url||!QCFG.key){ CD_CHO_DAY=false; return }
+  var so=CD_SO;
+  var ds=CD_KHOA.filter(function(k){ return k!=='tinhgia' }).map(function(k){ var v=cdDoc_(k); return v===undefined?null:{k:k,v:JSON.stringify(v)} }).filter(Boolean);
+  var tg=get('tinhgia',{})||{}; Object.keys(tg).forEach(function(k){ ds.push({k:'tg:'+k, v:JSON.stringify(tg[k])}) });
   NS_CHUOI=NS_CHUOI.then(async function(){
     try{ var j=await nsGhi_('caidat',ds); VERQL.cd=j.ver; set('verql',VERQL) }catch(e){}
+    if(so===CD_SO) CD_CHO_DAY=false;   // không còn thay đổi nào mới hơn đang chờ
   });
 }
 async function hoiNhanh(){
@@ -2667,7 +2681,8 @@ function guiCatalogChoTs(){
 // việc gửi catalog trước khi bên kia kịp lắng nghe (postMessage gửi sớm quá
 // sẽ mất tin, không có cách gửi lại).
 window.addEventListener('message', function(e){
-  if (e.data && e.data.type === 'ts-ready'){ guiCatalogChoTs(); guiTinhGiaChoTs(); guiLuongShipperChoTs() }
+  if (e.data && e.data.type === 'ts-ready'){ guiCatalogChoTs(); guiTinhGiaChoTs(); guiLuongShipperChoTs(); guiKhoChoTs_() }
+  if (e.data && e.data.type === 'tg-kho-luu'){ set('tinhgia', e.data.data||{}) }
   if (e.data && e.data.type === 'tg-luu') nhanLuuTinhGiaTuTs_(e.data.item);
   if (e.data && e.data.type === 'tg-xoa') nhanXoaTinhGiaTuTs_(e.data.ma);
   if (e.data && e.data.type === 'vc-ready'){ guiViecChoVc() }
@@ -6096,6 +6111,11 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260928b', ngay:'28/09/2026', ten:'Tính giá sàn nhớ lên Sheet',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['sua','Tính giá sàn (Sỉ, Cấu hình đội xe, phí sàn, pháp nhân, các tab sản phẩm, mốc giá): trước chỉ nhớ trong trình duyệt của đúng máy đó — đổi máy hay trình duyệt dọn bộ nhớ là mất. Nay lưu lên Sheet, mở máy nào cũng ra đúng số đã nhập.']
+  ]},
  {ban:'20260928a', ngay:'28/09/2026', ten:'Mã đơn có số máy, duyệt hàng không gợi ý chính nó',
   vaPhieu:[], vaNoi:[],
   muc:[
