@@ -51,7 +51,16 @@ body{margin:0;font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,
   color:var(--tx);overscroll-behavior-x:none}
 .hide{display:none!important}
 button{font:inherit;cursor:pointer;border:0;border-radius:14px;padding:11px 15px;transition:transform .08s,filter .12s}
-button:active{transform:scale(.98)}
+button{transition:scale .18s cubic-bezier(.34,1.56,.64,1),filter .12s,background-color .2s,color .2s}
+/* 29/09/2026 — nút mượt hơn (chủ duyệt demo): rê nở nhẹ, bấm lún rồi bật lại. Dùng thuộc tính "scale" riêng
+   (không phải transform) để không phá những nút đang dùng transform để canh vị trí. */
+@media (hover:hover){button:hover:not(:disabled){scale:1.03}nav button:hover{scale:1}}
+button:active:not(:disabled){scale:.95;transition-duration:.08s}
+.gonSong{position:absolute;border-radius:50%;background:rgba(255,255,255,.5);transform:scale(0);animation:gonSong .55s ease-out forwards;pointer-events:none}
+@keyframes gonSong{to{transform:scale(1);opacity:0}}
+button.daChep{background:#2f7d4f!important;color:#fff!important}
+::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
+@media (prefers-reduced-motion:reduce){button{transition:none}button:hover,button:active{scale:1}.gonSong{display:none}}
 input,select{font:inherit;width:100%;padding:11px 12px;border-radius:14px;border:1px solid var(--line);background:var(--c2);color:var(--tx)}
 input:focus,select:focus{outline:none;border-color:var(--acc)}
 label{display:block;font-size:12.5px;color:var(--tx2);margin:0 0 6px}
@@ -981,7 +990,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260929a';
+var APP_VER='20260929b';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -5637,6 +5646,11 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260929b', ngay:'29/09/2026', ten:'Nút bấm mượt hơn',
+  vaPhieu:[],
+  muc:[
+   ['moi','Nút bấm nảy nhẹ khi bấm; nút chính có gợn sóng từ chỗ chạm; bấm Chép xong nút tự đổi "✓ Đã chép"; đổi sáng/tối lan tròn từ nút ☀.']
+  ]},
  {ban:'20260929a', ngay:'29/09/2026', ten:'Chọn nhanh địa chỉ khách',
   vaPhieu:[],
   muc:[
@@ -5990,6 +6004,52 @@ function cnKhoiVa(){
         'kỹ sư còn đọc được nguyên văn góp ý này. Quá '+GIU_NGAY_VA+' ngày máy tự dọn.</div></div>';
     }).join('')+'</div>';
 }
+
+/* ══ NÚT MƯỢT — 29/09/2026 (chủ duyệt demo "Nút Mượt ZAKA") ══
+   (1) gợn sóng từ chỗ chạm ở nút chính; (2) nút vừa bấm mà chép thành công thì đổi "✓ Đã chép" 1,5 giây;
+   (3) đổi sáng/tối lan tròn từ chỗ bấm (trình duyệt không hỗ trợ thì đổi như cũ). Không thư viện ngoài. */
+(function(){
+  var giam = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var NUT_CUOI = null, LUC_CUOI = 0, XY = null;
+  document.addEventListener('pointerdown', function(e){
+    XY = {x:e.clientX, y:e.clientY};
+    var b = e.target.closest && e.target.closest('button.btn-main, button.btn');
+    if (!b || b.disabled || giam) return;
+    var cs = getComputedStyle(b);
+    if (cs.position === 'static') b.style.position = 'relative';
+    b.style.overflow = 'hidden';
+    var r = b.getBoundingClientRect(), s = Math.max(r.width, r.height) * 2.2, o = document.createElement('span');
+    o.className = 'gonSong'; o.style.width = o.style.height = s + 'px';
+    o.style.left = (e.clientX - r.left - s/2) + 'px'; o.style.top = (e.clientY - r.top - s/2) + 'px';
+    b.appendChild(o); setTimeout(function(){ o.remove() }, 600);
+  }, true);
+  document.addEventListener('click', function(e){
+    var b = e.target.closest && e.target.closest('button'); if (b){ NUT_CUOI = b; LUC_CUOI = Date.now() }
+  }, true);
+  function daChep(){
+    var b = NUT_CUOI; if (!b || Date.now() - LUC_CUOI > 4000 || !b.isConnected || b.classList.contains('daChep')) return;
+    var cu = b.innerHTML; b.classList.add('daChep'); b.innerHTML = '✓ Đã chép';
+    setTimeout(function(){ if (b.isConnected){ b.classList.remove('daChep'); b.innerHTML = cu } }, 1500);
+  }
+  var cb = navigator.clipboard;
+  if (cb){
+    ['writeText','write'].forEach(function(ten){
+      if (!cb[ten]) return; var goc = cb[ten].bind(cb);
+      try { cb[ten] = function(){ var p = goc.apply(null, arguments); p.then(daChep, function(){}); return p } } catch(e){}
+    });
+  }
+  if (typeof doiSangToi === 'function'){
+    var doiGoc2 = doiSangToi;
+    doiSangToi = function(){
+      if (!document.startViewTransition || giam || !XY) return doiGoc2();
+      var x = XY.x, y = XY.y, R = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+      document.startViewTransition(function(){ doiGoc2() }).ready.then(function(){
+        document.documentElement.animate({clipPath:['circle(0px at '+x+'px '+y+'px)','circle('+R+'px at '+x+'px '+y+'px)']},
+          {duration:520, easing:'cubic-bezier(.4,0,.2,1)', pseudoElement:'::view-transition-new(root)'});
+      }).catch(function(){});
+    };
+  }
+})();
 </script>
 <div id="inKhung"></div>
 <div style="position:fixed;right:8px;bottom:4px;font-size:10px;opacity:.35;pointer-events:none;z-index:99">v1.0-zaka</div>
