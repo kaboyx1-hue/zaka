@@ -787,7 +787,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260929a';
+var APP_VER='20260930a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -3986,6 +3986,7 @@ var GLIM=40;
 function giaReset(){GLIM=40;veGia()}
 function giaThem(n){GLIM=n?1e9:GLIM+60;veGia()}
 function veGia(){
+  var oSku=$('skuMoi'), gSku=oSku?{v:oSku.value,f:document.activeElement===oSku}:null;   // đồng bộ nền vẽ lại bảng không làm mất mã đang gõ
   var q=kd(($('gq').value||'').trim()), nh=$('gn').value;
   var tatca=Object.keys(GIA).map(function(k){return GIA[k]});
   var soNgung=tatca.filter(function(p){return p.ngung}).length;
@@ -3997,7 +3998,7 @@ function veGia(){
   if(LOCQD) all=all.filter(function(p){return LOCQD.indexOf(p.sku)>=0});
   var ds=all.filter(function(p){
     if(nh&&p.nhom!==nh)return false;
-    return !q||kd(p.ten+' '+(p.brand||'')+' '+p.sku).indexOf(q)>=0});
+    return !q||kd(p.ten+' '+(p.brand||'')+' '+p.sku+' '+maCuCua_(p.sku).join(' ')).indexOf(q)>=0});
   /* Thứ tự mặc định cũ (thiếu vốn lên đầu, rồi theo SKU) làm HỆ QUY CHIẾU cho món
      chưa từng kéo tay — kéo-thả chỉ gán thuTu cho món vừa kéo, mọi món khác vẫn
      đứng nguyên vị trí cũ theo hệ quy chiếu này (dùng số cách nhau 1000 để luôn còn
@@ -4032,7 +4033,9 @@ function veGia(){
       return '<tr data-sku="'+p.sku+'" data-khoa="'+khoa+'" ondragover="event.preventDefault()" ondrop="ggDrop(event,\''+p.sku+'\')">'+
         '<td class="r" draggable="true" ondragstart="ggDragStart(event,\''+p.sku+'\')" '+
           'style="cursor:grab;color:var(--tx2);user-select:none" title="Kéo để đổi thứ tự đứng cùng nhóm">⠿</td>'+
-        '<td>'+esc(p.sku)+(p.moi?'<br><span class="tag w">nhân viên thêm</span>':'')+
+        '<td>'+esc(p.sku)+' <button class="mini" style="padding:1px 6px" title="Đổi mã SKU" onclick="moDoiSku(\''+p.sku+'\')">✏ Đổi</button>'+
+        (maCuCua_(p.sku).length?'<div class="sm" style="opacity:.7">mã cũ: '+esc(maCuCua_(p.sku).join(', '))+'</div>':'')+
+        (p.moi?'<br><span class="tag w">nhân viên thêm</span>':'')+
         (p.gopVao?'<br><span class="tag w" style="color:var(--warn)" title="Chỉ gộp chung giá vốn/báo cáo — giá bán vẫn tính riêng, vẫn bán bình thường cho nhân viên">'+
           'đã gộp giá vốn → '+esc(p.gopVao)+'</span>':'')+'</td>'+
         '<td><input class="ten" style="padding:5px" value="'+esc(p.ten)+'" onchange="setF(\''+p.sku+'\',\'ten\',this.value)">'+
@@ -4054,7 +4057,7 @@ function veGia(){
         '<td class="r">'+(p.ngung
           ?'<button class="mini" onclick="banLai(\''+p.sku+'\')">Bán lại</button>'
           :'<input type="checkbox" '+(GIA_CHON[p.sku]?'checked':'')+' onchange="chonGia(\''+p.sku+'\',this.checked)" title="Chọn để xoá/gộp hàng loạt">')+
-        '</td></tr>'
+        '</td></tr>'+(DOI_SKU===p.sku?'<tr><td colspan="10">'+hopDoiSku_(p)+'</td></tr>':'')
     }).join('')+'</table>'+
     (ds.length>GLIM
       ? '<div style="text-align:center;padding:12px 0;display:flex;gap:8px;justify-content:center">'+
@@ -4062,6 +4065,7 @@ function veGia(){
         '<button class="btn2" onclick="giaThem(1)">Xem tất cả '+ds.length.toLocaleString('vi-VN')+'</button></div>'
       : (ds.length>40?'<div class="sm" style="text-align:center;padding:10px 0">Đã hiện hết '+ds.length.toLocaleString('vi-VN')+' sản phẩm</div>':''));
   veChonGia();
+  if(gSku&&$('skuMoi')){ $('skuMoi').value=gSku.v; kiemSkuMoi_(); if(gSku.f) $('skuMoi').focus() }
 }
 var XEMNGUNG=false, LOCQD=null, GIA_CHON={}, DRAG_SKU=null;
 function toggleNgung(){ XEMNGUNG=!XEMNGUNG; GLIM=40; veGia() }
@@ -4082,6 +4086,62 @@ function ggDrop(ev,sku){
 }
 
 /* Chọn nhiều dòng (checkbox) → nổi thanh Xoá/Gộp thay cho 2 nút riêng mỗi dòng. */
+/* ═══ ĐỔI MÃ SKU — 30/09/2026 (chủ duyệt demo "Đổi Mã SKU") ═══
+   Đơn cũ trên Sheet giữ mã cũ — ALIAS[mã cũ]=mã mới nên báo cáo/giá vốn tính chung một món
+   (cùng cơ chế gộp). Giá riêng của khách: Sheet GIA_RIENG đổi sang mã mới (hành động doisku).
+   Bảng giá nhân viên đổi ở lần "Phát bảng giá" kế tiếp. */
+var DOI_SKU=null, DOI_SKU_GR=null;
+function maCuCua_(sku){ return Object.keys(ALIAS).filter(function(k){return ALIAS[k]===sku && !GIA[k]}) }
+function moDoiSku(sku){
+  DOI_SKU=DOI_SKU===sku?null:sku; DOI_SKU_GR=null; veGia();
+  if(!DOI_SKU||!QCFG.url||!QCFG.key) return;
+  fetch(QCFG.url+'?gr=1&key='+encodeURIComponent(QCFG.key)).then(function(r){return r.json()}).then(function(j){
+    if(DOI_SKU!==sku||!j||!j.ok) return;
+    DOI_SKU_GR=(j.ds||[]).filter(function(g){return String(g.sku).trim()===sku}).length;
+    var el=$('dsGrDem'); if(el) el.textContent=DOI_SKU_GR;
+  }).catch(function(){});
+}
+function hopDoiSku_(p){
+  var don=SO.filter(function(d){return (d.dong||[]).some(function(x){return skuChinh(x.sku)===p.sku})}).length;
+  return '<div style="border:2px solid var(--acc);border-radius:12px;padding:10px 12px;margin:4px 0">'+
+    '<b>Đổi mã '+esc(p.sku)+' — '+esc(p.ten)+'</b>'+
+    '<input id="skuMoi" autocomplete="off" placeholder="Gõ mã mới, vd S2-V3-1KG" oninput="kiemSkuMoi_()" '+
+      'style="display:block;width:100%;margin-top:6px;padding:8px;font-family:ui-monospace,Consolas,monospace;text-transform:uppercase">'+
+    '<div id="skuLoi" class="sm" style="color:var(--bad);margin-top:4px"></div>'+
+    '<ul class="sm" style="margin:6px 0;padding-left:18px">'+
+      '<li><b>'+don+' đơn cũ</b>: giữ nguyên, không sửa. Báo cáo, lãi lỗ, giá vốn tự hiểu mã cũ = mã mới.</li>'+
+      '<li><b><span id="dsGrDem">'+(DOI_SKU_GR===null?'…':DOI_SKU_GR)+'</span> khách có giá riêng</b> món này: chuyển theo sang mã mới.</li>'+
+      '<li><b>Bảng giá nhân viên</b>: đổi sang mã mới ở lần bấm "Phát bảng giá" kế tiếp.</li>'+
+      '<li>Tìm theo mã cũ vẫn ra món này.</li></ul>'+
+    '<button class="btn" id="btnDoiSku" disabled onclick="luuDoiSku_()">Đổi mã</button> '+
+    '<button class="btn2" onclick="moDoiSku(DOI_SKU)">Huỷ</button></div>';
+}
+function kiemSkuMoi_(){
+  var v=($('skuMoi').value||'').trim().toUpperCase(), l='';
+  if(v && !/^[A-Z0-9][A-Z0-9._-]{1,23}$/.test(v)) l='Chỉ dùng chữ không dấu, số, dấu gạch ngang/chấm/gạch dưới, 2–24 ký tự.';
+  else if(v===DOI_SKU) l='Mã mới giống mã hiện tại.';
+  else if(v && (GIA[v]||ALIAS[v])) l='Mã '+v+' đã có món khác dùng (hoặc từng dùng) — chọn mã khác.';
+  $('skuLoi').textContent=l; $('btnDoiSku').disabled=!v||!!l; return l?'':v;
+}
+async function luuDoiSku_(){
+  var cu=DOI_SKU, moi=kiemSkuMoi_(); if(!cu||!moi||!GIA[cu]) return;
+  if(!QCFG.url||!QCFG.key){ bao('giaMsg','Cần link và mật khẩu quản lý ở tab Nạp đơn.','er'); return }
+  var b=$('btnDoiSku'); b.disabled=true; b.textContent='Đang đổi…';
+  try{
+    var r=await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'doisku',cu:cu,moi:moi})});
+    var j=JSON.parse(await r.text()); if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
+    var p=GIA[cu]; delete GIA[cu]; p.sku=moi; GIA[moi]=p;
+    Object.keys(ALIAS).forEach(function(k){ if(ALIAS[k]===cu) ALIAS[k]=moi });
+    ALIAS[cu]=moi; delete GIA_CHON[cu];
+    Object.keys(GIA).forEach(function(k){ if(GIA[k].gopVao===cu) GIA[k].gopVao=moi });
+    set('alias',ALIAS); set('gia',GIA); tinhLaiToanBoSO();
+    DOI_SKU=null; veGia(); veSo(); veBC(); vePhat();
+    await dayVon(false);
+    bao('giaMsg','Đã đổi <b>'+esc(cu)+'</b> → <b>'+esc(moi)+'</b>. Đơn cũ giữ nguyên, '+(j.doi||0)+' giá riêng của khách đã chuyển theo. '+
+      'Nhớ bấm <b>Phát bảng giá</b> để máy nhân viên nhận mã mới.','ok');
+  }catch(e){ b.disabled=false; b.textContent='Đổi mã'; bao('giaMsg','Chưa đổi được: '+esc(e.message),'er') }
+}
 function chonGia(sku,ck){ if(ck) GIA_CHON[sku]=true; else delete GIA_CHON[sku]; veChonGia() }
 function boChonGia(){ GIA_CHON={}; veChonGia() }
 function veChonGia(){
@@ -6120,6 +6180,11 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260930a', ngay:'30/09/2026', ten:'Đổi mã SKU ở Bảng giá',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['moi','Bảng giá: nút ✏ Đổi cạnh mã SKU — đổi sang mã mới. Đơn cũ giữ nguyên, báo cáo tính chung một món; giá riêng của khách chuyển theo; tìm mã cũ vẫn ra.']
+  ]},
  {ban:'20260929a', ngay:'29/09/2026', ten:'Nút bấm mượt hơn',
   vaPhieu:[], vaNoi:[],
   muc:[
