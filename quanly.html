@@ -455,15 +455,13 @@ body.ks-chi *{cursor:crosshair!important}
   <div id="giaMsg"></div>
 
   <div class="card" style="border-color:var(--acc)">
-    <h2>Phát bảng giá cho 3 máy nhân viên</h2>
+    <h2>Bảng giá của <span id="soMayNV">các</span> máy nhân viên</h2>
     <div id="phatInfo" class="sm"></div>
     <div class="row mt">
-      <button class="btn" id="btnPhatGia" onclick="phatGia()" style="flex:2">Phát bảng giá ngay</button>
       <button class="btn2" onclick="xemNhanGia()">Máy nào đã nhận?</button>
     </div>
-    <div class="sm" style="margin-top:8px">Bấm là ba máy nhân viên nhận bảng giá mới
-    <b>trong vòng một phút</b>, không phải chép file. <b>Giá vốn không đi theo</b> —
-    chỉ tên hàng, đơn vị, giá bán và giá quy đổi.</div>
+    <div class="sm" style="margin-top:8px">Bấm <b>Cập nhật bảng giá</b> (cuối bảng) là lưu và gửi luôn cho máy nhân viên,
+    nhận <b>trong vòng một phút</b>. <b>Giá vốn không đi theo</b> — chỉ tên hàng, đơn vị, giá bán và giá quy đổi.</div>
   </div>
 
   <div class="card"><h2>Bảng giá — chỉ máy này có giá vốn</h2>
@@ -483,7 +481,7 @@ body.ks-chi *{cursor:crosshair!important}
       <button class="btn2" onclick="boChonGia()">Bỏ chọn</button>
     </div>
     <div class="row mt">
-      <button class="btn" onclick="luuBangGia()">Cập nhật bảng giá</button>
+      <button class="btn" id="btnPhatGia" onclick="luuBangGia()">Cập nhật bảng giá</button>
       <button class="btn2" onclick="tinhLai()">Tính lại các đơn đang chờ</button>
       <button class="btn2" id="btnDayVon" onclick="dayVon(true)" style="color:var(--ok)">Lưu giá vốn lên Sheet</button>
       <button class="btn2" onclick="moSuaLo()" style="color:var(--pur)">Sửa hàng loạt món đang lọc</button>
@@ -540,7 +538,7 @@ body.ks-chi *{cursor:crosshair!important}
     <b>tự nhớ lấy</b>: chọn đúng khách, chọn lại đúng món họ từng mua thì giá của đơn gần nhất tự
     hiện ra, bán xong giá nào thì nhớ giá đó cho lần sau. Không cần ai duyệt.<br>
     Công cụ này chỉ để dùng khi anh/chị muốn <b>đẩy hàng loạt giá cũ lên Sheet một lượt</b> cho cả
-    ba máy cùng thấy ngay, thay vì đợi từng khách quay lại.</div>
+    các máy cùng thấy ngay, thay vì đợi từng khách quay lại.</div>
     <div class="msg wa mt"><b>Nên chạy SAU khi đã gộp xong mã trùng</b> ở tab Cảnh báo — vì giá riêng
     được gắn theo mã chính. Công cụ chỉ đề xuất, <b>bạn duyệt từng dòng rồi mới ghi</b>.</div>
     <button class="btn mt" onclick="moDeXuatGiaRieng()">Xem đề xuất giá riêng</button>
@@ -787,7 +785,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260930a';
+var APP_VER='20260930b';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1368,7 +1366,7 @@ var NHAT_KY_GOM=[];
    ═══════════════════════════════════════════════════════════════════════
    Chủ chọn phương án "phải có tôi duyệt mới được bán". Từ đây:
      - nhân viên thêm món  → món nằm ở trạng thái CHỜ DUYỆT, chưa bán được
-     - chủ NHẬN            → món vào bảng giá, phát bảng giá là ba máy bán được
+     - chủ NHẬN            → món vào bảng giá, phát bảng giá là các máy bán được
      - chủ GỘP             → món trỏ về mã cũ, dùng lại đúng cơ chế gộp sẵn có
      - chủ TỪ CHỐI         → món bị gỡ khỏi máy nhân viên, kèm lý do
    KHÔNG ghi thẳng vào trang BANG_GIA từ đây: việc đó vẫn đi đúng một cửa duy
@@ -1474,7 +1472,7 @@ async function nhanSP(i){
     set('gia',GIA); tinhLaiToanBoSO();
     veGia(); veCB(); veSo(); veBC(); vePhat(); veLam(); moDuyetSP();
     bao('giaMsg','Đã nhận <b>'+esc(x.ten)+'</b> vào bảng giá, giá nhập '+tien(von)+'. '+
-      '<b>Bấm "Phát bảng giá" ở tab Bảng giá</b> thì ba máy nhân viên bán được ngay.','ok');
+      '<b>Bấm "Cập nhật bảng giá" ở tab Bảng giá</b> thì máy nhân viên bán được ngay.','ok');
   }catch(e){
     console.error('Loi ve lai giao dien sau khi duyet SP (da ghi Sheet xong):', e);
     bao('dsErr','Đã ghi lên Sheet thành công, nhưng màn hình chưa vẽ lại đúng ('+esc(e.message)+'). Tải lại trang để xem đúng.','wa');
@@ -1565,7 +1563,7 @@ async function datChoBan(bat){
     if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
     CHO_BAN=!!j.bat; set('choban',CHO_BAN); veCongTac(); veLam();
     bao('vhMsg', CHO_BAN
-      ? 'Đã <b>BẬT</b>. Nhân viên bán được món chưa duyệt. Ba máy nhận trong vòng một phút.'
+      ? 'Đã <b>BẬT</b>. Nhân viên bán được món chưa duyệt. Các máy nhân viên nhận trong vòng một phút.'
       : 'Đã <b>TẮT</b>. Nhân viên phải chờ anh/chị duyệt mới bán được món mới.','ok');
   }catch(e){ bao('vhMsg','Không đổi được: '+esc(e.message),'er') }
 }
@@ -1640,7 +1638,7 @@ function veLam(){
     var b=goiGia().length;
     if(BGV && BGV.ver && b!==BGV.so) viec.push({
       ten:'Bảng giá trong máy này đã khác bản nhân viên đang dùng',
-      vi:'Anh/chị vừa sửa bảng giá nhưng ba máy bán hàng chưa nhận được. '+
+      vi:'Anh/chị vừa sửa bảng giá nhưng các máy bán hàng chưa nhận được. '+
          'Bấm gửi thì lát nữa máy nào mở lên cũng có bản mới.',
       nut:'Gửi bảng giá cho nhân viên',
       ham:"tab('gia')"
@@ -1967,7 +1965,7 @@ function gopHetNhomChac(){
   veCB(); veSo(); veBC(); veGia(); vePhat();
   bao('inMsg','Đã gộp gọn <b>'+viec.length+' nhóm</b> ('+soMa+' mã phụ). Đơn cũ đã được tính lại giá vốn '+
     'theo mã chính — những đơn trước đây treo "chờ vốn" vì mã chưa có giá vốn giờ đã có số. '+
-    'Đơn trên Sheet không bị sửa gì. Nhớ bấm <b>Phát bảng giá</b> để các máy nhân viên nhận bản mới.','ok');
+    'Đơn trên Sheet không bị sửa gì. Nhớ bấm <b>Cập nhật bảng giá</b> để các máy nhân viên nhận bản mới.','ok');
 }
 /* Lõi gộp dùng chung — cho cả 2 lối vào:
    1) mục "Sản phẩm nghi trùng tên" (tự phát hiện, tên phải khớp y hệt sau khi bỏ dấu)
@@ -2332,7 +2330,7 @@ function apDungKeoVe(j, luc){
   $('keoInfo').innerHTML='Kéo lúc '+(luc||nowStr())+' — nhận <b>'+(j.don||[]).length+'</b> đơn'+
     (soHuy?', trong đó <b style="color:var(--bad)">'+soHuy+' đơn đã huỷ</b>':'')+
     ' · <b>'+NVS.length+'</b> tài khoản nhân viên.';
-  veNV(); veKhaiTruong(); veMayGui(); veNhanSuNen_(); veCongTac();
+  veNV(); veKhaiTruong(); veMayGui(); veNhanSuNen_(); veCongTac(); vePhat();
   ksGuiLenSheet_();   // phiếu kỹ sư của máy này còn kẹt thì gửi bù
 }
 async function keoDon(im){
@@ -4111,7 +4109,7 @@ function hopDoiSku_(p){
     '<ul class="sm" style="margin:6px 0;padding-left:18px">'+
       '<li><b>'+don+' đơn cũ</b>: giữ nguyên, không sửa. Báo cáo, lãi lỗ, giá vốn tự hiểu mã cũ = mã mới.</li>'+
       '<li><b><span id="dsGrDem">'+(DOI_SKU_GR===null?'…':DOI_SKU_GR)+'</span> khách có giá riêng</b> món này: chuyển theo sang mã mới.</li>'+
-      '<li><b>Bảng giá nhân viên</b>: đổi sang mã mới ở lần bấm "Phát bảng giá" kế tiếp.</li>'+
+      '<li><b>Bảng giá nhân viên</b>: đổi sang mã mới ở lần bấm "Cập nhật bảng giá" kế tiếp.</li>'+
       '<li>Tìm theo mã cũ vẫn ra món này.</li></ul>'+
     '<button class="btn" id="btnDoiSku" disabled onclick="luuDoiSku_()">Đổi mã</button> '+
     '<button class="btn2" onclick="moDoiSku(DOI_SKU)">Huỷ</button></div>';
@@ -4139,7 +4137,7 @@ async function luuDoiSku_(){
     DOI_SKU=null; veGia(); veSo(); veBC(); vePhat();
     await dayVon(false);
     bao('giaMsg','Đã đổi <b>'+esc(cu)+'</b> → <b>'+esc(moi)+'</b>. Đơn cũ giữ nguyên, '+(j.doi||0)+' giá riêng của khách đã chuyển theo. '+
-      'Nhớ bấm <b>Phát bảng giá</b> để máy nhân viên nhận mã mới.','ok');
+      'Nhớ bấm <b>Cập nhật bảng giá</b> để máy nhân viên nhận mã mới.','ok');
   }catch(e){ b.disabled=false; b.textContent='Đổi mã'; bao('giaMsg','Chưa đổi được: '+esc(e.message),'er') }
 }
 function chonGia(sku,ck){ if(ck) GIA_CHON[sku]=true; else delete GIA_CHON[sku]; veChonGia() }
@@ -4215,7 +4213,7 @@ function banLai(sku){
     tinhLaiToanBoSO(); veCB(); veSo(); veBC();
   }
   GIA[sku].ngung=false; set('gia',GIA); giaLai();
-  bao('giaMsg','Đã cho bán lại <b>'+esc(GIA[sku].ten)+'</b>. Nhớ bấm <b>Phát bảng giá</b> để ba máy nhận.','ok');
+  bao('giaMsg','Đã cho bán lại <b>'+esc(GIA[sku].ten)+'</b>. Nhớ bấm <b>Cập nhật bảng giá</b> để máy nhân viên nhận.','ok');
 }
 
 /* ══════════ PHÁT BẢNG GIÁ CHO MÁY NHÂN VIÊN ══════════ */
@@ -4231,13 +4229,14 @@ function goiGia(){
             gb:p.gb||0, qd_dv:p.qd_dv||'', qd_sl:p.qd_sl||0, qd_gb:p.qd_gb||0, ngung:''};
   });
 }
+function soMayNV_(){ var ds=(NVS&&NVS.length)?NVS:(get('nvs',[])||[]), n=ds.filter(function(x){return x.trangthai==='HOAT DONG'}).length; return n||ds.length||'các' }
 function vePhat(){
-  var b=goiGia().length;
+  var b=goiGia().length; if($('soMayNV')) $('soMayNV').textContent=soMayNV_();
   $('phatInfo').innerHTML = BGV.ver
     ? 'Bản đang phát: <b>'+esc(BGV.luc)+'</b> · <b>'+BGV.so.toLocaleString('vi-VN')+' mặt hàng</b>'+
       (b!==BGV.so?'<br><span style="color:var(--warn)">Bảng giá trên máy này giờ có <b>'+b.toLocaleString('vi-VN')+
         '</b> mặt hàng — đã khác bản đang phát. Bấm phát lại.</span>':'')
-    : '<span style="color:var(--warn)">Chưa phát lần nào.</span> Ba máy nhân viên đang dùng bảng giá chép tay trong file. '+
+    : '<span style="color:var(--warn)">Chưa phát lần nào.</span> Máy nhân viên đang dùng bảng giá chép tay trong file. '+
       'Bấm phát một lần để chúng tự nhận từ nay về sau.';
 }
 async function phatGia(im){
@@ -4265,9 +4264,9 @@ async function phatGia(im){
     var loi=loiQD();
     if(loi.length){
       if(im){
-        bao('giaMsg','Đã xoá xong, nhưng <b>CHƯA phát được cho 3 máy nhân viên</b> vì còn '+loi.length+
+        bao('giaMsg','Đã xoá xong, nhưng <b>CHƯA phát được cho máy nhân viên</b> vì còn '+loi.length+
           ' món giá sỉ vô lý trong bảng giá (không liên quan món vừa xoá). '+
-          'Xử lý xong rồi bấm <b>Phát bảng giá ngay</b> tay.','wa');
+          'Xử lý xong rồi bấm <b>Cập nhật bảng giá</b> tay.','wa');
         return;
       }
       bao('giaMsg','<b>Chưa phát được — '+loi.length+' món có giá sỉ vô lý.</b><br>'+
@@ -4286,7 +4285,7 @@ async function phatGia(im){
     }
     var thieuGia=b.filter(function(p){return !p.gb}).length;
     if(!im){
-      if(!confirm('Phát bảng giá cho 3 máy nhân viên?\n\n'+
+      if(!confirm('Gửi bảng giá cho '+soMayNV_()+' máy nhân viên?\n\n'+
         b.length+' mặt hàng đang bán'+(thieuGia?'\n'+thieuGia+' món CHƯA CÓ GIÁ BÁN — nhân viên sẽ thấy giá 0':'')+
         '\n\nGiá vốn KHÔNG đi theo.\nĐơn đã bán không bị ảnh hưởng.'))return;
       bao('giaMsg','Đang phát…','wa');
@@ -4296,10 +4295,10 @@ async function phatGia(im){
     var j=JSON.parse(await r.text());
     if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
     BGV={ver:j.ver,luc:nowStr(),so:j.so}; set('bgv',BGV); vePhat();
-    if(im) bao('giaMsg','Đã xoá và phát lại cho 3 máy nhân viên ('+j.so.toLocaleString('vi-VN')+
+    if(im) bao('giaMsg','Đã xoá và phát lại cho máy nhân viên ('+j.so.toLocaleString('vi-VN')+
       ' mặt hàng) — sẽ hết thấy món đó trong vòng một phút.','ok');
     else bao('giaMsg','Đã phát <b>'+j.so.toLocaleString('vi-VN')+' mặt hàng</b> (bản '+esc(j.ver)+').<br>'+
-      'Ba máy nhân viên sẽ tự nhận trong vòng một phút — nhân viên không phải làm gì.','ok');
+      'Máy nhân viên sẽ tự nhận trong vòng một phút — nhân viên không phải làm gì.','ok');
   }catch(e){
     bao('giaMsg','Chưa phát được: '+esc(e.message)+'<br><span class="sm">Kiểm tra mạng, link và mật khẩu. '+
       'Bảng giá trên máy này vẫn nguyên vẹn.</span>','er');
@@ -4458,7 +4457,7 @@ function apDungNapGia(){
   veGia(); vePhat(); veCB(); veSo(); veBC(); veLam();
   $('dlgNap').close(); NAP_CHO=null;
   bao('giaMsg','Đã ghi: <b>'+sua+' món cập nhật</b>, <b>'+them+' món thêm mới</b>. '+
-    'Bấm <b>Phát bảng giá</b> để ba máy nhân viên nhận.<br>'+
+    'Bấm <b>Cập nhật bảng giá</b> để máy nhân viên nhận.<br>'+
     '<button class="mini mt" onclick="hoanTacNapGia()">Hoàn tác lần nạp này</button>','ok');
 }
 
@@ -4573,7 +4572,7 @@ function apDungSuaLo(){
   set('gia',GIA); tinhLaiToanBoSO();
   veGia(); vePhat(); veCB(); veSo(); veBC();
   $('dlgSuaLo').close(); SUA_LO_CHO=null;
-  bao('giaMsg','Đã đổi <b>'+ra.length+' món</b>. Bấm <b>Phát bảng giá</b> để ba máy nhân viên nhận.<br>'+
+  bao('giaMsg','Đã đổi <b>'+ra.length+' món</b>. Bấm <b>Cập nhật bảng giá</b> để máy nhân viên nhận.<br>'+
     '<button class="mini mt" onclick="hoanTacNapGia()">Hoàn tác lần sửa này</button>','ok');
 }
 
@@ -4630,7 +4629,7 @@ function boQDLoat(){
     'Sau này có giá sỉ đúng thì vào từng món bấm "+ Thêm giá sỉ".'))return;
   ds.forEach(function(p){ p.qd_dv='';p.qd_sl=0;p.qd_gb=0;p.qd_von=0;p.soat=1 });
   set('gia',GIA); LOCQD=null; GLIM=40; veGia(); vePhat();
-  bao('giaMsg','Đã bỏ giá sỉ của <b>'+ds.length+' món</b>. Giờ bấm <b>Phát bảng giá ngay</b> được rồi.<br>'+
+  bao('giaMsg','Đã bỏ giá sỉ của <b>'+ds.length+' món</b>. Giờ bấm <b>Cập nhật bảng giá</b> được rồi.<br>'+
     '<span class="sm">Danh sách 72 món cần soát lại nằm trong file <b>CAN_SOAT_LAI.csv</b> tôi gửi kèm.</span>','ok');
 }
 
@@ -4639,9 +4638,9 @@ function luuBangGia(){
   var n=Object.keys(GIA).length, thieu=Object.keys(GIA).filter(function(k){return !GIA[k].von}).length;
   bao('giaMsg','Đã lưu bảng giá — <b>'+n.toLocaleString('vi-VN')+' sản phẩm</b>'+
     (thieu?', còn <b style="color:var(--warn)">'+thieu+'</b> chưa có giá vốn':', đủ giá vốn hết')+
-    '.<br>Đơn đã bán KHÔNG đổi — mỗi đơn giữ giá của ngày bán.'+
-    '<br><b style="color:var(--warn)">Nhớ bấm "Phát bảng giá ngay" để ba máy nhân viên nhận giá mới.</b>','ok');
+    '.<br>Đơn đã bán KHÔNG đổi — mỗi đơn giữ giá của ngày bán.','ok');
   vePhat(); dayVon(false);
+  phatGia();   // 30/09/2026 chủ yêu cầu: Cập nhật bảng giá = phát luôn cho máy nhân viên, không còn nút riêng
 }
 /* SỬA 11/09/2026 — XUẤT ĐỦ CỘT ĐỂ TẢI XUỐNG → SỬA EXCEL → NẠP LẠI KHÔNG MẤT GÌ.
    LỖI CŨ: bản xuất thiếu cột "Ngung ban" và các cột giá sỉ. Nạp lại chính file
@@ -4705,7 +4704,7 @@ function xoaSP(sku){
     'Nhân viên sẽ không tìm thấy món này nữa.'))return;
   delete GIA[sku]; set('gia',GIA); giaLai(); vePhat(); dayVon(false); phatGia(true);
   bao('giaMsg','Đã xoá <b>'+esc(p.ten)+'</b> khỏi bảng giá — đang lưu lên Sheet (BANG_GIA_QL) để máy quản lý kia '+
-    'khớp theo, và đang phát lại cho 3 máy nhân viên (sẽ hết thấy món này trong vòng một phút). '+
+    'khớp theo, và đang phát lại cho máy nhân viên (sẽ hết thấy món này trong vòng một phút). '+
     'Đơn cũ không đổi.','wa');
 }
 function moThemSP(){ $('spTen').value=($('gq').value||'').trim(); $('spBrand').value='';
@@ -5071,7 +5070,7 @@ function suaDanhSachNho(loai,i,field,giaTri){
   if(!ds[i]) return;
   ds[i][field] = (field==='luongGio') ? n2(giaTri) : String(giaTri).trim();
   set(loai==='ship'?'ship':'tk',ds);
-  bao(cf.msgId,'Đã sửa — nhớ bấm <b>Lưu lên Sheet</b> để 3 máy nhân viên thấy.','wa');
+  bao(cf.msgId,'Đã sửa — nhớ bấm <b>Lưu lên Sheet</b> để máy nhân viên thấy.','wa');
 }
 async function luuDanhSachNhoLenSheet(loai){
   var cf=DS_NHO_CAUHINH[loai], ds=window[cf.tenBien];
@@ -5086,7 +5085,7 @@ async function luuDanhSachNhoLenSheet(loai){
     var j=JSON.parse(await r.text());
     if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
     VERQL[loai]=j.ver; set('verql',VERQL);
-    bao(cf.msgId,'Đã lưu <b>'+j.so+' mục</b> lên Sheet — 3 máy nhân viên sẽ tự thấy trong vòng một phút.','ok');
+    bao(cf.msgId,'Đã lưu <b>'+j.so+' mục</b> lên Sheet — máy nhân viên sẽ tự thấy trong vòng một phút.','ok');
   }catch(e){
     bao(cf.msgId,'Chưa lưu được: '+esc(e.message)+'<br><span class="sm">Danh sách trên máy này vẫn nguyên vẹn.</span>','er');
   } finally { if(bDS) bDS.disabled=false; }
@@ -5653,7 +5652,7 @@ function themTaiKhoan(){
   set('tk',TK);
   $('tkTen').value=''; $('tkGc').value='';
   veTaiKhoanQL();
-  bao('tkMsg','Đã thêm — nhớ bấm <b>Lưu lên Sheet</b> để 3 máy nhân viên thấy.','wa');
+  bao('tkMsg','Đã thêm — nhớ bấm <b>Lưu lên Sheet</b> để máy nhân viên thấy.','wa');
 }
 function xoaTaiKhoan(i){ xoaDanhSachNho('tk',i) }
 function luuTaiKhoanLenSheet(){ return luuDanhSachNhoLenSheet('tk') }
@@ -5797,7 +5796,7 @@ function veKhaiTruong(){
     return;
   }
   e.innerHTML='<h2>Bắt đầu chạy thật</h2>'+
-    '<div class="sm">Xoá sạch dữ liệu chạy thử ở <b>cả ba máy nhân viên và trên Sheet</b>: đơn hàng, '+
+    '<div class="sm">Xoá sạch dữ liệu chạy thử ở <b>cả các máy nhân viên và trên Sheet</b>: đơn hàng, '+
     'nhật ký, lịch sử mua, giá riêng của khách.<br>'+
     '<b>Giữ nguyên</b> bảng giá, giá vốn và danh sách khách.</div>'+
     '<div class="msg er mt"><b>Bấm được đúng một lần.</b> Xong là nút biến mất trên mọi máy, kể cả máy cài mới.</div>'+
@@ -5807,7 +5806,7 @@ async function khaiTruong(){
   if(!QCFG.url||!QCFG.key){bao('vhMsg','Cần link và mật khẩu quản lý.','er');return}
   var g=prompt('XOÁ TOÀN BỘ DỮ LIỆU CHẠY THỬ\n\n'+
     'Sổ cái đang có '+SO.length+' đơn — sẽ mất hết.\n'+
-    'Ba máy nhân viên cũng sẽ được lệnh xoá.\n\n'+
+    'Máy nhân viên cũng sẽ được lệnh xoá.\n\n'+
     'Bảng giá và giá vốn GIỮ NGUYÊN.\n\n'+
     'Gõ đúng chữ  KHAI TRUONG  để xác nhận:','');
   if(g===null)return;
@@ -5820,7 +5819,7 @@ async function khaiTruong(){
     if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
     SO=[]; set('so',SO); KTRUONG=j.ngay; set('ktruong',KTRUONG);
     veSo();veBC();veCB();nhanCB();veKhaiTruong();veNhatKy();
-    bao('vhMsg','<b>Đã khai trương '+esc(j.ngay)+'.</b><br>Sổ cái sạch. Ba máy nhân viên sẽ nhận lệnh xoá trong một phút.<br>'+
+    bao('vhMsg','<b>Đã khai trương '+esc(j.ngay)+'.</b><br>Sổ cái sạch. Máy nhân viên sẽ nhận lệnh xoá trong một phút.<br>'+
       '<span class="sm">Bản sao lưu trước khi xoá đã tải về máy anh.</span>','ok');
   }catch(e){ bao('vhMsg','Không khai trương được: '+esc(e.message)+'<br>Dữ liệu vẫn nguyên.','er') }
 }
@@ -6180,6 +6179,11 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260930b', ngay:'30/09/2026', ten:'Cập nhật bảng giá = gửi luôn cho nhân viên',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['sua','Bảng giá: bấm "Cập nhật bảng giá" là lưu và gửi luôn cho máy nhân viên, bỏ nút "Phát bảng giá" riêng. Số máy nhân viên tự đếm theo tài khoản đang hoạt động, không còn ghi cứng "3 máy".']
+  ]},
  {ban:'20260930a', ngay:'30/09/2026', ten:'Đổi mã SKU ở Bảng giá',
   vaPhieu:[], vaNoi:[],
   muc:[
@@ -6234,7 +6238,7 @@ var CAP_NHAT=[
    ['moi','Người còn thiếu bước <b>bắt buộc</b> hiện <b>⛔ Chưa được hoạt động</b> — không đăng nhập được trang công việc, không được chọn để giao việc thu nợ, cho tới khi đủ. Tích "đã xong" từng công đoạn ngay trong hồ sơ. Trước khi bật bắt buộc, máy báo ai sẽ bị chặn.'],
    ['sua','Phiếu kỹ sư đã vá <b>tự biến khỏi danh sách</b> ngay (không giữ 3 ngày), và được đánh dấu trên máy chủ để máy khác cũng hết thấy.'],
    ['sua','Điều hành công việc: đã xoá hết việc thì <b>không còn tự dựng lại việc demo</b> sau khi cập nhật. Nút 🛠 Kỹ sư giờ <b>trỏ được từng mục bên trong</b> Điều hành công việc và Tính giá sàn.'],
-   ['sua','Ô "Ba máy nhân viên" chuyển sang tab <b>Nhân sự</b> (Máy bán hàng); dòng "KiemTraDuongGui" ghi rõ là gói thử kết nối lúc cài đặt; giờ gửi hiện đúng ngày.']
+   ['sua','Ô "Máy nhân viên" chuyển sang tab <b>Nhân sự</b> (Máy bán hàng); dòng "KiemTraDuongGui" ghi rõ là gói thử kết nối lúc cài đặt; giờ gửi hiện đúng ngày.']
   ]},
  {ban:'20260923i', ngay:'23/09/2026', ten:'Phiếu kỹ sư máy quản lý + giao việc thu nợ',
   vaPhieu:[],
