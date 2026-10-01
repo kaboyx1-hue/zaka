@@ -990,7 +990,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20260929b';
+var APP_VER='20261001a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -3604,6 +3604,7 @@ function veEdit(){
     '<div class="row"><div><label>SĐT khách</label><input id="edSdt" value="'+esc(ED.sdt)+'" onchange="ED.sdt=this.value.replace(/\\D/g,\'\')"></div>'+
     '<div><label>Tên khách</label><input id="edTen" value="'+esc(ED.ten)+'" onchange="ED.ten=this.value"></div></div>'+
     '<div class="mt"><label>Địa chỉ giao hàng</label><input value="'+esc(ED.dc||'')+'" onchange="ED.dc=this.value"></div>'+
+    '<div class="mt"><label>Ghi chú</label><input id="edGc" value="'+esc(ED.gc||'')+'" onchange="ED.gc=this.value"></div>'+
     '<div class="row mt"><div><label>Tiền ship</label><input value="'+(ED.ship||0).toLocaleString('vi-VN')+'" oninput="dinhDangTien(this)" onchange="ED.ship=so(this.value);edLai()"></div>'+
     '<div><label>Giảm giá</label><input value="'+(ED.giam||0).toLocaleString('vi-VN')+'" oninput="dinhDangTien(this)" onchange="ED.giam=so(this.value);edLai()"></div></div>'+
     '<div class="mt"><label>Phí giao chành (shop chịu — trừ vào lãi)</label>'+
@@ -3664,10 +3665,11 @@ function edLuu(){
   if(d.khach!==ED.ten) td.push('Khách: '+d.khach+' → '+ED.ten);
   if(d.sdt!==ED.sdt) td.push('SĐT: '+d.sdt+' → '+ED.sdt);
   if((d.dc||'')!==(ED.dc||'')) td.push('Địa chỉ: '+(d.dc||'(trống)')+' → '+(ED.dc||'(trống)'));
+  if((d.ghichu||'')!==(ED.gc||'')) td.push('Ghi chú: '+(d.ghichu||'(trống)')+' → '+(ED.gc||'(trống)'));
   if(d.tong!==hang+ED.ship-ED.giam) td.push('TỔNG ĐƠN: '+tien(d.tong)+' → '+tien(hang+ED.ship-ED.giam));
   d.dong=ED.dong.map(function(x){return {sku:x.sku,ten:x.ten,brand:x.brand,dv:x.dv,hs:x.hs,sl:x.sl,gia:x.gia,thanhTien:x.gia*x.sl}});
   d.sl=ts; d.tienHang=hang; d.ship=ED.ship; d.giam=ED.giam; d.phiChanh=ED.phiChanh;
-  d.tong=hang+ED.ship-ED.giam; d.sdt=ED.sdt||d.sdt; d.khach=ED.ten||d.khach; d.dc=ED.dc||'';
+  d.tong=hang+ED.ship-ED.giam; d.sdt=ED.sdt||d.sdt; d.khach=ED.ten||d.khach; d.dc=ED.dc||''; d.ghichu=(ED.gc||'').trim();
   if(KH[d.sdt]&&d.dc){KH[d.sdt].dc=d.dc;KH[d.sdt].canDay=true}
   d.sualan=(d.sualan||0)+1; d.lichSu=d.lichSu||[];
   d.lichSu.push({lan:d.sualan,luc:nowStr(),nguoi:CFG.ten,td:td.length?td:['(chỉnh sửa nhỏ)']});
@@ -5646,6 +5648,11 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261001a', ngay:'01/10/2026', ten:'Sửa đơn có lại ô Ghi chú',
+  vaPhieu:[],
+  muc:[
+   ['sua','Sửa đơn (Phiếu giao hàng / Lịch sử) có lại ô <b>Ghi chú</b> như lúc lên đơn — sửa xong ghi chú mới hiện trên phiếu in và gửi lên Sheet.']
+  ]},
  {ban:'20260929b', ngay:'29/09/2026', ten:'Nút bấm mượt hơn',
   vaPhieu:[],
   muc:[

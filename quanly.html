@@ -785,7 +785,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260930b';
+var APP_VER='20260930c';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -4722,19 +4722,28 @@ function luuSP(){
   set('gia',GIA); $('dlgSP').close(); $('gq').value=t; veGia();
   bao('giaMsg','Đã thêm <b>'+esc(t)+'</b> — mã <b>'+sku+'</b>','ok');
 }
-function tinhLai(){
+/* SỬA 30/09/2026 — chủ báo "đã điền giá vốn mà đơn vẫn treo": trước đây tra GIA[x.sku] thẳng,
+   bỏ qua mã đã GỘP (ALIAS) — món gộp vào mã chính đã có vốn vẫn bị coi là thiếu vốn mãi mãi,
+   mà bảng "cần điền giá vốn" (đi qua skuChinh) lại không hiện món đó để điền. Nay đi qua skuChinh
+   như napDon/tinhLaiToanBoSO, và tự chạy lặng lẽ mỗi lần vẽ tab Cảnh báo. */
+function tinhLaiIm_(){
   var n=0;
   SO.forEach(function(d){
-    if(!d.thieuVon||d.suaVon)return;
+    if(!d.thieuVon||d.suaVon||d.huy)return;
     var von=0,thieu=false;
     d.dong.forEach(function(x){
-      var p=GIA[x.sku];
+      var p=GIA[skuChinh(x.sku)];
       var v=p?(x.hs>1?(p.qd_von||(p.von||0)*x.hs):(p.von||0)):0;
       if(!p||!p.von)thieu=true;
       x.von=v;x.tongVon=v*x.sl;x.lai=x.thanhTien-v*x.sl;von+=v*x.sl});
     d.von=von;d.lai=tinhLaiDon(d,von);
     if(!thieu&&d.thieuVon){d.thieuVon=false;n++}
   });
+  if(n) set('so',SO);
+  return n;
+}
+function tinhLai(){
+  var n=tinhLaiIm_();
   set('so',SO); veSo(); veBC(); veGia(); veCB();
   bao('giaMsg','Đã tính lại. <b>'+n+' đơn</b> chuyển từ trạng thái chờ sang tính được lãi.','ok');
 }
@@ -4831,6 +4840,7 @@ function cbGiao(){
   return h;
 }
 function veCB(){
+  if(tinhLaiIm_()){ setTimeout(function(){ veSo(); veBC() },0) }
   var gia=cbGiao();
   var tt=veTrungTen();
   var q=SO.filter(function(d){return d.thieuVon});
@@ -4869,7 +4879,7 @@ function veCB(){
     '<th class="r">Treo lâu nhất</th><th class="r">Giá vốn</th></tr>'+
     ds.map(function(z){
       var o=z.d.ngay>HAN_NGAY;
-      return '<tr'+(o?' style="background:#301b18"':'')+'><td>'+esc(z.sku)+'</td><td>'+esc(z.d.ten)+'</td>'+
+      return '<tr'+(o?' style="background:rgba(220,60,40,.12)"':'')+'><td>'+esc(z.sku)+'</td><td>'+esc(z.d.ten)+'</td>'+
         '<td class="r">'+z.d.don+'</td><td class="r">'+tien(z.d.dt)+'</td>'+
         '<td class="r" style="color:'+(o?'var(--bad)':'var(--warn)')+';font-weight:700">'+z.d.ngay+' ngày'+(o?' ⚠':'')+'</td>'+
         '<td class="r"><input style="width:100px;padding:5px;text-align:right" placeholder="điền vào đây" '+
@@ -4880,7 +4890,7 @@ function veCB(){
     '<th class="r">Doanh thu</th><th class="r">Treo</th></tr>'+
     q.sort(function(a,b){return soNgay(b.iso)-soNgay(a.iso)}).map(function(d){
       var n=soNgay(d.iso), o=n>HAN_NGAY;
-      return '<tr'+(o?' style="background:#301b18"':'')+'><td>'+esc(maHien_(d.ma))+'</td><td>'+esc(d.ngay)+'</td>'+
+      return '<tr'+(o?' style="background:rgba(220,60,40,.12)"':'')+'><td>'+esc(maHien_(d.ma))+'</td><td>'+esc(d.ngay)+'</td>'+
         '<td>'+esc(d.khach)+'</td><td class="r">'+tien(d.tienHang)+'</td>'+
         '<td class="r" style="color:'+(o?'var(--bad)':'var(--warn)')+';font-weight:700">'+n+' ngày'+(o?' QUÁ HẠN':'')+'</td></tr>'
     }).join('')+'</table></div>';
@@ -4888,7 +4898,11 @@ function veCB(){
 }
 function anViec_(k,n){ var a=get('anviec',{}); a[k]=n; set('anviec',a); veLam() }
 function vonNhanh(sku,v){
-  if(!GIA[sku]) return;
+  if(!GIA[sku]){   // món đã xoá khỏi bảng giá nhưng đơn cũ còn dùng — tạo lại dòng ngừng bán để giữ giá vốn
+    var x=null; SO.some(function(d){ return (d.dong||[]).some(function(y){ if(skuChinh(y.sku)===sku){x=y;return true} }) });
+    GIA[sku]={sku:sku,ten:(x&&x.ten)||sku,brand:(x&&x.brand)||'',nhom:'KHÁC',dvt:(x&&x.dv)||'',gb:(x&&x.gia)||0,
+      von:null,qd_dv:'',qd_sl:0,qd_gb:0,qd_von:0,ngung:true};
+  }
   GIA[sku].von=n2(v)||null; GIA[sku].moi=false;
   GIA[sku].suaTay=true; GIA[sku].vonLuc=nowStr(); set('gia',GIA);
   vonNhanhHen_();
@@ -6179,6 +6193,13 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20260930c', ngay:'30/09/2026', ten:'Đơn chờ giá vốn tự hết khi đã có vốn',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['sua','Cảnh báo: đơn có món đã gộp vào mã khác (mã chính đã có giá vốn) không còn bị kẹt "chờ giá vốn" nữa — tự tính lại ngay khi mở tab.'],
+   ['sua','Điền giá vốn cho món đã xoá khỏi bảng giá giờ ăn (trước đó gõ vào không có tác dụng gì).'],
+   ['sua','Dòng quá hạn trong Cảnh báo đọc được ở giao diện sáng (trước nền nâu đậm, chữ gần như chìm).']
+  ]},
  {ban:'20260930b', ngay:'30/09/2026', ten:'Cập nhật bảng giá = gửi luôn cho nhân viên',
   vaPhieu:[], vaNoi:[],
   muc:[
