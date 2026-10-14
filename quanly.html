@@ -785,7 +785,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20260930c';
+var APP_VER='20261014a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -2093,6 +2093,7 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){
    (không đổi dữ liệu, không đổi Sheet) — chỉ đổi cách hiện + tìm được bằng "02.584"/"02584". */
 function soDon_(ma){
   var m=/^(.*)-(\d{6})-(\d+)$/.exec(String(ma||'')); if(!m) return '';
+  if(m[3].length>=4) return m[3];   // mã kiểu mới (từ 14/10/2026): số đuôi đã gồm chữ số máy, vd 2585
   var so=(m[1].replace(/\D/g,'')||'0'); so=('0'+so).slice(-2);
   return so+'.'+m[3];
 }
@@ -6193,6 +6194,11 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261014a', ngay:'14/10/2026', ten:'Hiện mã đơn kiểu mới',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['sua','Đơn mới từ máy nhân viên có số đuôi gồm luôn số máy (vd 2015 = NV02). Sổ cái/tìm kiếm hiện và tìm được theo đúng con số đó.']
+  ]},
  {ban:'20260930c', ngay:'30/09/2026', ten:'Đơn chờ giá vốn tự hết khi đã có vốn',
   vaPhieu:[], vaNoi:[],
   muc:[

@@ -566,6 +566,7 @@ body.ks-chi *{cursor:crosshair!important}
 
 <section id="pg-new">
   <div id="newMsg"></div>
+  <div id="inNgay"></div>
   <div id="tabNhap" class="tabnhap-bar"></div>
   <div id="suaBar"></div>
   <div class="card"><h2>Khách hàng</h2>
@@ -990,7 +991,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20261001a';
+var APP_VER='20261014b';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1185,6 +1186,7 @@ function mauMay(may){
    (không đổi dữ liệu, không đổi Sheet) — chỉ đổi cách hiện + tìm được bằng "02.584"/"02584". */
 function soDon_(ma){
   var m=/^(.*)-(\d{6})-(\d+)$/.exec(String(ma||'')); if(!m) return '';
+  if(m[3].length>=4) return m[3];   // mã kiểu mới (từ 14/10/2026): số đuôi đã gồm chữ số máy, vd 2585
   var so=(m[1].replace(/\D/g,'')||'0'); so=('0'+so).slice(-2);
   return so+'.'+m[3];
 }
@@ -2850,8 +2852,10 @@ function them(sku,dungQD,giaEp){
     setTimeout(function(){ oSL.focus(); oSL.select() },220) }
 }
 function xoa(i){GIO.splice(i,1);veGio()}
-function sl(i,d){GIO[i].sl=Math.max(1,GIO[i].sl+d);veGio()}
-function slSet(i,v){GIO[i].sl=Math.max(1,parseInt(v)||1);veLai()}
+function sl(i,d){var v=slSo_(GIO[i].sl+d);GIO[i].sl=v>0?v:GIO[i].sl;veGio()}
+/* 14/10/2026 — chủ báo: món bán theo kg (cá khô 1kg) cần bán nửa ký → số lượng nhận số lẻ (0.5 hoặc 0,5). */
+function slSo_(v){ var n=parseFloat(String(v==null?'':v).replace(',','.')); return isFinite(n)?Math.round(n*1000)/1000:0 }
+function slSet(i,v){GIO[i].sl=slSo_(v)>0?slSo_(v):1;veLai()}
 function giaSet(i,v){GIO[i].gia=so(v);veLai()}
 
 function veLai(){ try{if(document.activeElement&&document.activeElement.blur)document.activeElement.blur()}catch(e){}
@@ -2925,7 +2929,7 @@ function veGio(){
       (doi?'<span class="tag qd">đã sửa giá — sẽ nhớ cho khách này</span>':'')+
       '</div><button class="del" onclick="xoa('+i+')">&times;</button></div><div class="qty">'+
       '<button onclick="sl('+i+',-1)">−</button>'+
-      '<input id="slIn'+i+'" type="number" inputmode="numeric" value="'+g.sl+'" onchange="slSet('+i+',this.value)">'+
+      '<input id="slIn'+i+'" type="text" inputmode="decimal" value="'+g.sl+'" onchange="slSet('+i+',this.value)">'+
       '<button onclick="sl('+i+',1)">+</button><div class="pr">'+
       '<input value="'+g.gia.toLocaleString('vi-VN')+'" onchange="giaSet('+i+',this.value)">'+
       '<div class="tt">'+tien(g.gia*g.sl)+'</div></div></div></div>'}).join('');
@@ -3224,8 +3228,18 @@ function luu(){
   luuGio(); veTabNhap();
   chonTT('CHUA');
   veGio(); veDon(); veKH(); veOut(); dem(); dayLen(false);
+  /* 02/10/2026 (chủ duyệt demo "In ngay sau khi lưu"): in phiếu / phiếu nhà xe ngay tại chỗ, khỏi qua tab
+     Phiếu giao hàng tìm lại. Nút nhà xe nổi màu khi đơn có phí chành hoặc khách từng gửi chành. */
+  var tungChanh=phiChanh>0||DON.some(function(x){return x.ma!==ma&&x.sdt===sdt&&sdt&&(x.phiChanh||0)>0});
   bao('newMsg','Đã lưu đơn <b>'+ma+'</b> · '+tien(hang+ship-giam)+
     (khMoi?'<br>Đã tự thêm <b>'+esc(ten)+'</b> ('+esc(sdt)+') vào danh sách khách — lần sau gõ số là ra.':''),'ok');
+  // thanh in nằm riêng (#inNgay) vì bao() tự xoá thông báo sau 6 giây — thanh này giữ tới khi bấm ✕ hoặc lưu đơn kế
+  $('inNgay').innerHTML='<div class="msg ok" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
+    '<b style="flex:1 1 100%">✓ Đơn vừa lưu: '+esc(maHien_(ma))+' · '+esc(ten||'Khách lẻ')+'</b>'+
+      '<button onclick="inPhieu([\''+ma+'\'],1)" style="background:var(--card);color:var(--tx);padding:8px 14px">🖨 In phiếu</button>'+
+      '<button onclick="moKienHang([\''+ma+'\'],1)" style="'+(tungChanh?'background:var(--pur);color:#fff':'background:var(--purBg);color:var(--pur)')+';padding:8px 14px">🚚 In phiếu gửi nhà xe</button>'+
+      '<button onclick="this.parentNode.remove()" title="Ẩn" style="margin-left:auto;background:none;color:var(--tx2);padding:6px 10px">✕</button>'+
+    (tungChanh?'<div class="sm" style="flex:1 1 100%;color:var(--pur)">💡 '+(phiChanh>0?'Đơn có phí chành':'Khách này từng gửi chành')+' — nhớ in phiếu nhà xe.</div>':'')+'</div>';
   window.scrollTo({top:0,behavior:'smooth'});
 }
 function moSua(ma){
@@ -3282,21 +3296,21 @@ function getDon(ma){ return DON.filter(function(x){return x.ma===ma})[0] }
    tiền tố nên vẫn là 2 mã đơn riêng biệt, không ghi đè, không mất dữ liệu) —
    xác suất thấp trong vận hành thực tế, đổi lại đúng cái chủ cần: số không
    lặp lại giữa các nhân viên khi máy đã đồng bộ bình thường. */
+/* SỬA 14/10/2026 (chủ duyệt demo "Mã Đơn Mới", áp dụng cho đơn lên từ bản này): số đuôi = CHỮ SỐ MÁY + bộ đếm
+   RIÊNG của máy đó trong năm (NV02 → 2001, 2002…; 1000 trở lên → 21000). Mỗi máy tự đếm nên không bao giờ trùng
+   với máy khác, kể cả lúc mất mạng; quản lý chỉ cần gửi lại con số. Sang năm mới đếm lại từ 1.
+   Đơn cũ (đuôi 3 số, bộ đếm chung cũ) giữ nguyên — nhận biết mã mới bằng đuôi ≥4 số.
+   ponytail: chữ số máy lấy nguyên số của mã máy; quá 9 máy (NV10…) thì 1 và 10 có thể lẫn — đổi sang tiền tố 2 số nếu có máy thứ 10. */
 function capMa(pre,epNhay){
-  var may=pre.split('-')[0]; // tiền tố mã máy — vẫn giữ để phân biệt ai lên đơn, KHÔNG còn dùng làm khoá đếm
-  var dem=get('demma',{});
-  var n=dem.chung||0;
-  // dò lại TOÀN BỘ đơn của MỌI máy (không lọc theo tiền tố nữa) để lấy đúng
-  // số cao nhất đang có trong toàn hệ thống — đảm bảo tiếp diễn dù đây là
-  // lần đầu máy này chạy bộ đếm chung, hay có máy khác vừa lên đơn cao hơn.
-  var max=0;
+  var may=pre.split('-')[0], so=String(parseInt(may.replace(/\D/g,''),10)||0), nam=pre.split('-')[1].slice(0,2);
+  var dem=get('demma',{}), khoa='m'+nam, n=dem[khoa]||0;
   DON.forEach(function(d){
-    var x=parseInt(d.ma.slice(d.ma.lastIndexOf('-')+1),10)||0; if(x>max) max=x;
+    var m=/^(.*)-(\d{2})\d{4}-(\d+)$/.exec(d.ma||''); if(!m||m[1]!==may||m[2]!==nam||m[3].length<4) return;
+    var x=parseInt(m[3].slice(so.length),10)||0; if(x>n) n=x;
   });
-  if(max>n) n=max;
   var ma;
-  do { n++; ma=pre+'-'+('00'+n).slice(-3) } while(DON.some(function(d){return d.ma===ma}));
-  dem.chung=n; set('demma',dem);
+  do { n++; ma=pre+'-'+so+('00'+n).slice(-Math.max(3,String(n).length)) } while(DON.some(function(d){return d.ma===ma}));
+  dem[khoa]=n; set('demma',dem);
   return ma;
 }
 function xoaDon(ma,tuPG){
@@ -3596,7 +3610,7 @@ function veEdit(){
     ED.dong.map(function(x,i){
       return '<div class="el"><div class="nm">'+(x.brand?'<span>'+esc(x.brand)+'</span>':'')+esc(x.ten)+
         '<span>'+esc(x.dv)+(x.hs>1?' (= '+x.hs+' đv lẻ)':'')+'</span></div>'+
-        '<input type="number" min="1" value="'+x.sl+'" onchange="edSL('+i+',this.value)" title="Số lượng">'+
+        '<input type="text" inputmode="decimal" value="'+x.sl+'" onchange="edSL('+i+',this.value)" title="Số lượng">'+
         '<input class="g" value="'+x.gia.toLocaleString('vi-VN')+'" onchange="edGia('+i+',this.value)" title="Đơn giá">'+
         '<button class="x" onclick="edXoa('+i+')" title="Bỏ dòng">&times;</button></div>'}).join('')+
     '<div class="eadd"><input id="edQ" placeholder="Gõ để thêm sản phẩm vào đơn này…" oninput="edTim()" autocomplete="off"></div>'+
@@ -3617,7 +3631,7 @@ function veEdit(){
       '<button onclick="edHuy()" style="background:var(--c2);color:var(--tx2);padding:9px 14px">Huỷ</button></div></div>';
   box.classList.remove('hide');
 }
-function edSL(i,v){ED.dong[i].sl=Math.max(1,parseInt(v)||1);edLai()}
+function edSL(i,v){ED.dong[i].sl=slSo_(v)>0?slSo_(v):1;edLai()}
 function edGia(i,v){ED.dong[i].gia=so(v);edLai()}
 function edXoa(i){ if(ED.dong.length<2){alert('Đơn phải còn ít nhất một sản phẩm.');return}
   ED.dong.splice(i,1);edLai()}
@@ -4127,7 +4141,7 @@ function gdToggleTungPhan(){
   $('gdBang').style.display=show?'':'none';
   $('gdBtnTungPhan').textContent=show?'✕ Ẩn bảng chi tiết':'✏️ Giao từng phần';
 }
-function gdSet(i,v){ var d=getDon(GD.ma); GD.sl[i]=Math.max(0,Math.min(conLaiDialog(d,d.dong[i]),parseInt(v)||0)); veGiaoDot() }
+function gdSet(i,v){ var d=getDon(GD.ma); GD.sl[i]=Math.max(0,Math.min(conLaiDialog(d,d.dong[i]),slSo_(v))); veGiaoDot() }
 function veGiaoDot(){
   var d=getDon(GD.ma); if(!d) return;
   var soDot=(d.dot||[]).length+1;
@@ -4153,7 +4167,7 @@ function veGiaoDot(){
             ' <a href="#" class="lnk" onclick="GD.doi['+i+']=null;veGiaoDot();return false">bỏ</a></div>':'')+
         '</td>'+
         '<td class="r">'+dat+'</td><td class="r">'+dg+'</td>'+
-        '<td class="r"><input type="number" min="0" max="'+con+'" value="'+lan+'" style="width:80px;text-align:right" '+
+        '<td class="r"><input type="number" step="any" min="0" max="'+con+'" value="'+lan+'" style="width:80px;text-align:right" '+
           'onchange="gdSet('+i+',this.value)"></td>'+
         '<td class="r">'+(con-lan)+'</td>'+
         '<td class="r">'+((con-lan)>0?'<button class="btn-nho" onclick="moDoiSP('+i+')" style="color:var(--pur)">Đổi SP</button>':'')+'</td></tr>'
@@ -5648,6 +5662,21 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261014b', ngay:'14/10/2026', ten:'Mã đơn mới không trùng giữa các máy',
+  vaPhieu:[],
+  muc:[
+   ['sua','Đơn lên từ bản này có số đuôi bắt đầu bằng <b>số máy</b>: NV01 → 1001, 1002…; NV02 → 2001… Mỗi máy đếm riêng nên không còn trùng số giữa các máy, số chạy tới hết năm. Quản lý chỉ cần gửi lại con số (vd 2015) là biết đơn nào. Đơn cũ giữ mã cũ.']
+  ]},
+ {ban:'20261014a', ngay:'14/10/2026', ten:'Bán số lượng lẻ (0,5 kg)',
+  vaPhieu:[],
+  muc:[
+   ['sua','Ô số lượng nhận số lẻ: gõ <b>0.5</b> hoặc <b>0,5</b> để bán nửa ký (món tính theo kg). Áp dụng khi lên đơn, sửa đơn và giao đợt.']
+  ]},
+ {ban:'20261002a', ngay:'02/10/2026', ten:'In phiếu ngay sau khi lưu đơn',
+  vaPhieu:[],
+  muc:[
+   ['moi','Lưu đơn xong có sẵn 2 nút <b>🖨 In phiếu</b> và <b>🚚 In phiếu gửi nhà xe</b> ngay trên đầu — khỏi qua Phiếu giao hàng tìm lại. Đơn có phí chành hoặc khách từng gửi chành thì nút nhà xe tô màu nhắc.']
+  ]},
  {ban:'20261001a', ngay:'01/10/2026', ten:'Sửa đơn có lại ô Ghi chú',
   vaPhieu:[],
   muc:[
