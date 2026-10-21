@@ -435,9 +435,16 @@ body.ks-chi *{cursor:crosshair!important}
       <button class="btn-nho" onclick="kiemTraTrungMa()" style="background:var(--badBg);color:var(--bad)" title="Quét toàn bộ sổ cái tìm mã đơn xuất hiện nhiều hơn 1 lần">Kiểm tra đơn trùng mã</button>
     </div>
     <div class="row mt">
-      <button class="btn2" id="btnHuyLo2" onclick="huyLoQL()" style="color:var(--bad)">Huỷ 0 đơn đã chọn</button>
-      <button class="btn-nho" onclick="chonHetSo(1)">Chọn tất cả đang hiện</button>
-      <button class="btn-nho" onclick="chonHetSo(0)">Bỏ chọn</button>
+      <!-- 21/10/2026 chủ yêu cầu: nút thao tác đơn đã tích chỉ nổi lên khi có tích, cho gọn thanh công cụ -->
+      <div id="soChonBar" style="display:none;position:fixed;left:50%;transform:translateX(-50%);
+        bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:50;padding:10px 14px;max-width:calc(100% - 24px);
+        background:var(--c2);border:1px solid var(--vien);border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,.35);
+        align-items:center;gap:10px;flex-wrap:wrap">
+        <b id="soChonDem"></b>
+        <button class="btn-nho" onclick="chonHetSo(1)">Chọn tất cả đang hiện</button>
+        <button class="btn2" id="btnHuyLo2" onclick="huyLoQL()" style="color:var(--bad);width:auto">Huỷ 0 đơn đã chọn</button>
+        <button class="btn-nho" onclick="chonHetSo(0)">Bỏ chọn</button>
+      </div>
       <button class="btn" onclick="xuatSoCai()">Xuất sổ cái ra CSV</button>
       <button class="btn2" onclick="saoLuu()" title="Tải xuống 1 file .json chứa toàn bộ sổ cái + giá vốn hiện có trên máy này — để dự phòng">Sao lưu toàn bộ</button>
       <button class="btn2" onclick="document.getElementById('fbk').click()" title="Nạp lại dữ liệu từ 1 file .json đã sao lưu trước đó — ghi đè dữ liệu đang có trên máy này">Khôi phục từ bản sao lưu</button>
@@ -678,6 +685,7 @@ body.ks-chi *{cursor:crosshair!important}
     <div><label>Phí giao chành</label><input id="sdPhiChanh" inputmode="numeric" oninput="tinhLaiSuaDon()"></div>
   </div>
   <div class="mt"><label>Ghi chú</label><input id="sdGc"></div>
+  <div class="mt"><label>Ngày bán (chỉ quản lý đổi được — dùng khi nhân viên lên đơn bù cho hàng đã giao hôm trước)</label><input type="date" id="sdNgay"></div>
   <div class="mt" id="sdTong"></div>
   <div id="sdErr"></div>
   <div class="row mt">
@@ -785,7 +793,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261014a';
+var APP_VER='20261021b';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -3535,7 +3543,8 @@ function veSo(){
   demHuyQL();
 }
 function dsChonSo(){ return [].slice.call(document.querySelectorAll('.ckso:checked')).map(function(c){return c.value}) }
-function demHuyQL(){ var b=$('btnHuyLo2'); if(b) b.textContent='Huỷ '+dsChonSo().length+' đơn đã chọn' }
+function demHuyQL(){ var n=dsChonSo().length, b=$('btnHuyLo2'); if(b) b.textContent='Huỷ '+n+' đơn đã chọn';
+  var bar=$('soChonBar'); if(bar){ bar.style.display=n?'flex':'none'; $('soChonDem').textContent='Đã chọn '+n+' đơn' } }
 function chonHetSo(v){ [].slice.call(document.querySelectorAll('.ckso')).forEach(function(c){c.checked=!!v}); demHuyQL() }
 async function huyLoQL(){
   var ma=dsChonSo();
@@ -3817,6 +3826,7 @@ function moSuaDon(ma){
   $('sdKhach').value=d.khach||''; $('sdSdt').value=d.sdt||''; $('sdDc').value=d.dc||'';
   $('sdShip').value=d.ship||0; $('sdGiam').value=d.giam||0; $('sdPhiChanh').value=d.phiChanh||0;
   $('sdGc').value=d.gc||'';
+  $('sdNgay').value=d.iso||''; $('sdNgay').max=new Date(Date.now()+7*3600e3).toISOString().slice(0,10);
   var sp=Object.keys(GIA).filter(function(k){return !GIA[k].ngung})
     .sort(function(a,b){return String(GIA[a].ten||'').localeCompare(String(GIA[b].ten||''))});
   $('sdSkuMoi').innerHTML='<option value="">— chọn sản phẩm để thêm —</option>'+
@@ -3879,13 +3889,21 @@ async function luuSuaDon(){
   if((d.sdt||'')!==sdt) td.push('SĐT: '+(d.sdt||'')+' → '+sdt);
   if((d.dc||'')!==dc) td.push('Địa chỉ: '+(d.dc||'(trống)')+' → '+(dc||'(trống)'));
   if((d.gc||'')!==gc) td.push('Ghi chú: '+(d.gc||'(trống)')+' → '+(gc||'(trống)'));
+  // 21/10/2026 — chủ: đơn lên bù phải nằm đúng ngày bán (báo cáo tính theo iso), CHỈ quản lý đổi. Mã đơn giữ nguyên.
+  var isoMoi=$('sdNgay').value||d.iso, ngayMoi=d.ngay;
+  if(isoMoi>new Date(Date.now()+7*3600e3).toISOString().slice(0,10)){ $('sdErr').innerHTML='<div class="msg er">Không chọn ngày trong tương lai.</div>'; return }
+  if(isoMoi!==d.iso){
+    var vn=function(i){return String(i||'').split('-').reverse().join('/')};
+    td.push('Ngày bán: '+vn(d.iso)+' → '+vn(isoMoi));
+    ngayMoi=vn(isoMoi)+(String(d.ngay||'').match(/ \d{1,2}:\d{2}.*$/)||[''])[0];
+  }
   if(!td.length){ $('dlgSuaDon').close(); EDQL=null; return } // không đổi gì thì khỏi tốn 1 lần sửa
 
   var sualanMoi=(d.sualan||0)+1;
   var lsCu=d.ls?String(d.ls).split('||').map(function(x){return x.trim()}).filter(Boolean):[];
   var lsMoi=lsCu.concat(['[Lan '+sualanMoi+' - '+nowStr()+' - QUẢN LÝ] '+td.join('; ')]);
 
-  var goiDon={ma:d.ma, ngay:d.ngay, iso:d.iso, kenh:d.kenh, sdt:sdt, khach:khach, dc:dc,
+  var goiDon={ma:d.ma, ngay:ngayMoi, iso:isoMoi, kenh:d.kenh, sdt:sdt, khach:khach, dc:dc,
     ship:ship, giam:giam, phiChanh:phiChanh, nguoiGiao:d.nguoiGiao||'', tong:tong, sualan:sualanMoi, gc:gc,
     tt:d.tt||'CHUA', ttHt:d.ttHt||'', tkNhan:d.tkNhan||'', daTra:d.daTra||0,
     inLan:d.inLan||0, inLuc:d.inLuc||'', bgv:d.bgv||'', tgGiao:d.tgGiao||'DU', daGiao:d.daGiao||null, dot:d.dot||null,
@@ -6194,6 +6212,16 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261021b', ngay:'21/10/2026', ten:'Sổ cái gọn hơn',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['sua','Sổ cái: nút Huỷ / Chọn tất cả / Bỏ chọn đã ẩn khỏi thanh công cụ — tích chọn đơn là một thanh nổi hiện ra ở đáy màn hình, bỏ hết tích thì tự ẩn.']
+  ]},
+ {ban:'20261021a', ngay:'21/10/2026', ten:'Quản lý đổi được ngày bán của đơn',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['moi','Sửa đơn (Sổ cái) có ô <b>Ngày bán</b>: đơn nhân viên lên bù cho hàng đã giao hôm trước thì chọn lại đúng ngày, báo cáo tính vào ngày đó. Chỉ máy quản lý đổi được; không chọn ngày tương lai; mã đơn giữ nguyên.']
+  ]},
  {ban:'20261014a', ngay:'14/10/2026', ten:'Hiện mã đơn kiểu mới',
   vaPhieu:[], vaNoi:[],
   muc:[
