@@ -407,7 +407,7 @@ body.sang .badge.breeder{background:#e9f3e0;color:#5c8a3a}
 .edt h3{font-size:12.5px;color:var(--acc);margin:0 0 9px;letter-spacing:.04em;text-transform:uppercase}
 .el{display:flex;gap:8px;align-items:center;background:var(--c2);border-radius:9px;padding:8px 9px;margin-bottom:6px}
 .el .nm{flex:1;min-width:0;font-size:13px;line-height:1.35}
-.el .nm span{color:var(--tx2);font-size:11px;display:block}
+.el .nm span{color:var(--tx);opacity:.9;font-size:13px;font-weight:500;display:block;margin-top:2px}
 .el input{width:66px;text-align:center;padding:6px;font-size:13px}
 .el input.g{width:96px;text-align:right}
 .el .x{background:none;color:var(--bad);padding:0 4px;font-size:19px;line-height:1}
@@ -991,7 +991,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20261014b';
+var APP_VER='20261021a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -2854,6 +2854,9 @@ function them(sku,dungQD,giaEp){
 function xoa(i){GIO.splice(i,1);veGio()}
 function sl(i,d){var v=slSo_(GIO[i].sl+d);GIO[i].sl=v>0?v:GIO[i].sl;veGio()}
 /* 14/10/2026 — chủ báo: món bán theo kg (cá khô 1kg) cần bán nửa ký → số lượng nhận số lẻ (0.5 hoặc 0,5). */
+/* 21/10/2026 chủ: "(= 25 đv lẻ)" khó hiểu → ghi đúng tên đơn vị nhỏ nhất của món (25 Gói, 25 bánh; đơn vị "1kg" → "25kg"). */
+function dvLe_(sku){ var p=SP.filter(function(x){return x.sku===sku})[0]; var u=String(p&&p.dvt||'').trim();
+  return u?u.replace(/^1\s*(?=\D)/,''):'đơn vị lẻ' }
 function slSo_(v){ var n=parseFloat(String(v==null?'':v).replace(',','.')); return isFinite(n)?Math.round(n*1000)/1000:0 }
 function slSet(i,v){GIO[i].sl=slSo_(v)>0?slSo_(v):1;veLai()}
 function giaSet(i,v){GIO[i].gia=so(v);veLai()}
@@ -2924,7 +2927,7 @@ function veGio(){
     return '<div class="line"><div class="top"><div class="nm">'+
       (g.brand?'<span class="br" style="color:var(--pur);font-size:11px">'+esc(g.brand)+'</span> ':'')+
       esc(g.ten)+'<div class="v" style="font-size:11.5px;color:var(--tx2)">'+esc(g.dv)+
-      (g.hs>1?' (= '+g.hs+' đv lẻ)':'')+'</div>'+
+      (g.hs>1?' (= '+g.hs+' '+esc(dvLe_(g.sku))+')':'')+'</div>'+
       (g.riêng?'<span class="tag kh">giá riêng</span>':'')+
       (doi?'<span class="tag qd">đã sửa giá — sẽ nhớ cho khách này</span>':'')+
       '</div><button class="del" onclick="xoa('+i+')">&times;</button></div><div class="qty">'+
@@ -3493,7 +3496,7 @@ function vePG(epVe){
       (tgGiaoCua(d)==='DU'?'':'<th style="text-align:center">Đã giao</th>')+
       '<th class="r">Đơn giá</th><th class="r">Thành tiền</th></tr>'+
       d.dong.map(function(x){return '<tr><td class="n">'+esc(x.ten)+
-        '<div style="font-size:12.5px;color:var(--tx2);font-weight:400">'+esc(x.dv)+(x.hs>1?' (= '+x.hs+' đv lẻ)':'')+'</div></td>'+
+        '<div style="font-size:13px;color:var(--tx);opacity:.85;font-weight:500">'+esc(x.dv)+(x.hs>1?' (= '+x.hs+' '+esc(dvLe_(x.sku))+')':'')+'</div></td>'+
         '<td class="sl">'+x.sl+'</td>'+
         (tgGiaoCua(d)==='DU'?'':'<td class="sl" style="color:'+(conLaiDong(d,x)?'var(--warn)':'var(--ok)')+'">'+
           daGiaoDong(d,x)+'</td>')+
@@ -3609,7 +3612,7 @@ function veEdit(){
   box.innerHTML='<div class="edt"><h3>Đang sửa đơn '+esc(ED.ma)+'</h3>'+
     ED.dong.map(function(x,i){
       return '<div class="el"><div class="nm">'+(x.brand?'<span>'+esc(x.brand)+'</span>':'')+esc(x.ten)+
-        '<span>'+esc(x.dv)+(x.hs>1?' (= '+x.hs+' đv lẻ)':'')+'</span></div>'+
+        '<span>'+esc(x.dv)+(x.hs>1?' (= '+x.hs+' '+esc(dvLe_(x.sku))+')':'')+'</span></div>'+
         '<input type="text" inputmode="decimal" value="'+x.sl+'" onchange="edSL('+i+',this.value)" title="Số lượng">'+
         '<input class="g" value="'+x.gia.toLocaleString('vi-VN')+'" onchange="edGia('+i+',this.value)" title="Đơn giá">'+
         '<button class="x" onclick="edXoa('+i+')" title="Bỏ dòng">&times;</button></div>'}).join('')+
@@ -3643,14 +3646,19 @@ function edTim(){
   var kq=SP.filter(function(p){return kd(p.ten+' '+(p.brand||'')+' '+p.sku).indexOf(q)>=0});
   $('edKQ').innerHTML=kq.length?'<div class="sm" style="margin:4px 2px">'+kq.length+' sản phẩm khớp'+(kq.length>8?' — kéo xuống để xem hết, hoặc gõ thêm chữ cho gọn':'')+'</div>'+
     '<div class="eres">'+kq.map(function(p){
-    return '<div onclick="edThem(\''+p.sku+'\')">'+esc(p.ten)+' — <b style="color:var(--ok)">'+tien(p.gb)+
-      '</b> <span style="color:var(--tx2)">/'+esc(p.dvt)+'</span></div>'}).join('')+'</div>'
+    /* SỬA 21/10/2026 — phiếu chị Hằng 30/09: món có 2 phân loại chung mã (Gói lẻ + Bao 25kg) chỉ hiện đơn vị lẻ,
+       sửa đơn không thêm được Bao. Nay hiện thêm dòng đơn vị quy đổi, giống ô Lên đơn. */
+    return '<div onclick="edThem(\''+p.sku+'\',0)">'+esc(p.ten)+' — <b style="color:var(--ok)">'+tien(p.gb)+
+      '</b> <span style="color:var(--tx2)">/'+esc(p.dvt)+'</span></div>'+
+      (p.qd_sl?'<div onclick="edThem(\''+p.sku+'\',1)">'+esc(p.ten)+' — <b style="color:var(--ok)">'+tien(p.qd_gb||p.gb*p.qd_sl)+
+      '</b> <span style="color:var(--tx);font-weight:600">/'+esc(p.qd_dv)+' (= '+p.qd_sl+' '+esc(p.dvt)+')</span></div>':'')}).join('')+'</div>'
     :'<div class="sm">Không tìm thấy</div>';
 }
-function edThem(sku){
+function edThem(sku,qd){
   var p=SP.filter(function(x){return x.sku===sku})[0]; if(!p)return;
-  var c=ED.dong.filter(function(x){return x.sku===sku&&x.dv===p.dvt})[0];
-  if(c)c.sl++; else ED.dong.push({sku:p.sku,ten:p.ten,brand:p.brand||'',dv:p.dvt,hs:1,sl:1,gia:p.gb,goc:p.gb});
+  var dungQD=!!(qd&&p.qd_sl), dv=dungQD?p.qd_dv:p.dvt, hs=dungQD?p.qd_sl:1, gia=dungQD?(p.qd_gb||p.gb*p.qd_sl):p.gb;
+  var c=ED.dong.filter(function(x){return x.sku===sku&&x.dv===dv})[0];
+  if(c)c.sl++; else ED.dong.push({sku:p.sku,ten:p.ten,brand:p.brand||'',dv:dv,hs:hs,sl:1,gia:gia,goc:gia});
   edLai();
 }
 function edHuy(){ var ma=ED.ma, pg=ED.tuPG; ED=null;
@@ -4161,7 +4169,7 @@ function veGiaoDot(){
       var lan=Math.max(0,Math.min(con,GD.sl[i]||0));
       var dm=GD.doi[i];
       return '<tr><td class="n">'+esc(x.ten)+
-        '<div class="sm">'+esc(x.dv)+(x.hs>1?' (= '+x.hs+' đv lẻ)':'')+'</div>'+
+        '<div class="sm">'+esc(x.dv)+(x.hs>1?' (= '+x.hs+' '+esc(dvLe_(x.sku))+')':'')+'</div>'+
         (dm?'<div class="sm" style="color:var(--pur)">Phần chưa giao đổi sang: <b>'+esc(dm.ten)+'</b> · '+
             tien(dm.gia)+(dm.lydo?' · '+esc(dm.lydo):'')+
             ' <a href="#" class="lnk" onclick="GD.doi['+i+']=null;veGiaoDot();return false">bỏ</a></div>':'')+
@@ -4499,7 +4507,7 @@ function phieuHTML(d,cu){
       (d._soTrang>1?' — phần '+d._trang+' trong '+d._soTrang:'')+'</div>'+
     '<table class="ph-tb"><tr><th>Sản phẩm</th><th style="text-align:center">SL</th><th class="r">Thành tiền</th></tr>'+
       d.dong.map(function(x){return '<tr><td>'+esc(x.ten)+
-        (gonDV?'':'<div class="dv">'+esc(x.dv)+(x.hs>1?' (= '+x.hs+' đv lẻ)':'')+' × '+pTien(x.gia)+'</div>')+
+        (gonDV?'':'<div class="dv">'+esc(x.dv)+(x.hs>1?' (= '+x.hs+' '+esc(dvLe_(x.sku))+')':'')+' × '+pTien(x.gia)+'</div>')+
         (gonDV?' <span class="dv">'+esc(x.dv)+' × '+pTien(x.gia)+'</span>':'')+'</td>'+
         '<td class="c">'+x.sl+'</td><td class="r">'+pTien(x.thanhTien)+'</td></tr>'}).join('')+
     '</table>'+
@@ -5662,6 +5670,12 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261021a', ngay:'21/10/2026', ten:'Sửa đơn thêm được hàng theo bao/thùng',
+  vaPhieu:['2026-09-30T03:21:14.000Z','30/09/2026 10:21:14'],
+  muc:[
+   ['sua','Sửa đơn → ô thêm sản phẩm giờ hiện cả đơn vị quy đổi (vd Mùn cưa nén: Gói và Bao 25kg). Trước chỉ hiện đơn vị lẻ nên không thêm được Bao.'],
+   ['sua','Chỗ ghi quy đổi giờ ghi đúng tên đơn vị nhỏ nhất của món, vd <b>Bao (= 25 Gói)</b> thay cho "(= 25 đv lẻ)" khó hiểu; chữ to và rõ hơn.']
+  ]},
  {ban:'20261014b', ngay:'14/10/2026', ten:'Mã đơn mới không trùng giữa các máy',
   vaPhieu:[],
   muc:[

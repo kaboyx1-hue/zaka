@@ -343,42 +343,20 @@ body.ks-chi *{cursor:crosshair!important}
 /* ══ GIAO DIỆN 21/10/2026 — chủ duyệt demo PPTisudqqiTtChEp1NL8tn ("đẩy"): tối giản kiểu Tesla, CÓ MÀU phân biệt
    nút/loại dữ liệu nhưng KHÔNG tô màu lên chữ số (chủ chê "phèn"), chuyển động êm không nảy, nền mạng nơ-ron sống.
    Chỉ đổi cách hiện — không đụng số liệu. Đặt cuối CSS để đè các luật cũ. ══ */
-body{--ez:cubic-bezier(.4,0,.2,1);
-  --bg:#0b0c0e;--bg2:#0b0c0e;--card:#121316;--c2:#1a1b1f;--line:#24262b;--tx:#eef0f3;--tx2:#a2a4a9;
-  --acc:#5b84f0;--acc2:#5b84f0;--brand:#121316;--brandTx:#eef0f3;
-  --ok:#3fc285;--warn:#e0a443;--bad:#ef5b4f;--pur:#a988ff;--info:#6b93ff;
-  --okBg:color-mix(in srgb,#3fc285 14%,#121316);--badBg:color-mix(in srgb,#ef5b4f 14%,#121316);--warnBg:color-mix(in srgb,#e0a443 14%,#121316);
-  --purBg:color-mix(in srgb,#a988ff 14%,#121316);--infoBg:color-mix(in srgb,#6b93ff 14%,#121316);
-  --shadow:none;--btnGlow:none;--nenDay:160,175,200;--nenNut:190,200,220}
-body.sang{--bg:#f4f4f4;--bg2:#f4f4f4;--card:#fff;--c2:#f0f0f1;--line:#e3e3e5;--tx:#171a20;--tx2:#5c5e62;
-  --acc:#3e6ae1;--acc2:#3e6ae1;--brand:#fff;--brandTx:#171a20;
-  --ok:#1f8a5b;--warn:#b7791f;--bad:#c4372c;--pur:#7a4fd6;--info:#2f62e0;
-  --okBg:color-mix(in srgb,#1f8a5b 11%,#fff);--badBg:color-mix(in srgb,#c4372c 10%,#fff);--warnBg:color-mix(in srgb,#b7791f 12%,#fff);
-  --purBg:color-mix(in srgb,#7a4fd6 10%,#fff);--infoBg:color-mix(in srgb,#2f62e0 10%,#fff);--nenDay:40,50,70;--nenNut:40,50,70}
-body{background:var(--bg);font-family:"Be Vietnam Pro",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
-#zNen{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
+/* 21/10 chủ: GIỮ NGUYÊN MÀU GỐC (xanh rêu tối / Mùn cưa sáng) — khối này chỉ đổi hiệu ứng, không đè màu. */
+body{--ez:cubic-bezier(.4,0,.2,1)}
+body{font-family:"Be Vietnam Pro",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
 button{border-radius:6px;transition:background-color .2s var(--ez),color .2s var(--ez),border-color .2s var(--ez),opacity .1s}
 @media (hover:hover){button:hover:not(:disabled){scale:1}}
 button:active:not(:disabled){scale:1;opacity:.8}
 .gonSong{display:none}
 input,select,textarea{border-radius:6px}
-.card{border-radius:6px;box-shadow:none}
-.btn{background:var(--acc);box-shadow:none;font-weight:500;letter-spacing:.01em}
-.btn:hover{background:color-mix(in srgb,var(--acc) 85%,#000)}
 .drop{border-radius:6px}
 th{text-transform:uppercase;letter-spacing:.08em;font-size:10.5px;color:var(--tx2)}
 h2{font-weight:600;letter-spacing:-.005em}
 .kpi div{border-radius:6px;border-left-width:2px}
-.kpi b{color:var(--tx);font-weight:500;font-variant-numeric:tabular-nums}
-/* số tô màu sẵn (lãi xanh, chi phí/lỗ đỏ): chữ về trắng/đen, màu chuyển thành chấm sáng trước số */
-.kpi b[style*="color"]{color:var(--tx)!important}
-.kpi b[style*="--ok"]::before,.kpi b[style*="--bad"]::before,.kpi b[style*="--warn"]::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;margin:0 8px 2px 0;vertical-align:middle}
-.kpi b[style*="--ok"]::before{background:var(--ok);box-shadow:0 0 6px var(--ok)}
-.kpi b[style*="--bad"]::before{background:var(--bad);box-shadow:0 0 6px var(--bad)}
-.kpi b[style*="--warn"]::before{background:var(--warn);box-shadow:0 0 6px var(--warn)}
-nav button.on{color:var(--tx);background:none;border-bottom-color:var(--acc)}
+.kpi b{font-variant-numeric:tabular-nums}
 .side nav button{border-radius:0}
-.side nav button.on{color:var(--tx);background:none}
 .side nav{position:relative}
 .side nav button{position:relative;z-index:1}
 .side nav.coPill button.on{background:transparent}
@@ -905,7 +883,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261021d';
+var APP_VER='20261021e';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -6326,6 +6304,13 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261021e', ngay:'21/10/2026', ten:'Màu gốc, bỏ nền mạng',
+  vaPhieu:[], vaNoi:['khi vào bổ sung đơn hàng, mùn nén bị mất phân loại bao 25kg'],
+  muc:[
+   ['sua','Trả lại <b>màu gốc</b> (xanh rêu tối / Mùn cưa sáng) — bản trước lỡ đổi cả màu, giờ chỉ giữ phần hiệu ứng.'],
+   ['sua','Bỏ hẳn nền mạng nơ-ron phía sau — nền trơn như cũ.'],
+   ['sua','Phiếu chị Hằng (30/09): máy nhân viên bản 20261021a — Sửa đơn thêm được hàng theo Bao/Thùng.']
+  ]},
  {ban:'20261021d', ngay:'21/10/2026', ten:'Giao diện mới: tối giản, phân màu, nền mạng sống',
   vaPhieu:[], vaNoi:[],
   muc:[
@@ -7271,48 +7256,10 @@ function cnKhoiVa(){
     var nhom=document.createElement('div'); nhom.style.cssText='display:flex;gap:8px;align-items:flex-start;flex-shrink:0';
     sangToi.parentNode.insertBefore(nhom,sangToi); nhom.appendChild(nut); nhom.appendChild(sangToi);
     nut.onclick=async function(){ if(nut.classList.contains('chay')) return; nut.classList.add('chay');
-      try{ await keoDon(1); toast('Đã đồng bộ với Sheet.'); window.nenXung&&nenXung(10) }catch(e){} finally{ nut.classList.remove('chay') } };
+      try{ await keoDon(1); toast('Đã đồng bộ với Sheet.') }catch(e){} finally{ nut.classList.remove('chay') } };
   }
 })();
 
-/* NỀN SỐNG — mạng nơ-ron phía sau giao diện: nút trôi chậm, dây nối mờ, xung tín hiệu chạy dọc dây rồi lan sang nút kế.
-   Tự dừng khi tab ẩn / máy bật giảm chuyển động. ponytail: O(n²) nối dây, n≤110 nút — đủ nhẹ cho laptop. */
-(function(){
-  var cv=document.createElement('canvas'); cv.id='zNen'; cv.setAttribute('aria-hidden','true'); document.body.insertBefore(cv,document.body.firstChild);
-  var cx=cv.getContext('2d'),W,H,N=[],X=[],ke=[],chay=false,tLast=0;
-  function bien(k){ return getComputedStyle(document.body).getPropertyValue(k).trim() }
-  function mauXung(){ return bien(['--info','--ok','--pur'][Math.random()*3|0]) }
-  function dung(){ var dpr=Math.min(devicePixelRatio||1,2); W=innerWidth; H=innerHeight; cv.width=W*dpr; cv.height=H*dpr; cx.setTransform(dpr,0,0,dpr,0,0);
-    var n=Math.round(Math.min(110,Math.max(28,W*H/16000))); N=[]; X=[];
-    for(var i=0;i<n;i++) N.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.12,vy:(Math.random()-.5)*.12,sang:0,r:1+Math.random()*1.4});
-    noi() }
-  function noi(){ var D=Math.min(170,Math.max(110,W/9)); ke=N.map(function(){return[]});
-    for(var i=0;i<N.length;i++) for(var j=i+1;j<N.length;j++){ var dx=N[i].x-N[j].x,dy=N[i].y-N[j].y; if(dx*dx+dy*dy<D*D){ ke[i].push(j); ke[j].push(i) } } }
-  function phat(i,m,doi){ if(!ke[i]||!ke[i].length) return; X.push({a:i,b:ke[i][Math.random()*ke[i].length|0],p:0,v:.006+Math.random()*.01,m:m||mauXung(),doi:doi==null?2:doi}) }
-  window.nenXung=function(so){ if(!N.length) return; for(var k=0;k<(so||8);k++) phat(Math.random()*N.length|0,bien('--ok'),3) };
-  function ve(t){ var dt=Math.min(50,t-(tLast||t)); tLast=t; var day=bien('--nenDay'), nut=bien('--nenNut');
-    cx.clearRect(0,0,W,H);
-    N.forEach(function(n){ n.x+=n.vx*dt/16; n.y+=n.vy*dt/16; if(n.x<-20)n.x=W+20; if(n.x>W+20)n.x=-20; if(n.y<-20)n.y=H+20; if(n.y>H+20)n.y=-20; n.sang*=.96 });
-    if(Math.random()<.02) noi();
-    cx.lineWidth=1;
-    for(var i=0;i<N.length;i++) for(var q=0;q<ke[i].length;q++){ var j=ke[i][q]; if(j<i) continue; var A=N[i],B=N[j],d=Math.hypot(A.x-B.x,A.y-B.y); if(d>190) continue;
-      cx.strokeStyle='rgba('+day+','+(0.18*(1-d/190))+')'; cx.beginPath(); cx.moveTo(A.x,A.y); cx.lineTo(B.x,B.y); cx.stroke() }
-    if(Math.random()<.16) phat(Math.random()*N.length|0);
-    for(var k=X.length-1;k>=0;k--){ var x=X[k],P=N[x.a],Q=N[x.b]; if(!P||!Q){ X.splice(k,1); continue } x.p+=x.v*dt/16;
-      var px=P.x+(Q.x-P.x)*x.p,py=P.y+(Q.y-P.y)*x.p,tx=P.x+(Q.x-P.x)*Math.max(0,x.p-.25),ty=P.y+(Q.y-P.y)*Math.max(0,x.p-.25);
-      var g=cx.createLinearGradient(tx,ty,px,py); g.addColorStop(0,'transparent'); g.addColorStop(1,x.m);
-      cx.strokeStyle=g; cx.lineWidth=1.8; cx.beginPath(); cx.moveTo(tx,ty); cx.lineTo(px,py); cx.stroke(); cx.lineWidth=1;
-      cx.shadowColor=x.m; cx.shadowBlur=16; cx.fillStyle=x.m; cx.beginPath(); cx.arc(px,py,2.3,0,7); cx.fill(); cx.shadowBlur=0;
-      if(x.p>=1){ Q.sang=1; Q.m=x.m; X.splice(k,1); if(x.doi>0&&Math.random()<.8) phat(x.b,x.m,x.doi-1) } }
-    if(X.length>90) X.splice(0,X.length-90);
-    N.forEach(function(n){ var s=n.sang>.05; if(s){ cx.shadowColor=n.m; cx.shadowBlur=14*n.sang; cx.globalAlpha=.4+.6*n.sang }
-      cx.fillStyle=s?n.m:'rgba('+nut+',.5)'; cx.beginPath(); cx.arc(n.x,n.y,n.r+n.sang*1.6,0,7); cx.fill(); cx.shadowBlur=0; cx.globalAlpha=1 });
-    if(chay) requestAnimationFrame(ve) }
-  function batTat(){ var dung_=document.hidden||(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
-    if(dung_) chay=false; else if(!chay){ chay=true; tLast=0; requestAnimationFrame(ve) } }
-  addEventListener('resize',function(){ dung(); if(!chay) ve(0) }); document.addEventListener('visibilitychange',batTat);
-  dung(); batTat(); if(!chay) ve(0);
-})();
 </script><div style="position:fixed;right:8px;bottom:4px;font-size:10px;opacity:.35;pointer-events:none;z-index:99">v1.0-zaka</div>
 <button id="ksNut" onclick="ksMo()" title="Báo cho kỹ sư một chỗ đang có vấn đề">🛠 Kỹ sư</button>
 <dialog id="dlgSuaLo" style="max-width:680px">
