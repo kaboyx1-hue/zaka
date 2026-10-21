@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi"><head><meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ZAKA — Quản lý</title>
 <style>
@@ -338,6 +339,101 @@ body.ks-chi *{cursor:crosshair!important}
 #bc tr.dongxem:hover{background:var(--c2)}
 #bc tr.dongxem:hover .mui2{opacity:1}
 .mui2{color:var(--acc);font-size:11.5px;opacity:.45;white-space:nowrap;transition:opacity .15s}
+
+/* ══ GIAO DIỆN 21/10/2026 — chủ duyệt demo PPTisudqqiTtChEp1NL8tn ("đẩy"): tối giản kiểu Tesla, CÓ MÀU phân biệt
+   nút/loại dữ liệu nhưng KHÔNG tô màu lên chữ số (chủ chê "phèn"), chuyển động êm không nảy, nền mạng nơ-ron sống.
+   Chỉ đổi cách hiện — không đụng số liệu. Đặt cuối CSS để đè các luật cũ. ══ */
+body{--ez:cubic-bezier(.4,0,.2,1);
+  --bg:#0b0c0e;--bg2:#0b0c0e;--card:#121316;--c2:#1a1b1f;--line:#24262b;--tx:#eef0f3;--tx2:#a2a4a9;
+  --acc:#5b84f0;--acc2:#5b84f0;--brand:#121316;--brandTx:#eef0f3;
+  --ok:#3fc285;--warn:#e0a443;--bad:#ef5b4f;--pur:#a988ff;--info:#6b93ff;
+  --okBg:color-mix(in srgb,#3fc285 14%,#121316);--badBg:color-mix(in srgb,#ef5b4f 14%,#121316);--warnBg:color-mix(in srgb,#e0a443 14%,#121316);
+  --purBg:color-mix(in srgb,#a988ff 14%,#121316);--infoBg:color-mix(in srgb,#6b93ff 14%,#121316);
+  --shadow:none;--btnGlow:none;--nenDay:160,175,200;--nenNut:190,200,220}
+body.sang{--bg:#f4f4f4;--bg2:#f4f4f4;--card:#fff;--c2:#f0f0f1;--line:#e3e3e5;--tx:#171a20;--tx2:#5c5e62;
+  --acc:#3e6ae1;--acc2:#3e6ae1;--brand:#fff;--brandTx:#171a20;
+  --ok:#1f8a5b;--warn:#b7791f;--bad:#c4372c;--pur:#7a4fd6;--info:#2f62e0;
+  --okBg:color-mix(in srgb,#1f8a5b 11%,#fff);--badBg:color-mix(in srgb,#c4372c 10%,#fff);--warnBg:color-mix(in srgb,#b7791f 12%,#fff);
+  --purBg:color-mix(in srgb,#7a4fd6 10%,#fff);--infoBg:color-mix(in srgb,#2f62e0 10%,#fff);--nenDay:40,50,70;--nenNut:40,50,70}
+body{background:var(--bg);font-family:"Be Vietnam Pro",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+#zNen{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
+button{border-radius:6px;transition:background-color .2s var(--ez),color .2s var(--ez),border-color .2s var(--ez),opacity .1s}
+@media (hover:hover){button:hover:not(:disabled){scale:1}}
+button:active:not(:disabled){scale:1;opacity:.8}
+.gonSong{display:none}
+input,select,textarea{border-radius:6px}
+.card{border-radius:6px;box-shadow:none}
+.btn{background:var(--acc);box-shadow:none;font-weight:500;letter-spacing:.01em}
+.btn:hover{background:color-mix(in srgb,var(--acc) 85%,#000)}
+.drop{border-radius:6px}
+th{text-transform:uppercase;letter-spacing:.08em;font-size:10.5px;color:var(--tx2)}
+h2{font-weight:600;letter-spacing:-.005em}
+.kpi div{border-radius:6px;border-left-width:2px}
+.kpi b{color:var(--tx);font-weight:500;font-variant-numeric:tabular-nums}
+/* số tô màu sẵn (lãi xanh, chi phí/lỗ đỏ): chữ về trắng/đen, màu chuyển thành chấm sáng trước số */
+.kpi b[style*="color"]{color:var(--tx)!important}
+.kpi b[style*="--ok"]::before,.kpi b[style*="--bad"]::before,.kpi b[style*="--warn"]::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;margin:0 8px 2px 0;vertical-align:middle}
+.kpi b[style*="--ok"]::before{background:var(--ok);box-shadow:0 0 6px var(--ok)}
+.kpi b[style*="--bad"]::before{background:var(--bad);box-shadow:0 0 6px var(--bad)}
+.kpi b[style*="--warn"]::before{background:var(--warn);box-shadow:0 0 6px var(--warn)}
+nav button.on{color:var(--tx);background:none;border-bottom-color:var(--acc)}
+.side nav button{border-radius:0}
+.side nav button.on{color:var(--tx);background:none}
+.side nav{position:relative}
+.side nav button{position:relative;z-index:1}
+.side nav.coPill button.on{background:transparent}
+.navPill{position:absolute;left:0;top:0;pointer-events:none;z-index:0;background:color-mix(in srgb,var(--acc) 13%,transparent);
+  box-shadow:inset 2px 0 0 var(--acc);transition:transform .3s var(--ez),width .3s var(--ez),height .3s var(--ez)}
+@media(max-width:760px){.navPill{box-shadow:inset 0 -2px 0 var(--acc)}}
+main>section.vaoTab{animation:zVao .3s var(--ez)}
+@keyframes zVao{from{opacity:.001;transform:translateY(6px)}}
+.vaoTab .kpi>div{animation:zNoi .4s var(--ez) backwards}
+.vaoTab .kpi>div:nth-child(2){animation-delay:.05s}.vaoTab .kpi>div:nth-child(3){animation-delay:.1s}
+.vaoTab .kpi>div:nth-child(4){animation-delay:.15s}.vaoTab .kpi>div:nth-child(n+5){animation-delay:.2s}
+@keyframes zNoi{from{opacity:0}}
+.kpi b.nhay{animation:zNhay 1.4s var(--ez)}
+@keyframes zNhay{0%{background:color-mix(in srgb,var(--acc) 30%,transparent)}}
+.card table tr:hover td{background:var(--c2)}
+.card table td{transition:background .15s var(--ez)}
+#soChonBar{animation:zLenGiua .3s var(--ez)}
+@keyframes zLenGiua{from{opacity:0;transform:translate(-50%,24px)}}
+#ggChonBar{animation:zLen .3s var(--ez)}
+@keyframes zLen{from{opacity:0;transform:translateY(24px)}}
+dialog{border-radius:6px}
+dialog[open]{animation:zPop .25s var(--ez)}
+dialog::backdrop{background:rgba(0,0,0,.45);backdrop-filter:blur(6px) grayscale(.6);animation:zMo .25s var(--ez)}
+@keyframes zPop{from{opacity:0;transform:scale(.98)}}
+@keyframes zMo{from{opacity:0}}
+.empty.dangTinh{color:transparent;position:relative;min-height:40px}
+.empty.dangTinh::before{content:"";position:absolute;left:16px;right:16px;top:20px;height:1px;background:var(--line)}
+.empty.dangTinh::after{content:"";position:absolute;left:16px;top:20px;height:1px;width:30%;background:var(--acc);animation:zQuet 1s var(--ez) infinite}
+@keyframes zQuet{from{transform:translateX(-30%)}to{transform:translateX(240%)}}
+.zToasts{position:fixed;bottom:calc(70px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;width:max-content;max-width:calc(100% - 24px)}
+.zToast{pointer-events:auto;cursor:pointer;max-width:420px;padding:10px 16px 12px;border-radius:4px;background:var(--tx);color:var(--bg);
+  border-left:3px solid var(--ok);font-size:13.5px;line-height:1.5;position:relative;overflow:hidden;animation:zToastVao .3s var(--ez)}
+.zToast::after{content:"";position:absolute;left:0;bottom:0;height:1px;width:100%;background:currentColor;opacity:.5;transform-origin:left;animation:zHet var(--t,3.5s) linear forwards}
+.zToast.ra{animation:zToastRa .25s var(--ez) forwards}
+@keyframes zToastVao{from{opacity:0;transform:translateY(8px)}}
+@keyframes zToastRa{to{opacity:0;transform:translateY(8px)}}
+@keyframes zHet{to{transform:scaleX(0)}}
+.zSync{background:transparent;color:var(--tx);border:1px solid var(--line);border-radius:6px;padding:8px 12px;font-size:13px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:8px;flex-shrink:0}
+.zSync:hover{background:var(--c2)}
+.zSync svg{transform:rotate(-90deg)}
+.zSync.chay svg{animation:zXoay .9s linear infinite}
+@keyframes zXoay{from{transform:rotate(-90deg)}to{transform:rotate(270deg)}}
+.zChart{display:flex;align-items:flex-end;height:150px;padding-top:18px;border-bottom:1px solid var(--line)}
+.zChart .c{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0;position:relative}
+.zChart .c span{width:12px;background:var(--info);transform-origin:bottom;transition:filter .2s var(--ez)}
+.zChart .c:hover span{filter:brightness(1.25)}
+.zChart .c.homnay span{background:var(--ok)}
+.vaoTab .zChart .c span{animation:zMoc .7s var(--ez) backwards}
+@keyframes zMoc{from{transform:scaleY(0)}}
+.zChart .c i{font-style:normal;font-size:11px;white-space:nowrap;color:var(--tx2);font-variant-numeric:tabular-nums;margin-bottom:4px}
+.zChart .c em{position:absolute;top:calc(100% + 5px);font-style:normal;font-size:11px;color:var(--tx2)}
+.zChart .c.homnay em{color:var(--tx);font-weight:600}
+#zBieuDo .sm{margin-top:24px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 </style></head><body>
 <div id="khoa">
   <div class="logoMark">🐾</div>
@@ -441,6 +537,11 @@ body.ks-chi *{cursor:crosshair!important}
         background:var(--c2);border:1px solid var(--vien);border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,.35);
         align-items:center;gap:10px;flex-wrap:wrap">
         <b id="soChonDem"></b>
+        <span id="soMot" style="display:none;gap:8px;flex-wrap:wrap">
+          <button class="btn-nho" onclick="soMotLam('sua')">Sửa đơn</button>
+          <button class="btn-nho" onclick="soMotLam('von')">Sửa giá vốn</button>
+          <button class="btn-nho" onclick="soMotLam('xoa')" style="color:var(--bad)">Xoá đơn</button>
+        </span>
         <button class="btn-nho" onclick="chonHetSo(1)">Chọn tất cả đang hiện</button>
         <button class="btn2" id="btnHuyLo2" onclick="huyLoQL()" style="color:var(--bad);width:auto">Huỷ 0 đơn đã chọn</button>
         <button class="btn-nho" onclick="chonHetSo(0)">Bỏ chọn</button>
@@ -694,6 +795,17 @@ body.ks-chi *{cursor:crosshair!important}
   </div>
 </dialog>
 
+<dialog id="dlgXoaDon" style="max-width:460px">
+  <button class="dlgX" onclick="document.getElementById('dlgXoaDon').close()" title="Đóng">✕</button>
+  <h2 style="color:var(--bad)">Xoá đơn <span id="xdMa"></span>?</h2>
+  <div id="xdInfo" class="sm"></div>
+  <div class="msg wa mt">Đơn biến mất khỏi sổ cái và mọi báo cáo. Trên Google Sheet dòng được đóng dấu <b>ĐÃ HUỶ</b> (vẫn còn để tra lại), lần kéo sau không quay lại.</div>
+  <div class="mt"><label>Lý do xoá (bắt buộc)</label><input id="xdLy" placeholder="vd: nhân viên lên trùng đơn"></div>
+  <div id="xdErr"></div>
+  <div class="row mt"><button class="btn2" onclick="document.getElementById('dlgXoaDon').close()">Không xoá</button>
+    <button class="btn" style="background:var(--bad);color:#fff;width:auto" onclick="xacNhanXoaDon()">Xoá đơn</button></div>
+</dialog>
+
 <dialog id="dlgGR" style="max-width:720px">
   <button class="dlgX" onclick="document.getElementById('dlgGR').close()" title="Đóng">✕</button>
   <h2 style="margin-top:0">Duyệt giá riêng đề xuất</h2>
@@ -793,7 +905,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261021b';
+var APP_VER='20261021d';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -2672,7 +2784,7 @@ function tab(t){
   ['lam','in','bc','so','gia','ts','vc','ns','cb','vh'].forEach(function(x){
     $('pg-'+x).classList.toggle('hide',x!==t);$('tb-'+x).classList.toggle('on',x===t)});
   var oCho={lam:'lamDs',bc:'bc',so:'dsSo',cb:'cb'}[t];
-  if(oCho && $(oCho) && !$(oCho).innerHTML) $(oCho).innerHTML='<div class="card"><div class="empty">Đang tính…</div></div>';
+  if(oCho && $(oCho) && !$(oCho).innerHTML) $(oCho).innerHTML='<div class="card"><div class="empty dangTinh">Đang tính…</div></div>';
   requestAnimationFrame(function(){ setTimeout(function(){ veTab_(t) },0) });
 }
 function veTab_(t){
@@ -3537,14 +3649,18 @@ function veSo(){
         '<td class="r">'+tien(d.tienHang)+'</td><td class="r">'+(d.huy?'—':tien(d.von))+
         '</td><td class="r" style="color:'+(d.huy?'var(--tx2)':'var(--ok)')+'">'+(d.huy?'không tính':tien(d.lai))+'</td>'+
         '<td class="r">'+(d.huy?'<span class="sm">'+esc(String(d.huyBoi||''))+'</span>'
-          :'<button class="mini" onclick="event.stopPropagation();moVon(\''+d.ma+'\')">Sửa giá vốn</button>')+'</td></tr>'+
+          :'')+'</td></tr>'+
         '<tr id="ct_'+d.ma+'" class="hide"><td colspan="9"></td></tr>'
     }).join('')+'</table></div></div>';
   demHuyQL();
 }
 function dsChonSo(){ return [].slice.call(document.querySelectorAll('.ckso:checked')).map(function(c){return c.value}) }
 function demHuyQL(){ var n=dsChonSo().length, b=$('btnHuyLo2'); if(b) b.textContent='Huỷ '+n+' đơn đã chọn';
-  var bar=$('soChonBar'); if(bar){ bar.style.display=n?'flex':'none'; $('soChonDem').textContent='Đã chọn '+n+' đơn' } }
+  var bar=$('soChonBar'); if(bar){ bar.style.display=n?'flex':'none'; $('soChonDem').textContent='Đã chọn '+n+' đơn';
+    $('soMot').style.display=n===1?'inline-flex':'none'; if(b) b.style.display=n>1?'':'none' } }
+/* 21/10/2026 chủ: Sửa đơn / Sửa giá vốn / Xoá đơn gom vào thanh nổi — tích đúng 1 đơn là hiện. */
+function soMotLam(viec){ var ma=dsChonSo()[0]; if(!ma) return;
+  if(viec==='sua') moSuaDon(ma); else if(viec==='von') moVon(ma); else xoaDon(ma) }
 function chonHetSo(v){ [].slice.call(document.querySelectorAll('.ckso')).forEach(function(c){c.checked=!!v}); demHuyQL() }
 async function huyLoQL(){
   var ma=dsChonSo();
@@ -3627,24 +3743,22 @@ function ctDon(ma){
        '<span class="sm">Doanh thu '+tien(d.tienHang)+' KHÔNG được tính. Đơn giữ lại để tra cứu.</span></div>':'')+
     (d.suaVon?'<div class="sm" style="color:var(--pur);margin-top:7px"><b>Chủ sửa giá vốn:</b> '+esc(d.suaVon.luc)+
        ' · '+esc(d.suaVon.lyDo)+' · '+tien(d.suaVon.cu)+' → '+tien(d.suaVon.moi)+'</div>':'')+
-    '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">'+
-      (d.huy?'':'<button class="mini" onclick="moSuaDon(\''+d.ma+'\')">Sửa đơn</button>')+
-      '<button class="mini" onclick="moVon(\''+d.ma+'\')">Sửa giá vốn</button>'+
-      '<button class="mini" style="color:var(--bad)" onclick="xoaDon(\''+d.ma+'\')">Xoá đơn khỏi sổ cái</button>'+
-    '</div></div>';
+    (d.huy?'':'<div class="sm" style="margin-top:10px">Muốn sửa đơn, sửa giá vốn hay xoá: tích ô vuông đầu dòng — thanh nút hiện ở đáy màn hình.</div>')+
+    '</div>';
   tr.classList.remove('hide');
 }
-async function xoaDon(ma){
+function xoaDon(ma){
   var d=SO.filter(function(x){return x.ma===ma})[0]; if(!d)return;
-  if(!confirm('XOÁ ĐƠN '+ma+'\n\n'+
-    'Khách: '+d.khach+'\nDoanh thu: '+tien(d.tienHang)+'\n\n'+
-    'Đơn biến mất khỏi sổ cái và mọi báo cáo.\n'+
-    'Dòng trong Google Sheet được đóng dấu ĐÃ HUỶ (vẫn còn để tra lại),\n'+
-    'nên lần kéo sau nó sẽ KHÔNG quay lại.'))return;
-  var ly=prompt('Ghi lý do huỷ (bắt buộc):','');
-  if(ly===null)return;
-  ly=String(ly).trim();
-  if(!ly){alert('Phải ghi lý do mới xoá được.');return}
+  $('xdMa').textContent=maHien_(ma);
+  $('xdInfo').innerHTML='Khách: <b>'+esc(d.khach||'')+'</b> · Doanh thu: <b>'+tien(d.tienHang)+'</b> · Ngày: '+esc(d.ngay||'');
+  $('xdLy').value=''; $('xdErr').innerHTML=''; XD_MA=ma;
+  $('dlgXoaDon').showModal(); setTimeout(function(){$('xdLy').focus()},60);
+}
+var XD_MA=null;
+async function xacNhanXoaDon(){
+  var ma=XD_MA, ly=String($('xdLy').value||'').trim(); if(!ma) return;
+  if(!ly){ $('xdErr').innerHTML='<div class="msg er">Phải ghi lý do mới xoá được.</div>'; return }
+  $('dlgXoaDon').close(); XD_MA=null;
 
   SO=SO.filter(function(x){return x.ma!==ma}); set('so',SO);
   veSo();veBC();veCB();nhanCB();
@@ -6212,6 +6326,20 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261021d', ngay:'21/10/2026', ten:'Giao diện mới: tối giản, phân màu, nền mạng sống',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['moi','Giao diện gọn kiểu Tesla: màu chỉ nằm ở vạch, chấm, cột biểu đồ và nút (xanh dương = thao tác chính/doanh thu, xanh lá = lãi/hoàn tất, đỏ = huỷ/xoá); chữ số để trắng/đen cho dễ đọc. Font mới Be Vietnam Pro.'],
+   ['moi','Nền phía sau là mạng nơ-ron "sống": tín hiệu chạy dọc dây và phát sáng; đồng bộ xong thì loé một đợt xung xanh.'],
+   ['moi','Chuyển tab có vạch trượt; số ở Báo cáo đếm lên; biểu đồ hàng bán 7 ngày; thanh nút nổi trượt lên; hộp thoại hiện êm, nền mờ.'],
+   ['moi','Nút <b>Đồng bộ</b> trên đầu trang. Thông báo "đã xong" hiện ở giữa đáy màn hình rồi tự ẩn (bấm để tắt sớm); cảnh báo/lỗi vẫn hiện tại chỗ.']
+  ]},
+ {ban:'20261021c', ngay:'21/10/2026', ten:'Sổ cái: thao tác đơn gom vào thanh nổi',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['sua','Tích đúng 1 đơn: thanh nổi có <b>Sửa đơn / Sửa giá vốn / Xoá đơn</b>. Tích nhiều đơn: nút Huỷ hàng loạt. Bỏ nút "Sửa giá vốn" lặp ở cuối dòng.'],
+   ['sua','Xoá đơn có hộp xác nhận riêng (ghi lý do ngay trong hộp), không còn 2 bảng hỏi của trình duyệt.']
+  ]},
  {ban:'20261021b', ngay:'21/10/2026', ten:'Sổ cái gọn hơn',
   vaPhieu:[], vaNoi:[],
   muc:[
@@ -7060,6 +7188,130 @@ function cnKhoiVa(){
       }).catch(function(){});
     };
   }
+})();
+
+/* ══ HIỆU ỨNG GIAO DIỆN — 21/10/2026 (chủ duyệt demo "ZAKA Quản Lý Sinh Động", lấy cả 8 mục) ══
+   ① vạch tab trượt ② chuyển tab trượt nhẹ ③ số Báo cáo đếm lên + thẻ hiện lần lượt ④ biểu đồ hàng bán 7 ngày
+   ⑤ dòng bảng sáng khi rê, thanh nổi trượt lên ⑥ nút Đồng bộ xoay + khung chờ + số đổi nháy xanh
+   ⑦ thông báo "xong" hiện ở góc trên phải rồi tự ẩn ⑧ hộp thoại bật nhẹ. CHỈ đổi cách hiện — không đụng số liệu.
+   Thông báo cảnh báo/lỗi và thông báo có nút bấm vẫn hiện tại chỗ như cũ (cần đọc kỹ / bấm). */
+(function(){
+  var giam=function(){ return window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches };
+  // ① vạch trượt dưới tab đang chọn
+  var nav=document.querySelector('.side nav'), pill=null;
+  function dichPill(){
+    if(!nav) return; var b=nav.querySelector('button.on'); if(!b){ if(pill) pill.style.opacity=0; return }
+    if(!pill){ pill=document.createElement('span'); pill.className='navPill'; nav.insertBefore(pill,nav.firstChild); nav.classList.add('coPill') }
+    pill.style.opacity=1; pill.style.width=b.offsetWidth+'px'; pill.style.height=b.offsetHeight+'px';
+    pill.style.transform='translate('+b.offsetLeft+'px,'+b.offsetTop+'px)';
+  }
+  // ③ đếm số lên / ⑥ nháy số đổi
+  var DEM_TOI=0, CU={};
+  function demLen(el){
+    var t=el.textContent, m=/^(-?)([\d.]+)(.*)$/.exec(t.trim()); if(!m||giam()) return;
+    var dich=parseInt(m[2].replace(/\./g,''),10); if(!(dich>0)) return;
+    var t0=performance.now(), dur=800;
+    (function buoc(n){ var p=Math.min(1,(n-t0)/dur), e=1-Math.pow(1-p,3);
+      el.textContent=m[1]+Math.round(dich*e).toLocaleString('vi-VN')+m[3]; if(p<1) requestAnimationFrame(buoc); else el.textContent=t })(t0);
+  }
+  function lamKpi(){
+    var bs=[].slice.call(document.querySelectorAll('#bc .kpi b')), moi={};
+    bs.forEach(function(b,i){ var k=(b.parentNode.querySelector('small')||{}).textContent||i; moi[k]=b.textContent;
+      if(Date.now()<DEM_TOI) demLen(b);
+      else if(CU[k]!==undefined && CU[k]!==b.textContent){ b.classList.remove('nhay'); void b.offsetWidth; b.classList.add('nhay') } });
+    CU=moi;
+  }
+  // ④ biểu đồ hàng bán 7 ngày (theo ngày bán, đơn chưa huỷ) — chỉ để nhìn xu hướng
+  function veBieuDo(){
+    var bc=$('bc'); if(!bc || !window.SO) return;
+    var ngay=[], nay=new Date(Date.now()+7*3600e3);
+    for(var i=6;i>=0;i--){ var d=new Date(nay.getTime()-i*86400e3); ngay.push(d.toISOString().slice(0,10)) }
+    var tong={}; ngay.forEach(function(k){tong[k]=0});
+    SO.forEach(function(d){ if(!d.huy && tong[d.iso]!==undefined) tong[d.iso]+=Number(d.tienHang||d.tong||0) });
+    var mx=Math.max.apply(null,ngay.map(function(k){return tong[k]}))||1, TH=['CN','T2','T3','T4','T5','T6','T7'];
+    var gon=function(v){ return v>=1e6?(Math.round(v/1e5)/10).toLocaleString('vi-VN')+'tr':(v?Math.round(v/1e3)+'k':'0') };
+    var html='<div class="card" id="zBieuDo"><h2>Hàng bán 7 ngày gần nhất</h2><div class="zChart">'+
+      ngay.map(function(k,i){ var d=new Date(k+'T00:00:00'); return '<div class="c'+(i===6?' homnay':'')+'" title="'+k.split('-').reverse().join('/')+': '+tien(tong[k])+'">'+
+        '<i>'+gon(tong[k])+'</i><span style="height:'+Math.max(2,tong[k]/mx*100)+'%;animation-delay:'+(i*60)+'ms"></span><em>'+(i===6?'Hôm nay':TH[d.getDay()])+'</em></div>' }).join('')+
+      '</div><div class="sm">Tính theo ngày bán của đơn (gồm cả đơn chưa thu, không tính đơn đã huỷ).</div></div>';
+    var cu=$('zBieuDo'); if(cu) cu.remove();
+    var dau=bc.querySelector('.card'); if(dau) dau.insertAdjacentHTML('afterend',html); else bc.insertAdjacentHTML('afterbegin',html);
+  }
+  if(typeof veBC==='function'){ var veBCGoc=veBC; veBC=function(){ var r=veBCGoc.apply(this,arguments); try{ veBieuDo(); lamKpi() }catch(e){} return r } }
+  // ② chuyển tab + ① + ③
+  if(typeof tab==='function'){ var tabGoc=tab; tab=function(t){
+    var r=tabGoc.apply(this,arguments); dichPill();
+    var sec=$('pg-'+t); if(sec && !giam()){ sec.classList.remove('vaoTab'); void sec.offsetWidth; sec.classList.add('vaoTab'); setTimeout(function(){sec.classList.remove('vaoTab')},1200) }
+    if(t==='bc') DEM_TOI=Date.now()+1500;
+    return r } }
+  addEventListener('resize',dichPill); setTimeout(dichPill,300);
+  // ⑥ khung chờ thay chữ "Đang tính…"
+  new MutationObserver(function(ms){ ms.forEach(function(m){ [].forEach.call(m.addedNodes,function(n){
+    if(n.querySelectorAll) [].forEach.call(n.querySelectorAll('.empty'),function(e){ if(/^Đang tính/.test(e.textContent)) e.classList.add('dangTinh') }) }) }) })
+    .observe(document.querySelector('main')||document.body,{childList:true,subtree:true});
+  // ⑦ thông báo góc
+  var hop=document.createElement('div'); hop.className='zToasts'; document.body.appendChild(hop);
+  function toast(html){
+    var d=document.createElement('div'), lau=Math.min(9000,3500+String(html).replace(/<[^>]+>/g,'').length*35);
+    d.className='zToast'; d.style.setProperty('--t',lau+'ms'); d.innerHTML=html; hop.appendChild(d);
+    var tat=function(){ if(!d.parentNode) return; d.classList.add('ra'); setTimeout(function(){ d.remove() },300) };
+    d.onclick=tat; setTimeout(tat,lau);
+    while(hop.children.length>4) hop.firstChild.remove();
+  }
+  window.zToast=toast;
+  if(typeof bao==='function'){ var baoGoc=bao; bao=function(el,t,cl){
+    if(t && (cl||'ok')==='ok' && !/<(button|input|select|textarea|table|a )/i.test(String(t))){
+      var o=$(el); if(o) o.innerHTML=''; toast(t); return }
+    return baoGoc.apply(this,arguments) } }
+  // ⑥ nút Đồng bộ trên đầu trang
+  var sangToi=$('btnSangToi');
+  if(sangToi && typeof keoDon==='function'){
+    var nut=document.createElement('button'); nut.className='zSync'; nut.type='button'; nut.title='Kéo đơn mới nhất từ Sheet về';
+    nut.innerHTML='<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="var(--line)" stroke-width="1.6"/><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.6" stroke-dasharray="37.7" stroke-dashoffset="28"/></svg>Đồng bộ';
+    var nhom=document.createElement('div'); nhom.style.cssText='display:flex;gap:8px;align-items:flex-start;flex-shrink:0';
+    sangToi.parentNode.insertBefore(nhom,sangToi); nhom.appendChild(nut); nhom.appendChild(sangToi);
+    nut.onclick=async function(){ if(nut.classList.contains('chay')) return; nut.classList.add('chay');
+      try{ await keoDon(1); toast('Đã đồng bộ với Sheet.'); window.nenXung&&nenXung(10) }catch(e){} finally{ nut.classList.remove('chay') } };
+  }
+})();
+
+/* NỀN SỐNG — mạng nơ-ron phía sau giao diện: nút trôi chậm, dây nối mờ, xung tín hiệu chạy dọc dây rồi lan sang nút kế.
+   Tự dừng khi tab ẩn / máy bật giảm chuyển động. ponytail: O(n²) nối dây, n≤110 nút — đủ nhẹ cho laptop. */
+(function(){
+  var cv=document.createElement('canvas'); cv.id='zNen'; cv.setAttribute('aria-hidden','true'); document.body.insertBefore(cv,document.body.firstChild);
+  var cx=cv.getContext('2d'),W,H,N=[],X=[],ke=[],chay=false,tLast=0;
+  function bien(k){ return getComputedStyle(document.body).getPropertyValue(k).trim() }
+  function mauXung(){ return bien(['--info','--ok','--pur'][Math.random()*3|0]) }
+  function dung(){ var dpr=Math.min(devicePixelRatio||1,2); W=innerWidth; H=innerHeight; cv.width=W*dpr; cv.height=H*dpr; cx.setTransform(dpr,0,0,dpr,0,0);
+    var n=Math.round(Math.min(110,Math.max(28,W*H/16000))); N=[]; X=[];
+    for(var i=0;i<n;i++) N.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.12,vy:(Math.random()-.5)*.12,sang:0,r:1+Math.random()*1.4});
+    noi() }
+  function noi(){ var D=Math.min(170,Math.max(110,W/9)); ke=N.map(function(){return[]});
+    for(var i=0;i<N.length;i++) for(var j=i+1;j<N.length;j++){ var dx=N[i].x-N[j].x,dy=N[i].y-N[j].y; if(dx*dx+dy*dy<D*D){ ke[i].push(j); ke[j].push(i) } } }
+  function phat(i,m,doi){ if(!ke[i]||!ke[i].length) return; X.push({a:i,b:ke[i][Math.random()*ke[i].length|0],p:0,v:.006+Math.random()*.01,m:m||mauXung(),doi:doi==null?2:doi}) }
+  window.nenXung=function(so){ if(!N.length) return; for(var k=0;k<(so||8);k++) phat(Math.random()*N.length|0,bien('--ok'),3) };
+  function ve(t){ var dt=Math.min(50,t-(tLast||t)); tLast=t; var day=bien('--nenDay'), nut=bien('--nenNut');
+    cx.clearRect(0,0,W,H);
+    N.forEach(function(n){ n.x+=n.vx*dt/16; n.y+=n.vy*dt/16; if(n.x<-20)n.x=W+20; if(n.x>W+20)n.x=-20; if(n.y<-20)n.y=H+20; if(n.y>H+20)n.y=-20; n.sang*=.96 });
+    if(Math.random()<.02) noi();
+    cx.lineWidth=1;
+    for(var i=0;i<N.length;i++) for(var q=0;q<ke[i].length;q++){ var j=ke[i][q]; if(j<i) continue; var A=N[i],B=N[j],d=Math.hypot(A.x-B.x,A.y-B.y); if(d>190) continue;
+      cx.strokeStyle='rgba('+day+','+(0.18*(1-d/190))+')'; cx.beginPath(); cx.moveTo(A.x,A.y); cx.lineTo(B.x,B.y); cx.stroke() }
+    if(Math.random()<.16) phat(Math.random()*N.length|0);
+    for(var k=X.length-1;k>=0;k--){ var x=X[k],P=N[x.a],Q=N[x.b]; if(!P||!Q){ X.splice(k,1); continue } x.p+=x.v*dt/16;
+      var px=P.x+(Q.x-P.x)*x.p,py=P.y+(Q.y-P.y)*x.p,tx=P.x+(Q.x-P.x)*Math.max(0,x.p-.25),ty=P.y+(Q.y-P.y)*Math.max(0,x.p-.25);
+      var g=cx.createLinearGradient(tx,ty,px,py); g.addColorStop(0,'transparent'); g.addColorStop(1,x.m);
+      cx.strokeStyle=g; cx.lineWidth=1.8; cx.beginPath(); cx.moveTo(tx,ty); cx.lineTo(px,py); cx.stroke(); cx.lineWidth=1;
+      cx.shadowColor=x.m; cx.shadowBlur=16; cx.fillStyle=x.m; cx.beginPath(); cx.arc(px,py,2.3,0,7); cx.fill(); cx.shadowBlur=0;
+      if(x.p>=1){ Q.sang=1; Q.m=x.m; X.splice(k,1); if(x.doi>0&&Math.random()<.8) phat(x.b,x.m,x.doi-1) } }
+    if(X.length>90) X.splice(0,X.length-90);
+    N.forEach(function(n){ var s=n.sang>.05; if(s){ cx.shadowColor=n.m; cx.shadowBlur=14*n.sang; cx.globalAlpha=.4+.6*n.sang }
+      cx.fillStyle=s?n.m:'rgba('+nut+',.5)'; cx.beginPath(); cx.arc(n.x,n.y,n.r+n.sang*1.6,0,7); cx.fill(); cx.shadowBlur=0; cx.globalAlpha=1 });
+    if(chay) requestAnimationFrame(ve) }
+  function batTat(){ var dung_=document.hidden||(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+    if(dung_) chay=false; else if(!chay){ chay=true; tLast=0; requestAnimationFrame(ve) } }
+  addEventListener('resize',function(){ dung(); if(!chay) ve(0) }); document.addEventListener('visibilitychange',batTat);
+  dung(); batTat(); if(!chay) ve(0);
 })();
 </script><div style="position:fixed;right:8px;bottom:4px;font-size:10px;opacity:.35;pointer-events:none;z-index:99">v1.0-zaka</div>
 <button id="ksNut" onclick="ksMo()" title="Báo cho kỹ sư một chỗ đang có vấn đề">🛠 Kỹ sư</button>
