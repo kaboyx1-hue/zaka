@@ -991,7 +991,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20261021a';
+var APP_VER='20261022b';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -2945,7 +2945,13 @@ function veGio(){
 }
 
 /* ── THÊM SẢN PHẨM MỚI ── */
-function moThem(){ $('nTen').value=$('q').value; $('nGia').value=''; $('nDvt').value='';
+var THEM_CHO_SUA=false;   // 22/10/2026: hộp "Thêm món mới" mở từ Sửa đơn → món mới vào đơn đang sửa, không vào giỏ
+function moThemChoSua(){ if(!ED) return; moThem(); THEM_CHO_SUA=true; $('nTen').value=($('edQ')&&$('edQ').value||'').trim(); goiYTrung() }
+function vaoDonDangSua_(sku,gia){ var p=SP.filter(function(x){return x.sku===sku})[0]; if(!p||!ED) return;
+  var c=ED.dong.filter(function(x){return x.sku===sku&&x.dv===p.dvt})[0];
+  if(c) c.sl++; else ED.dong.push({sku:p.sku,ten:p.ten,brand:p.brand||'',dv:p.dvt,hs:1,sl:1,gia:gia||p.gb,goc:p.gb});
+  THEM_CHO_SUA=false; if($('edQ')) $('edQ').value=''; edLai() }
+function moThem(){ THEM_CHO_SUA=false; $('nTen').value=$('q').value; $('nGia').value=''; $('nDvt').value='';
   $('nErr').innerHTML=''; nDatNut_(''); $('dlgThem').showModal(); goiYTrung() }
 /* SỬA 26/09/2026 — chủ báo "thêm sản phẩm mới không cho thêm": gặp tên gần giống thì cảnh báo hiện ra,
    nhưng nút TO "Thêm và bán" bấm lại chỉ hiện lại cảnh báo — phải tìm nút xám nhỏ phía trên mới thêm được.
@@ -3019,6 +3025,7 @@ function chiChoToiXem(sku){
 }
 function dungMonNay(sku,gia){
   $('dlgThem').close(); $('nErr').innerHTML=''; XAC_NHAN_MON_KHAC='';
+  if(THEM_CHO_SUA&&ED){ vaoDonDangSua_(sku,gia); return }
   $('q').value=''; timSP();
   them(sku,false,gia);
   var p=SP.filter(function(x){return x.sku===sku})[0];
@@ -3108,9 +3115,11 @@ async function luuMoi(){
   var m={sku:sku,nhom:nhom,brand:'',ten:t,dvt:dv,gb:g,moi:true,choDuyet:true,
          tao:today(),nguoiTao:CFG.ten};
   SP.unshift(m); var ds=get('spmoi',[]); ds.unshift(m); set('spmoi',ds);
-  $('dlgThem').close(); $('q').value=t; timSP();
+  $('dlgThem').close();
+  if(THEM_CHO_SUA&&ED){ vaoDonDangSua_(sku,g) }   // sửa đơn: món mới vào thẳng đơn, chủ vẫn duyệt món như thường
+  else { $('q').value=t; timSP();
   bao('newMsg','Đã gửi <b>'+esc(t)+'</b> cho chủ duyệt (mã tạm '+sku+').<br>'+
-    '<b>Chưa bán được ngay</b> — chờ chủ gật. Cần gấp thì bấm <b>Xin duyệt gấp</b> ở ngay dòng sản phẩm đó.','wa');
+    '<b>Chưa bán được ngay</b> — chờ chủ gật. Cần gấp thì bấm <b>Xin duyệt gấp</b> ở ngay dòng sản phẩm đó.','wa'); }
 
   // Báo ngay cho các máy nhân viên KHÁC biết — không đợi tới lúc đơn được đẩy
   // đi mới lộ ra, để họ tìm thấy và dùng lại đúng mã này ở lần đồng bộ kế tiếp.
@@ -3651,9 +3660,11 @@ function edTim(){
     return '<div onclick="edThem(\''+p.sku+'\',0)">'+esc(p.ten)+' — <b style="color:var(--ok)">'+tien(p.gb)+
       '</b> <span style="color:var(--tx2)">/'+esc(p.dvt)+'</span></div>'+
       (p.qd_sl?'<div onclick="edThem(\''+p.sku+'\',1)">'+esc(p.ten)+' — <b style="color:var(--ok)">'+tien(p.qd_gb||p.gb*p.qd_sl)+
-      '</b> <span style="color:var(--tx);font-weight:600">/'+esc(p.qd_dv)+' (= '+p.qd_sl+' '+esc(p.dvt)+')</span></div>':'')}).join('')+'</div>'
-    :'<div class="sm">Không tìm thấy</div>';
+      '</b> <span style="color:var(--tx);font-weight:600">/'+esc(p.qd_dv)+' (= '+p.qd_sl+' '+esc(p.dvt)+')</span></div>':'')}).join('')+'</div>'+nutMoiSua_()
+    :'<div class="sm">Không tìm thấy</div>'+nutMoiSua_();
 }
+/* 22/10/2026 chủ: đơn đã lên mà cần bổ sung một món CHƯA CÓ trong danh sách → trước đây Sửa đơn không có cách thêm. */
+function nutMoiSua_(){ return '<button type="button" class="btn-nho mt" style="width:100%;padding:9px;border-style:dashed" onclick="moThemChoSua()">+ Món chưa có trong danh sách — thêm món mới vào đơn này</button>' }
 function edThem(sku,qd){
   var p=SP.filter(function(x){return x.sku===sku})[0]; if(!p)return;
   var dungQD=!!(qd&&p.qd_sl), dv=dungQD?p.qd_dv:p.dvt, hs=dungQD?p.qd_sl:1, gia=dungQD?(p.qd_gb||p.gb*p.qd_sl):p.gb;
@@ -4087,12 +4098,15 @@ function luuSuaTT(){
   if(!td.length){ $('dlgTT').close(); return }
 
   d.tt=ttMoi; d.ttHt=httMoi; d.tkNhan=tkMoi; d.daTra=daTraMoi;
+  /* 22/10/2026 — máy chủ giờ GIỮ trạng thái thu tiền khi nhận bản sửa đơn (để máy khác gửi bản cũ không
+     lật "đã thu" về "chưa thu"). Thu tiền phải đi đúng đường thanhtoan → đánh dấu chờ gửi + dayTT() bên dưới. */
+  d.ttChuaDay=true;
   d.sualan=(d.sualan||0)+1; d.lichSu=d.lichSu||[];
   d.lichSu.push({lan:d.sualan,luc:nowStr(),nguoi:CFG.ten,td:td});
   if(d.xuat) d.guiLai=true;
   set('don',DON);
   $('dlgTT').close();
-  veDon(); vePG(); dem(); dayLen(false);
+  veDon(); vePG(); dem(); dayTT(); dayLen(false);
   bao('newMsg','Đã cập nhật thanh toán đơn <b>'+esc(MA_DANG_SUA_TT)+'</b>.','ok');
 }
 /* Tab "Đơn giao dở" — gom đơn đã mở Giao đợt ít nhất 1 lần nhưng chưa giao đủ,
@@ -5670,6 +5684,12 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261022b', ngay:'22/10/2026', ten:'Đơn đã thu không còn bị lật về chưa thu · Sửa đơn thêm được món mới',
+  vaPhieu:[],
+  muc:[
+   ['moi','<b>Sửa đơn</b> → ô thêm sản phẩm có nút <b>+ Món chưa có trong danh sách</b>: tạo món mới (vẫn gửi chủ duyệt như thường) và bỏ thẳng vào đơn đang sửa.'],
+   ['sua','Máy này đánh dấu <b>ĐÃ THU</b> mà máy khác vừa sửa đơn đó (người giao, phí chành…) thì trước đây đơn bị lật lại thành CHƯA THU, máy khác không thấy đã chốt. Nay trạng thái thu tiền luôn được giữ.']
+  ]},
  {ban:'20261021a', ngay:'21/10/2026', ten:'Sửa đơn thêm được hàng theo bao/thùng',
   vaPhieu:['2026-09-30T03:21:14.000Z','30/09/2026 10:21:14'],
   muc:[
