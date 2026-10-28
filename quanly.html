@@ -1067,7 +1067,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261028o';
+var APP_VER='20261028p';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1335,6 +1335,22 @@ function tinhLaiDon(d, von){ return d.tienHang - von - (d.phiChanh||0) - (d.ship
 var ALIAS_HS=get('aliashs',{});
 /* 28/10/2026 chủ: gộp bao 5kg vào 1kg xong thì bao 5kg biến mất khỏi Bảng giá (bị xếp vào ngừng bán). Món quy đổi
    là hàng bán thật: luôn hiện ở bảng chính, giá vốn tự = hệ số × giá vốn mã gốc (không gõ tay). Trả true nếu có đổi. */
+function suaHsGop(sku){
+  var p=GIA[sku]; if(!p||!ALIAS[sku]) return;
+  var g=GIA[ALIAS[sku]]||{}, cu=Number(ALIAS_HS[sku])||1;
+  var t=prompt('1 '+(p.dvt||'đơn vị')+' "'+p.ten+'" bằng bao nhiêu '+(g.dvt||'đơn vị')+' của "'+(g.ten||ALIAS[sku])+'"?\n\n'+
+    'Vd bao 24kg gộp vào gói 1kg thì điền 24. Cùng 1 món thì điền 1.', String(cu).replace('.',','));
+  if(t===null) return;
+  var hs=Number(String(t).replace(',','.'));
+  if(!(hs>0)){ alert('Hệ số phải là số lớn hơn 0.'); return }
+  if(hs===cu) return;
+  if(hs===1) delete ALIAS_HS[sku]; else ALIAS_HS[sku]=hs;
+  p.ngung=false; set('aliashs',ALIAS_HS); set('gia',GIA);
+  dongBoQuyDoi_(); tinhLaiToanBoSO();
+  veGia(); veSo(); veBC(); veCB(); henDayVon_();
+  bao('giaMsg','Đã đổi quy đổi <b>'+esc(p.ten)+'</b>: 1 '+esc(p.dvt||'')+' = '+String(hs).replace('.',',')+' '+esc(g.dvt||'')+
+    ' — lãi các đơn cũ của món này đã tính lại.','ok');
+}
 function dongBoQuyDoi_(){
   var doi=false;
   Object.keys(ALIAS_HS).forEach(function(k){
@@ -2362,13 +2378,23 @@ function veGopKQ(){
   $('gopKQ').innerHTML=dau+(ds.length?ds.map(function(k){ return dongGop_(k,'Chọn làm món gốc') }).join('')
     :'<div class="empty">Không thấy sản phẩm nào khớp.</div>');
 }
-function xacNhanGopThuCong(skuChinhMoi){
+function xacNhanGopThuCong(skuChinhMoi, cungMon){
   if(!GOP_PHU||!GOP_PHU.length||!GIA[skuChinhMoi]){ $('gopErr').innerHTML='<div class="msg er">Dữ liệu không hợp lệ, mở lại.</div>'; return }
   var phu=GOP_PHU.filter(function(k){return k!==skuChinhMoi});
   if(!phu.length){ $('gopErr').innerHTML='<div class="msg er">Cần ít nhất 1 món khác để gộp vào món gốc.</div>'; return }
   if(!$('gopHs').dataset.tay){ var g=doanHs_(phu[0],skuChinhMoi); if(g!==1) $('gopHs').value=String(g).replace('.',',') }   // chưa sửa tay thì đoán theo tên
   var hs=Number(String($('gopHs').value||'1').replace(',','.'))||1;
   if(hs<=0){ $('gopErr').innerHTML='<div class="msg er">Hệ số quy đổi phải lớn hơn 0.</div>'; return }
+  /* 28/10/2026 chủ: tên không ghi khối lượng ("Thùng 24 gói") thì máy không đoán được, để 1 là thành gộp thường
+     (món bị ẩn, vốn tính bằng 1 gói). Khác đơn vị mà hệ số còn 1 → bắt nhập số, trừ khi chủ xác nhận cùng 1 món. */
+  var dvG=kd(GIA[skuChinhMoi].dvt||''), khacDv=phu.filter(function(k){ return GIA[k] && kd(GIA[k].dvt||'')!==dvG });
+  if(hs===1 && khacDv.length && !cungMon){
+    $('gopErr').innerHTML='<div class="msg er"><b>Chưa có hệ số quy đổi.</b> "'+esc(GIA[khacDv[0]].ten)+'" tính bằng <b>'+esc(GIA[khacDv[0]].dvt||'?')+
+      '</b>, món gốc tính bằng <b>'+esc(GIA[skuChinhMoi].dvt||'?')+'</b>. Điền ô Quy đổi: 1 '+esc(GIA[khacDv[0]].dvt||'')+' bằng bao nhiêu '+
+      esc(GIA[skuChinhMoi].dvt||'đơn vị')+' rồi bấm lại.<div style="margin-top:8px"><button class="btn2" onclick="xacNhanGopThuCong(\''+skuChinhMoi+
+      '\',1)">Đúng là cùng 1 món, gộp thường</button></div></div>';
+    $('gopHs').focus(); $('gopHs').select(); return;
+  }
   var ok=thucHienGop(phu, skuChinhMoi, hs);
   if(ok){ document.getElementById('dlgGopSP').close(); GOP_PHU=null; boChonGia() }
 }
@@ -4507,7 +4533,8 @@ function veGia(){
         (maCuCua_(p.sku).length?'<div class="sm" style="opacity:.7">mã cũ: '+esc(maCuCua_(p.sku).join(', '))+'</div>':'')+
         (p.moi?'<br><span class="tag w">nhân viên thêm</span>':'')+
         (p.gopVao?'<br><span class="tag w" style="color:var(--warn)" title="Chỉ gộp chung giá vốn/báo cáo — giá bán vẫn tính riêng, vẫn bán bình thường cho nhân viên">'+
-          (ALIAS_HS[p.sku]&&ALIAS_HS[p.sku]!==1?'quy đổi: 1 '+esc(p.dvt||'')+' = '+ALIAS_HS[p.sku]+' × '+esc(p.gopVao):'đã gộp giá vốn → '+esc(p.gopVao))+'</span>':'')+'</td>'+
+          (ALIAS_HS[p.sku]&&ALIAS_HS[p.sku]!==1?'quy đổi: 1 '+esc(p.dvt||'')+' = '+ALIAS_HS[p.sku]+' × '+esc(p.gopVao):'đã gộp giá vốn → '+esc(p.gopVao))+'</span>'+
+          ' <button class="mini" style="padding:1px 6px" title="Sửa hệ số quy đổi" onclick="suaHsGop(\''+p.sku+'\')">✏ quy đổi</button>':'')+'</td>'+
         '<td><input class="ten" style="padding:5px" value="'+esc(p.ten)+'" onchange="setF(\''+p.sku+'\',\'ten\',this.value)">'+
         (p.brand?'<div class="sm" style="color:var(--pur)">'+esc(p.brand)+'</div>':'')+
         '<select class="mini" style="margin-top:4px;max-width:100%" onchange="setF(\''+p.sku+'\',\'nhom\',this.value)">'+
@@ -6768,6 +6795,12 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261028p', ngay:'28/10/2026', ten:'Quy đổi chắc chắn hơn',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['sua','Gộp 2 món khác đơn vị (vd Thùng và Gói) mà ô Quy đổi còn để 1 thì máy <b>chặn lại, hỏi số quy đổi</b> — không còn lỡ gộp thường làm sai giá vốn.'],
+   ['moi','Món đã gộp có nút <b>✏ quy đổi</b> ở Bảng giá: sửa hệ số (vd 5 → 24) bất cứ lúc nào, lãi đơn cũ tự tính lại.'],
+  ]},
  {ban:'20261028o', ngay:'28/10/2026', ten:'Món quy đổi vẫn hiện ở Bảng giá',
   vaPhieu:[], vaNoi:[],
   muc:[
