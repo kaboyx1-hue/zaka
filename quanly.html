@@ -957,7 +957,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261028e';
+var APP_VER='20261028f';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -3636,7 +3636,11 @@ function tomTatLoc(ds){
     '<div class="k-brand"><small>Tổng đơn</small><b>'+ds.length+'</b>'+
     (huy.length?'<div class="sm">'+huy.length+' đơn đã huỷ</div>':'')+'</div>'+
     '<div class="k-ok"><small>Doanh thu (chưa huỷ)</small><b>'+tien(dt)+'</b></div>'+
-    '<div class="k-info"><small>Lãi gộp</small><b>'+tien(lai)+'</b></div>'+
+    /* 28/10/2026 chủ: lọc 88 đơn chưa thu mà vẫn ra "lãi gộp"? Đây là lãi tính trên giấy (giá bán − vốn) của các
+       đơn đang lọc; đơn chưa đủ điều kiện ghi nhận thì chưa nằm trong lãi gộp ở Báo cáo — ghi rõ để khỏi hiểu lầm. */
+    (function(){ var chua=song.filter(function(d){return !daGhiNhan(d)}).length;
+      return '<div class="k-info"><small>'+(chua?'Lãi dự kiến (khi thu đủ)':'Lãi gộp')+'</small><b>'+tien(lai)+'</b>'+
+        (chua?'<div class="sm">'+chua+' đơn chưa ghi nhận — chưa tính vào lãi ở Báo cáo</div>':'')+'</div>' })()+
     '<div class="k-pur"><small>Còn phải thu</small><b style="color:'+(conThu?'var(--warn)':'var(--ok)')+'">'+tien(conThu)+'</b></div>'+
     '</div>';
 }
@@ -4274,7 +4278,8 @@ function veGia(){
           '" onchange="setN(\''+p.sku+'\',\'gb\',this.value)"></td>'+
         '<td>'+oQD(p)+'</td>'+
         '<td class="r"><input style="width:96px;padding:5px;text-align:right'+(xau?';color:var(--bad)':'')+
-          '" value="'+(p.von||'')+'" placeholder="chưa có" onchange="setN(\''+p.sku+'\',\'von\',this.value)"></td>'+
+          '" value="'+(p.von||'')+'" placeholder="chưa có" onchange="setN(\''+p.sku+'\',\'von\',this.value)">'+
+          '<div><button class="mini" style="padding:1px 6px;margin-top:3px" title="Đổi giá vốn từ một ngày trong quá khứ, tính lại lãi các đơn từ ngày đó" onclick="moVonNgay(\''+p.sku+'\')">🕘 theo ngày</button></div></td>'+
         '<td class="r"><input style="width:56px;padding:5px;text-align:right" '+
           'value="'+(p.vat===null||p.vat===undefined?'':p.vat)+'" placeholder="— " title="Để trống = chưa có hoá đơn đầu vào, không tính VAT. Thức ăn tự để 0%." '+
           'onchange="setN(\''+p.sku+'\',\'vat\',this.value)"></td>'+
@@ -4282,7 +4287,7 @@ function veGia(){
         '<td class="r">'+(p.ngung
           ?'<button class="mini" onclick="banLai(\''+p.sku+'\')">Bán lại</button>'
           :'<input type="checkbox" '+(GIA_CHON[p.sku]?'checked':'')+' onchange="chonGia(\''+p.sku+'\',this.checked)" title="Chọn để xoá/gộp hàng loạt">')+
-        '</td></tr>'+(DOI_SKU===p.sku?'<tr><td colspan="10">'+hopDoiSku_(p)+'</td></tr>':'')
+        '</td></tr>'+(DOI_SKU===p.sku?'<tr><td colspan="10">'+hopDoiSku_(p)+'</td></tr>':'')+(VON_NGAY===p.sku?'<tr><td colspan="10">'+hopVonNgay_(p)+'</td></tr>':'')
     }).join('')+'</table>'+
     (ds.length>GLIM
       ? '<div style="text-align:center;padding:12px 0;display:flex;gap:8px;justify-content:center">'+
@@ -4315,6 +4320,85 @@ function ggDrop(ev,sku){
    Đơn cũ trên Sheet giữ mã cũ — ALIAS[mã cũ]=mã mới nên báo cáo/giá vốn tính chung một món
    (cùng cơ chế gộp). Giá riêng của khách: Sheet GIA_RIENG đổi sang mã mới (hành động doisku).
    Bảng giá nhân viên đổi ở lần "Phát bảng giá" kế tiếp. */
+/* ══ GIÁ VỐN THEO NGÀY — 28/10/2026 chủ: "giá vốn đã đổi từ một thời điểm trong quá khứ mà chưa kịp chỉnh,
+   muốn đặt giá vốn mới từ ngày cụ thể, doanh thu/lợi nhuận tính lại từ đó".
+   Không đụng máy chủ: dùng lại đường "sửa vốn tay từng đơn" (d.suaVon → trang SUA_VON_DON qua daySuaVon),
+   nên máy quản lý khác cũng nhận. Đơn trước ngày đã chọn giữ nguyên. Khoảng tới hôm nay thì bảng giá
+   cũng đổi theo, đơn mới về sau tự dùng giá mới. */
+var VON_NGAY=null, VN_NHAP={};   // VN_NHAP giữ số đang gõ — bảng giá vẽ lại (đồng bộ 20s) không làm mất
+function moVonNgay(sku){ VON_NGAY=VON_NGAY===sku?null:sku; VN_NHAP={de:false}; veGia(); if(VON_NGAY) xemVonNgay_() }
+function homNayVN_(){ return new Date(Date.now()+7*3600e3).toISOString().slice(0,10) }
+function donVonNgay_(sku,tu,den,ghiDe){
+  var ra={don:[],boQua:0};
+  SO.forEach(function(d){
+    if(d.huy) return;
+    var iso=String(d.iso||''); if(!iso||(tu&&iso<tu)||(den&&iso>den)) return;
+    if(!(d.dong||[]).some(function(x){return skuChinh(x.sku)===sku})) return;
+    if(d.suaVon && !ghiDe){ ra.boQua++; return }
+    ra.don.push(d);
+  });
+  return ra;
+}
+function vonDongMoi_(x,sku,v){ return skuChinh(x.sku)===sku ? (x.hs>1?v*x.hs:v) : (x.von||0) }
+function hopVonNgay_(p){
+  setTimeout(xemVonNgay_,0);   // vẽ lại phần xem trước sau khi bảng giá dựng xong
+  return '<div style="border:2px solid var(--acc);border-radius:12px;padding:10px 12px;margin:4px 0">'+
+    '<b>Giá vốn mới cho sản phẩm '+esc(p.ten)+', có hiệu lực từ ngày…</b>'+
+    '<div class="sm" style="margin:2px 0 8px">Giá vốn hiện tại: <b>'+(p.von?tien(p.von):'chưa có')+'</b> / '+esc(p.dvt||'đơn vị')+
+      '. Các đơn bán <b>từ ngày đã chọn</b> sẽ tính lại vốn và lãi theo giá mới; đơn trước ngày đó giữ nguyên.</div>'+
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">'+
+      '<label class="sm">Giá vốn mới / '+esc(p.dvt||'đơn vị')+'<input id="vnGia" inputmode="numeric" value="'+esc(VN_NHAP.gia||'')+'" style="width:140px;display:block" oninput="dinhDangTien(this);xemVonNgay_()"></label>'+
+      '<label class="sm">Áp dụng từ ngày<input id="vnTu" type="date" value="'+esc(VN_NHAP.tu||'')+'" style="width:160px;display:block" onchange="xemVonNgay_()"></label>'+
+      '<label class="sm">Đến ngày (để trống = đến nay)<input id="vnDen" type="date" value="'+esc(VN_NHAP.den||'')+'" style="width:160px;display:block" onchange="xemVonNgay_()"></label>'+
+    '</div>'+
+    '<label class="sm" style="display:flex;gap:6px;align-items:center;margin-top:8px"><input id="vnDe" type="checkbox"'+(VN_NHAP.de?' checked':'')+' style="width:16px;height:16px" onchange="xemVonNgay_()"> '+
+      'Ghi đè cả đơn đã sửa giá vốn tay</label>'+
+    '<div id="vnXem" style="margin-top:10px"></div>'+
+  '</div>';
+}
+function xemVonNgay_(){
+  var o=$('vnXem'); if(!o||!VON_NGAY) return;
+  var sku=VON_NGAY, v=n2($('vnGia').value), tu=$('vnTu').value, den=$('vnDen').value, ghiDe=$('vnDe').checked;
+  VN_NHAP={gia:$('vnGia').value,tu:tu,den:den,de:ghiDe};
+  if(!v||!tu){ o.innerHTML='<div class="sm">Điền giá vốn mới và chọn ngày bắt đầu để xem trước.</div>'; return }
+  if(den&&den<tu){ o.innerHTML='<div class="sm" style="color:var(--bad)">"Đến ngày" phải sau "từ ngày".</div>'; return }
+  if(tu>homNayVN_()){ o.innerHTML='<div class="sm" style="color:var(--bad)">Ngày bắt đầu đang ở tương lai.</div>'; return }
+  var r=donVonNgay_(sku,tu,den,ghiDe), vonCu=0, vonMoi=0;
+  r.don.forEach(function(d){ (d.dong||[]).forEach(function(x){
+    if(skuChinh(x.sku)!==sku) return; vonCu+=(x.von||0)*x.sl; vonMoi+=vonDongMoi_(x,sku,v)*x.sl }) });
+  var lech=vonCu-vonMoi, doiBG=!den||den>=homNayVN_();
+  o.innerHTML=(r.don.length
+    ? '<div class="kpi" style="margin-bottom:8px">'+
+        '<div><small>Đơn được tính lại</small><b>'+r.don.length+'</b></div>'+
+        '<div><small>Tổng vốn món này</small><b>'+tien(vonCu)+' → '+tien(vonMoi)+'</b></div>'+
+        '<div><small>Lãi thay đổi</small><b style="color:'+(lech>=0?'var(--ok)':'var(--bad)')+'">'+(lech>=0?'+':'')+tien(lech)+'</b></div></div>'
+    : '<div class="sm">Không có đơn nào bán món này trong khoảng ngày đã chọn.</div>')+
+    (r.boQua?'<div class="sm" style="color:var(--warn)">Bỏ qua '+r.boQua+' đơn đã sửa giá vốn tay (tích ô phía trên nếu muốn ghi đè).</div>':'')+
+    '<div class="sm" style="margin:4px 0 8px">'+(doiBG?'Bảng giá cũng đổi giá vốn thành <b>'+tien(v)+'</b>, đơn mới về sau dùng giá này.'
+      :'Bảng giá giữ nguyên (khoảng ngày đã kết thúc trong quá khứ).')+'</div>'+
+    '<button class="btn" id="vnNut" onclick="apVonNgay_()"'+(r.don.length||doiBG?'':' disabled')+'>Áp dụng giá vốn '+tien(v)+' từ '+tu.split('-').reverse().join('/')+
+      (r.don.length?' <span style="font-weight:400;opacity:.85">(tự tính lại '+r.don.length+' đơn)</span>':'')+'</button> '+
+    '<button class="btn2" onclick="moVonNgay(\''+sku+'\')">Huỷ</button>';
+}
+function apVonNgay_(){
+  var sku=VON_NGAY; if(!sku) return;
+  var v=n2($('vnGia').value), tu=$('vnTu').value, den=$('vnDen').value, ghiDe=$('vnDe').checked;
+  if(!v||!tu) return;
+  var nut=$('vnNut'); if(nut) nut.disabled=true;
+  var r=donVonNgay_(sku,tu,den,ghiDe), luc=nowStr(),
+      lyDo='Giá vốn '+sku+' = '+tien(v)+' từ '+tu.split('-').reverse().join('/')+(den?' đến '+den.split('-').reverse().join('/'):'');
+  r.don.forEach(function(d){
+    var cu=d.von||0, von=0;
+    d.dong.forEach(function(x){ x.von=vonDongMoi_(x,sku,v); x.tongVon=x.von*x.sl; x.lai=x.thanhTien-x.tongVon; von+=x.tongVon });
+    d.von=von; d.lai=tinhLaiDon(d,von);
+    if(d.thieuVon) d.thieuVon=d.dong.some(function(x){return !(x.von>0)});
+    d.suaVon={luc:luc,lyDo:lyDo,cu:cu,moi:von};
+  });
+  if(!den||den>=homNayVN_()){ var p=GIA[sku]; p.von=v; if(p.qd_sl>1) p.qd_von=v*p.qd_sl; p.suaTay=true; p.vonLuc=luc; p.vonLyDo=lyDo; set('gia',GIA); dayVon(false) }
+  set('so',SO); if(r.don.length) daySuaVon();
+  VON_NGAY=null; veSo(); veBC(); veGia(); veCB();
+  bao('giaMsg','Đã đổi giá vốn <b>'+esc(GIA[sku]?GIA[sku].ten:sku)+'</b> từ '+tu.split('-').reverse().join('/')+': tính lại <b>'+r.don.length+' đơn</b>, đang lưu lên Sheet.','ok');
+}
 var DOI_SKU=null, DOI_SKU_GR=null;
 function maCuCua_(sku){ return Object.keys(ALIAS).filter(function(k){return ALIAS[k]===sku && !GIA[k]}) }
 function moDoiSku(sku){
@@ -6420,6 +6504,12 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261028f', ngay:'28/10/2026', ten:'Đổi giá vốn theo ngày',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['moi','Bảng giá: nút <b>🕘 theo ngày</b> dưới ô giá vốn. Điền giá vốn mới + ngày bắt đầu (có thể chọn ngày kết thúc) → xem trước bao nhiêu đơn bị tính lại, lãi tăng/giảm bao nhiêu → bấm Áp dụng. Đơn trước ngày đó giữ nguyên; máy quản lý khác cũng nhận.'],
+   ['sua','Sổ cái khi đang lọc nhóm đơn (vd đơn còn phải thu): ô lãi đổi tên thành <b>Lãi dự kiến (khi thu đủ)</b> nếu trong nhóm có đơn chưa ghi nhận, ghi rõ số đơn chưa tính vào lãi ở Báo cáo.'],
+  ]},
  {ban:'20261028e', ngay:'28/10/2026', ten:'Biểu đồ Báo cáo vẽ lại kiểu Sapo',
   vaPhieu:[], vaNoi:[],
   muc:[
