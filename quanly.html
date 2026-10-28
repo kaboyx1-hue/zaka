@@ -978,7 +978,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261028h';
+var APP_VER='20261028i';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -5070,14 +5070,30 @@ function setF(sku,f,v){
   // nuôi, theo yêu cầu chủ 18/09/2026) — chỉ tự điền khi CHƯA gán VAT gì, gõ
   // tay đè lại được như thường, không khoá cứng.
   if(f==='nhom'&&v==='THỨC ĂN'&&(p.vat===null||p.vat===undefined||p.vat==='')) p.vat=0;
-  set('gia',GIA);giaLai()
+  set('gia',GIA);giaLai();henDayVon_()
+}
+/* 28/10/2026 chủ: máy kia điền giá vốn 82.500 ở Bảng giá mà máy này vẫn đòi điền lại. Trước đây sửa ô trong
+   Bảng giá CHỈ lưu trên máy đó, phải tự bấm "Lưu giá vốn lên Sheet" — quên bấm là máy khác không thấy, tệ hơn:
+   lần đồng bộ kế tiếp còn kéo bản cũ trên Sheet đè mất số vừa gõ. Nay sửa xong (rời ô 1,5 giây) là tự tính lại
+   đơn đang chờ vốn + tự lưu lên Sheet; còn thay đổi chưa gửi thì không nhận bản từ Sheet đè vào. */
+var VON_CHO_DAY=false, VON_HEN_BG=0;
+function henDayVon_(){
+  VON_CHO_DAY=true; clearTimeout(VON_HEN_BG);
+  VON_HEN_BG=setTimeout(async function(){
+    var a=document.activeElement;
+    if(a && /^(INPUT|SELECT)$/.test(a.tagName) && a.closest && a.closest('#dsGia')){ henDayVon_(); return }   // còn đang gõ ô khác
+    if(tinhLaiIm_()){ veSo(); veBC(); veCB() }
+    await dayVon(false);
+    if(VON_CHO_DAY){ VON_HEN_BG=setTimeout(henDayVon_,30000); bao('giaMsg','Chưa lưu được bảng giá lên Sheet (mạng?) — sẽ tự thử lại.','wa') }
+    else bao('giaMsg','Đã tự lưu bảng giá lên Sheet — máy quản lý khác sẽ thấy trong khoảng 20 giây.','ok');
+  },1500);
 }
 function setN(sku,f,v){var p=GIA[sku]; p[f]=n2(v)||null;
   if(f==='von'||f==='qd_von'){p.moi=false;p.suaTay=true;p.vonLuc=nowStr()}
   // Đổi hệ số quy đổi (1 Thùng = mấy lẻ) thì tự gợi ý lại giá sỉ theo cấp số nhân
   // (hệ số × giá lẻ) — vẫn sửa tay đè lại được ngay ở ô "Giá sỉ" bên cạnh.
   if(f==='qd_sl'&&p.qd_dv) p.qd_gb=(p.qd_sl||0)*(p.gb||0);
-  set('gia',GIA);giaLai();if(f==='gb'||f==='qd_gb')vePhat()}
+  set('gia',GIA);giaLai();henDayVon_();if(f==='gb'||f==='qd_gb')vePhat()}
 function xoaSP(sku){
   var p=GIA[sku]; if(!p)return;
   var dung=SO.filter(function(d){return d.dong.some(function(x){return x.sku===sku})}).length;
@@ -5419,7 +5435,7 @@ async function dayVon(im){
       body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'giavon',bang:b})});
     var j=JSON.parse(await r.text());
     if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
-    VONVER=j.ver; set('vonver',VONVER);
+    VONVER=j.ver; set('vonver',VONVER); VON_CHO_DAY=false;
     if(im) bao('giaMsg','Đã lưu <b>'+j.so.toLocaleString('vi-VN')+' dòng</b> lên Google Sheet '+
       '(trang BANG_GIA_QL, chỉ mở được bằng mật khẩu quản lý).<br>'+
       '<span class="sm">Gồm cả giá bán, giá vốn, hàng ngừng bán. Điện thoại và máy quản lý kia '+
@@ -5430,6 +5446,7 @@ async function dayVon(im){
    hàng ngừng bán, hàng mới. Tất cả. Đây là chỗ điện thoại và máy bàn khớp nhau. */
 function napVonTuSheet(ds,ver){
   if(!ver||ver===get('vonver','')) return;
+  if(VON_CHO_DAY) return;   // máy này còn sửa chưa gửi lên — gửi xong mới nhận, khỏi bị đè mất
   var them=0, sua=0, doi=[], coTrongSheet={};
   ds.forEach(function(x){
     var sku=String(x.sku||'').trim(); if(!sku) return;
@@ -6594,6 +6611,11 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261028i', ngay:'28/10/2026', ten:'Bảng giá tự lưu lên Sheet',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['sua','Sửa giá vốn (hay giá bán, tên…) ngay trong <b>Bảng giá</b> giờ <b>tự lưu lên Sheet</b> sau khi rời ô, và tự tính lại đơn đang chờ giá vốn. Trước đây phải tự bấm "Lưu giá vốn lên Sheet", quên bấm là máy khác vẫn đòi điền lại.'],
+  ]},
  {ban:'20261028h', ngay:'28/10/2026', ten:'Gộp sản phẩm có quy đổi',
   vaPhieu:[], vaNoi:[],
   muc:[
