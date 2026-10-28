@@ -412,6 +412,28 @@ dialog::backdrop{background:rgba(0,0,0,.45);backdrop-filter:blur(6px) grayscale(
 .zChart .c.homnay em{color:var(--tx);font-weight:600}
 #zBieuDo .sm{margin-top:24px}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+/* khối "Mã gần giống nhau" — 28/10/2026 */
+.tt-khoi .tt-vi{margin:0 0 10px;font-size:13px;color:var(--tx2)}
+.tt-khoi .tt-vi summary{cursor:pointer;color:var(--acc);font-weight:600}
+.tt-khoi .tt-vi ul{margin:6px 0 0;padding-left:18px;line-height:1.55}
+.tt-khoi .tt-nhom{background:var(--c2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px}
+.tt-khoi .tt-dau{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.tt-khoi .tt-so{width:22px;height:22px;border-radius:50%;background:var(--card);border:1px solid var(--line);display:grid;place-items:center;font-size:12px;font-weight:700}
+.tt-khoi .tt-nhan{font-size:12px;font-weight:600;padding:2px 9px;border-radius:99px}
+.tt-khoi .tt-nhan.xanh{background:var(--okBg);color:var(--ok)}
+.tt-khoi .tt-nhan.cam{background:var(--warnBg);color:var(--warn)}
+.tt-khoi .tt-nhan.do{background:var(--badBg);color:var(--bad)}
+.tt-khoi .tt-ma{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:12px;align-items:center;
+  padding:8px 10px;margin:0 0 6px;border-radius:10px;background:var(--card);border:1px solid var(--line);cursor:pointer}
+.tt-khoi .tt-ma:has(input:checked){border-color:var(--acc);box-shadow:inset 3px 0 0 var(--acc)}
+.tt-khoi .tt-ma input{width:18px;height:18px;margin:0;padding:0;accent-color:var(--acc)}
+.tt-khoi .tt-ma small{display:block;font-size:11.5px;color:var(--tx2);font-weight:400}
+.tt-khoi .tt-ten b{font-weight:600}
+.tt-khoi .tt-von,.tt-khoi .tt-don{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+.tt-khoi .tt-von i{font-style:normal;color:var(--warn);font-weight:500}
+.tt-khoi .tt-nhom>.mini{margin-top:4px}
+@media(max-width:600px){.tt-khoi .tt-ma{grid-template-columns:auto minmax(0,1fr) auto}.tt-khoi .tt-don{display:none}}
 </style></head><body>
 <div id="khoa">
   <div class="logoMark">🐾</div>
@@ -883,7 +905,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261021e';
+var APP_VER='20261028b';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1258,55 +1280,37 @@ function veTrungTen(){
   });
   if(!nhom.length) return '';
   var soChac=nhom.filter(function(a){return a.chac}).length;
-  return '<div class="card"><h2>Mã gần giống nhau cần dọn — '+nhom.length+' nhóm</h2>'+
-    (soChac?'<button class="btn mt" style="margin-bottom:10px" onclick="gopHetNhomChac()">'+
-      'Gộp gọn '+soChac+' nhóm chắc chắn (tên rút gọn trùng khít) — chọn mã có giá vốn làm mã chính</button>':'')+
-    '<div class="msg wa" style="margin-bottom:10px">' +
-    '<b>Vì sao có mấy mã gần giống nhau ở đây — và vì sao KHÔNG phải nhân viên làm bậy.</b><br>' +
-    'Ô "Thêm sản phẩm" ở máy nhân viên bắt buộc phải điền giá bán mới cho tạo. Nên mỗi lần gặp khách trả ' +
-    'giá khác, đường dễ đi nhất mà nhân viên thấy là gõ lại tên sản phẩm với giá mới — và thế là đẻ thêm ' +
-    'một mã. Ba mã trông gần như y hệt, chỉ khác giá, thực chất là <b>ba lần bán cho ba khách khác giá</b>, ' +
-    'không phải ba sản phẩm. Bản 20260909c đã bịt đường này: gõ trùng tên giờ tự dùng lại mã cũ và ghi giá ' +
-    'vừa nhập thành <b>giá riêng của đúng khách đó</b> (giữ 90 ngày, lần sau tự nhảy ra, nhân viên không ' +
-    'phải nhớ gì). Bảng dưới đây là để dọn nốt những mã đã lỡ đẻ ra từ trước.</div>' +
-    '<div class="sm" style="margin-bottom:8px">Chỉ xét sản phẩm nhân viên tự thêm (mã <code>MOI-*</code> ' +
-    'hoặc từ mục "chờ duyệt") — <b>không đụng tới các mặt hàng cũ có sẵn trong bảng giá</b>. ' +
-    '<b>Đơn hàng cũ trên Google Sheet giữ nguyên 100%</b> — gộp chỉ là một ánh xạ ở phía máy quản lý để ' +
-    'tính giá vốn và báo cáo cho gọn, tháo ra lúc nào cũng được, không sửa một chữ nào trong lịch sử bán. ' +
-    '<b>Giá bán của từng mã giữ nguyên</b> — mỗi khách mỗi giá vẫn bán bình thường.</div>'+
+  /* 28/10/2026 chủ: khối này chữ dày đặc, nút lệch (ô chọn bị CSS chung input{width:100%} kéo dãn ra giữa
+     màn hình, chữ đẩy sang phải). Viết lại gọn: 1 câu hướng dẫn, giải thích gấp lại, mỗi mã là 1 hàng
+     ô chọn + tên + vài con số; nút Gộp nằm ngay dưới. Logic gộp (gopSanPham) KHÔNG đổi. */
+  return '<div class="card tt-khoi"><h2>Mã gần giống nhau — '+nhom.length+' nhóm cần xem</h2>'+
+    '<div class="sm" style="margin:-4px 0 10px">Mỗi nhóm: <b>chọn 1 mã giữ lại</b> (nên chọn mã có giá vốn) rồi bấm <b>Gộp</b>. '+
+      'Không đúng là cùng món thì cứ để đó.</div>'+
+    '<details class="tt-vi"><summary>Vì sao có mấy mã này? Gộp có ảnh hưởng gì không?</summary>'+
+      '<ul><li>Trước bản 20260909c, khách trả giá khác là nhân viên phải tạo lại món mới → 1 món thành nhiều mã. Nay đã tự dùng lại mã cũ.</li>'+
+      '<li>Chỉ xét món nhân viên tự thêm (mã <code>MOI-…</code>), không đụng hàng có sẵn trong bảng giá.</li>'+
+      '<li>Gộp chỉ để tính giá vốn, lãi lỗ cho gọn. Đơn cũ trên Sheet và giá bán từng khách giữ nguyên, tháo gộp lúc nào cũng được.</li></ul></details>'+
+    (soChac?'<button class="btn" style="margin:4px 0 12px" onclick="gopHetNhomChac()">Gộp nhanh '+soChac+' nhóm trùng tên khít</button>':'')+
     nhom.map(function(ds,gi){
-      var tenKhacNhau=false, nhomKhacNhau=false, tenDau=GIA[ds[0]].ten, nhomDau=GIA[ds[0]].nhom;
-      ds.forEach(function(k){ if(GIA[k].ten!==tenDau) tenKhacNhau=true; if(GIA[k].nhom!==nhomDau) nhomKhacNhau=true });
-      var canhBao=nhomKhacNhau
-        ? '<div class="sm" style="color:var(--bad);margin-bottom:6px">⚠ Các mã nằm ở NHÓM HÀNG khác nhau — nhiều khả năng đây là 2 sản phẩm thật sự khác nhau, không phải trùng. Kiểm tra kỹ trước khi gộp.</div>'
-        : '';
-      var huy=ds.chac
-        ? '<div class="sm" style="color:var(--ok);margin-bottom:6px">✓ Tên rút gọn trùng khít — gộp gần như chắc chắn đúng.</div>'
-        : '<div class="sm" style="color:var(--warn);margin-bottom:6px">⚠ Chỉ GẦN giống, không trùng khít — có thể là biến thể thật (khác mùi, khác khối lượng). Đọc kỹ tên trước khi gộp.</div>';
-      return '<div class="tt-nhom" style="margin-bottom:10px;padding:9px;background:var(--c2);border-radius:8px">'+
-        (tenKhacNhau
-          ? '<div class="sm" style="margin-bottom:6px">Các tên gần giống trong nhóm này: '+
-            ds.map(function(k){return '<b>'+esc(GIA[k].ten)+'</b>'}).join(' · ')+'</div>'
-          : '<div class="sm" style="margin-bottom:6px"><b>'+esc(tenDau)+'</b></div>')+
-        huy+canhBao+
+      var nhomKhacNhau=false, nhomDau=GIA[ds[0]].nhom;
+      ds.forEach(function(k){ if(GIA[k].nhom!==nhomDau) nhomKhacNhau=true });
+      var nhan = nhomKhacNhau
+        ? '<span class="tt-nhan do">Khác nhóm hàng — dễ là 2 món khác</span>'
+        : ds.chac ? '<span class="tt-nhan xanh">Trùng tên khít</span>'
+        : '<span class="tt-nhan cam">Chỉ gần giống — xem kỹ mùi, khối lượng</span>';
+      return '<div class="tt-nhom">'+
+        '<div class="tt-dau"><span class="tt-so">'+(gi+1)+'</span>'+nhan+'</div>'+
         ds.map(function(k,i){
-          return '<label style="display:flex;gap:7px;align-items:center;margin-bottom:4px">'+
+          var v=dauVetBan_(k), p=GIA[k];
+          return '<label class="tt-ma">'+
             '<input type="radio" name="tt_'+gi+'" value="'+esc(k)+'" '+(i===0?'checked':'')+'>'+
-            /* SỬA 09/09/2026: bỏ giá bán khỏi dòng này. Gộp mã là để dùng chung
-               GIÁ VỐN cho báo cáo lãi lỗ — giá bán mỗi mã mỗi khác là bình thường
-               (tuỳ khách, tuỳ kênh) nên in nó ra ngay chỗ quyết định gộp chỉ khiến
-               người xem tưởng phải chọn mã "cùng giá bán" mới được gộp. Nay chỉ
-               hiện đúng thứ cần cân nhắc: nhóm hàng và giá vốn. */
-            '<span class="sm">'+esc(k)+' ('+esc(GIA[k].nhom||'')+') — '+
-            (GIA[k].von?'giá vốn <b>'+tien(GIA[k].von)+'</b>':'<span style="color:var(--warn)">chưa có giá vốn</span>')+
-            (function(){ var v=dauVetBan_(k); if(!v.soDon) return ' · <i style="opacity:.65">chưa bán đơn nào</i>';
-              return ' · <b>'+v.soDon+' đơn</b>'+(v.khach.length
-                ? ' — '+v.khach.slice(0,3).map(function(x){
-                    return esc(x.ten)+' '+x.gia.map(function(g){return tien(g)}).join('/') }).join(', ')+
-                  (v.khach.length>3?' …':'')
-                : '') })()+'</span></label>'
+            '<span class="tt-ten"><b>'+esc(p.ten)+'</b>'+
+              '<small>'+esc(k)+(p.nhom?' · '+esc(p.nhom):'')+'</small></span>'+
+            '<span class="tt-von">'+(p.von?tien(p.von):'<i>chưa có vốn</i>')+'<small>giá vốn</small></span>'+
+            '<span class="tt-don">'+(v.soDon||0)+'<small>đơn đã bán</small></span>'+
+          '</label>';
         }).join('')+
-        '<button class="mini mt" onclick=\'gopSanPham('+JSON.stringify(ds)+',this)\'>Gộp nhóm này — theo mã chính đã chọn ở trên</button>'+
+        '<button class="mini" onclick=\'gopSanPham('+JSON.stringify(ds)+',this)\'>Gộp nhóm '+(gi+1)+' vào mã đã chọn</button>'+
       '</div>';
     }).join('')+'</div>';
 }
@@ -2884,7 +2888,11 @@ function tenKy(){
 function datKy(k){ KY=k; set('ky',KY); veBC(); veSo() }
 function datKhoangNgay(){
   var idFocus=document.activeElement?document.activeElement.id:'';
-  TU_NGAY=$('tuNgay').value||''; DEN_NGAY=$('denNgay').value||'';
+  /* 28/10/2026 chủ: chọn ngày ở Báo cáo không lọc. Gõ tay năm, trình duyệt báo "đã đổi" ngay khi mới gõ 1 số
+     (năm 0002) → vẽ lại cả bảng, ô ngày mới mất chỗ đang gõ → ra ngày rác, lọc sai. Chờ đủ năm 4 số mới lọc. */
+  var vTu=$('tuNgay').value||'', vDen=$('denNgay').value||'';
+  if((vTu&&vTu.slice(0,4)<'2000')||(vDen&&vDen.slice(0,4)<'2000')) return;
+  TU_NGAY=vTu; DEN_NGAY=vDen;
   set('tungay',TU_NGAY); set('denngay',DEN_NGAY);
   if(TU_NGAY||DEN_NGAY){ KY='tuychinh'; set('ky',KY) }
   veBC(); veSo();
@@ -2892,7 +2900,11 @@ function datKhoangNgay(){
 }
 function datKhoangNgaySo(){
   var idFocus=document.activeElement?document.activeElement.id:'';
-  TU_NGAY=$('tuNgaySo').value||''; DEN_NGAY=$('denNgaySo').value||'';
+  /* 28/10/2026 chủ: chọn ngày ở Báo cáo không lọc. Gõ tay năm, trình duyệt báo "đã đổi" ngay khi mới gõ 1 số
+     (năm 0002) → vẽ lại cả bảng, ô ngày mới mất chỗ đang gõ → ra ngày rác, lọc sai. Chờ đủ năm 4 số mới lọc. */
+  var vTu=$('tuNgaySo').value||'', vDen=$('denNgaySo').value||'';
+  if((vTu&&vTu.slice(0,4)<'2000')||(vDen&&vDen.slice(0,4)<'2000')) return;
+  TU_NGAY=vTu; DEN_NGAY=vDen;
   set('tungay',TU_NGAY); set('denngay',DEN_NGAY);
   if(TU_NGAY||DEN_NGAY){ KY='tuychinh'; set('ky',KY) }
   veBC(); veSo();
@@ -6304,6 +6316,12 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261028b', ngay:'28/10/2026', ten:'Chọn khoảng ngày ở Báo cáo lọc đúng · Mã gần giống gọn hơn',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['sua','Khối <b>Mã gần giống nhau</b> (Cần làm) viết lại gọn: 1 câu hướng dẫn, phần giải thích gấp lại, mỗi mã một hàng thẳng: ô chọn · tên · giá vốn · số đơn; nút Gộp nằm ngay dưới nhóm.'],
+   ['sua','Gõ tay ngày ở ô "Hoặc chọn khoảng ngày" (Báo cáo và Sổ cái) trước đây bị vẽ lại giữa chừng khi mới gõ số đầu của năm → ngày sai, số liệu không đổi. Nay đợi gõ xong năm mới lọc.']
+  ]},
  {ban:'20261021e', ngay:'21/10/2026', ten:'Màu gốc, bỏ nền mạng',
   vaPhieu:[], vaNoi:['khi vào bổ sung đơn hàng, mùn nén bị mất phân loại bao 25kg'],
   muc:[

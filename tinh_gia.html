@@ -913,6 +913,7 @@ h3{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercas
 <div class="card" id="cardDsLuu" style="display:none">
   <h3 id="lblCardDsLuu">Đã lưu trên máy này</h3>
   <div class="hint" id="hintCardDsLuu" style="margin:-4px 0 8px">Chỉ xem lại được trên đúng máy/trình duyệt đã lưu — đổi qua máy khác sẽ không thấy.</div>
+  <input id="luuTim" type="search" placeholder="Tìm theo tên, mã SKU, giá…" autocomplete="off" oninput="veDsLuu()" style="width:100%;margin-bottom:8px">
   <div class="luuFilter" id="luuFilterBar"></div>
   <div id="dsLuu"></div>
 </div>
@@ -2929,7 +2930,14 @@ function veDsLuu(){
   var demTt = LICH_SU.filter(function(x){return x.san==='tt'}).length;
   $('luuFilterBar').innerHTML = [['tat_ca','Tất cả ('+LICH_SU.length+')'],['sp','Shopee ('+demSp+')'],['tt','TikTok ('+demTt+')']]
     .map(function(b){ return '<button type="button" class="'+(LICH_SU_LOC===b[0]?'on':'')+'" onclick="locDsLuu_(\''+b[0]+'\')">'+b[1]+'</button>' }).join('');
-  var ds = LICH_SU.map(function(x,i){ return {x:x, i:i} }).filter(function(o){ return LICH_SU_LOC==='tat_ca' || o.x.san===LICH_SU_LOC });
+  /* 26/10/2026 chủ: danh sách đã lưu sẽ dài → ô tìm (tên/SKU/giá vốn/giá bán), không phân biệt dấu, chữ hoa thường. */
+  var bo=function(t){ return String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/đ/gi,'d').toLowerCase() };
+  var q = bo(($('luuTim')&&$('luuTim').value||'').trim()), qSo = q.replace(/\D/g,'');
+  var ds = LICH_SU.map(function(x,i){ return {x:x, i:i} }).filter(function(o){
+    if(!(LICH_SU_LOC==='tat_ca' || o.x.san===LICH_SU_LOC)) return false;
+    if(!q) return true;
+    if(bo((o.x.sku||'')+' '+(o.x.ten||'')).indexOf(q)>=0) return true;
+    return qSo.length>=3 && (String(o.x.von||'').indexOf(qSo)>=0 || String(o.x.gia||'').indexOf(qSo)>=0) });
   $('dsLuu').innerHTML = ds.length ? ds.map(function(o){
     var x = o.x, i = o.i;
     var gio = typeof x.luc === 'number'
@@ -2941,7 +2949,7 @@ function veDsLuu(){
       '<div class="lai'+(x.lai<0?' am':'')+'">'+vnd(x.lai)+'</div>'+
       '<button type="button" onclick="xemLaiLichSu_('+i+')">Xem lại</button>'+
       '<button type="button" onclick="xoaLichSu_('+i+')" style="color:var(--loss)">Xoá</button></div>';
-  }).join('') : '<div class="hint" style="padding:10px 0">Không có dòng nào khớp bộ lọc đang chọn.</div>';
+  }).join('') : '<div class="hint" style="padding:10px 0">Không có dòng nào khớp '+(q?'từ khoá đang tìm':'bộ lọc đang chọn')+'.</div>';
 }
 function esc_(s){ var d = document.createElement('div'); d.textContent = s; return d.innerHTML }
 $('btnLuu').addEventListener('click', luuKetQua);
