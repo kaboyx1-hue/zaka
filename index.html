@@ -614,10 +614,11 @@ body.ks-chi *{cursor:crosshair!important}
 
   <div class="card"><h2>Đơn hàng <span id="soDong" class="pill"></span></h2>
     <div id="gio"></div>
-    <div class="row mt">
-      <div><label>Tiền ship</label><input id="ship" inputmode="numeric" value="0" oninput="dinhDangTien(this)" onchange="veLai()"></div>
-      <div><label>Phí giao chành</label><input id="phiChanh" inputmode="numeric" value="0" oninput="dinhDangTien(this)" onchange="veLai()"></div>
-      <div><label>Giảm giá</label><input id="giam" inputmode="numeric" value="0" oninput="dinhDangTien(this)" onchange="veLai()"></div>
+    <div class="row mt" style="flex-wrap:wrap">
+      <div style="flex:1 1 40%"><label>Tiền ship</label><input id="ship" inputmode="numeric" value="0" oninput="dinhDangTien(this)" onchange="veLai()"></div>
+      <div style="flex:1 1 40%"><label>Phí giao chành</label><input id="phiChanh" inputmode="numeric" value="0" oninput="dinhDangTien(this)" onchange="veLai()"></div>
+      <div style="flex:1 1 40%"><label>Ship shop chịu</label><input id="shipShop" inputmode="numeric" value="0" oninput="dinhDangTien(this)" onchange="veLai()" title="Tiền ship / thuê xe ngoài cửa hàng tự trả — trừ vào lãi, không cộng vào tiền khách trả"></div>
+      <div style="flex:1 1 40%"><label>Giảm giá</label><input id="giam" inputmode="numeric" value="0" oninput="dinhDangTien(this)" onchange="veLai()"></div>
     </div>
   </div>
 </section>
@@ -834,6 +835,9 @@ body.ks-chi *{cursor:crosshair!important}
     <input id="ttNhanhChanh" inputmode="numeric" value="0" oninput="dinhDangTien(this)">
     <div class="sm" style="opacity:.7;margin-top:3px">Tiền gửi chành mà cửa hàng chịu — ghi vào đơn để trừ vào chi phí ở báo cáo. Không đổi tổng tiền khách trả.</div>
   </div>
+  <div class="mt"><label>Ship shop chịu / thuê xe ngoài (không bắt buộc)</label>
+    <input id="ttNhanhShipShop" inputmode="numeric" value="0" oninput="dinhDangTien(this)">
+  </div>
   <button class="btn mt" onclick="xacNhanThuTienNhanh()" style="background:var(--acc);color:#03121f;font-weight:600">Xác nhận đã thu</button>
 </dialog>
 
@@ -991,7 +995,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20261022b';
+var APP_VER='20261028b';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1042,7 +1046,7 @@ function veBangBanMoi_(){
     '<div style="opacity:.85">Máy này đang chạy <b>v'+APP_VER+'</b>, trên mạng đã là <b>v'+BAN_MOI_TREN_SERVER+'</b>.'+
       (doViec
         ? '<br><b style="color:#ffd479">Đang dở việc — lưu xong rồi hãy cập nhật.</b> Bấm cập nhật lúc này có thể mất phần đang gõ.'
-        : '<br>Bấm nút bên dưới để lấy bản mới. Đơn đã lưu không mất.')+
+        : '<br>Máy sẽ <b>tự cập nhật</b> khi rảnh tay (20 giây không ai chạm). Muốn lấy ngay thì bấm nút dưới. Đơn đã lưu không mất.')+
     '</div>'+
     '<div style="display:flex;gap:8px;margin-top:11px;flex-wrap:wrap">'+
       '<button onclick="capNhatNgay_()" style="flex:1;min-width:150px;padding:10px 14px;border-radius:11px;border:none;'+
@@ -1070,10 +1074,28 @@ function doBanMoi_(){
       BAN_MOI_TREN_SERVER=m[1];
       var hoan=''; try{ hoan=sessionStorage.getItem('zaka_hoan_ban_moi')||'' }catch(e){}
       if(hoan===BAN_MOI_TREN_SERVER) return;      // người dùng đã bấm "để lát nữa" cho đúng bản này
-      veBangBanMoi_();
+      veBangBanMoi_(); thuTuCapNhat_();
     }).catch(function(){});
   }catch(e){}
 }
+/* 28/10/2026 chủ: "sau này tự nó cập nhật, không cần bấm cập nhật — rất mất công". Thay quyết định 15/09
+   (chỉ hiện bảng, không tự tải lại): nay TỰ TẢI LẠI khi máy rảnh tay — không ô nào đang gõ, không hộp nào
+   đang mở, không dở việc, và không ai chạm máy 20 giây. Đang bận thì vẫn hiện bảng báo như cũ, rảnh là tự lấy. */
+var LAN_THAO_TAC_=Date.now();
+['keydown','pointerdown','input','wheel'].forEach(function(e){ document.addEventListener(e,function(){ LAN_THAO_TAC_=Date.now() },true) });
+function tuCapNhatDuoc_(){
+  var a=document.activeElement;
+  if(a && /^(INPUT|TEXTAREA)$/.test(a.tagName) && a.value && a.type!=='checkbox' && a.type!=='radio') return false;   // ô đang có chữ gõ dở
+  if(dangBanDo_()) return false;
+  // đơn chưa gửi nằm sẵn trong máy, tải lại vẫn tự gửi tiếp
+  return Date.now()-LAN_THAO_TAC_>20000;
+}
+function thuTuCapNhat_(){
+  if(!BAN_MOI_TREN_SERVER || BAN_MOI_TREN_SERVER===APP_VER || !tuCapNhatDuoc_()) return;
+  try{ sessionStorage.setItem('zaka_hoan_ban_moi','') }catch(e){}
+  location.replace(location.pathname+'?_v='+Date.now());
+}
+setInterval(thuTuCapNhat_, 10000);
 setTimeout(doBanMoi_, 3000);
 setInterval(doBanMoi_, 120000);
 document.addEventListener('visibilitychange', function(){ if(!document.hidden) doBanMoi_() });
@@ -1286,7 +1308,7 @@ var MK_PHIEN='', DANG_DN=false;
   NHAP=get('nhap',null);
   if(!NHAP||!NHAP.length){
     NHAP=[{tenTab:'Đơn 1',g:(gz&&gz.g)||[],ship:(gz&&gz.ship)||0,giam:(gz&&gz.giam)||0,
-      phiChanh:(gz&&gz.phiChanh)||0,sdt:(gz&&gz.sdt)||'',khten:(gz&&gz.ten)||'',
+      phiChanh:(gz&&gz.phiChanh)||0,shipShop:(gz&&gz.shipShop)||0,sdt:(gz&&gz.sdt)||'',khten:(gz&&gz.ten)||'',
       dc:(gz&&gz.dc)||'',kenh:(gz&&gz.kenh)||'',gc:(gz&&gz.gc)||''}];
   }
   NHAP_DANG=get('nhapdang',0); if(NHAP_DANG>=NHAP.length) NHAP_DANG=0;
@@ -1649,7 +1671,7 @@ async function dayLen(im,lanHai){
       // (xem giải thích ở taiDon). Đơn tự tạo trên máy không có trường này nên
       // dùng d.ngay như cũ — không đổi gì với đơn mới.
       return {ma:d.ma,ngay:d.ngayDayDu||d.ngay,iso:d.iso,kenh:d.kenh,sdt:d.sdt,khach:d.khach,dc:d.dc||'',
-        ship:d.ship,giam:d.giam,phiChanh:d.phiChanh||0,nguoiGiao:d.nguoiGiao||'',tong:d.tong,sualan:d.sualan||0,gc:d.ghichu||'',
+        ship:d.ship,giam:d.giam,phiChanh:d.phiChanh||0,shipShop:d.shipShop||0,nguoiGiao:d.nguoiGiao||'',tong:d.tong,sualan:d.sualan||0,gc:d.ghichu||'',
         tt:d.tt||'CHUA',ttHt:d.ttHt||'',tkNhan:d.tkNhan||'',daTra:d.daTra||0,inLan:d.inLan||0,inLuc:d.inLuc||'',
         tgGiao:tgGiaoCua(d),daGiao:d.daGiao||null,dot:d.dot||null,
         ls:(d.lichSu||[]).map(function(x){return '[Lan '+x.lan+' - '+x.luc+' - '+x.nguoi+'] '+x.td.join('; ')}).join(' || '),
@@ -2866,7 +2888,7 @@ function veLai(){ try{if(document.activeElement&&document.activeElement.blur)doc
 function luuGio(){ try{
   if(SUA) return;   // dang sua don da luu — GIO luc nay la vung tam cho SUA, khong phai nhap, tuyet doi khong ghi de len tab
   NHAP[NHAP_DANG]={tenTab:(NHAP[NHAP_DANG]&&NHAP[NHAP_DANG].tenTab)||('Đơn '+(NHAP_DANG+1)),
-    g:GIO,ship:$('ship').value,giam:$('giam').value,phiChanh:$('phiChanh').value,
+    g:GIO,ship:$('ship').value,giam:$('giam').value,phiChanh:$('phiChanh').value,shipShop:$('shipShop').value,
     sdt:$('sdt').value,khten:$('khten').value,dc:$('dc').value,kenh:$('kenh').value,gc:$('ghichu').value};
   set('nhap',NHAP); set('nhapdang',NHAP_DANG);
 }catch(e){} }
@@ -2881,7 +2903,7 @@ function napNhap(i,khoiDong){
   var n=NHAP[i]||{};
   GIO=n.g||[];
   $('ship').value=so(n.ship).toLocaleString('vi-VN'); $('giam').value=so(n.giam).toLocaleString('vi-VN');
-  $('phiChanh').value=so(n.phiChanh).toLocaleString('vi-VN');
+  $('phiChanh').value=so(n.phiChanh).toLocaleString('vi-VN'); $('shipShop').value=so(n.shipShop).toLocaleString('vi-VN');
   $('sdt').value=n.sdt||''; $('khten').value=n.khten||''; $('dc').value=n.dc||'';
   if(n.kenh) $('kenh').value=n.kenh; else if($('kenh').options.length) $('kenh').selectedIndex=0;
   $('ghichu').value=n.gc||''; $('khInfo').innerHTML='';
@@ -2890,7 +2912,7 @@ function napNhap(i,khoiDong){
 function themTabNhap(){
   if(SUA){ alert('Đang sửa đơn '+SUA+'. Bấm "Huỷ sửa" trước khi mở đơn nháp mới.'); return }
   luuGio();
-  NHAP.push({tenTab:'Đơn '+(NHAP.length+1),g:[],ship:0,giam:0,phiChanh:0,sdt:'',khten:'',dc:'',kenh:'',gc:''});
+  NHAP.push({tenTab:'Đơn '+(NHAP.length+1),g:[],ship:0,giam:0,phiChanh:0,shipShop:0,sdt:'',khten:'',dc:'',kenh:'',gc:''});
   napNhap(NHAP.length-1);
 }
 function dongTabNhap(i){
@@ -3151,7 +3173,7 @@ function luu(){
      mỗi đơn khách lẻ không SĐT đứng độc lập, không bị gộp với nhau. */
   var sdt=$('sdt').value.replace(/\D/g,'');
   var ten=$('khten').value.trim()||(sdt&&KH[sdt]?KH[sdt].ten:'KHÁCH LẺ');
-  var kenh=$('kenh').value, ship=so($('ship').value), giam=so($('giam').value), phiChanh=so($('phiChanh').value);
+  var kenh=$('kenh').value, ship=so($('ship').value), giam=so($('giam').value), phiChanh=so($('phiChanh').value), shipShop=so($('shipShop').value);
   var dc=$('dc').value.trim();
   var hang=0,ts=0; GIO.forEach(function(g){hang+=g.gia*g.sl;ts+=g.sl});
   var dong=GIO.map(function(g){return {sku:g.sku,ten:g.ten,brand:g.brand,dv:g.dv,hs:g.hs,sl:g.sl,gia:g.gia,thanhTien:g.gia*g.sl}});
@@ -3162,10 +3184,11 @@ function luu(){
       var td=[];
       if(o.tong!==hang+ship-giam) td.push('Tổng đơn: '+tien(o.tong)+' → '+tien(hang+ship-giam));
       if((o.phiChanh||0)!==phiChanh) td.push('Phí giao chành: '+tien(o.phiChanh||0)+' → '+tien(phiChanh));
+      if((o.shipShop||0)!==shipShop) td.push('Ship shop chịu: '+tien(o.shipShop||0)+' → '+tien(shipShop));
       if(o.khach!==ten) td.push('Khách: '+o.khach+' → '+ten);
       if(o.kenh!==kenh) td.push('Kênh: '+o.kenh+' → '+kenh);
       if(o.dong.length!==dong.length) td.push('Số dòng hàng: '+o.dong.length+' → '+dong.length);
-      o.khach=ten;o.sdt=sdt;o.kenh=kenh;o.ship=ship;o.giam=giam;o.phiChanh=phiChanh;o.ghichu=$('ghichu').value.trim();
+      o.khach=ten;o.sdt=sdt;o.kenh=kenh;o.ship=ship;o.giam=giam;o.phiChanh=phiChanh;o.shipShop=shipShop;o.ghichu=$('ghichu').value.trim();
       o.sl=ts;o.tienHang=hang;o.tong=hang+ship-giam;o.dong=dong;
       o.sualan=(o.sualan||0)+1;o.lichSu=o.lichSu||[];
       o.lichSu.push({lan:o.sualan,luc:nowStr(),nguoi:CFG.ten,td:td.length?td:['(chỉnh sửa nhỏ)']});
@@ -3198,7 +3221,7 @@ function luu(){
     tkNhan:(ttLuu!=='CHUA'&&laCK_($('ttHt').value))?($('ttHtTK').value||''):'',
     daTra:daTra,
     ma:ma,ngay:nowStr(),iso:today(),kenh:kenh,sdt:sdt,khach:ten,nv:CFG.ten,may:CFG.ma,
-    sl:ts,tienHang:hang,ship:ship,giam:giam,phiChanh:phiChanh,tong:hang+ship-giam,dc:dc,ghichu:$('ghichu').value.trim(),
+    sl:ts,tienHang:hang,ship:ship,giam:giam,phiChanh:phiChanh,shipShop:shipShop,tong:hang+ship-giam,dc:dc,ghichu:$('ghichu').value.trim(),
     dong:dong,xuat:false,sualan:0,lichSu:[]});
   // Không có SĐT → khách lẻ vãng lai, KHÔNG tạo/gộp vào hồ sơ danh bạ khách nào
   // cả (xem giải thích ở đầu hàm luu()). Có SĐT thật thì vẫn lưu vào danh bạ +
@@ -3236,7 +3259,7 @@ function luu(){
     });
   }
   set('kh',KH); set('don',DON);
-  GIO=[]; $('ship').value=0; $('giam').value=0; $('phiChanh').value=0; $('ghichu').value=''; $('dc').value='';
+  GIO=[]; $('ship').value=0; $('giam').value=0; $('phiChanh').value=0; $('shipShop').value=0; $('ghichu').value=''; $('dc').value='';
   luuGio(); veTabNhap();
   chonTT('CHUA');
   veGio(); veDon(); veKH(); veOut(); dem(); dayLen(false);
@@ -3263,6 +3286,7 @@ function moSua(ma){
   $('sdt').value=d.sdt;$('khten').value=d.khach;$('kenh').value=d.kenh;
   $('ghichu').value=d.ghichu||'';$('ship').value=so(d.ship).toLocaleString('vi-VN');
   $('giam').value=so(d.giam).toLocaleString('vi-VN');$('phiChanh').value=so(d.phiChanh).toLocaleString('vi-VN');
+  $('shipShop').value=so(d.shipShop).toLocaleString('vi-VN');
   tab('new');veGio();banner();window.scrollTo({top:0});
 }
 function banner(){
@@ -3285,7 +3309,7 @@ function huyToanBoDon(){
   if(!GIO.length && !$('sdt').value && !$('khten').value){ return }   // dang trong san, khong co gi de huy
   if(!confirm('Huỷ toàn bộ đơn đang gõ dở?\n\nGiỏ hàng và thông tin khách sẽ mất hết, chưa lưu gì nên không ảnh hưởng sổ sách.'))return;
   GIO=[];$('sdt').value='';$('khten').value='';$('ghichu').value='';$('dc').value='';
-  $('ship').value=0;$('giam').value=0;$('phiChanh').value=0;$('khInfo').innerHTML='';
+  $('ship').value=0;$('giam').value=0;$('phiChanh').value=0;$('shipShop').value=0;$('khInfo').innerHTML='';
   luuGio(); veTabNhap();
   veGio();timSP();
   bao('newMsg','Đã huỷ toàn bộ đơn đang gõ dở.','wa');
@@ -3521,6 +3545,7 @@ function vePG(epVe){
       '<div class="pgf"><div class="l">hàng '+tien(d.tienHang)+
         (d.ship?' · <b style="color:var(--warn)">ship '+tien(d.ship)+'</b>':'')+
         (d.phiChanh?' · <b style="color:var(--bad)">chành '+tien(d.phiChanh)+'</b>':'')+
+        (d.shipShop?' · <b style="color:var(--bad)">ship shop chịu '+tien(d.shipShop)+'</b>':'')+
         (d.giam?' · giảm '+tien(d.giam):'')+'</div>'+
       '<div class="t">'+tien(d.tong)+'</div></div>'+
       /* Ba nút hay dùng nhất đứng ngoài; phần còn lại nằm sau nút Thêm */
@@ -3577,7 +3602,7 @@ function suaTaiCho(ma,tuPG){
     var boxCu=oFormSua();
     if(boxCu){boxCu.classList.add('hide');boxCu.innerHTML=''}
   }
-  ED={ma:ma,ship:d.ship||0,giam:d.giam||0,phiChanh:d.phiChanh||0,sdt:d.sdt,ten:d.khach,kenh:d.kenh,dc:d.dc||'',gc:d.ghichu||'',
+  ED={ma:ma,ship:d.ship||0,giam:d.giam||0,phiChanh:d.phiChanh||0,shipShop:d.shipShop||0,sdt:d.sdt,ten:d.khach,kenh:d.kenh,dc:d.dc||'',gc:d.ghichu||'',
       dong:d.dong.map(function(x){return {sku:x.sku,ten:x.ten,brand:x.brand,dv:x.dv,hs:x.hs,sl:x.sl,gia:x.gia,goc:x.gia}})};
   ED.tuPG=!!tuPG;
   if(tuPG){vePG(true)} veEdit();
@@ -3598,7 +3623,7 @@ function datLaiDon(ma){
     // khi nhân viên tự gõ lại đúng SĐT + món cũ (xem them()).
     return {sku:x.sku,ten:x.ten,brand:x.brand||'',dv:x.dv,hs:x.hs||1,gia:x.gia,goc:x.gia,sl:x.sl,riêng:false,tuCu:true};
   });
-  NHAP.push({tenTab:'Lại '+ma,g:g,ship:0,giam:0,phiChanh:0,
+  NHAP.push({tenTab:'Lại '+ma,g:g,ship:0,giam:0,phiChanh:0,shipShop:0,
     sdt:d.sdt||'',khten:d.khach||'',dc:d.dc||'',kenh:d.kenh||'',gc:''});
   napNhap(NHAP.length-1);
   tab('new');
@@ -3635,6 +3660,8 @@ function veEdit(){
     '<div><label>Giảm giá</label><input value="'+(ED.giam||0).toLocaleString('vi-VN')+'" oninput="dinhDangTien(this)" onchange="ED.giam=so(this.value);edLai()"></div></div>'+
     '<div class="mt"><label>Phí giao chành (shop chịu — trừ vào lãi)</label>'+
       '<input value="'+(ED.phiChanh||0).toLocaleString('vi-VN')+'" oninput="dinhDangTien(this)" onchange="ED.phiChanh=so(this.value)"></div>'+
+    '<div class="mt"><label>Ship shop chịu / thuê xe ngoài (trừ vào lãi)</label>'+
+      '<input value="'+(ED.shipShop||0).toLocaleString('vi-VN')+'" oninput="dinhDangTien(this)" onchange="ED.shipShop=so(this.value)"></div>'+
     '<div class="sm mt" style="font-size:13.5px">Tiền hàng '+tien(t)+
       (ED.ship?' + ship '+tien(ED.ship):'')+(ED.giam?' − giảm '+tien(ED.giam):'')+
       ' = <b style="color:var(--ok);font-size:15px">'+tien(t+ED.ship-ED.giam)+'</b></div>'+
@@ -3695,13 +3722,14 @@ function edLuu(){
   if((d.ship||0)!==ED.ship) td.push('Tiền ship: '+tien(d.ship||0)+' → '+tien(ED.ship));
   if((d.giam||0)!==ED.giam) td.push('Giảm giá: '+tien(d.giam||0)+' → '+tien(ED.giam));
   if((d.phiChanh||0)!==ED.phiChanh) td.push('Phí giao chành: '+tien(d.phiChanh||0)+' → '+tien(ED.phiChanh));
+  if((d.shipShop||0)!==ED.shipShop) td.push('Ship shop chịu: '+tien(d.shipShop||0)+' → '+tien(ED.shipShop));
   if(d.khach!==ED.ten) td.push('Khách: '+d.khach+' → '+ED.ten);
   if(d.sdt!==ED.sdt) td.push('SĐT: '+d.sdt+' → '+ED.sdt);
   if((d.dc||'')!==(ED.dc||'')) td.push('Địa chỉ: '+(d.dc||'(trống)')+' → '+(ED.dc||'(trống)'));
   if((d.ghichu||'')!==(ED.gc||'')) td.push('Ghi chú: '+(d.ghichu||'(trống)')+' → '+(ED.gc||'(trống)'));
   if(d.tong!==hang+ED.ship-ED.giam) td.push('TỔNG ĐƠN: '+tien(d.tong)+' → '+tien(hang+ED.ship-ED.giam));
   d.dong=ED.dong.map(function(x){return {sku:x.sku,ten:x.ten,brand:x.brand,dv:x.dv,hs:x.hs,sl:x.sl,gia:x.gia,thanhTien:x.gia*x.sl}});
-  d.sl=ts; d.tienHang=hang; d.ship=ED.ship; d.giam=ED.giam; d.phiChanh=ED.phiChanh;
+  d.sl=ts; d.tienHang=hang; d.ship=ED.ship; d.giam=ED.giam; d.phiChanh=ED.phiChanh; d.shipShop=ED.shipShop;
   d.tong=hang+ED.ship-ED.giam; d.sdt=ED.sdt||d.sdt; d.khach=ED.ten||d.khach; d.dc=ED.dc||''; d.ghichu=(ED.gc||'').trim();
   if(KH[d.sdt]&&d.dc){KH[d.sdt].dc=d.dc;KH[d.sdt].canDay=true}
   d.sualan=(d.sualan||0)+1; d.lichSu=d.lichSu||[];
@@ -4774,6 +4802,7 @@ function doiTT(ma){
   $('ttNhanhHt').value='Tiền mặt';
   $('ttNhanhShipper').value=d.nguoiGiao||'';
   $('ttNhanhChanh').value=so(d.phiChanh||0).toLocaleString('vi-VN');
+  $('ttNhanhShipShop').value=so(d.shipShop||0).toLocaleString('vi-VN');
   $('ttNhanhShipperHint').textContent=d.nguoiGiao
     ?'Đơn đã gán sẵn "'+d.nguoiGiao+'" — để nguyên hoặc đổi nếu khác người.'
     :'Dùng chung danh sách shipper đã khai ở tab Vận hành (máy quản lý).';
@@ -4799,10 +4828,16 @@ function xacNhanThuTienNhanh(){
     d.lichSu.push({lan:d.sualan,luc:nowStr(),nguoi:CFG.ten,td:['Phí giao chành: '+tien(d.phiChanh||0)+' → '+tien(chanh)]});
     d.phiChanh=chanh; if(d.xuat) d.guiLai=true; if(d.day) d.suaSauDay=true; set('don',DON);
   }
+  var shipShop=so($('ttNhanhShipShop').value);   // 28/10/2026 chủ: ship/thuê xe ngoài shop trả — trước NV ghi tạm vào phí chành
+  if(shipShop!==(d.shipShop||0)){
+    d.lichSu=d.lichSu||[]; d.sualan=(d.sualan||0)+1;
+    d.lichSu.push({lan:d.sualan,luc:nowStr(),nguoi:CFG.ten,td:['Ship shop chịu: '+tien(d.shipShop||0)+' → '+tien(shipShop)]});
+    d.shipShop=shipShop; if(d.xuat) d.guiLai=true; if(d.day) d.suaSauDay=true; set('don',DON);
+  }
   if(shipper!==(d.nguoiGiao||'')) ganShipper(ma,shipper);
   vePG(); veDon(); dayTT(); dayLen(false);
   bao('pgMsg','Đơn <b>'+esc(ma)+'</b> → <b style="color:var(--ok)">ĐÃ THANH TOÁN</b> ('+esc(d.ttHt)+')'+
-    (shipper?' · Người giao: <b>'+esc(shipper)+'</b>':'')+(chanh?' · Chành: <b>'+tien(chanh)+'</b>':''),'ok');
+    (shipper?' · Người giao: <b>'+esc(shipper)+'</b>':'')+(chanh?' · Chành: <b>'+tien(chanh)+'</b>':'')+(shipShop?' · Ship shop chịu: <b>'+tien(shipShop)+'</b>':''),'ok');
 }
 /* ĐÁNH DẤU ĐÃ THU HÀNG LOẠT — thêm 13/09/2026 theo yêu cầu của chủ, để khỏi
    phải mở dropdown từng đơn một lúc thu tiền mặt cuối ca. Mặc định hình thức
@@ -5684,6 +5719,16 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261028b', ngay:'28/10/2026', ten:'Thêm ô Ship shop chịu',
+  vaPhieu:[],
+  muc:[
+   ['moi','Có ô mới <b>Ship shop chịu</b> (ship / thuê xe ngoài cửa hàng tự trả) ở Lên đơn, Sửa đơn và hộp Đã thu — không cần ghi tạm vào Phí chành nữa. Không đổi tiền khách trả, chỉ trừ vào lãi.'],
+  ]},
+ {ban:'20261028a', ngay:'28/10/2026', ten:'Tự cập nhật bản mới',
+  vaPhieu:[],
+  muc:[
+   ['sua','Có bản phần mềm mới thì máy <b>tự cập nhật</b> lúc rảnh tay (không đang gõ, không dở đơn, 20 giây không ai chạm) — không cần bấm "Cập nhật ngay" nữa.'],
+  ]},
  {ban:'20261022b', ngay:'22/10/2026', ten:'Đơn đã thu không còn bị lật về chưa thu · Sửa đơn thêm được món mới',
   vaPhieu:[],
   muc:[

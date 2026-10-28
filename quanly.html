@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi"><head><meta charset="utf-8">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ZAKA — Quản lý</title>
 <style>
@@ -438,6 +438,21 @@ dialog::backdrop{background:rgba(0,0,0,.45);backdrop-filter:blur(6px) grayscale(
 .spbd-x span{flex:1;min-width:0;text-align:center;font-size:11px;color:var(--tx2);white-space:nowrap;overflow:visible;font-variant-numeric:tabular-nums}
 .spbd-x small{display:block;font-size:11px;color:var(--tx);font-weight:600}
 .spbd-phu{margin-top:12px}
+/* hộp Gộp — 28/10/2026 */
+.gopQD{border-left:4px solid var(--info)!important}
+.gopHoi{display:flex;gap:10px;align-items:center;margin:4px 0 8px}
+.gopHoi .so{width:26px;height:26px;border-radius:50%;background:var(--pur);color:#fff;display:grid;place-items:center;font-weight:800;flex-shrink:0}
+.gopDong{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;margin-bottom:8px;
+  border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:10px;background:var(--card)}
+.gopDong.coVon{border-left-color:var(--ok)}
+.gopTen{min-width:0}
+.gopChip{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
+.gopChip .ch{font-size:11.5px;padding:2px 8px;border-radius:99px;font-weight:600}
+.gopChip .ok{background:var(--okBg);color:var(--ok)}
+.gopChip .wa{background:var(--warnBg);color:var(--warn)}
+.gopChip .dv{background:var(--c2);color:var(--tx2);border:1px solid var(--line)}
+.gopChip .ma{color:var(--tx2);font-weight:400;padding-left:2px}
+.gopNut{flex-shrink:0;padding:8px 14px!important;font-size:13px!important;width:auto!important}
 .lr-hang{display:flex;flex-wrap:wrap;gap:8px}
 .lr-o{flex:1 1 140px;background:var(--c2);border:1px solid var(--line);border-radius:12px;padding:9px 12px}
 .lr-o small{display:block;font-size:12px;color:var(--tx2)}
@@ -482,6 +497,79 @@ dialog::backdrop{background:rgba(0,0,0,.45);backdrop-filter:blur(6px) grayscale(
 .tt-khoi .tt-gop{margin-top:6px}
 .tt-khoi .tt-nhom>.mini{margin-top:4px}
 @media(max-width:600px){.tt-khoi .tt-ma{grid-template-columns:auto minmax(0,1fr) auto}.tt-khoi .tt-don{display:none}}
+/* ══ GIAO DIỆN CHIẾN THUẬT — 28/10/2026 chủ: "thích UI, animation, nút kiểu game bắn súng quân sự, áp vào màu tối trước".
+   CHỈ chế độ tối (body:not(.sang)) — chế độ sáng Mùn cưa giữ nguyên. Đen than + vạch chanh, góc vuông/vát, chữ đứng hẹp in hoa,
+   rê nút thì vệt sáng quét từ trái, chuyển tab mở ra từ trái, hộp thoại bung từ giữa. Chỉ đổi cách hiện, không đụng số liệu. ══ */
+body:not(.sang){--bg:#0A0C0B;--bg2:#0A0C0B;--card:#121615;--c2:#191E1C;--line:#2A312E;--tx:#ECEFEA;--tx2:#8D968F;
+  --acc:#C8F03C;--acc2:#C8F03C;--brand:#070908;--brandTx:#ECEFEA;--shadow:none;--btnGlow:none;--codTx:#0A0C0B;
+  --codF:"Barlow Condensed","Be Vietnam Pro",sans-serif;
+  background:#0A0C0B;background-image:radial-gradient(ellipse 80% 50% at 85% -10%,rgba(200,240,60,.07),transparent 60%),
+    repeating-linear-gradient(0deg,rgba(255,255,255,.016) 0 1px,transparent 1px 3px);background-attachment:fixed}
+/* chữ hẹp in hoa cho nhãn, tiêu đề, nút */
+body:not(.sang) h2,body:not(.sang) header b,body:not(.sang) .side nav button,body:not(.sang) th,body:not(.sang) .kpi small,
+body:not(.sang) .btn,body:not(.sang) .btn2,body:not(.sang) .mini,body:not(.sang) .btn-nho,body:not(.sang) .chip,
+body:not(.sang) .zSync,body:not(.sang) .side-brand .nm,body:not(.sang) .spbd-ten,body:not(.sang) .lr small{
+  font-family:var(--codF);text-transform:uppercase;letter-spacing:.07em}
+body:not(.sang) .kpi b,body:not(.sang) .spbd-so,body:not(.sang) .lr b{font-family:var(--codF);font-weight:600;letter-spacing:.02em}
+body:not(.sang) .kpi b{font-size:24px}
+body:not(.sang) h2{font-size:19px;font-weight:600;display:flex;align-items:center;gap:9px}
+body:not(.sang) h2::before{content:"";width:4px;height:15px;background:var(--acc);flex:none}
+/* đầu trang + cột trái */
+body:not(.sang) header{background:rgba(7,9,8,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+body:not(.sang) header b{font-size:20px;font-weight:600}
+body:not(.sang) header div{color:var(--tx2);opacity:1}
+body:not(.sang) .side{background:#070908;border-right:1px solid var(--line)}
+body:not(.sang) .side-brand .mark{border-radius:0;background:var(--acc);color:var(--codTx);
+  clip-path:polygon(0 0,100% 0,100% 70%,70% 100%,0 100%)}
+body:not(.sang) .side-brand .nm{font-size:19px}
+/* vệt sáng quét khi rê: nền là 1 dải màu chữ, rộng 0% → 100% */
+body:not(.sang) .side nav button,body:not(.sang) .btn2,body:not(.sang) .mini,body:not(.sang) .btn-nho,body:not(.sang) .chip,body:not(.sang) .zSync{
+  background:linear-gradient(var(--tx),var(--tx)) no-repeat left/0% 100%;
+  transition:background-size .22s cubic-bezier(.2,.8,.2,1),color .18s,border-color .18s}
+@media (hover:hover){
+  body:not(.sang) .side nav button:not(.on):hover,body:not(.sang) .btn2:hover:not(:disabled),body:not(.sang) .mini:hover:not(:disabled),
+  body:not(.sang) .btn-nho:hover:not(:disabled),body:not(.sang) .chip:hover,body:not(.sang) .zSync:hover{
+    background-size:100% 100%;color:var(--codTx);border-color:var(--tx)}}
+body:not(.sang) .side nav button{font-size:17px;font-weight:600;border-radius:0;padding:8px 14px}
+body:not(.sang) .side nav button.on{color:var(--codTx);font-weight:700}
+body:not(.sang) .side nav.coPill button.on{background:transparent}
+body:not(.sang) .navPill{background:var(--acc);box-shadow:none;clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%)}
+body:not(.sang) .side nav button.on span,body:not(.sang) .side nav button:hover span{color:inherit}
+/* nút chính: khối chanh, góc vát; nút phụ: viền mảnh */
+body:not(.sang) .btn{background:var(--acc);color:var(--codTx);font-weight:700;border-radius:0;box-shadow:none;
+  clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));transition:background-color .15s,filter .15s}
+@media (hover:hover){body:not(.sang) .btn:hover:not(:disabled){background:#fff}}
+body:not(.sang) .btn:active:not(:disabled){filter:brightness(.8)}
+body:not(.sang) .btn2,body:not(.sang) .mini,body:not(.sang) .btn-nho,body:not(.sang) .chip,body:not(.sang) .zSync{
+  background-color:transparent;border:1px solid var(--line);border-radius:0;color:var(--tx)}
+body:not(.sang) .mini{color:var(--acc);border-color:color-mix(in srgb,var(--acc) 40%,var(--line))}
+body:not(.sang) .chip.on{background-color:var(--acc);border-color:var(--acc);color:var(--codTx)}
+/* thẻ: góc vuông, dấu ngắm ở 2 góc */
+body:not(.sang) .card{border-radius:0;border:1px solid var(--line);background:
+  linear-gradient(var(--acc),var(--acc)) top left/16px 2px no-repeat,linear-gradient(var(--acc),var(--acc)) top left/2px 16px no-repeat,
+  linear-gradient(var(--tx2),var(--tx2)) bottom right/12px 1px no-repeat,linear-gradient(var(--tx2),var(--tx2)) bottom right/1px 12px no-repeat,
+  var(--card)}
+body:not(.sang) .kpi div{border-radius:0;background:#0E1211;border:1px solid var(--line);border-left:2px solid var(--acc)}
+body:not(.sang) .kpi div.k-ok{border-left-color:var(--ok)}body:not(.sang) .kpi div.k-info{border-left-color:var(--info)}
+body:not(.sang) .kpi div.k-pur{border-left-color:var(--pur)}
+body:not(.sang) .kpiclick:hover{border-color:var(--acc)!important;background:#141A17}
+/* ô nhập */
+body:not(.sang) input,body:not(.sang) select,body:not(.sang) textarea{border-radius:0;background:#0E1211;border:1px solid var(--line)}
+body:not(.sang) input:focus,body:not(.sang) select:focus,body:not(.sang) textarea:focus{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc);outline:none}
+/* bảng: dòng đang rê có vạch chanh bên trái */
+body:not(.sang) .card table tr:hover td{background:rgba(200,240,60,.05)}
+body:not(.sang) .card table tr:hover td:first-child{box-shadow:inset 2px 0 0 var(--acc)}
+/* chuyển tab: màn mở ra từ trái kèm vạch quét */
+body:not(.sang) main>section.vaoTab{animation:codVao .38s cubic-bezier(.2,.8,.2,1)}
+@keyframes codVao{from{clip-path:inset(0 100% 0 0);opacity:.3}to{clip-path:inset(0 0 0 0);opacity:1}}
+/* hộp thoại: bung từ đường giữa, viền chanh trên đầu */
+body:not(.sang) dialog{border-radius:0;border:1px solid var(--line);border-top:2px solid var(--acc);background:var(--card)}
+body:not(.sang) dialog[open]{animation:codBung .28s cubic-bezier(.2,.8,.2,1)}
+@keyframes codBung{from{clip-path:inset(48% 0 48% 0);opacity:.4}to{clip-path:inset(0 0 0 0);opacity:1}}
+body:not(.sang) dialog::backdrop{background:rgba(0,0,0,.7);backdrop-filter:blur(3px) grayscale(1)}
+body:not(.sang) .zToast{border-radius:0;background:var(--acc);color:var(--codTx);border-left:0;font-weight:600}
+@media (prefers-reduced-motion:reduce){body:not(.sang) main>section.vaoTab,body:not(.sang) dialog[open]{animation:none}
+  body:not(.sang) .side nav button,body:not(.sang) .btn2,body:not(.sang) .mini,body:not(.sang) .btn-nho,body:not(.sang) .chip,body:not(.sang) .zSync{transition:none}}
 </style></head><body>
 <div id="khoa">
   <div class="logoMark">🐾</div>
@@ -851,6 +939,7 @@ dialog::backdrop{background:rgba(0,0,0,.45);backdrop-filter:blur(6px) grayscale(
     <div><label>Tiền ship</label><input id="sdShip" inputmode="numeric" oninput="tinhLaiSuaDon()"></div>
     <div><label>Giảm giá</label><input id="sdGiam" inputmode="numeric" oninput="tinhLaiSuaDon()"></div>
     <div><label>Phí giao chành</label><input id="sdPhiChanh" inputmode="numeric" oninput="tinhLaiSuaDon()"></div>
+    <div><label>Ship shop chịu</label><input id="sdShipShop" inputmode="numeric" oninput="tinhLaiSuaDon()"></div>
   </div>
   <div class="mt"><label>Ghi chú</label><input id="sdGc"></div>
   <div class="mt"><label>Ngày bán (chỉ quản lý đổi được — dùng khi nhân viên lên đơn bù cho hàng đã giao hôm trước)</label><input type="date" id="sdNgay"></div>
@@ -898,11 +987,11 @@ dialog::backdrop{background:rgba(0,0,0,.45);backdrop-filter:blur(6px) grayscale(
   </div>
   <label>Tìm sản phẩm để làm mã chính</label>
   <input id="gopQ" placeholder="Gõ tên sản phẩm…" oninput="veGopKQ()">
-  <div style="margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--c2)">
+  <div class="gopQD" style="margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--c2)">
     <label class="sm" style="display:block;margin-bottom:4px"><b>Quy đổi</b> (khi mã này là bao/túi lớn của mã chính)</label>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap" class="sm">1 <span id="gopDvPhu">đơn vị</span> mã này =
-      <input id="gopHs" inputmode="decimal" value="1" style="width:80px;padding:6px 8px;text-align:right"> đơn vị của mã chính</div>
-    <div class="sm" style="margin-top:4px">Vd "Cát Sand 5kg" gộp vào "Cát Sand 1kg" thì điền <b>5</b> — giá vốn đơn cũ = 5 × giá vốn 1kg. Cùng một món thì để 1.</div>
+      <input id="gopHs" inputmode="decimal" value="1" oninput="this.dataset.tay=1" style="width:80px;padding:6px 8px;text-align:right"> đơn vị của mã chính</div>
+    <div class="sm" style="margin-top:4px">Vd "Cát Sand 5kg" gộp vào "Cát Sand 1kg" thì điền <b>5</b> — giá vốn đơn cũ = 5 × giá vốn 1kg. Để 1 thì máy tự đoán theo tên (5kg so với 1kg ra 5) và hỏi lại trước khi gộp.</div>
   </div>
   <div id="gopKQ" style="margin-top:10px;max-height:280px;overflow:auto"></div>
   <div id="gopErr"></div>
@@ -978,7 +1067,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261028i';
+var APP_VER='20261028n';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1029,7 +1118,7 @@ function veBangBanMoi_(){
     '<div style="opacity:.85">Máy này đang chạy <b>v'+APP_VER+'</b>, trên mạng đã là <b>v'+BAN_MOI_TREN_SERVER+'</b>.'+
       (doViec
         ? '<br><b style="color:#ffd479">Đang dở việc — lưu xong rồi hãy cập nhật.</b> Bấm cập nhật lúc này có thể mất phần đang gõ.'
-        : '<br>Bấm nút bên dưới để lấy bản mới. Đơn đã lưu không mất.')+
+        : '<br>Máy sẽ <b>tự cập nhật</b> khi rảnh tay (20 giây không ai chạm). Muốn lấy ngay thì bấm nút dưới. Đơn đã lưu không mất.')+
     '</div>'+
     '<div style="display:flex;gap:8px;margin-top:11px;flex-wrap:wrap">'+
       '<button onclick="capNhatNgay_()" style="flex:1;min-width:150px;padding:10px 14px;border-radius:11px;border:none;'+
@@ -1057,10 +1146,28 @@ function doBanMoi_(){
       BAN_MOI_TREN_SERVER=m[1];
       var hoan=''; try{ hoan=sessionStorage.getItem('zaka_hoan_ban_moi')||'' }catch(e){}
       if(hoan===BAN_MOI_TREN_SERVER) return;      // người dùng đã bấm "để lát nữa" cho đúng bản này
-      veBangBanMoi_();
+      veBangBanMoi_(); thuTuCapNhat_();
     }).catch(function(){});
   }catch(e){}
 }
+/* 28/10/2026 chủ: "sau này tự nó cập nhật, không cần bấm cập nhật — rất mất công". Thay quyết định 15/09
+   (chỉ hiện bảng, không tự tải lại): nay TỰ TẢI LẠI khi máy rảnh tay — không ô nào đang gõ, không hộp nào
+   đang mở, không dở việc, và không ai chạm máy 20 giây. Đang bận thì vẫn hiện bảng báo như cũ, rảnh là tự lấy. */
+var LAN_THAO_TAC_=Date.now();
+['keydown','pointerdown','input','wheel'].forEach(function(e){ document.addEventListener(e,function(){ LAN_THAO_TAC_=Date.now() },true) });
+function tuCapNhatDuoc_(){
+  var a=document.activeElement;
+  if(a && /^(INPUT|TEXTAREA)$/.test(a.tagName) && a.value && a.type!=='checkbox' && a.type!=='radio') return false;   // ô đang có chữ gõ dở
+  if(dangBanDo_()) return false;
+  if((typeof VON_CHO_DAY!=='undefined'&&VON_CHO_DAY)||(typeof CD_CHO_DAY!=='undefined'&&CD_CHO_DAY)) return false;   // còn thay đổi chưa gửi lên Sheet
+  return Date.now()-LAN_THAO_TAC_>20000;
+}
+function thuTuCapNhat_(){
+  if(!BAN_MOI_TREN_SERVER || BAN_MOI_TREN_SERVER===APP_VER || !tuCapNhatDuoc_()) return;
+  try{ sessionStorage.setItem('zaka_hoan_ban_moi','') }catch(e){}
+  location.replace(location.pathname+'?_v='+Date.now());
+}
+setInterval(thuTuCapNhat_, 10000);
 setTimeout(doBanMoi_, 3000);
 setInterval(doBanMoi_, 120000);
 document.addEventListener('visibilitychange', function(){ if(!document.hidden) doBanMoi_() });
@@ -1202,7 +1309,7 @@ function huyHieuHTML_(sdt, ds){
    độc lập, mỗi lần thêm khoản trừ mới (như phí giao chành) phải sửa cả 5 chỗ,
    dễ sót. Giờ chỉ sửa đúng MỘT nơi. `von` truyền vào là tổng giá vốn đã tính sẵn
    ở từng chỗ gọi (không tính lại ở đây, vì cách tính von khác nhau tuỳ tình huống). */
-function tinhLaiDon(d, von){ return d.tienHang - von - (d.phiChanh||0) }
+function tinhLaiDon(d, von){ return d.tienHang - von - (d.phiChanh||0) - (d.shipShop||0) }   // shipShop: ship/thuê xe ngoài shop trả (28/10/2026)
 
 /* ══════════════════════════════════════════════════════════════════
    GỘP SẢN PHẨM TRÙNG TÊN, SAI MÃ SKU — thêm 05/09/2026
@@ -2152,10 +2259,10 @@ function gopHetNhomChac(){
   });
   set('alias',ALIAS); set('gia',GIA);
   tinhLaiToanBoSO();
-  veCB(); veSo(); veBC(); veGia(); vePhat();
+  veCB(); veSo(); veBC(); veGia(); vePhat(); henDayVon_();
   bao('inMsg','Đã gộp gọn <b>'+viec.length+' nhóm</b> ('+soMa+' mã phụ). Đơn cũ đã được tính lại giá vốn '+
     'theo mã chính — những đơn trước đây treo "chờ vốn" vì mã chưa có giá vốn giờ đã có số. '+
-    'Đơn trên Sheet không bị sửa gì. Nhớ bấm <b>Cập nhật bảng giá</b> để các máy nhân viên nhận bản mới.','ok');
+    'Đơn trên Sheet không bị sửa gì. Đã tự lưu và phát cho máy nhân viên.','ok');
 }
 /* Lõi gộp dùng chung — cho cả 2 lối vào:
    1) mục "Sản phẩm nghi trùng tên" (tự phát hiện, tên phải khớp y hệt sau khi bỏ dấu)
@@ -2177,6 +2284,7 @@ function thucHienGop(khac, chinh, hs){
      chủ tự tay điền, hoặc còn giá bán khác mã chính, thì vẫn chỉ ẩn đi. */
   var daXoa=0;
   khac.forEach(function(k){ if(gomVaDon_(k, chinh, '', hs).daXoa) daXoa++ });
+  henDayVon_();
   veCB(); veSo(); veBC(); veGia(); vePhat(); veLam();
   bao('inMsg','Đã gộp <b>'+khac.length+'</b> mã vào <b>'+esc(chinh)+'</b> — dùng chung giá vốn và báo cáo. '+
     (daXoa?('Đã <b>dọn hẳn '+daXoa+' mã thừa</b> khỏi bảng giá. '):'')+
@@ -2194,35 +2302,60 @@ function moGopSP(skuPhu){
   $('gopTenPhu').textContent=ds.length===1
     ? '"'+GIA[ds[0]].ten+'" ('+ds[0]+')'
     : ds.length+' sản phẩm đã chọn: '+ds.map(function(s){return GIA[s].ten}).join(', ');
+  /* 28/10/2026 chủ tích cả bao 5kg lẫn món 1kg rồi bấm Gộp — hộp lại bắt tìm mã chính trong cả danh mục (ô tìm trống
+     bày ra Ba khía…). Nay: tích ≥2 món thì hiện ngay các món đã tích để chọn món GỐC; ô tìm trống không bày danh mục. */
   $('gopQ').value=ds.length===1?(GIA[ds[0]].ten||''):'';
-  $('gopErr').innerHTML=''; $('gopHs').value='1'; $('gopDvPhu').textContent=(GIA[ds[0]].dvt||'đơn vị');
+  $('gopErr').innerHTML=''; $('gopHs').value='1'; $('gopHs').dataset.tay='';
+  $('gopDvPhu').textContent=ds.length===1?(GIA[ds[0]].dvt||'đơn vị'):'đơn vị';
   document.getElementById('dlgGopSP').showModal();
   veGopKQ();
-  setTimeout(function(){ $('gopQ').focus(); $('gopQ').select() },50);
+  if(ds.length===1) setTimeout(function(){ $('gopQ').focus(); $('gopQ').select() },50);
+}
+/* đoán hệ số từ khối lượng/thể tích ghi trong tên: "…5kg" so với "…1kg" → 5; không đọc được thì 1 */
+function luongTrongTen_(t){
+  var m=String(t||'').toLowerCase().match(/(\d+(?:[.,]\d+)?)\s*(kg|g|gr|gram|l|lit|lít|ml)\b/);
+  if(!m) return 0;
+  var v=parseFloat(m[1].replace(',','.')), d=m[2];
+  return (d==='kg'||d==='l'||d==='lit'||d==='lít') ? v*1000 : v;
+}
+function doanHs_(phu,chinh){
+  var a=luongTrongTen_(GIA[phu]&&GIA[phu].ten), b=luongTrongTen_(GIA[chinh]&&GIA[chinh].ten);
+  if(!a||!b) return 1;
+  var r=a/b; return Math.abs(r-Math.round(r))<0.001 ? Math.round(r) : Math.round(r*1000)/1000;
+}
+function dongGop_(k,nhan){
+  var p=GIA[k], coVon=!!p.von;   // 28/10/2026 chủ: thêm màu cho dễ nhìn — vạch xanh = có giá vốn (nên chọn làm gốc), cam = chưa có
+  return '<div class="gopDong'+(coVon?' coVon':'')+'">'+
+    '<div class="gopTen"><b>'+esc(p.ten)+'</b>'+
+      '<div class="gopChip"><span class="ch dv">'+esc(p.dvt||'đơn vị')+'</span>'+
+      (coVon?'<span class="ch ok">vốn '+tien(p.von)+'</span>':'<span class="ch wa">chưa có giá vốn</span>')+
+      '<span class="ch ma">'+esc(k)+'</span></div></div>'+
+    '<button class="'+(coVon?'btn':'btn2')+' gopNut" onclick="xacNhanGopThuCong(\''+k+'\')">'+nhan+'</button></div>';
 }
 function veGopKQ(){
   var q=kd(($('gopQ').value||'').trim());
+  var dau='';
+  if(GOP_PHU.length>=2) dau='<div class="gopHoi"><span class="so">?</span><div><b>Món nào là món GỐC?</b><div class="sm">Các món còn lại sẽ gộp vào nó. Nên chọn món có giá vốn (vạch xanh).</div></div></div>'+
+    GOP_PHU.map(function(k){ return dongGop_(k,'Đây là món gốc') }).join('')+
+    '<div class="sm" style="margin:12px 0 4px;opacity:.8">Hoặc gõ tên ở ô trên để chọn món khác làm món gốc.</div>';
+  if(!q){ $('gopKQ').innerHTML=dau||'<div class="sm">Gõ tên món gốc vào ô trên để tìm.</div>'; return }
   var ds=Object.keys(GIA).filter(function(k){
     if(GOP_PHU.indexOf(k)>=0) return false;             // không tự gộp vào chính nó
     if(GOP_PHU.indexOf(skuChinh(k))>=0) return false;   // mã này (hoặc chuỗi mã) đã trỏ VỀ một mã phụ đang gộp — tránh vòng lặp
     if(!q) return true;
     return kd(GIA[k].ten+' '+(GIA[k].brand||'')+' '+k).indexOf(q)>=0;
   }).sort(function(a,b){return GIA[a].ten.localeCompare(GIA[b].ten)}).slice(0,30);
-  if(!ds.length){ $('gopKQ').innerHTML='<div class="empty">Không thấy sản phẩm nào khớp.</div>'; return }
-  $('gopKQ').innerHTML=ds.map(function(k){
-    var p=GIA[k];
-    return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;'+
-      'padding:8px 4px;border-bottom:1px solid var(--vien)">'+
-      '<div class="sm"><b>'+esc(p.ten)+'</b><br>'+esc(k)+' — '+
-      (p.von?'giá vốn <b>'+tien(p.von)+'</b>':'<span style="color:var(--warn)">chưa có giá vốn</span>')+'</div>'+
-      '<button class="mini" style="flex-shrink:0" onclick="xacNhanGopThuCong(\''+k+'\')">Chọn làm mã chính</button></div>';
-  }).join('');
+  $('gopKQ').innerHTML=dau+(ds.length?ds.map(function(k){ return dongGop_(k,'Chọn làm món gốc') }).join('')
+    :'<div class="empty">Không thấy sản phẩm nào khớp.</div>');
 }
 function xacNhanGopThuCong(skuChinhMoi){
   if(!GOP_PHU||!GOP_PHU.length||!GIA[skuChinhMoi]){ $('gopErr').innerHTML='<div class="msg er">Dữ liệu không hợp lệ, mở lại.</div>'; return }
+  var phu=GOP_PHU.filter(function(k){return k!==skuChinhMoi});
+  if(!phu.length){ $('gopErr').innerHTML='<div class="msg er">Cần ít nhất 1 món khác để gộp vào món gốc.</div>'; return }
+  if(!$('gopHs').dataset.tay){ var g=doanHs_(phu[0],skuChinhMoi); if(g!==1) $('gopHs').value=String(g).replace('.',',') }   // chưa sửa tay thì đoán theo tên
   var hs=Number(String($('gopHs').value||'1').replace(',','.'))||1;
   if(hs<=0){ $('gopErr').innerHTML='<div class="msg er">Hệ số quy đổi phải lớn hơn 0.</div>'; return }
-  var ok=thucHienGop(GOP_PHU, skuChinhMoi, hs);
+  var ok=thucHienGop(phu, skuChinhMoi, hs);
   if(ok){ document.getElementById('dlgGopSP').close(); GOP_PHU=null; boChonGia() }
 }
 /* Tính lại vốn/lãi/thiếu-vốn cho TOÀN BỘ sổ cái sau khi gộp sản phẩm — cùng
@@ -3082,10 +3215,10 @@ function veBC(){
   var ok=tinhDuoc.filter(daGhiNhan);
   var choGN=tinhDuoc.filter(function(d){return !daGhiNhan(d)});
   if(!SO.length){$('bc').innerHTML='<div class="card"><div class="empty">Chưa có đơn nào. Sang tab Nạp đơn.</div></div>';return}
-  var hang=0,von=0,ship=0,giam=0,phiChanh=0,kenh={},nv={},br={},sp={},shp={},htt={},tkht={};
+  var hang=0,von=0,ship=0,giam=0,phiChanh=0,shipShop=0,kenh={},nv={},br={},sp={},shp={},htt={},tkht={};
   var thueTong={doanhThuChuaVAT:0,vatDauRa:0,vatDauVao:0,vatRong:0,laiGopThat:0,tndn:0,loiNhuanSauThue:0};
   ok.forEach(function(d){
-    hang+=d.tienHang;von+=d.von;ship+=d.ship;giam+=d.giam;phiChanh+=(d.phiChanh||0);
+    hang+=d.tienHang;von+=d.von;ship+=d.ship;giam+=d.giam;phiChanh+=(d.phiChanh||0);shipShop+=(d.shipShop||0);
     var th=tinhThueDon(d);
     thueTong.doanhThuChuaVAT+=th.doanhThuChuaVAT; thueTong.vatDauRa+=th.vatDauRa;
     thueTong.vatDauVao+=th.vatDauVao; thueTong.vatRong+=th.vatRong; thueTong.laiGopThat+=th.laiGopThat;
@@ -3176,10 +3309,10 @@ function veBC(){
     '<div><small>Biên lãi</small><b>'+(hang?(lai/hang*100).toFixed(1):0)+'%</b></div></div></div>'+
     (function(){   // 28/10/2026: Lãi ròng = lãi gộp − chành xe − chi phí phát sinh − chi phí cố định (chia theo ngày)
       var kh=KY==='tuychinh'?[TU_NGAY||khoangKy_('tatca')[0], DEN_NGAY||'']:khoangKy_(KY);
-      var cd=cpCoDinhKy_(kh[0],kh[1]), rong=lai-phiChanh-tongChiPhi-cd.tong;
+      var cd=cpCoDinhKy_(kh[0],kh[1]), rong=lai-phiChanh-shipShop-tongChiPhi-cd.tong;
       var o=function(ten,v,am,bam){ return '<div class="lr-o'+(bam?' kpiclick" onclick="'+bam:'')+'"><small>'+ten+'</small><b>'+(am&&v?'− ':'')+tien(v)+'</b></div>' };
       return '<div class="card lr"><h2 style="margin-bottom:8px">Lãi ròng</h2><div class="lr-hang">'+
-        o('Lãi gộp',lai)+o('Chành xe',phiChanh,1)+o('Chi phí phát sinh',tongChiPhi,1,chiPhiTrongKy.length?'toggleChiPhiBC()':'')+
+        o('Lãi gộp',lai)+o('Chành xe',phiChanh,1)+o('Ship shop chịu',shipShop,1)+o('Chi phí phát sinh',tongChiPhi,1,chiPhiTrongKy.length?'toggleChiPhiBC()':'')+
         o('Chi phí cố định',cd.tong,1,'tab(\'vh\')')+
         '<div class="lr-o lr-kq"><small>= Lãi ròng</small><b style="color:'+(rong>=0?'var(--ok)':'var(--bad)')+'">'+tien(rong)+'</b></div></div>'+
         (Object.keys(CPCD).length
@@ -3193,6 +3326,7 @@ function veBC(){
       huyHieu_(ok.length,truocDon)+'</div>'+
     '<div><small>Tiền ship thu</small><b>'+tien(ship)+'</b></div>'+
     '<div><small>Tiền chành xe (shop chịu)</small><b style="color:var(--bad)">'+tien(phiChanh)+'</b></div>'+
+    '<div><small>Ship shop chịu</small><b style="color:var(--bad)">'+tien(shipShop)+'</b></div>'+
     '<div'+(chiPhiTrongKy.length?' class="kpiclick" onclick="toggleChiPhiBC()"':'')+'>'+
       '<small>Chi phí'+(chiPhiTrongKy.length?' <span class="mui">↗</span>':'')+'</small>'+
       '<b style="color:var(--bad)">'+tien(tongChiPhi)+'</b>'+
@@ -3887,6 +4021,7 @@ function ctDon(ma){
     (d.nguoiGiao?'<div class="sm">Người giao: <b>'+esc(d.nguoiGiao)+'</b></div>':'')+
     (d.ttHt?'<div class="sm">Thanh toán: <b>'+esc(d.ttHt)+(d.tkNhan?' — '+esc(d.tkNhan):'')+'</b></div>':'')+
     (d.phiChanh?'<div class="sm" style="color:var(--bad)">Phí giao chành (shop chịu): '+tien(d.phiChanh)+'</div>':'')+
+    (d.shipShop?'<div class="sm" style="color:var(--bad)">Ship shop chịu: '+tien(d.shipShop)+'</div>':'')+
     '<table style="margin-top:8px"><tr><th>Sản phẩm</th><th>ĐV</th><th class="r">SL</th>'+
     (tgGiaoCua(d)==='DU'?'':'<th class="r">Đã giao</th>')+
     '<th class="r">Giá bán</th><th class="r">Thành tiền</th><th class="r">Giá vốn</th><th class="r">Lãi</th>'+
@@ -4126,7 +4261,7 @@ function moSuaDon(ma){
   $('sdInfo').innerHTML='Ngày: '+esc(d.ngay)+' · Số lần sửa hiện tại: <b>'+(d.sualan||0)+'</b>'+
     '<br><span class="sm">Lưu ở đây tính là một lần sửa mới, ghi vào lịch sử đơn — nhân viên cũng thấy được.</span>';
   $('sdKhach').value=d.khach||''; $('sdSdt').value=d.sdt||''; $('sdDc').value=d.dc||'';
-  $('sdShip').value=d.ship||0; $('sdGiam').value=d.giam||0; $('sdPhiChanh').value=d.phiChanh||0;
+  $('sdShip').value=d.ship||0; $('sdGiam').value=d.giam||0; $('sdPhiChanh').value=d.phiChanh||0; $('sdShipShop').value=d.shipShop||0;
   $('sdGc').value=d.gc||'';
   $('sdNgay').value=d.iso||''; $('sdNgay').max=new Date(Date.now()+7*3600e3).toISOString().slice(0,10);
   var sp=Object.keys(GIA).filter(function(k){return !GIA[k].ngung})
@@ -4173,7 +4308,7 @@ async function luuSuaDon(){
   if(!EDQL.dong.length){ $('sdErr').innerHTML='<div class="msg er">Đơn phải có ít nhất 1 sản phẩm.</div>'; return }
   var khach=$('sdKhach').value.trim(), sdt=$('sdSdt').value.trim(), dc=$('sdDc').value.trim(), gc=$('sdGc').value.trim();
   if(!khach){ $('sdErr').innerHTML='<div class="msg er">Phải có tên khách.</div>'; return }
-  var ship=n2($('sdShip').value), giam=n2($('sdGiam').value), phiChanh=n2($('sdPhiChanh').value);
+  var ship=n2($('sdShip').value), giam=n2($('sdGiam').value), phiChanh=n2($('sdPhiChanh').value), shipShop=n2($('sdShipShop').value);
   var hang=EDQL.dong.reduce(function(a,x){return a+x.sl*x.gia},0), tong=hang+ship-giam;
 
   // Dựng lại danh sách thay đổi để ghi lịch sử — cùng tinh thần với edLuu() bên máy nhân viên.
@@ -4187,6 +4322,7 @@ async function luuSuaDon(){
   if((d.ship||0)!==ship) td.push('Tiền ship: '+tien(d.ship||0)+' → '+tien(ship));
   if((d.giam||0)!==giam) td.push('Giảm giá: '+tien(d.giam||0)+' → '+tien(giam));
   if((d.phiChanh||0)!==phiChanh) td.push('Phí giao chành: '+tien(d.phiChanh||0)+' → '+tien(phiChanh));
+  if((d.shipShop||0)!==shipShop) td.push('Ship shop chịu: '+tien(d.shipShop||0)+' → '+tien(shipShop));
   if((d.khach||'')!==khach) td.push('Khách: '+(d.khach||'')+' → '+khach);
   if((d.sdt||'')!==sdt) td.push('SĐT: '+(d.sdt||'')+' → '+sdt);
   if((d.dc||'')!==dc) td.push('Địa chỉ: '+(d.dc||'(trống)')+' → '+(dc||'(trống)'));
@@ -4206,7 +4342,7 @@ async function luuSuaDon(){
   var lsMoi=lsCu.concat(['[Lan '+sualanMoi+' - '+nowStr()+' - QUẢN LÝ] '+td.join('; ')]);
 
   var goiDon={ma:d.ma, ngay:ngayMoi, iso:isoMoi, kenh:d.kenh, sdt:sdt, khach:khach, dc:dc,
-    ship:ship, giam:giam, phiChanh:phiChanh, nguoiGiao:d.nguoiGiao||'', tong:tong, sualan:sualanMoi, gc:gc,
+    ship:ship, giam:giam, phiChanh:phiChanh, shipShop:shipShop, nguoiGiao:d.nguoiGiao||'', tong:tong, sualan:sualanMoi, gc:gc,
     tt:d.tt||'CHUA', ttHt:d.ttHt||'', tkNhan:d.tkNhan||'', daTra:d.daTra||0,
     inLan:d.inLan||0, inLuc:d.inLuc||'', bgv:d.bgv||'', tgGiao:d.tgGiao||'DU', daGiao:d.daGiao||null, dot:d.dot||null,
     ls:lsMoi.join(' || '),
@@ -4536,9 +4672,9 @@ async function luuDoiSku_(){
     Object.keys(GIA).forEach(function(k){ if(GIA[k].gopVao===cu) GIA[k].gopVao=moi });
     set('alias',ALIAS); set('gia',GIA); tinhLaiToanBoSO();
     DOI_SKU=null; veGia(); veSo(); veBC(); vePhat();
-    await dayVon(false);
+    await dayVon(false); phatGia(true);
     bao('giaMsg','Đã đổi <b>'+esc(cu)+'</b> → <b>'+esc(moi)+'</b>. Đơn cũ giữ nguyên, '+(j.doi||0)+' giá riêng của khách đã chuyển theo. '+
-      'Nhớ bấm <b>Cập nhật bảng giá</b> để máy nhân viên nhận mã mới.','ok');
+      'Máy nhân viên tự nhận mã mới trong vòng một phút.','ok');
   }catch(e){ b.disabled=false; b.textContent='Đổi mã'; bao('giaMsg','Chưa đổi được: '+esc(e.message),'er') }
 }
 function chonGia(sku,ck){ if(ck) GIA_CHON[sku]=true; else delete GIA_CHON[sku]; veChonGia() }
@@ -4613,8 +4749,8 @@ function banLai(sku){
     delete GIA[sku].gopVao;
     tinhLaiToanBoSO(); veCB(); veSo(); veBC();
   }
-  GIA[sku].ngung=false; set('gia',GIA); giaLai();
-  bao('giaMsg','Đã cho bán lại <b>'+esc(GIA[sku].ten)+'</b>. Nhớ bấm <b>Cập nhật bảng giá</b> để máy nhân viên nhận.','ok');
+  GIA[sku].ngung=false; set('gia',GIA); giaLai(); henDayVon_();
+  bao('giaMsg','Đã cho bán lại <b>'+esc(GIA[sku].ten)+'</b>. Đang tự lưu và phát cho máy nhân viên.','ok');
 }
 
 /* ══════════ PHÁT BẢNG GIÁ CHO MÁY NHÂN VIÊN ══════════ */
@@ -4665,8 +4801,8 @@ async function phatGia(im){
     var loi=loiQD();
     if(loi.length){
       if(im){
-        bao('giaMsg','Đã xoá xong, nhưng <b>CHƯA phát được cho máy nhân viên</b> vì còn '+loi.length+
-          ' món giá sỉ vô lý trong bảng giá (không liên quan món vừa xoá). '+
+        bao('giaMsg','Đã lưu, nhưng <b>CHƯA phát được cho máy nhân viên</b> vì còn '+loi.length+
+          ' món giá sỉ vô lý trong bảng giá. '+
           'Xử lý xong rồi bấm <b>Cập nhật bảng giá</b> tay.','wa');
         return;
       }
@@ -4696,8 +4832,8 @@ async function phatGia(im){
     var j=JSON.parse(await r.text());
     if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
     BGV={ver:j.ver,luc:nowStr(),so:j.so}; set('bgv',BGV); vePhat();
-    if(im) bao('giaMsg','Đã xoá và phát lại cho máy nhân viên ('+j.so.toLocaleString('vi-VN')+
-      ' mặt hàng) — sẽ hết thấy món đó trong vòng một phút.','ok');
+    if(im) bao('giaMsg','Đã tự lưu lên Sheet và phát cho máy nhân viên ('+j.so.toLocaleString('vi-VN')+
+      ' mặt hàng) — máy nhân viên nhận trong vòng một phút.','ok');
     else bao('giaMsg','Đã phát <b>'+j.so.toLocaleString('vi-VN')+' mặt hàng</b> (bản '+esc(j.ver)+').<br>'+
       'Máy nhân viên sẽ tự nhận trong vòng một phút — nhân viên không phải làm gì.','ok');
   }catch(e){
@@ -5001,7 +5137,7 @@ function themQD(sku){ var p=GIA[sku]; if(!p)return;
   p.qd_dv='Thùng'; p.qd_sl=1; p.qd_gb=p.gb||0; set('gia',GIA); giaLai() }
 function boQD(sku){ var p=GIA[sku]; if(!p)return;
   if(!confirm('Bỏ giá sỉ của "'+p.ten+'"?\n\nNhân viên sẽ chỉ bán được theo '+(p.dvt||'đơn vị lẻ')+'.'))return;
-  p.qd_dv='';p.qd_sl=0;p.qd_gb=0;p.qd_von=0;p.soat=0; set('gia',GIA); giaLai(); vePhat() }
+  p.qd_dv='';p.qd_sl=0;p.qd_gb=0;p.qd_von=0;p.soat=0; set('gia',GIA); giaLai(); vePhat(); henDayVon_() }
 
 /* Dòng nào giá sỉ vô lý thì chặn không cho phát */
 function loiQD(){
@@ -5029,7 +5165,7 @@ function boQDLoat(){
     'Giá lẻ, tên hàng, giá vốn giữ nguyên — không mất gì.\n\n'+
     'Sau này có giá sỉ đúng thì vào từng món bấm "+ Thêm giá sỉ".'))return;
   ds.forEach(function(p){ p.qd_dv='';p.qd_sl=0;p.qd_gb=0;p.qd_von=0;p.soat=1 });
-  set('gia',GIA); LOCQD=null; GLIM=40; veGia(); vePhat();
+  set('gia',GIA); LOCQD=null; GLIM=40; veGia(); vePhat(); henDayVon_();
   bao('giaMsg','Đã bỏ giá sỉ của <b>'+ds.length+' món</b>. Giờ bấm <b>Cập nhật bảng giá</b> được rồi.<br>'+
     '<span class="sm">Danh sách 72 món cần soát lại nằm trong file <b>CAN_SOAT_LAI.csv</b> tôi gửi kèm.</span>','ok');
 }
@@ -5084,8 +5220,8 @@ function henDayVon_(){
     if(a && /^(INPUT|SELECT)$/.test(a.tagName) && a.closest && a.closest('#dsGia')){ henDayVon_(); return }   // còn đang gõ ô khác
     if(tinhLaiIm_()){ veSo(); veBC(); veCB() }
     await dayVon(false);
-    if(VON_CHO_DAY){ VON_HEN_BG=setTimeout(henDayVon_,30000); bao('giaMsg','Chưa lưu được bảng giá lên Sheet (mạng?) — sẽ tự thử lại.','wa') }
-    else bao('giaMsg','Đã tự lưu bảng giá lên Sheet — máy quản lý khác sẽ thấy trong khoảng 20 giây.','ok');
+    if(VON_CHO_DAY){ VON_HEN_BG=setTimeout(henDayVon_,30000); bao('giaMsg','Chưa lưu được bảng giá lên Sheet (mạng?) — sẽ tự thử lại.','wa'); return }
+    await phatGia(true);   // 28/10/2026 chủ: không cần bấm "Cập nhật bảng giá" — tự phát cho máy nhân viên
   },1500);
 }
 function setN(sku,f,v){var p=GIA[sku]; p[f]=n2(v)||null;
@@ -5136,7 +5272,7 @@ function luuSP(){
   GIA[sku]={sku:sku,ten:t,brand:$('spBrand').value.trim(),nhom:$('spNhom').value,
             dvt:$('spDvt').value.trim()||'Cái',gb:gb,von:n2($('spVon').value)||null,
             vat:$('spNhom').value==='THỨC ĂN'?0:null};
-  set('gia',GIA); $('dlgSP').close(); $('gq').value=t; veGia();
+  set('gia',GIA); $('dlgSP').close(); $('gq').value=t; veGia(); henDayVon_();
   bao('giaMsg','Đã thêm <b>'+esc(t)+'</b> — mã <b>'+sku+'</b>','ok');
 }
 /* SỬA 30/09/2026 — chủ báo "đã điền giá vốn mà đơn vẫn treo": trước đây tra GIA[x.sku] thẳng,
@@ -5436,6 +5572,7 @@ async function dayVon(im){
     var j=JSON.parse(await r.text());
     if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
     VONVER=j.ver; set('vonver',VONVER); VON_CHO_DAY=false;
+    VERQL.von=j.ver; set('verql',VERQL);   // lần lưu của chính máy này không tính là "người khác vừa sửa" — tự lưu lần sau khỏi bị hỏi oan
     if(im) bao('giaMsg','Đã lưu <b>'+j.so.toLocaleString('vi-VN')+' dòng</b> lên Google Sheet '+
       '(trang BANG_GIA_QL, chỉ mở được bằng mật khẩu quản lý).<br>'+
       '<span class="sm">Gồm cả giá bán, giá vốn, hàng ngừng bán. Điện thoại và máy quản lý kia '+
@@ -6611,6 +6748,28 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261028n', ngay:'28/10/2026', ten:'Giao diện tối kiểu chiến thuật',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['sua','Chế độ <b>tối</b> đổi sang giao diện chiến thuật: nền đen than, vạch chanh, góc vuông, chữ in hoa; rê nút có vệt sáng quét, chuyển tab mở ra từ trái, hộp thoại bung từ giữa. Chế độ sáng giữ nguyên.'],
+  ]},
+ {ban:'20261028m', ngay:'28/10/2026', ten:'Ship shop chịu',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['moi','Đơn có thêm khoản <b>Ship shop chịu</b> (ship / thuê xe ngoài cửa hàng tự trả), tách riêng khỏi phí chành. Lãi từng đơn và <b>Lãi ròng</b> ở Báo cáo đã trừ khoản này; Sửa đơn sửa được.'],
+  ]},
+ {ban:'20261028l', ngay:'28/10/2026', ten:'Gộp sản phẩm dễ hơn, có màu',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['sua','Hộp gộp có màu cho dễ nhìn: vạch xanh = món đã có giá vốn (nên chọn làm gốc), vạch cam = chưa có giá vốn.'],
+   ['sua','Tích từ 2 món rồi bấm <b>Gộp vào…</b>: hộp hiện ngay các món đã tích, bấm <b>Đây là món gốc</b> ở món gốc là xong — không phải tìm trong cả danh mục. Hệ số quy đổi tự đoán theo tên (5kg so với 1kg → 5), hộp xác nhận ghi rõ để kiểm tra.'],
+  ]},
+ {ban:'20261028j', ngay:'28/10/2026', ten:'Tự cập nhật · Bảng giá tự phát cho nhân viên',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['sua','Có bản phần mềm mới thì máy <b>tự cập nhật</b> lúc rảnh tay (không đang gõ, không mở hộp nào, 20 giây không ai chạm) — không cần bấm "Cập nhật ngay".'],
+   ['sua','Sửa gì ở <b>Bảng giá</b> (giá, tên, thêm món, gộp, đổi mã, bán lại, bỏ giá sỉ…) là tự lưu lên Sheet <b>và tự phát cho máy nhân viên</b> — không cần bấm "Cập nhật bảng giá".'],
+  ]},
  {ban:'20261028i', ngay:'28/10/2026', ten:'Bảng giá tự lưu lên Sheet',
   vaPhieu:[], vaNoi:[],
   muc:[
@@ -7560,6 +7719,8 @@ function cnKhoiVa(){
     if(t==='bc') DEM_TOI=Date.now()+1500;
     return r } }
   addEventListener('resize',dichPill); setTimeout(dichPill,300);
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(dichPill);   // phông chữ tải xong làm đổi bề rộng nút → đo lại vạch
+  if(window.ResizeObserver&&nav) new ResizeObserver(dichPill).observe(nav);
   // ⑥ khung chờ thay chữ "Đang tính…"
   new MutationObserver(function(ms){ ms.forEach(function(m){ [].forEach.call(m.addedNodes,function(n){
     if(n.querySelectorAll) [].forEach.call(n.querySelectorAll('.empty'),function(e){ if(/^Đang tính/.test(e.textContent)) e.classList.add('dangTinh') }) }) }) })
