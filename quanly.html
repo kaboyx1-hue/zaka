@@ -438,6 +438,13 @@ dialog::backdrop{background:rgba(0,0,0,.45);backdrop-filter:blur(6px) grayscale(
 .spbd-x span{flex:1;min-width:0;text-align:center;font-size:11px;color:var(--tx2);white-space:nowrap;overflow:visible;font-variant-numeric:tabular-nums}
 .spbd-x small{display:block;font-size:11px;color:var(--tx);font-weight:600}
 .spbd-phu{margin-top:12px}
+.lr-hang{display:flex;flex-wrap:wrap;gap:8px}
+.lr-o{flex:1 1 140px;background:var(--c2);border:1px solid var(--line);border-radius:12px;padding:9px 12px}
+.lr-o small{display:block;font-size:12px;color:var(--tx2)}
+.lr-o b{font-size:17px;font-variant-numeric:tabular-nums}
+.lr-o.lr-kq{border:2px solid var(--ok)}
+.cpBang input{padding:6px 8px}
+.cpBang td{padding:4px 6px}
 .thSap{cursor:pointer;user-select:none;white-space:nowrap}
 .thSap span{color:var(--tx2);font-weight:400}
 .thSap:hover{color:var(--tx)}
@@ -742,6 +749,14 @@ dialog::backdrop{background:rgba(0,0,0,.45);backdrop-filter:blur(6px) grayscale(
   </div>
 
 
+  <div class="card"><h2>Chi phí cố định hằng tháng</h2>
+    <div class="sm" style="margin-bottom:8px">Tiền nhà, lương, điện nước, internet, phần mềm… Nhập số tiền <b>mỗi tháng</b>. Báo cáo tự chia đều theo ngày
+      (xem 10 ngày thì trừ 10 ngày) rồi trừ ra <b>Lãi ròng</b>. Chỉ máy quản lý thấy, đồng bộ giữa các máy quản lý.</div>
+    <div id="cpcdDs"></div>
+    <button class="btn-nho mt" onclick="cpThem()">+ Thêm khoản chi cố định</button>
+  </div>
+
+
   <div class="card"><h2>Ngưỡng huy hiệu khách</h2>
     <div class="sm" style="margin-bottom:8px">Chỉnh mức chi tiêu để lên "Khách quen"/"VIP" (kênh Lẻ, Thú y) và "VVIP" (kênh Breeder) — đổi ở đây áp dụng ngay cho Sổ cái, Báo cáo, Cần làm trên MÁY NÀY. Kênh Sỉ cố định chỉ hiện "Sỉ", không xét theo tiền.</div>
     <div id="nguongHhMsg"></div>
@@ -883,6 +898,12 @@ dialog::backdrop{background:rgba(0,0,0,.45);backdrop-filter:blur(6px) grayscale(
   </div>
   <label>Tìm sản phẩm để làm mã chính</label>
   <input id="gopQ" placeholder="Gõ tên sản phẩm…" oninput="veGopKQ()">
+  <div style="margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--c2)">
+    <label class="sm" style="display:block;margin-bottom:4px"><b>Quy đổi</b> (khi mã này là bao/túi lớn của mã chính)</label>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap" class="sm">1 <span id="gopDvPhu">đơn vị</span> mã này =
+      <input id="gopHs" inputmode="decimal" value="1" style="width:80px;padding:6px 8px;text-align:right"> đơn vị của mã chính</div>
+    <div class="sm" style="margin-top:4px">Vd "Cát Sand 5kg" gộp vào "Cát Sand 1kg" thì điền <b>5</b> — giá vốn đơn cũ = 5 × giá vốn 1kg. Cùng một món thì để 1.</div>
+  </div>
   <div id="gopKQ" style="margin-top:10px;max-height:280px;overflow:auto"></div>
   <div id="gopErr"></div>
   <div class="row mt">
@@ -957,7 +978,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261028f';
+var APP_VER='20261028h';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1201,6 +1222,17 @@ function tinhLaiDon(d, von){ return d.tienHang - von - (d.phiChanh||0) }
    nào. Đây là lý do chọn cách này thay vì sửa thẳng mã SKU trong lịch sử
    đơn — sửa lịch sử là vùng cấm theo nguyên tắc an toàn của hệ thống.
    ══════════════════════════════════════════════════════════════════ */
+/* GỘP CÓ QUY ĐỔI — 28/10/2026 chủ: mã nhân viên tạo (vd "Cát Sand 5kg") thật ra là quy đổi của mã gốc (1kg).
+   ALIAS_HS[mã phụ] = 1 đơn vị mã phụ bằng bao nhiêu đơn vị mã chính (mặc định 1 = gộp thường). Đơn cũ không sửa,
+   chỉ cách TÍNH vốn đổi: vốn 1 dòng = vốn mã chính × hệ số. Lưu trong CAI_DAT_QL (khoá 'aliashs'). */
+var ALIAS_HS=get('aliashs',{});
+function hsGop_(sku){ var f=1, s=sku, dem=0; while(ALIAS[s] && dem<10){ f*=Number(ALIAS_HS[s])||1; s=ALIAS[s]; dem++ } return f }
+function vonDong_(x){
+  var p=GIA[skuChinh(x.sku)]; if(!p) return 0;
+  var f=hsGop_(x.sku);
+  if(f===1) return x.hs>1 ? (p.qd_von||(p.von||0)*x.hs) : (p.von||0);
+  return (p.von||0)*(x.hs||1)*f;
+}
 function skuChinh(sku){
   var s=sku, dem=0;
   while(ALIAS[s] && dem<10){ s=ALIAS[s]; dem++ }   // dem chặn vòng lặp nếu lỡ gộp vòng tròn
@@ -2004,12 +2036,14 @@ function diemGiuLai_(k){
    Đây cũng đúng luật an toàn sẵn có ở xoaSP(): đã gộp thì xoá mới an toàn.
 
    Hoàn tác thì trả lại y nguyên cả dòng bảng giá đã xoá. */
-function gomVaDon_(phu, chinh, lyDo){
+function gomVaDon_(phu, chinh, lyDo, hs){
   var banCu = GIA[phu] ? JSON.parse(JSON.stringify(GIA[phu])) : null;
   var g={phu:phu, chinh:chinh, lyDo:lyDo||'',
          tenPhu:(GIA[phu]&&GIA[phu].ten)||phu, tenChinh:(GIA[chinh]&&GIA[chinh].ten)||chinh,
          banCu:banCu, daXoa:false};
   ALIAS[phu]=chinh;
+  if(hs>0 && hs!==1){ ALIAS_HS[phu]=hs; g.hs=hs } else delete ALIAS_HS[phu];
+  set('aliashs',ALIAS_HS);
   if(GIA[phu]){ GIA[phu].ngung=true; GIA[phu].gopVao=chinh }
   /* Xoá hẳn khi mã thừa KHÔNG còn giá trị riêng nào đáng giữ: không có giá vốn
      chủ tự điền, và không có giá bán khác mã chính. Còn thứ đáng giữ thì chỉ
@@ -2049,7 +2083,7 @@ function dongHoi(){
 function hoanTacGom(i){
   var g=NHAT_KY_GOM[i]; if(!g) return;
   if(!confirm('Tách "'+g.tenPhu+'" ra khỏi "'+g.tenChinh+'" như cũ?')) return;
-  delete ALIAS[g.phu];
+  delete ALIAS[g.phu]; if(ALIAS_HS[g.phu]){ delete ALIAS_HS[g.phu]; set('aliashs',ALIAS_HS) }
   if(LY_DO_GOM[g.phu]){ delete LY_DO_GOM[g.phu]; set('lydogom',LY_DO_GOM) }
   if(g.daXoa && g.banCu){ GIA[g.phu]=JSON.parse(JSON.stringify(g.banCu)) }  // dựng lại y nguyên dòng đã xoá
   if(GIA[g.phu]){ GIA[g.phu].ngung=false; delete GIA[g.phu].gopVao }
@@ -2127,8 +2161,10 @@ function gopHetNhomChac(){
    1) mục "Sản phẩm nghi trùng tên" (tự phát hiện, tên phải khớp y hệt sau khi bỏ dấu)
    2) nút "Gộp vào…" ở bảng giá (chọn tay, dùng khi tên gõ khác nhau — thừa/thiếu chữ,
       sai chính tả — nên không tự phát hiện được). */
-function thucHienGop(khac, chinh){
+function thucHienGop(khac, chinh, hs){
+  hs=Number(hs)||1;
   if(!confirm('Gộp '+khac.length+' mã vào mã chính '+chinh+'?\n\n'+khac.join('\n')+
+    (hs!==1?'\n\nQUY ĐỔI: 1 '+((GIA[khac[0]]&&GIA[khac[0]].dvt)||'đơn vị')+' mã phụ = '+hs+' '+((GIA[chinh]&&GIA[chinh].dvt)||'đơn vị')+' mã chính → giá vốn đơn cũ = '+hs+' × giá vốn mã chính.':'')+
     '\n\nCác đơn cũ dùng mã này vẫn giữ nguyên trên Google Sheet — CHỈ gộp chung cách TÍNH GIÁ VỐN và '+
     'HIỂN THỊ báo cáo (lãi/lỗ), KHÔNG đụng gì tới giá bán — mã này vẫn bán bình thường cho nhân viên với '+
     'đúng giá bán riêng của nó (giá có thể khác mã chính, tuỳ khách/kênh).\n\n'+
@@ -2140,7 +2176,7 @@ function thucHienGop(khac, chinh){
      giữ thứ gì riêng thì DỌN HẲN khỏi bảng giá, đúng ý chủ. Mã nào còn giá vốn
      chủ tự tay điền, hoặc còn giá bán khác mã chính, thì vẫn chỉ ẩn đi. */
   var daXoa=0;
-  khac.forEach(function(k){ if(gomVaDon_(k, chinh).daXoa) daXoa++ });
+  khac.forEach(function(k){ if(gomVaDon_(k, chinh, '', hs).daXoa) daXoa++ });
   veCB(); veSo(); veBC(); veGia(); vePhat(); veLam();
   bao('inMsg','Đã gộp <b>'+khac.length+'</b> mã vào <b>'+esc(chinh)+'</b> — dùng chung giá vốn và báo cáo. '+
     (daXoa?('Đã <b>dọn hẳn '+daXoa+' mã thừa</b> khỏi bảng giá. '):'')+
@@ -2159,7 +2195,7 @@ function moGopSP(skuPhu){
     ? '"'+GIA[ds[0]].ten+'" ('+ds[0]+')'
     : ds.length+' sản phẩm đã chọn: '+ds.map(function(s){return GIA[s].ten}).join(', ');
   $('gopQ').value=ds.length===1?(GIA[ds[0]].ten||''):'';
-  $('gopErr').innerHTML='';
+  $('gopErr').innerHTML=''; $('gopHs').value='1'; $('gopDvPhu').textContent=(GIA[ds[0]].dvt||'đơn vị');
   document.getElementById('dlgGopSP').showModal();
   veGopKQ();
   setTimeout(function(){ $('gopQ').focus(); $('gopQ').select() },50);
@@ -2184,7 +2220,9 @@ function veGopKQ(){
 }
 function xacNhanGopThuCong(skuChinhMoi){
   if(!GOP_PHU||!GOP_PHU.length||!GIA[skuChinhMoi]){ $('gopErr').innerHTML='<div class="msg er">Dữ liệu không hợp lệ, mở lại.</div>'; return }
-  var ok=thucHienGop(GOP_PHU, skuChinhMoi);
+  var hs=Number(String($('gopHs').value||'1').replace(',','.'))||1;
+  if(hs<=0){ $('gopErr').innerHTML='<div class="msg er">Hệ số quy đổi phải lớn hơn 0.</div>'; return }
+  var ok=thucHienGop(GOP_PHU, skuChinhMoi, hs);
   if(ok){ document.getElementById('dlgGopSP').close(); GOP_PHU=null; boChonGia() }
 }
 /* Tính lại vốn/lãi/thiếu-vốn cho TOÀN BỘ sổ cái sau khi gộp sản phẩm — cùng
@@ -2198,7 +2236,7 @@ function tinhLaiToanBoSO(){
     var von=0, coThieu=false;
     (d.dong||[]).forEach(function(x){
       var pSku=skuChinh(x.sku), p=GIA[pSku];
-      var v=p?((x.hs>1)?(p.qd_von||(p.von||0)*x.hs):(p.von||0)):0;
+      var v=vonDong_(x);
       if(!p||!p.von) coThieu=true;
       x.von=v; x.tongVon=v*x.sl; x.lai=(x.thanhTien||x.gia*x.sl)-v*x.sl; von+=v*x.sl;
     });
@@ -2368,6 +2406,45 @@ var VERQL=get('verql',{don:'',von:'',sv:'',nv:'',kt:'',ship:''});
 var SHIP=get('ship',[]);   // danh sách shipper: {ten, luongGio, bienSo, gc}
 var NGUOI_PT=get('nguoiphutrach',['Chủ','Vợ chủ']); // danh sách người phụ trách cho tab Việc cần làm — cục bộ máy này
 var TK=get('tk',[]);       // danh sách tài khoản nhận chuyển khoản: {ten, gc}
+/* CHI PHÍ CỐ ĐỊNH — 28/10/2026 chủ: "mỗi tháng có một số khoản cố định". {id:{ten,tien(/tháng),tu:'yyyy-mm',den:'yyyy-mm'|''}}.
+   Lưu trong CAI_DAT_QL (khoá 'cpcd'). Báo cáo chia đều theo ngày: mỗi ngày trong kỳ cộng tien/số ngày của tháng đó. */
+var CPCD=get('cpcd',{});
+function cpCoDinhKy_(a,b){
+  var homNay=new Date(Date.now()+7*3600e3).toISOString().slice(0,10);
+  if(!b||b>homNay) b=homNay;                 // chưa tới ngày thì chưa tốn
+  var ra={tong:0,khoan:{}}; if(!a||a>b) return ra;
+  var d=new Date(a+'T00:00:00'), cuoi=new Date(b+'T00:00:00'), an=0;
+  while(d<=cuoi && an++<4000){
+    var ym=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2), soNgay=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+    Object.keys(CPCD).forEach(function(id){ var k=CPCD[id];
+      if(!(Number(k.tien)>0) || (k.tu&&ym<k.tu) || (k.den&&ym>k.den)) return;
+      var t=Number(k.tien)/soNgay; ra.tong+=t; ra.khoan[id]=(ra.khoan[id]||0)+t });
+    d.setDate(d.getDate()+1);
+  }
+  ra.tong=Math.round(ra.tong); Object.keys(ra.khoan).forEach(function(id){ ra.khoan[id]=Math.round(ra.khoan[id]) });
+  return ra;
+}
+function cpThem(){ var id='cp'+Date.now().toString(36); CPCD[id]={ten:'',tien:0,tu:new Date(Date.now()+7*3600e3).toISOString().slice(0,7),den:''};
+  set('cpcd',CPCD); veCPCD(); var o=document.querySelector('[data-cpten="'+id+'"]'); if(o) o.focus() }
+function cpSua(id,f,v){ if(!CPCD[id]) return; CPCD[id][f]= f==='tien'?n2(v):String(v||'').trim(); set('cpcd',CPCD); if(f!=='ten') veCPCD(); try{ veBC() }catch(e){} }
+function cpXoa(id){ var k=CPCD[id]; if(!k) return;
+  if(!confirm('Xoá khoản "'+(k.ten||'(chưa đặt tên)')+'"? Báo cáo các tháng cũ cũng không trừ khoản này nữa.\nNếu chỉ là thôi trả từ tháng nào đó, hãy điền ô "Đến tháng" thay vì xoá.')) return;
+  delete CPCD[id]; set('cpcd',CPCD); veCPCD(); try{ veBC() }catch(e){} }
+function veCPCD(){
+  var e=$('cpcdDs'); if(!e) return;
+  var ids=Object.keys(CPCD);
+  var tong=ids.reduce(function(a,id){ var k=CPCD[id], ym=new Date(Date.now()+7*3600e3).toISOString().slice(0,7);
+    return a+((Number(k.tien)>0&&(!k.tu||k.tu<=ym)&&(!k.den||k.den>=ym))?Number(k.tien):0) },0);
+  e.innerHTML=(ids.length?'<div style="overflow-x:auto"><table class="cpBang"><tr><th>Khoản chi</th><th class="r">Mỗi tháng</th><th>Từ tháng</th><th>Đến tháng</th><th></th></tr>'+
+    ids.map(function(id){ var k=CPCD[id];
+      return '<tr><td><input data-cpten="'+id+'" value="'+esc(k.ten||'')+'" placeholder="vd Tiền nhà" onchange="cpSua(\''+id+'\',\'ten\',this.value)"></td>'+
+        '<td class="r"><input inputmode="numeric" style="text-align:right" value="'+(k.tien?Number(k.tien).toLocaleString('vi-VN'):'')+'" placeholder="0" oninput="dinhDangTien(this)" onchange="cpSua(\''+id+'\',\'tien\',this.value)"></td>'+
+        '<td><input type="month" value="'+esc(k.tu||'')+'" onchange="cpSua(\''+id+'\',\'tu\',this.value)"></td>'+
+        '<td><input type="month" value="'+esc(k.den||'')+'" title="Để trống = vẫn đang trả" onchange="cpSua(\''+id+'\',\'den\',this.value)"></td>'+
+        '<td><button class="mini" style="color:var(--bad)" onclick="cpXoa(\''+id+'\')">Xoá</button></td></tr>' }).join('')+
+    '</table></div><div class="sm mt">Tháng này đang tính: <b>'+tien(tong)+'</b> / tháng.</div>'
+    :'<div class="sm">Chưa có khoản nào.</div>');
+}
 var CHIPHI_QL=get('chiphiql',[]);   // chi phí nhân viên báo lên: {ma,ngay,iso,may,nv,muc,tien,gc}
 var TINHGIA_LUU=get('tinhgialuu',[]);   // lịch sử tính giá đã lưu lên Sheet (tab Tính giá sàn/Sỉ)
 var VIEC_CL=get('vieccl',[]);   // "Việc cần làm" — nay lưu Sheet (VIEC_CAN_LAM), giữ bản chép cục bộ để mở lại nhanh
@@ -2386,7 +2463,7 @@ var TRUC_DA_NAP=false, TRUC_LUU_LUC=0, KEO_BAT_DAU=0;
    CAI_DAT_QL (1 dòng/khoá, giá trị JSON). Lần đầu một máy nối vào: GỘP phần máy đó đang có với
    phần trên Sheet (không mất quyết định nào của máy nào) rồi đẩy lên. Từ đó Sheet là bản gốc.
    ponytail: ghi đè cả gói — hai máy cùng sửa trong ~20 giây thì bản ghi sau thắng. */
-var CD_KHOA=['alias','khacmon','ksxong','anviec','hanthu','nguongHuyHieu','lydogom','ks_phieu','tinhgia'];
+var CD_KHOA=['alias','khacmon','ksxong','anviec','hanthu','nguongHuyHieu','lydogom','ks_phieu','tinhgia','cpcd','aliashs'];
 var CD_DANG_NAP=false, CD_HEN=null, CD_DA_NAP=false, CHO_GUI_KHO=false, CD_CHO_DAY=false, CD_SO=0;
 /* 28/09/2026 — dữ liệu trang Tính giá sàn (khoá 'tinhgia' = {khoá trình duyệt: giá trị}) lưu mỗi khoá một dòng
    'tg:<khoá>' trên CAI_DAT_QL (tránh 1 ô quá dài). Chỉ gửi xuống trang con SAU khi đã kéo Sheet về — gửi sớm
@@ -2417,12 +2494,12 @@ function napCaiDat_(ds){
   CD_DANG_NAP=false;
   // nạp lại biến đang chạy
   ALIAS=get('alias',{}); KHAC_MON=get('khacmon',{}); KS_XONG=get('ksxong',{})||{}; LY_DO_GOM=get('lydogom',{});
-  HAN_THU=get('hanthu',7); NGUONG_HH_=get('nguongHuyHieu',NGUONG_HH_MACDINH_);
+  HAN_THU=get('hanthu',7); NGUONG_HH_=get('nguongHuyHieu',NGUONG_HH_MACDINH_); CPCD=get('cpcd',{}); ALIAS_HS=get('aliashs',{});
   NGUONG_QUEN_=NGUONG_HH_.quen; NGUONG_VIP_=NGUONG_HH_.vip; NGUONG_VVIP_BREEDER_=NGUONG_HH_.vvipBreeder;
   if(GIA){ var va=false; Object.keys(ALIAS).forEach(function(k){ if(GIA[k]&&!GIA[k].gopVao){ GIA[k].gopVao=skuChinh(k); GIA[k].ngung=true; va=true } }); if(va) set('gia',GIA) }
   xoaDemNang_();
   if(lanDau){ set('cddanoi',true); cdDay_() }
-  try{ veLam(); veCB(); veNguongHuyHieu() }catch(e){}
+  try{ veLam(); veCB(); veNguongHuyHieu(); veCPCD() }catch(e){}
   CD_DA_NAP=true; if(CHO_GUI_KHO){ CHO_GUI_KHO=false; guiKhoChoTs_() }
 }
 function cdHenDay_(){ if(CD_DANG_NAP||!get('cddanoi',false)) return; CD_CHO_DAY=true; CD_SO++; clearTimeout(CD_HEN); CD_HEN=setTimeout(cdDay_,1500) }
@@ -2713,7 +2790,7 @@ function napDon(ds,nguon,ct){
     (d.dong||[]).forEach(function(x){
       var pSku=skuChinh(x.sku);
       var p=GIA[pSku];
-      var v=p?((x.hs>1)?(p.qd_von||(p.von||0)*x.hs):(p.von||0)):0;
+      var v=vonDong_(x);
       if(!p||!p.von){coThieu=true;thieu[pSku]=(thieu[pSku]||0)+1}
       x.von=v;x.tongVon=v*x.sl;x.lai=(x.thanhTien||x.gia*x.sl)-v*x.sl;von+=v*x.sl;
     });
@@ -2829,7 +2906,7 @@ function veTab_(t){
   if(t==='ts'){guiCatalogChoTs();guiTinhGiaChoTs();guiLuongShipperChoTs()}
   if(t==='vc'){guiViecChoVc()}
   if(t==='ns'){veNV();veNhanSu();veMayGui()}  // guiNguoiPTChoVc() bo hang 23/09 — khong con ai ben truc.html nghe
-  if(t==='vh'){veNV();veMayGui();veNhatKy();veKhaiTruong();nhacSaoLuu();veNvXemLS();veNguongHuyHieu();veNguoiPhuTrachQL()}
+  if(t==='vh'){veNV();veMayGui();veNhatKy();veKhaiTruong();nhacSaoLuu();veNvXemLS();veNguongHuyHieu();veCPCD();veNguoiPhuTrachQL()}
 }
 /* Gửi danh mục sản phẩm đang bán (SKU/tên/giá lẻ/giá vốn) cho tool tính giá
    sàn (tinh_gia.html, chạy trong iframe riêng) qua postMessage — không viết
@@ -3097,6 +3174,19 @@ function veBC(){
     '<div><small>Lãi gộp</small><b style="color:var(--ok)">'+tien(lai)+'</b> '+huyHieu_(lai,truocLai)+
       (truocLai?'<span class="sm" style="display:block;opacity:.65">kỳ trước '+tien(truocLai)+'</span>':'')+'</div>'+
     '<div><small>Biên lãi</small><b>'+(hang?(lai/hang*100).toFixed(1):0)+'%</b></div></div></div>'+
+    (function(){   // 28/10/2026: Lãi ròng = lãi gộp − chành xe − chi phí phát sinh − chi phí cố định (chia theo ngày)
+      var kh=KY==='tuychinh'?[TU_NGAY||khoangKy_('tatca')[0], DEN_NGAY||'']:khoangKy_(KY);
+      var cd=cpCoDinhKy_(kh[0],kh[1]), rong=lai-phiChanh-tongChiPhi-cd.tong;
+      var o=function(ten,v,am,bam){ return '<div class="lr-o'+(bam?' kpiclick" onclick="'+bam:'')+'"><small>'+ten+'</small><b>'+(am&&v?'− ':'')+tien(v)+'</b></div>' };
+      return '<div class="card lr"><h2 style="margin-bottom:8px">Lãi ròng</h2><div class="lr-hang">'+
+        o('Lãi gộp',lai)+o('Chành xe',phiChanh,1)+o('Chi phí phát sinh',tongChiPhi,1,chiPhiTrongKy.length?'toggleChiPhiBC()':'')+
+        o('Chi phí cố định',cd.tong,1,'tab(\'vh\')')+
+        '<div class="lr-o lr-kq"><small>= Lãi ròng</small><b style="color:'+(rong>=0?'var(--ok)':'var(--bad)')+'">'+tien(rong)+'</b></div></div>'+
+        (Object.keys(CPCD).length
+          ? (cd.tong?'<div class="sm mt">Chi phí cố định chia đều theo ngày trong kỳ (tới hôm nay): '+
+              Object.keys(cd.khoan).map(function(id){return esc(CPCD[id].ten||'(chưa đặt tên)')+' '+tien(cd.khoan[id])}).join(' · ')+'</div>':'')
+          : '<div class="sm mt">Chưa nhập chi phí cố định (tiền nhà, lương…) — vào tab <b>Vận hành</b> → "Chi phí cố định hằng tháng".</div>')+
+      '</div>' })()+
     veBieuDo_(ok)+'<div class="card">'+
     '<div class="kpi mt"><div'+(ok.length?' class="kpiclick" onclick="xemBCNhom(\'ghiNhan\',\'đơn đã ghi nhận doanh thu\')"':'')+'>'+
       '<small>Số đơn ghi nhận'+(ok.length?' <span class="mui">↗</span>':'')+'</small><b>'+ok.length+'</b> '+
@@ -4266,7 +4356,7 @@ function veGia(){
         (maCuCua_(p.sku).length?'<div class="sm" style="opacity:.7">mã cũ: '+esc(maCuCua_(p.sku).join(', '))+'</div>':'')+
         (p.moi?'<br><span class="tag w">nhân viên thêm</span>':'')+
         (p.gopVao?'<br><span class="tag w" style="color:var(--warn)" title="Chỉ gộp chung giá vốn/báo cáo — giá bán vẫn tính riêng, vẫn bán bình thường cho nhân viên">'+
-          'đã gộp giá vốn → '+esc(p.gopVao)+'</span>':'')+'</td>'+
+          'đã gộp giá vốn → '+esc(p.gopVao)+(ALIAS_HS[p.sku]?' ×'+ALIAS_HS[p.sku]:'')+'</span>':'')+'</td>'+
         '<td><input class="ten" style="padding:5px" value="'+esc(p.ten)+'" onchange="setF(\''+p.sku+'\',\'ten\',this.value)">'+
         (p.brand?'<div class="sm" style="color:var(--pur)">'+esc(p.brand)+'</div>':'')+
         '<select class="mini" style="margin-top:4px;max-width:100%" onchange="setF(\''+p.sku+'\',\'nhom\',this.value)">'+
@@ -4339,7 +4429,7 @@ function donVonNgay_(sku,tu,den,ghiDe){
   });
   return ra;
 }
-function vonDongMoi_(x,sku,v){ return skuChinh(x.sku)===sku ? (x.hs>1?v*x.hs:v) : (x.von||0) }
+function vonDongMoi_(x,sku,v){ return skuChinh(x.sku)===sku ? v*(x.hs||1)*hsGop_(x.sku) : (x.von||0) }
 function hopVonNgay_(p){
   setTimeout(xemVonNgay_,0);   // vẽ lại phần xem trước sau khi bảng giá dựng xong
   return '<div style="border:2px solid var(--acc);border-radius:12px;padding:10px 12px;margin:4px 0">'+
@@ -5044,7 +5134,7 @@ function tinhLaiIm_(){
     var von=0,thieu=false;
     d.dong.forEach(function(x){
       var p=GIA[skuChinh(x.sku)];
-      var v=p?(x.hs>1?(p.qd_von||(p.von||0)*x.hs):(p.von||0)):0;
+      var v=vonDong_(x);
       if(!p||!p.von)thieu=true;
       x.von=v;x.tongVon=v*x.sl;x.lai=x.thanhTien-v*x.sl;von+=v*x.sl});
     d.von=von;d.lai=tinhLaiDon(d,von);
@@ -6504,6 +6594,17 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261028h', ngay:'28/10/2026', ten:'Gộp sản phẩm có quy đổi',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['moi','Hộp <b>Gộp vào sản phẩm khác</b> (Bảng giá) có ô <b>Quy đổi</b>: vd "Cát Sand 5kg" gộp vào "Cát Sand 1kg" điền 5 → đơn cũ tính giá vốn = 5 × giá vốn 1kg. Đơn cũ không bị sửa, xoá mã phụ đơn vẫn còn; tháo gộp lúc nào cũng được.'],
+  ]},
+ {ban:'20261028g', ngay:'28/10/2026', ten:'Chi phí cố định hằng tháng · Lãi ròng',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['moi','Tab <b>Vận hành</b>: mục <b>Chi phí cố định hằng tháng</b> — nhập tiền nhà, lương, điện nước… (số tiền mỗi tháng, từ tháng nào, đến tháng nào).'],
+   ['moi','Tab <b>Báo cáo</b>: dòng <b>Lãi ròng</b> = Lãi gộp − Chành xe − Chi phí phát sinh − Chi phí cố định. Chi phí cố định chia đều theo ngày của kỳ đang xem.'],
+  ]},
  {ban:'20261028f', ngay:'28/10/2026', ten:'Đổi giá vốn theo ngày',
   vaPhieu:[], vaNoi:[],
   muc:[
