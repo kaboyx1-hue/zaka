@@ -1067,7 +1067,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261028n';
+var APP_VER='20261028o';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1333,6 +1333,19 @@ function tinhLaiDon(d, von){ return d.tienHang - von - (d.phiChanh||0) - (d.ship
    ALIAS_HS[mã phụ] = 1 đơn vị mã phụ bằng bao nhiêu đơn vị mã chính (mặc định 1 = gộp thường). Đơn cũ không sửa,
    chỉ cách TÍNH vốn đổi: vốn 1 dòng = vốn mã chính × hệ số. Lưu trong CAI_DAT_QL (khoá 'aliashs'). */
 var ALIAS_HS=get('aliashs',{});
+/* 28/10/2026 chủ: gộp bao 5kg vào 1kg xong thì bao 5kg biến mất khỏi Bảng giá (bị xếp vào ngừng bán). Món quy đổi
+   là hàng bán thật: luôn hiện ở bảng chính, giá vốn tự = hệ số × giá vốn mã gốc (không gõ tay). Trả true nếu có đổi. */
+function dongBoQuyDoi_(){
+  var doi=false;
+  Object.keys(ALIAS_HS).forEach(function(k){
+    var p=GIA[k], hs=Number(ALIAS_HS[k])||1; if(!p||hs===1) return;
+    if(p.ngung){ p.ngung=false; doi=true }
+    var g=GIA[skuChinh(k)], v=g&&g.von?Math.round(g.von*hsGop_(k)):null;
+    if(v!==null && p.von!==v){ p.von=v; doi=true }
+  });
+  if(doi) set('gia',GIA);
+  return doi;
+}
 function hsGop_(sku){ var f=1, s=sku, dem=0; while(ALIAS[s] && dem<10){ f*=Number(ALIAS_HS[s])||1; s=ALIAS[s]; dem++ } return f }
 function vonDong_(x){
   var p=GIA[skuChinh(x.sku)]; if(!p) return 0;
@@ -2151,13 +2164,13 @@ function gomVaDon_(phu, chinh, lyDo, hs){
   ALIAS[phu]=chinh;
   if(hs>0 && hs!==1){ ALIAS_HS[phu]=hs; g.hs=hs } else delete ALIAS_HS[phu];
   set('aliashs',ALIAS_HS);
-  if(GIA[phu]){ GIA[phu].ngung=true; GIA[phu].gopVao=chinh }
+  if(GIA[phu]){ GIA[phu].ngung=!(hs>0 && hs!==1); GIA[phu].gopVao=chinh }
   /* Xoá hẳn khi mã thừa KHÔNG còn giá trị riêng nào đáng giữ: không có giá vốn
      chủ tự điền, và không có giá bán khác mã chính. Còn thứ đáng giữ thì chỉ
      ẩn đi như cũ, để chủ tự xem lại rồi quyết. */
   var pPhu=GIA[phu]||{}, pChinh=GIA[chinh]||{};
   var dangGiu = (pPhu.suaTay && pPhu.von) || (pPhu.gb && pChinh.gb && pPhu.gb!==pChinh.gb);
-  if(!dangGiu && GIA[phu]){ delete GIA[phu]; g.daXoa=true }
+  if(!dangGiu && GIA[phu] && !g.hs){ delete GIA[phu]; g.daXoa=true }   // món quy đổi (bao 5kg…) là hàng bán thật — không xoá
   NHAT_KY_GOM.push(g);
   if(lyDo){ LY_DO_GOM[phu]={chinh:chinh,lyDo:lyDo,luc:nowStr()}; set('lydogom',LY_DO_GOM) }
   set('alias',ALIAS); set('gia',GIA);
@@ -2288,7 +2301,8 @@ function thucHienGop(khac, chinh, hs){
   veCB(); veSo(); veBC(); veGia(); vePhat(); veLam();
   bao('inMsg','Đã gộp <b>'+khac.length+'</b> mã vào <b>'+esc(chinh)+'</b> — dùng chung giá vốn và báo cáo. '+
     (daXoa?('Đã <b>dọn hẳn '+daXoa+' mã thừa</b> khỏi bảng giá. '):'')+
-    ((khac.length-daXoa)?('Còn '+(khac.length-daXoa)+' mã được giữ lại (vì có giá vốn bạn tự điền hoặc có giá bán riêng) — '+
+    (hs!==1?('Món quy đổi vẫn bán bình thường, giá vốn tự = '+hs+' × giá vốn mã gốc. '):
+    (khac.length-daXoa)?('Còn '+(khac.length-daXoa)+' mã được giữ lại (vì có giá vốn bạn tự điền hoặc có giá bán riêng) — '+
       'xem ở mục "Hàng ngừng bán". '):'')+
     'Đơn cũ trên Google Sheet không sửa một chữ nào; lãi/lỗ đã tính lại theo nhóm gộp. '+
     'Gom nhầm thì bấm <b>Hoàn tác</b> ở tab Cần làm.','ok');
@@ -2629,7 +2643,7 @@ function napCaiDat_(ds){
   ALIAS=get('alias',{}); KHAC_MON=get('khacmon',{}); KS_XONG=get('ksxong',{})||{}; LY_DO_GOM=get('lydogom',{});
   HAN_THU=get('hanthu',7); NGUONG_HH_=get('nguongHuyHieu',NGUONG_HH_MACDINH_); CPCD=get('cpcd',{}); ALIAS_HS=get('aliashs',{});
   NGUONG_QUEN_=NGUONG_HH_.quen; NGUONG_VIP_=NGUONG_HH_.vip; NGUONG_VVIP_BREEDER_=NGUONG_HH_.vvipBreeder;
-  if(GIA){ var va=false; Object.keys(ALIAS).forEach(function(k){ if(GIA[k]&&!GIA[k].gopVao){ GIA[k].gopVao=skuChinh(k); GIA[k].ngung=true; va=true } }); if(va) set('gia',GIA) }
+  if(GIA){ var va=false; Object.keys(ALIAS).forEach(function(k){ if(GIA[k]&&!GIA[k].gopVao){ GIA[k].gopVao=skuChinh(k); GIA[k].ngung=true; va=true } }); if(va) set('gia',GIA); dongBoQuyDoi_() }
   xoaDemNang_();
   if(lanDau){ set('cddanoi',true); cdDay_() }
   try{ veLam(); veCB(); veNguongHuyHieu(); veCPCD() }catch(e){}
@@ -4441,6 +4455,7 @@ var GLIM=40;
 function giaReset(){GLIM=40;veGia()}
 function giaThem(n){GLIM=n?1e9:GLIM+60;veGia()}
 function veGia(){
+  dongBoQuyDoi_();
   var oSku=$('skuMoi'), gSku=oSku?{v:oSku.value,f:document.activeElement===oSku}:null;   // đồng bộ nền vẽ lại bảng không làm mất mã đang gõ
   var q=kd(($('gq').value||'').trim()), nh=$('gn').value;
   var tatca=Object.keys(GIA).map(function(k){return GIA[k]});
@@ -4492,7 +4507,7 @@ function veGia(){
         (maCuCua_(p.sku).length?'<div class="sm" style="opacity:.7">mã cũ: '+esc(maCuCua_(p.sku).join(', '))+'</div>':'')+
         (p.moi?'<br><span class="tag w">nhân viên thêm</span>':'')+
         (p.gopVao?'<br><span class="tag w" style="color:var(--warn)" title="Chỉ gộp chung giá vốn/báo cáo — giá bán vẫn tính riêng, vẫn bán bình thường cho nhân viên">'+
-          'đã gộp giá vốn → '+esc(p.gopVao)+(ALIAS_HS[p.sku]?' ×'+ALIAS_HS[p.sku]:'')+'</span>':'')+'</td>'+
+          (ALIAS_HS[p.sku]&&ALIAS_HS[p.sku]!==1?'quy đổi: 1 '+esc(p.dvt||'')+' = '+ALIAS_HS[p.sku]+' × '+esc(p.gopVao):'đã gộp giá vốn → '+esc(p.gopVao))+'</span>':'')+'</td>'+
         '<td><input class="ten" style="padding:5px" value="'+esc(p.ten)+'" onchange="setF(\''+p.sku+'\',\'ten\',this.value)">'+
         (p.brand?'<div class="sm" style="color:var(--pur)">'+esc(p.brand)+'</div>':'')+
         '<select class="mini" style="margin-top:4px;max-width:100%" onchange="setF(\''+p.sku+'\',\'nhom\',this.value)">'+
@@ -4503,9 +4518,13 @@ function veGia(){
         '<td class="r"><input style="width:100px;padding:5px;text-align:right" value="'+(p.gb||'')+
           '" onchange="setN(\''+p.sku+'\',\'gb\',this.value)"></td>'+
         '<td>'+oQD(p)+'</td>'+
-        '<td class="r"><input style="width:96px;padding:5px;text-align:right'+(xau?';color:var(--bad)':'')+
+        '<td class="r">'+(p.gopVao&&ALIAS_HS[p.sku]&&ALIAS_HS[p.sku]!==1
+          ? '<input readonly style="width:96px;padding:5px;text-align:right;opacity:.75" value="'+(p.von||'')+'" placeholder="chưa có" '+
+              'title="Tự tính, sửa giá vốn ở mã gốc">'+
+            '<div class="sm" style="color:var(--info)">= '+ALIAS_HS[p.sku]+' × vốn '+esc(p.gopVao)+'</div></td>'
+          : '<input style="width:96px;padding:5px;text-align:right'+(xau?';color:var(--bad)':'')+
           '" value="'+(p.von||'')+'" placeholder="chưa có" onchange="setN(\''+p.sku+'\',\'von\',this.value)">'+
-          '<div><button class="mini" style="padding:1px 6px;margin-top:3px" title="Đổi giá vốn từ một ngày trong quá khứ, tính lại lãi các đơn từ ngày đó" onclick="moVonNgay(\''+p.sku+'\')">🕘 theo ngày</button></div></td>'+
+          '<div><button class="mini" style="padding:1px 6px;margin-top:3px" title="Đổi giá vốn từ một ngày trong quá khứ, tính lại lãi các đơn từ ngày đó" onclick="moVonNgay(\''+p.sku+'\')">🕘 theo ngày</button></div></td>')+
         '<td class="r"><input style="width:56px;padding:5px;text-align:right" '+
           'value="'+(p.vat===null||p.vat===undefined?'':p.vat)+'" placeholder="— " title="Để trống = chưa có hoá đơn đầu vào, không tính VAT. Thức ăn tự để 0%." '+
           'onchange="setN(\''+p.sku+'\',\'vat\',this.value)"></td>'+
@@ -5218,6 +5237,7 @@ function henDayVon_(){
   VON_HEN_BG=setTimeout(async function(){
     var a=document.activeElement;
     if(a && /^(INPUT|SELECT)$/.test(a.tagName) && a.closest && a.closest('#dsGia')){ henDayVon_(); return }   // còn đang gõ ô khác
+    dongBoQuyDoi_();
     if(tinhLaiIm_()){ veSo(); veBC(); veCB() }
     await dayVon(false);
     if(VON_CHO_DAY){ VON_HEN_BG=setTimeout(henDayVon_,30000); bao('giaMsg','Chưa lưu được bảng giá lên Sheet (mạng?) — sẽ tự thử lại.','wa'); return }
@@ -6748,6 +6768,11 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261028o', ngay:'28/10/2026', ten:'Món quy đổi vẫn hiện ở Bảng giá',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['sua','Gộp có quy đổi (vd bao 5kg vào 1kg) xong, món 5kg trước đây bị xếp vào "ngừng bán" nên không thấy. Nay nó vẫn ở bảng chính, có nhãn <b>quy đổi: 1 Bao = 5 × mã gốc</b>, giá vốn tự bằng 5 × giá vốn mã gốc. Sửa giá vốn ở mã gốc là món quy đổi tự theo.'],
+  ]},
  {ban:'20261028n', ngay:'28/10/2026', ten:'Giao diện tối kiểu chiến thuật',
   vaPhieu:[], vaNoi:[],
   muc:[
