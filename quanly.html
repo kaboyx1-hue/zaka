@@ -400,17 +400,55 @@ dialog::backdrop{background:rgba(0,0,0,.45);backdrop-filter:blur(6px) grayscale(
 .zSync svg{transform:rotate(-90deg)}
 .zSync.chay svg{animation:zXoay .9s linear infinite}
 @keyframes zXoay{from{transform:rotate(-90deg)}to{transform:rotate(270deg)}}
-.zChart{display:flex;align-items:flex-end;height:150px;padding-top:18px;border-bottom:1px solid var(--line)}
-.zChart .c{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0;position:relative}
-.zChart .c span{width:12px;background:var(--info);transform-origin:bottom;transition:filter .2s var(--ez)}
-.zChart .c:hover span{filter:brightness(1.25)}
-.zChart .c.homnay span{background:var(--ok)}
-.vaoTab .zChart .c span{animation:zMoc .7s var(--ez) backwards}
+/* biểu đồ cột kiểu Sapo — 28/10/2026 */
+.spbd-dau{display:flex;justify-content:space-between;align-items:flex-end;gap:12px 24px;flex-wrap:wrap;margin-bottom:18px}
+.spbd-ten{font-size:13px;color:var(--tx2);font-weight:600;margin-bottom:2px}
+.spbd-so{font-size:26px;font-weight:700;letter-spacing:-.4px;font-variant-numeric:tabular-nums;line-height:1.15}
+.spbd-tom{display:flex;gap:22px}
+.spbd-tom>div{border-left:3px solid var(--info);padding-left:9px}
+.spbd-tom>div+div{border-left-color:var(--ok)}
+.spbd-tom small{display:block;font-size:11.5px;color:var(--tx2)}
+.spbd-tom b{font-size:14px;font-variant-numeric:tabular-nums}
+.spbd-khung{display:flex;gap:8px}
+.spbd-truc{position:relative;width:44px;flex-shrink:0;height:200px}
+.spbd-truc span{position:absolute;right:0;transform:translateY(50%);font-size:11px;color:var(--tx2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.spbd-vung{position:relative;flex:1;min-width:0}
+.spbd-luoi,.spbd-cot{height:200px}
+.spbd-luoi{position:absolute;left:0;right:0;top:0;pointer-events:none}
+.spbd-luoi i{position:absolute;left:0;right:0;border-top:1px dashed var(--line)}
+.spbd-luoi i:first-child,.spbd-luoi i:last-child{border-top-style:solid}
+.spbd-cot{position:relative;display:flex;align-items:flex-end;gap:6px}
+.spbd-cot.day{gap:2px}
+.spc{flex:1;height:100%;display:flex;align-items:flex-end;justify-content:center;position:relative;cursor:pointer;outline:none;min-width:0}
+.spc b{display:block;width:100%;max-width:38px;background:var(--info);border-radius:4px 4px 0 0;transition:filter .15s,opacity .15s;transform-origin:bottom}
+.spc.nay b{background:var(--ok)}
+.spbd-cot:hover .spc b{opacity:.55}
+.spbd-cot .spc:hover b,.spc:focus b{opacity:1}
+.spc:hover,.spc:focus{z-index:5}
+.spc::before{content:'';position:absolute;inset:0 -1px;background:var(--c2);border-radius:6px;opacity:0;z-index:-1;transition:opacity .15s}
+.spc:hover::before,.spc:focus::before{opacity:.7}
+.spc b{position:relative}
+.spc:hover b::after,.spc:focus b::after{content:attr(data-t);white-space:pre;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);
+  background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:10px;padding:6px 10px;
+  font-size:12px;line-height:1.45;font-weight:600;color:var(--tx);pointer-events:none;text-align:center}
+.spc.trai:hover b::after,.spc.trai:focus b::after{left:0;transform:none}
+.spc.phai:hover b::after,.spc.phai:focus b::after{left:auto;right:0;transform:none}
+.spbd-x{display:flex;gap:6px;margin-top:6px}
+.spbd-cot.day+.spbd-x{gap:2px}
+.spbd-x span{flex:1;min-width:0;text-align:center;font-size:11px;color:var(--tx2);white-space:nowrap;overflow:visible;font-variant-numeric:tabular-nums}
+.spbd-x small{display:block;font-size:11px;color:var(--tx);font-weight:600}
+.spbd-phu{margin-top:12px}
+.thSap{cursor:pointer;user-select:none;white-space:nowrap}
+.thSap span{color:var(--tx2);font-weight:400}
+.thSap:hover{color:var(--tx)}
+.spc.vuot b{-webkit-mask:linear-gradient(#000 0 5px,transparent 5px 9px,#000 9px);mask:linear-gradient(#000 0 5px,transparent 5px 9px,#000 9px)}
+.spc.vuot em{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-style:normal;font-size:11px;font-weight:700;color:var(--tx);white-space:nowrap;font-variant-numeric:tabular-nums}
+.spbd-khung{padding-top:16px}
+.spbd-x.thua span:first-child{display:flex;justify-content:flex-start}
+.spbd-x.thua span:last-child{display:flex;justify-content:flex-end}
+.vaoTab .spc b{animation:zMoc .6s var(--ez) backwards}
 @keyframes zMoc{from{transform:scaleY(0)}}
-.zChart .c i{font-style:normal;font-size:11px;white-space:nowrap;color:var(--tx2);font-variant-numeric:tabular-nums;margin-bottom:4px}
-.zChart .c em{position:absolute;top:calc(100% + 5px);font-style:normal;font-size:11px;color:var(--tx2)}
-.zChart .c.homnay em{color:var(--tx);font-weight:600}
-#zBieuDo .sm{margin-top:24px}
+@media(max-width:600px){.spbd-truc{width:36px}.spbd-cot,.spbd-x{gap:3px}.spbd-tom{gap:14px}.spbd-so{font-size:22px}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 
 /* khối "Mã gần giống nhau" — 28/10/2026 */
@@ -427,11 +465,14 @@ dialog::backdrop{background:rgba(0,0,0,.45);backdrop-filter:blur(6px) grayscale(
 .tt-khoi .tt-ma{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:12px;align-items:center;
   padding:8px 10px;margin:0 0 6px;border-radius:10px;background:var(--card);border:1px solid var(--line);cursor:pointer}
 .tt-khoi .tt-ma:has(input:checked){border-color:var(--acc);box-shadow:inset 3px 0 0 var(--acc)}
-.tt-khoi .tt-ma input{width:18px;height:18px;margin:0;padding:0;accent-color:var(--acc)}
+.tt-khoi .tt-ma input[type=radio]{width:18px;height:18px;margin:0;padding:0;accent-color:var(--acc)}
 .tt-khoi .tt-ma small{display:block;font-size:11.5px;color:var(--tx2);font-weight:400}
 .tt-khoi .tt-ten b{font-weight:600}
 .tt-khoi .tt-von,.tt-khoi .tt-don{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
 .tt-khoi .tt-von i{font-style:normal;color:var(--warn);font-weight:500}
+.tt-khoi .tt-nhom{max-width:860px}
+.tt-khoi .tt-oVon{width:120px;padding:5px 8px;font-size:13px;text-align:right;border:1px solid var(--warn);border-radius:8px;background:var(--card);color:var(--tx)}
+.tt-khoi .tt-gop{margin-top:6px}
 .tt-khoi .tt-nhom>.mini{margin-top:4px}
 @media(max-width:600px){.tt-khoi .tt-ma{grid-template-columns:auto minmax(0,1fr) auto}.tt-khoi .tt-don{display:none}}
 </style></head><body>
@@ -524,6 +565,17 @@ dialog::backdrop{background:rgba(0,0,0,.45);backdrop-filter:blur(6px) grayscale(
         <option value="daThu">Đã thu</option>
         <option value="chuaThu">Chưa thu</option>
         <option value="daHuy">Đã huỷ</option>
+      </select>
+      <!-- 28/10/2026 chủ: không có lọc rõ theo doanh thu thấp→cao / cao→thấp -->
+      <select id="sapSo" onchange="veSo()" title="Sắp xếp danh sách đơn">
+        <option value="">Sắp xếp: mới nhất trước</option>
+        <option value="ngay:1">Cũ nhất trước</option>
+        <option value="tienHang:-1">Doanh thu cao → thấp</option>
+        <option value="tienHang:1">Doanh thu thấp → cao</option>
+        <option value="lai:-1">Lãi cao → thấp</option>
+        <option value="lai:1">Lãi thấp → cao</option>
+        <option value="von:-1">Giá vốn cao → thấp</option>
+        <option value="von:1">Giá vốn thấp → cao</option>
       </select>
       <span id="scDemNho" class="tag w" style="align-self:center;font-weight:700"></span>
       <input id="locLaiTu" inputmode="numeric" placeholder="Lãi từ… (đ)" style="max-width:140px" oninput="dinhDangTien(this)" onchange="veSo()">
@@ -905,7 +957,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261028b';
+var APP_VER='20261028e';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1303,14 +1355,16 @@ function veTrungTen(){
         ds.map(function(k,i){
           var v=dauVetBan_(k), p=GIA[k];
           return '<label class="tt-ma">'+
-            '<input type="radio" name="tt_'+gi+'" value="'+esc(k)+'" '+(i===0?'checked':'')+'>'+
+            '<input type="radio" name="tt_'+gi+'" value="'+esc(k)+'" '+(i===Math.max(0,ds.findIndex(function(z){return GIA[z].von>0}))?'checked':'')+'>'+
             '<span class="tt-ten"><b>'+esc(p.ten)+'</b>'+
               '<small>'+esc(k)+(p.nhom?' · '+esc(p.nhom):'')+'</small></span>'+
-            '<span class="tt-von">'+(p.von?tien(p.von):'<i>chưa có vốn</i>')+'<small>giá vốn</small></span>'+
+            /* 28/10/2026 chủ: chưa có vốn thì điền luôn tại đây (cùng đường vonNhanh của tab Cảnh báo: tính lại đơn + lưu Sheet) */
+            '<span class="tt-von">'+(p.von?tien(p.von):'<input class="tt-oVon" inputmode="numeric" placeholder="Điền giá vốn" '+
+              'onclick="event.stopPropagation()" onchange="vonNhanh(\''+esc(k)+'\',this.value)">')+'<small>giá vốn</small></span>'+
             '<span class="tt-don">'+(v.soDon||0)+'<small>đơn đã bán</small></span>'+
           '</label>';
         }).join('')+
-        '<button class="mini" onclick=\'gopSanPham('+JSON.stringify(ds)+',this)\'>Gộp nhóm '+(gi+1)+' vào mã đã chọn</button>'+
+        '<button class="btn tt-gop" onclick=\'gopSanPham('+JSON.stringify(ds)+',this)\'>Gộp nhóm '+(gi+1)+' vào mã đã chọn</button>'+
       '</div>';
     }).join('')+'</div>';
 }
@@ -2885,7 +2939,29 @@ function tenKy(){
   return {tatca:'Toàn bộ',thangnay:'Tháng này',thangtruoc:'Tháng trước',homnay:'Hôm nay',homqua:'Hôm qua',
           quynay:'Quý này',quytruoc:'Quý trước',namnay:'Năm nay'}[KY]||'Toàn bộ';
 }
-function datKy(k){ KY=k; set('ky',KY); veBC(); veSo() }
+/* 28/10/2026 chủ: bấm "Tháng này" mà 2 ô ngày vẫn hiện ngày cũ (04/09) → tưởng không lọc. Bấm kỳ có sẵn thì
+   bỏ khoảng ngày tự chọn và 2 ô hiện đúng từ–đến của kỳ đó. */
+function datKy(k){ KY=k; set('ky',KY);
+  if(k!=='tuychinh'){ TU_NGAY=''; DEN_NGAY=''; set('tungay',''); set('denngay','') }
+  veBC(); veSo() }
+function khoangKy_(k){
+  var n=new Date(), y=n.getFullYear(), m=n.getMonth(), d=n.getDate();
+  var f=function(x){ return x.getFullYear()+'-'+('0'+(x.getMonth()+1)).slice(-2)+'-'+('0'+x.getDate()).slice(-2) };
+  var q=Math.floor(m/3);
+  switch(k){
+    case 'homnay': return [f(n),f(n)];
+    case 'homqua': var h=new Date(y,m,d-1); return [f(h),f(h)];
+    case 'thangnay': return [f(new Date(y,m,1)),f(new Date(y,m+1,0))];
+    case 'thangtruoc': return [f(new Date(y,m-1,1)),f(new Date(y,m,0))];
+    case 'quynay': return [f(new Date(y,q*3,1)),f(new Date(y,q*3+3,0))];
+    case 'quytruoc': return [f(new Date(y,q*3-3,1)),f(new Date(y,q*3,0))];
+    case 'namnay': return [f(new Date(y,0,1)),f(new Date(y,11,31))];
+    case 'tatca': var dau=''; (window.SO||[]).forEach(function(x){ var i=String(x.iso||''); if(/^\d{4}-/.test(i)&&(!dau||i<dau)) dau=i });
+      return [dau,f(n)];
+    default: return ['',''];
+  }
+}
+function oNgay_(i){ return KY==='tuychinh' ? (i?DEN_NGAY:TU_NGAY) : khoangKy_(KY)[i] }
 function datKhoangNgay(){
   var idFocus=document.activeElement?document.activeElement.id:'';
   /* 28/10/2026 chủ: chọn ngày ở Báo cáo không lọc. Gõ tay năm, trình duyệt báo "đã đổi" ngay khi mới gõ 1 số
@@ -2999,15 +3075,20 @@ function veBC(){
   var daThu=trong.filter(function(d){return !d.huy}).reduce(function(a,d){return a+(d.tong-conThuDon(d))},0);
   // Danh sách mã đơn đứng sau từng ô KPI bên dưới — bấm vào ô nào thì nhảy sang
   // Số cái (hoặc Cảnh báo) lọc đúng nhóm đó, không cần tự đi lọc tay lại.
-  BC_NHOM={ghiNhan:ok.map(function(d){return d.ma}),choGN:choGN.map(function(d){return d.ma}),huy:huy.map(function(d){return d.ma})};
+  /* 28/10/2026 chủ: "Đã thu về / Còn phải thu" không biết căn cứ đâu ra → ghi rõ cách tính + kỳ + đơn lớn nhất, bấm được để xem từng đơn. */
+  var daThuDs=trong.filter(function(d){return !d.huy && d.tong-conThuDon(d)>0});
+  var tongBan=(Number(daThu)||0)+(Number(noTien)||0), kyTxt=(KY==='tatca'?'mọi thời gian':'kỳ '+tenKy());
+  var lonNhat=function(ds,f){ return ds.slice().sort(function(a,b){return f(b)-f(a)}).slice(0,3).map(function(d){
+    return esc(d.khach||'(khách lẻ)')+' '+tien(f(d)) }).join(' · ') };
+  BC_NHOM={daThu:daThuDs.map(function(d){return d.ma}),no:noDs.map(function(d){return d.ma}),ghiNhan:ok.map(function(d){return d.ma}),choGN:choGN.map(function(d){return d.ma}),huy:huy.map(function(d){return d.ma})};
   var h='<div class="card"><div class="chips" style="margin:-4px 0 12px">'+
     KYS_CHUNG.map(function(k){return '<button class="chip'+(KY===k[0]?' on':'')+'" onclick="datKy(\''+k[0]+'\')">'+k[1]+'</button>'}).join('')+
     '</div>'+
     '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 12px">'+
       '<span class="sm">Hoặc chọn khoảng ngày:</span>'+
-      '<input type="date" id="tuNgay" value="'+esc(TU_NGAY)+'" onchange="datKhoangNgay()">'+
+      '<input type="date" id="tuNgay" value="'+esc(oNgay_(0))+'" onchange="datKhoangNgay()">'+
       '<span class="sm">đến</span>'+
-      '<input type="date" id="denNgay" value="'+esc(DEN_NGAY)+'" onchange="datKhoangNgay()">'+
+      '<input type="date" id="denNgay" value="'+esc(oNgay_(1))+'" onchange="datKhoangNgay()">'+
       (KY==='tuychinh'?'<button class="chip" onclick="TU_NGAY=\'\';DEN_NGAY=\'\';set(\'tungay\',\'\');set(\'denngay\',\'\');datKy(\'thangnay\')">Bỏ lọc ngày</button>':'')+
     '</div><div class="kpi">'+
     '<div><small>Doanh thu GHI NHẬN</small><b>'+tien(hang)+'</b> '+huyHieu_(hang,truocDT)+
@@ -3032,11 +3113,15 @@ function veBC(){
       '<b style="color:'+(cho.length?'var(--warn)':'var(--ok)')+'">'+cho.length+'</b>'+
       (cho.length?'<div class="kpihint">Sang tab Cảnh báo — điền vốn theo sản phẩm</div>':'')+'</div></div>'+
     '<div class="kpi mt">'+
-    '<div><small>Đã thu về</small><b style="color:var(--ok)">'+tien(daThu)+'</b></div>'+
+    '<div'+(daThuDs.length?' class="kpiclick" onclick="xemBCNhom(\'daThu\',\'đơn đã thu tiền trong kỳ\')"':'')+'>'+
+      '<small>Đã thu về'+(daThuDs.length?' <span class="mui">↗</span>':'')+'</small><b style="color:var(--ok)">'+tien(daThu)+'</b>'+
+      '<div class="sm">Khách đã trả, của '+daThuDs.length+' đơn bán trong '+esc(kyTxt)+'</div></div>'+
     '<div'+(noDs.length?' class="kpiclick" onclick="xemNo()"':'')+'><small>CÒN PHẢI THU'+
       (noDs.length?' <span class="mui">↗</span>':'')+'</small>'+
       '<b style="color:'+(noTien?'var(--warn)':'var(--ok)')+'">'+tien(noTien)+'</b>'+
-      '<div class="sm">'+noDs.length+' đơn'+(doDs.length?' · trong đó '+doDs.length+' đơn giao dở ('+tien(doTien)+')':'')+'</div></div></div>'+
+      '<div class="sm">Khách còn nợ, của '+noDs.length+' đơn bán trong '+esc(kyTxt)+(doDs.length?' · trong đó '+doDs.length+' đơn giao dở ('+tien(doTien)+')':'')+'</div>'+
+      (noDs.length?'<div class="sm" style="opacity:.75;margin-top:3px">Lớn nhất: '+lonNhat(noDs,conThuDon)+'</div>':'')+'</div></div>'+
+    '<div class="sm" style="margin:6px 2px 0">Cách tính: <b>Đã thu</b> + <b>Còn phải thu</b> = '+tien(tongBan)+' = tổng tiền các đơn bán trong '+esc(kyTxt)+' (không tính đơn huỷ). Bấm vào từng ô để xem danh sách đơn.</div>'+
     '<div class="kpi mt">'+
     '<div'+(choGN.length?' class="kpiclick" onclick="xemBCNhom(\'choGN\',\'đơn đủ giá vốn nhưng chưa đủ điều kiện ghi nhận\')"':'')+'>'+
       '<small>DOANH THU CHỜ — chưa đủ điều kiện'+(choGN.length?' <span class="mui">↗</span>':'')+'</small>'+
@@ -3583,6 +3668,15 @@ function veSo(){
     ds=ds.filter(function(d){return !d.huy && (d.lai||0)>=laiTu});
     ds=ds.slice().sort(function(a,b){return (b.lai||0)-(a.lai||0)});
   }
+  var sap=($('sapSo')&&$('sapSo').value)||'';
+  if(sap){
+    var tr=sap.split(':'), truong=tr[0], chieu=+tr[1];
+    ds=ds.slice().sort(function(a,b){
+      var x=truong==='ngay'?String(a.iso||'')+String(a.ngay||''):(Number(a[truong])||0),
+          y=truong==='ngay'?String(b.iso||'')+String(b.ngay||''):(Number(b[truong])||0);
+      return x<y?-chieu:x>y?chieu:0;
+    });
+  }
   var nutBoLocLai=$('btnBoLocLaiSo'); if(nutBoLocLai) nutBoLocLai.style.display=coLocLai?'':'none';
   veKenhLocSo(); veNVLocSo();
   // Ô nhỏ đếm "còn bao nhiêu đơn chưa thu" ngay trong danh sách ĐANG LỌC — chủ báo
@@ -3599,9 +3693,9 @@ function veSo(){
     KYS_CHUNG.map(function(k){return '<button class="chip'+(KY===k[0]?' on':'')+'" onclick="datKy(\''+k[0]+'\')">'+k[1]+'</button>'}).join('')+
     '</div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+
       '<span class="sm">Hoặc khoảng ngày:</span>'+
-      '<input type="date" id="tuNgaySo" value="'+esc(TU_NGAY)+'" onchange="datKhoangNgaySo()">'+
+      '<input type="date" id="tuNgaySo" value="'+esc(oNgay_(0))+'" onchange="datKhoangNgaySo()">'+
       '<span class="sm">đến</span>'+
-      '<input type="date" id="denNgaySo" value="'+esc(DEN_NGAY)+'" onchange="datKhoangNgaySo()">'+
+      '<input type="date" id="denNgaySo" value="'+esc(oNgay_(1))+'" onchange="datKhoangNgaySo()">'+
       '<span class="sm">— đang xem: <b>'+esc(tenKy())+'</b></span>'+
     '</div></div>';
   var bar='';
@@ -3616,7 +3710,7 @@ function veSo(){
   if(!ds.length){$('so').innerHTML=kyBar+bar+'<div class="card"><div class="empty">'+
     (LOCMA?'Không đơn nào trong nhóm này nằm trong sổ cái':(SO.length?'Không có đơn nào khớp bộ lọc đang chọn.':'Sổ cái trống'))+'</div></div>';return}
   $('so').innerHTML=kyBar+bar+'<div class="card"><div style="overflow-x:auto"><table><tr><th></th><th>Mã đơn</th><th>Ngày</th><th>Kênh</th><th>Khách</th>'+
-    '<th class="r">Hàng</th><th class="r">Vốn</th><th class="r">Lãi</th><th></th></tr>'+
+    thSap_('tienHang','Hàng')+thSap_('von','Vốn')+thSap_('lai','Lãi')+'<th></th></tr>'+
     ds.map(function(d){
       return '<tr onclick="ctDon(\''+d.ma+'\')" style="cursor:pointer'+(d.huy?';opacity:.55':'')+'">'+
         '<td onclick="event.stopPropagation()">'+(d.huy?'':'<input type="checkbox" class="ckso" value="'+d.ma+'" onchange="demHuyQL()" style="width:17px;height:17px;accent-color:var(--bad)">')+'</td>'+
@@ -3643,6 +3737,16 @@ function veSo(){
         '<tr id="ct_'+d.ma+'" class="hide"><td colspan="9"></td></tr>'
     }).join('')+'</table></div></div>';
   demHuyQL();
+}
+/* bấm tiêu đề cột Hàng/Vốn/Lãi: lần 1 cao→thấp, lần 2 thấp→cao; đồng bộ với ô Sắp xếp */
+function thSap_(truong,ten){
+  var v=($('sapSo')&&$('sapSo').value)||'', mui=v===truong+':-1'?' ↓':v===truong+':1'?' ↑':' ↕';
+  return '<th class="r thSap" onclick="sapCot_(\''+truong+'\')" title="Bấm để sắp xếp">'+ten+'<span>'+mui+'</span></th>';
+}
+function sapCot_(truong){
+  var o=$('sapSo'); if(!o) return;
+  o.value = o.value===truong+':-1' ? truong+':1' : truong+':-1';
+  veSo();
 }
 function dsChonSo(){ return [].slice.call(document.querySelectorAll('.ckso:checked')).map(function(c){return c.value}) }
 function demHuyQL(){ var n=dsChonSo().length, b=$('btnHuyLo2'); if(b) b.textContent='Huỷ '+n+' đơn đã chọn';
@@ -6316,6 +6420,25 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261028e', ngay:'28/10/2026', ten:'Biểu đồ Báo cáo vẽ lại kiểu Sapo',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['sua','Hai biểu đồ <b>Doanh thu từng ngày</b> và <b>Hàng bán 7 ngày</b> vẽ lại dạng cột: tổng tiền to ở đầu, trung bình/ngày và ngày cao nhất, trục số chẵn bên trái, chạm vào cột để xem ngày + số tiền.'],
+   ['sua','Bấm <b>Toàn bộ</b> thì 2 ô ngày hiện từ ngày đơn đầu tiên tới hôm nay (trước để trống).'],
+   ['sua','Ngày bán cao bất thường (gấp hơn 3 lần ngày khác) không còn ép các cột khác bẹp sát đáy: cột đó được cắt bớt, ghi số thật trên đầu cột.'],
+   ['moi','<b>Sổ cái</b> có ô <b>Sắp xếp</b>: doanh thu cao → thấp / thấp → cao, lãi, giá vốn, cũ nhất trước. Bấm tiêu đề cột Hàng / Vốn / Lãi cũng sắp được (bấm lần nữa để đảo chiều).'],
+   ['moi','Khối <b>Mã gần giống nhau</b> (tab Cảnh báo): mã chưa có giá vốn có ô điền giá vốn ngay tại chỗ; chọn sẵn mã đã có giá vốn; nút Gộp to rõ.'],
+  ]},
+ {ban:'20261028d', ngay:'28/10/2026', ten:'Báo cáo ghi rõ căn cứ Đã thu / Còn phải thu',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['sua','Ô <b>Đã thu về</b> và <b>Còn phải thu</b> ghi rõ: tính trên bao nhiêu đơn, bán trong kỳ nào, 3 khách nợ lớn nhất; cộng 2 ô = tổng tiền đơn bán trong kỳ. Bấm ô Đã thu về cũng mở danh sách đơn ở Sổ cái.']
+  ]},
+ {ban:'20261028c', ngay:'28/10/2026', ten:'Bấm kỳ báo cáo thì 2 ô ngày hiện đúng khoảng',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['sua','Bấm Hôm nay / Tháng này / Quý này… ở Báo cáo và Sổ cái: 2 ô ngày tự hiện đúng từ ngày – đến ngày của kỳ đó (trước vẫn hiện ngày tự chọn cũ nên tưởng không lọc).']
+  ]},
  {ban:'20261028b', ngay:'28/10/2026', ten:'Chọn khoảng ngày ở Báo cáo lọc đúng · Mã gần giống gọn hơn',
   vaPhieu:[], vaNoi:[],
   muc:[
@@ -6897,81 +7020,59 @@ function doanhThuTheoNgay_(ds){
   }
   return ra;
 }
-var BD_DL=[];
-function veBieuDo_(ds){
-  BD_DL=doanhThuTheoNgay_(ds);
-  if(BD_DL.length<2) return '';
-  var W=720, H=190, L=48, R=12, T=14, B=26;
-  var w=W-L-R, h=H-T-B;
-  var max=Math.max.apply(null,BD_DL.map(function(x){return x.tien}));
-  if(max<=0) max=1;
-  // trần làm tròn lên cho nhãn trục đọc được số chẵn
-  var buoc=Math.pow(10,Math.floor(Math.log10(max)));
-  var tran=Math.ceil(max/buoc)*buoc; if(tran===max) tran=max*1.1;
-  var x=function(i){ return L + (BD_DL.length===1?w/2:i*w/(BD_DL.length-1)) };
-  var y=function(v){ return T + h - (v/tran)*h };
-
-  var duong=BD_DL.map(function(p,i){return (i?'L':'M')+x(i).toFixed(1)+' '+y(p.tien).toFixed(1)}).join(' ');
-  var nen=duong+' L'+x(BD_DL.length-1).toFixed(1)+' '+(T+h)+' L'+x(0).toFixed(1)+' '+(T+h)+' Z';
-
-  var luoi='', nhanY='';
-  for(var k=0;k<=3;k++){
-    var vy=T+h-(k/3)*h;
-    luoi+='<line class="luoi" x1="'+L+'" y1="'+vy.toFixed(1)+'" x2="'+(L+w)+'" y2="'+vy.toFixed(1)+'" opacity="'+(k?.5:1)+'"/>';
-    nhanY+='<text class="truc" x="'+(L-8)+'" y="'+(vy+3.5).toFixed(1)+'" text-anchor="end">'+gonTien_(tran*k/3)+'</text>';
+/* 28/10/2026 chủ: "2 biểu đồ quá xấu, làm giống Sapo". Biểu đồ cột HTML/CSS dùng chung cho cả
+   "Doanh thu từng ngày" lẫn "Hàng bán 7 ngày": đầu thẻ là tổng to, trục số chẵn bên trái, lưới mờ,
+   cột bo góc trên, chạm/rê vào cột hiện ngày + số tiền. Không dùng SVG kéo giãn nữa (chữ bị méo). */
+function cotBieuDo_(o){
+  // o = {ten, dl:[{ngay:'yyyy-mm-dd', tien, nhan?}], phu, id, nhanHet}
+  var dl=o.dl, n=dl.length;
+  var max=Math.max(1e5,Math.max.apply(null,dl.map(function(x){return x.tien})));   // trục tối thiểu 0–100k, ngày trống không ra số lẻ
+  /* 28/10/2026 chủ: 1 ngày 218tr ép các ngày khác bẹp sát đáy. Ngày nào cao hơn 3 lần ngày cao kế tiếp thì
+     cắt cột ở mép trên (ghi số thật trên đầu cột), trục chỉ theo các ngày bình thường. */
+  var xep=dl.map(function(x){return x.tien}).sort(function(a,b){return b-a}), vuot=[];
+  for(var j=0;j<Math.min(3,xep.length-1);j++){
+    if(xep[j+1]>0 && xep[j]>xep[j+1]*3){ max=Math.max(1e5,xep[j+1]*1.15); break }
   }
-  // nhãn ngày: chỉ vài mốc, tránh chữ chồng lên nhau
-  var buocX=Math.max(1,Math.ceil(BD_DL.length/6)), nhanX='';
-  BD_DL.forEach(function(p,i){
-    if(i%buocX && i!==BD_DL.length-1) return;
-    var t=p.ngay.slice(8)+'/'+p.ngay.slice(5,7);
-    nhanX+='<text class="truc" x="'+x(i).toFixed(1)+'" y="'+(T+h+16)+'" text-anchor="middle">'+t+'</text>';
-  });
-  var iMax=0; BD_DL.forEach(function(p,i){ if(p.tien>BD_DL[iMax].tien) iMax=i });
-  var cham='<circle class="cham" cx="'+x(iMax).toFixed(1)+'" cy="'+y(BD_DL[iMax].tien).toFixed(1)+'" r="4.5"/>'+
-    '<circle class="cham" cx="'+x(BD_DL.length-1).toFixed(1)+'" cy="'+y(BD_DL[BD_DL.length-1].tien).toFixed(1)+'" r="4.5"/>';
-  var nhanMax='<text class="truc" x="'+x(iMax).toFixed(1)+'" y="'+(y(BD_DL[iMax].tien)-10).toFixed(1)+
-    '" text-anchor="middle" style="font-weight:700;fill:var(--tx)">'+gonTien_(BD_DL[iMax].tien)+'</text>';
-
-  var tong=BD_DL.reduce(function(a,p){return a+p.tien},0);
-  var tb=tong/BD_DL.length;
-  return '<div class="bd"><div class="bd-dau"><h2>Doanh thu từng ngày</h2>'+
-    '<span class="sm">'+BD_DL.length+' ngày · cao nhất '+tien(BD_DL[iMax].tien)+'</span></div>'+
-    '<div class="bd-phu">Trung bình <b>'+tien(tb)+'</b> mỗi ngày. Rê chuột lên biểu đồ để xem từng ngày.</div>'+
-    '<div class="bd-boc" id="bdBoc">'+
-    '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" style="height:190px" id="bdSvg" '+
-      'onmousemove="bdRe(event)" onmouseleave="bdThoi()" ontouchmove="bdRe(event)" ontouchend="bdThoi()">'+
-      '<defs><linearGradient id="bdTo" x1="0" y1="0" x2="0" y2="1">'+
-        '<stop offset="0%" stop-color="var(--acc)" stop-opacity=".28"/>'+
-        '<stop offset="100%" stop-color="var(--acc)" stop-opacity="0"/></linearGradient></defs>'+
-      luoi+nhanY+nhanX+
-      '<path d="'+nen+'" fill="url(#bdTo)"/>'+
-      '<path d="'+duong+'" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'+
-      '<line id="bdDoc" x1="0" y1="'+T+'" x2="0" y2="'+(T+h)+'" stroke="var(--acc)" stroke-width="1" opacity="0"/>'+
-      cham+nhanMax+
-    '</svg><div id="bdTroi" class="bd-troi" style="display:none"></div></div></div>';
+  var tho=max/4, mu=Math.pow(10,Math.floor(Math.log10(tho)));
+  var buoc=[1,2,2.5,5,10].map(function(k){return k*mu}).filter(function(v){return v>=tho})[0];
+  var tran=buoc*4;
+  var tong=dl.reduce(function(s,x){return s+x.tien},0);
+  var iMax=0; dl.forEach(function(x,i){ if(x.tien>dl[iMax].tien) iMax=i });
+  var truc='', luoi='';
+  for(var k=4;k>=0;k--){
+    truc+='<span style="bottom:'+(k*25)+'%">'+(k?gonTien_(buoc*k):'0')+'</span>';
+    luoi+='<i style="bottom:'+(k*25)+'%"></i>';
+  }
+  var buocX=o.nhanHet?1:Math.max(1,Math.ceil(n/8));
+  var cot=dl.map(function(x,i){
+    var ngay=x.ngay.slice(8)+'/'+x.ngay.slice(5,7);
+    var vt=i<n*.2?' trai':i>=n*.8?' phai':'';
+    var qua=x.tien>tran; if(qua) vuot.push(ngay+' ('+gonTien_(x.tien)+')');
+    return '<div class="spc'+vt+(i===n-1&&o.homNay?' nay':'')+(qua?' vuot':'')+'" tabindex="0">'+
+      (qua?'<em>'+gonTien_(x.tien)+'</em>':'')+
+      '<b style="height:'+(qua?100:x.tien?Math.max(1.5,x.tien/tran*100):0)+'%" data-t="'+esc((x.nhan?x.nhan+' · ':'')+ngay+'\n'+tien(x.tien))+'"></b></div>';
+  }).join('');
+  var nhanX=dl.map(function(x,i){
+    var hien=o.nhanHet||i%buocX===0||i===n-1;
+    if(!o.nhanHet && i!==n-1 && n-1-i<buocX) hien=false;   // khỏi chồng chữ với nhãn cuối
+    return '<span>'+(hien?(x.nhan?'<small>'+esc(x.nhan)+'</small>':'')+x.ngay.slice(8)+'/'+x.ngay.slice(5,7):'')+'</span>';
+  }).join('');
+  return '<div class="card spbd"'+(o.id?' id="'+o.id+'"':'')+'>'+
+    '<div class="spbd-dau"><div><div class="spbd-ten">'+o.ten+'</div>'+
+      '<div class="spbd-so">'+tien(tong)+'</div></div>'+
+      '<div class="spbd-tom"><div><small>Trung bình/ngày</small><b>'+tien(tong/n)+'</b></div>'+
+      '<div><small>Cao nhất'+(dl[iMax].tien?' ('+dl[iMax].ngay.slice(8)+'/'+dl[iMax].ngay.slice(5,7)+')':'')+'</small><b>'+tien(dl[iMax].tien)+'</b></div></div></div>'+
+    '<div class="spbd-khung"><div class="spbd-truc">'+truc+'</div>'+
+      '<div class="spbd-vung"><div class="spbd-luoi">'+luoi+'</div><div class="spbd-cot'+(n>40?' day':'')+'">'+cot+'</div>'+
+      '<div class="spbd-x'+(o.nhanHet?'':' thua')+'">'+nhanX+'</div></div></div>'+
+    (vuot.length?'<div class="sm spbd-phu">Cột có vạch cắt là ngày bán cao bất thường, cắt bớt để các ngày khác còn nhìn được: <b>'+vuot.join(', ')+'</b>.</div>':'')+
+    (o.phu?'<div class="sm spbd-phu">'+o.phu+'</div>':'')+'</div>';
 }
-function bdRe(e){
-  var svg=$('bdSvg'); if(!svg||!BD_DL.length) return;
-  var r=svg.getBoundingClientRect();
-  if(!r.width) return;                  // tab đang ẩn thì không có gì để chỉ
-  var cx=(e.touches&&e.touches[0]?e.touches[0].clientX:e.clientX)-r.left;
-  var W=720,L=48,R=12,w=W-L-R;
-  var tl=cx/r.width*W;                       // đổi từ pixel màn hình sang toạ độ trong hình
-  var i=Math.round((tl-L)/w*(BD_DL.length-1));
-  i=Math.max(0,Math.min(BD_DL.length-1,i)); if(isNaN(i)) return;
-  var p=BD_DL[i];
-  var xTl=L+(BD_DL.length===1?w/2:i*w/(BD_DL.length-1));
-  var d=$('bdDoc'); if(d){ d.setAttribute('x1',xTl); d.setAttribute('x2',xTl); d.setAttribute('opacity','.55') }
-  var t=$('bdTroi'); if(!t) return;
-  t.style.display='block';
-  t.style.left=(xTl/W*r.width)+'px';
-  t.style.top='24px';
-  t.innerHTML='<b>'+p.ngay.split('-').reverse().join('/')+'</b><br>'+tien(p.tien);
-}
-function bdThoi(){
-  var d=$('bdDoc'); if(d) d.setAttribute('opacity','0');
-  var t=$('bdTroi'); if(t) t.style.display='none';
+function veBieuDo_(ds){
+  var dl=doanhThuTheoNgay_(ds);
+  if(dl.length<2) return '';
+  return cotBieuDo_({ten:'Doanh thu từng ngày', dl:dl,
+    phu:'Theo ngày bán, tiền hàng của các đơn trong kỳ đang chọn. Chạm vào cột để xem từng ngày.'});
 }
 /* Huy hiệu tăng/giảm so với kỳ trước — kèm mũi tên và chữ, không chỉ dựa vào màu */
 function huyHieu_(nay,truoc){
@@ -7231,12 +7332,10 @@ function cnKhoiVa(){
     for(var i=6;i>=0;i--){ var d=new Date(nay.getTime()-i*86400e3); ngay.push(d.toISOString().slice(0,10)) }
     var tong={}; ngay.forEach(function(k){tong[k]=0});
     SO.forEach(function(d){ if(!d.huy && tong[d.iso]!==undefined) tong[d.iso]+=Number(d.tienHang||d.tong||0) });
-    var mx=Math.max.apply(null,ngay.map(function(k){return tong[k]}))||1, TH=['CN','T2','T3','T4','T5','T6','T7'];
-    var gon=function(v){ return v>=1e6?(Math.round(v/1e5)/10).toLocaleString('vi-VN')+'tr':(v?Math.round(v/1e3)+'k':'0') };
-    var html='<div class="card" id="zBieuDo"><h2>Hàng bán 7 ngày gần nhất</h2><div class="zChart">'+
-      ngay.map(function(k,i){ var d=new Date(k+'T00:00:00'); return '<div class="c'+(i===6?' homnay':'')+'" title="'+k.split('-').reverse().join('/')+': '+tien(tong[k])+'">'+
-        '<i>'+gon(tong[k])+'</i><span style="height:'+Math.max(2,tong[k]/mx*100)+'%;animation-delay:'+(i*60)+'ms"></span><em>'+(i===6?'Hôm nay':TH[d.getDay()])+'</em></div>' }).join('')+
-      '</div><div class="sm">Tính theo ngày bán của đơn (gồm cả đơn chưa thu, không tính đơn đã huỷ).</div></div>';
+    var TH=['CN','T2','T3','T4','T5','T6','T7'];
+    var html=cotBieuDo_({ten:'Hàng bán 7 ngày gần nhất', id:'zBieuDo', nhanHet:true, homNay:true,
+      dl:ngay.map(function(k,i){ return {ngay:k, tien:tong[k], nhan:i===6?'Hôm nay':TH[new Date(k+'T00:00:00').getDay()]} }),
+      phu:'Tính theo ngày bán (gồm cả đơn chưa thu, không tính đơn đã huỷ) — không phụ thuộc kỳ đang chọn.'});
     var cu=$('zBieuDo'); if(cu) cu.remove();
     var dau=bc.querySelector('.card'); if(dau) dau.insertAdjacentHTML('afterend',html); else bc.insertAdjacentHTML('afterbegin',html);
   }
