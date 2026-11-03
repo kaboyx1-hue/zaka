@@ -1067,7 +1067,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261028p';
+var APP_VER='20261103a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1795,8 +1795,8 @@ async function nhanSP(i){
       vonLyDo:'duyệt hàng nhân viên thêm', qd_dv:'', qd_sl:0, qd_gb:0, qd_von:0, moi:false};
     set('gia',GIA); tinhLaiToanBoSO();
     veGia(); veCB(); veSo(); veBC(); vePhat(); veLam(); moDuyetSP();
-    bao('giaMsg','Đã nhận <b>'+esc(x.ten)+'</b> vào bảng giá, giá nhập '+tien(von)+'. '+
-      '<b>Bấm "Cập nhật bảng giá" ở tab Bảng giá</b> thì máy nhân viên bán được ngay.','ok');
+    henDayVon_();   // 03/11/2026 chủ: nhập vốn lúc duyệt mà Bảng giá không có — trước chỉ lưu máy này, lần đồng bộ sau Sheet đè mất
+    bao('giaMsg','Đã nhận <b>'+esc(x.ten)+'</b> vào bảng giá, giá nhập '+tien(von)+'. Đang tự lưu lên Sheet và phát cho máy nhân viên.','ok');
   }catch(e){
     console.error('Loi ve lai giao dien sau khi duyet SP (da ghi Sheet xong):', e);
     bao('dsErr','Đã ghi lên Sheet thành công, nhưng màn hình chưa vẽ lại đúng ('+esc(e.message)+'). Tải lại trang để xem đúng.','wa');
@@ -1865,6 +1865,7 @@ async function gopSPCho(i, skuChinhCu){
     if(!GIA[x.sku]) GIA[x.sku]={sku:x.sku,ten:x.ten,brand:x.brand||'',nhom:x.nhom||'KHÁC',
       dvt:x.dvt||'',gb:Number(x.gb)||0,von:null,qd_dv:'',qd_sl:0,qd_gb:0,qd_von:0,moi:true};
     gomVaDon_(x.sku, skuChinhCu, 'Nhân viên thêm trùng — chủ chỉ về món cũ lúc duyệt');
+    henDayVon_();
     veGia(); veCB(); veSo(); veBC(); vePhat(); veLam(); moDuyetSP();
     bao('lamMsg','Đã gộp <b>'+esc(x.ten)+'</b> về <b>'+esc(tenChinh)+'</b>. '+
       'Đơn cũ lỡ dùng mã tạm vẫn tính đúng. Gộp nhầm thì bấm <b>Hoàn tác</b> ở cuối tab Cần làm.','ok');
@@ -5263,7 +5264,7 @@ function henDayVon_(){
   VON_CHO_DAY=true; clearTimeout(VON_HEN_BG);
   VON_HEN_BG=setTimeout(async function(){
     var a=document.activeElement;
-    if(a && /^(INPUT|SELECT)$/.test(a.tagName) && a.closest && a.closest('#dsGia')){ henDayVon_(); return }   // còn đang gõ ô khác
+    if(a && /^(INPUT|SELECT)$/.test(a.tagName) && a.closest && a.closest('#dsGia,#cb,#dsDan')){ henDayVon_(); return }   // còn đang gõ ô khác
     dongBoQuyDoi_();
     if(tinhLaiIm_()){ veSo(); veBC(); veCB() }
     await dayVon(false);
@@ -5505,7 +5506,7 @@ function vonNhanh(sku,v){
   }
   GIA[sku].von=n2(v)||null; GIA[sku].moi=false;
   GIA[sku].suaTay=true; GIA[sku].vonLuc=nowStr(); set('gia',GIA);
-  vonNhanhHen_();
+  henDayVon_();
 }
 /* SỬA 23/09/2026 — phiếu kỹ sư 10/09: "chỉnh giá ở đây có cập nhật toàn hệ thống không,
    cảnh báo có tự hết không?". Trước: chỉ ghi vào máy này, phải tự bấm Tính lại và tự
@@ -6795,6 +6796,11 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261103a', ngay:'03/11/2026', ten:'Giá vốn nhập ở Cần làm lưu luôn',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['sua','Nhập giá vốn lúc <b>duyệt món nhân viên thêm</b> (từ tab Cần làm) hay ở tab Cảnh báo giờ <b>tự lưu lên Sheet</b> và hiện ngay ở Bảng giá. Trước đây chỉ lưu trên máy đang dùng, lần đồng bộ sau bị bảng cũ trên Sheet đè mất nên phải điền lại.'],
+  ]},
  {ban:'20261028p', ngay:'28/10/2026', ten:'Quy đổi chắc chắn hơn',
   vaPhieu:[], vaNoi:[],
   muc:[
