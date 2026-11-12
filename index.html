@@ -995,7 +995,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20261112a';
+var APP_VER='20261112b';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1895,11 +1895,30 @@ async function taiNV(ver){
   return true;
 }
 
+/* 12/11/2026: Sheet từng làm mất số 0 đầu SĐT (0909… thành 909…) → máy này có khoá 9 số, gõ đúng
+   0909… không ra khách/giá riêng. Gộp khoá 9 số vào khoá có số 0 (giữ giá riêng mới hơn). */
+function sdtCo0_(s){ s=String(s||'').trim(); return /^\d{9}$/.test(s)?'0'+s:s }
+function gopSdtMat0_(){
+  Object.keys(KH).forEach(function(s){
+    if(!/^\d{9}$/.test(s)) return;
+    var dung='0'+s, a=KH[s], b=KH[dung];
+    if(!b){ a.sdt=dung; KH[dung]=a }
+    else{
+      ['ten','kenh','dc','thu','lh'].forEach(function(f){ if(!b[f]&&a[f]) b[f]=a[f] });
+      if(a.canDay) b.canDay=a.canDay;
+      b.gia=b.gia||{}; var ga=a.gia||{};
+      Object.keys(ga).forEach(function(k){ var c=b.gia[k]; if(!c||String(ga[k].luc||'')>String(c.luc||'')) b.gia[k]=ga[k] });
+    }
+    delete KH[s];
+  });
+}
+
 async function taiKH(ver){
   var j=await hoi('kh=1&ver='+encodeURIComponent(VER.kh||''));
   if(!j.ok||!j.moi) return false;
+  gopSdtMat0_();
   (j.ds||[]).forEach(function(k){
-    var sdt=String(k.sdt||'').trim(); if(!sdt) return;
+    var sdt=sdtCo0_(k.sdt); if(!sdt) return;
     KH[sdt]=KH[sdt]||{sdt:sdt,gia:{}};
     KH[sdt].ten=k.ten||KH[sdt].ten; KH[sdt].kenh=k.kenh||KH[sdt].kenh;
     KH[sdt].dc=k.dc||KH[sdt].dc; KH[sdt].dongBo=true;
@@ -1915,8 +1934,9 @@ async function taiKH(ver){
 async function taiGR(ver){
   var j=await hoi('gr=1&ver='+encodeURIComponent(VER.gr||''));
   if(!j.ok||!j.moi) return false;
+  gopSdtMat0_();
   (j.ds||[]).forEach(function(g){
-    var sdt=String(g.sdt||'').trim(), sku=String(g.sku||'').trim();
+    var sdt=sdtCo0_(g.sdt), sku=String(g.sku||'').trim();
     if(!sdt||!sku) return;
     KH[sdt]=KH[sdt]||{sdt:sdt,ten:'',gia:{}}; KH[sdt].gia=KH[sdt].gia||{};
     var cu=KH[sdt].gia[sku];
@@ -5721,6 +5741,11 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261112b', ngay:'12/11/2026', ten:'Khách cũ gõ SĐT có số 0 vẫn ra đúng khách và giá riêng',
+  vaPhieu:[],
+  muc:[
+   ['sua','Sheet từng làm mất số 0 đầu SĐT nên gõ 0909… ra "khách mới" dù khách đã mua nhiều lần, giá riêng cũng không hiện. Máy tự gộp lại, không cần làm gì.']
+  ]},
  {ban:'20261112a', ngay:'12/11/2026', ten:'Gửi phiếu và xin duyệt chắc chắn hơn',
   vaPhieu:[],
   muc:[

@@ -1140,7 +1140,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261112g';
+var APP_VER='20261112h';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -3805,7 +3805,7 @@ function giaoThuNo_(nguon){
   if(!ds.length){ alert('Không có đơn nào để giao.'); return }
   var dong=cnDong_(ds), tong=dong.reduce(function(a,d){return a+d.no},0);
   if(!confirm('Giao cho '+p.name+' đi thu '+dong.length+' đơn, tổng '+tien(tong)+'?\n\n'+p.name+' sẽ thấy việc này trên trang công việc của mình.')) return;
-  var han=new Date(Date.now()+2*864e5).toISOString().slice(0,10), dp=nsPhong_(p);
+  var han=new Date(Date.now()+7*3600e3+2*864e5).toISOString().slice(0,10), dp=nsPhong_(p);
   TRUC_VIEC.push({id:Date.now(), title:'Thu công nợ: '+dong.length+' đơn · '+tien(tong),
     desc:'Chủ giao lúc '+nowStr()+(nguon==='cb'?' — đơn đã giao đủ, quá '+HAN_THU+' ngày chưa thu':'')+(ai?' — đơn do '+ai+' giao':'')+
       '. Thu được đơn nào thì tích đơn đó; khách hẹn ngày khác thì ghi vào ô ý kiến.',
@@ -5492,7 +5492,7 @@ function tinhLai(){
 var HAN_NGAY=3;
 function soNgay(iso){
   if(!iso) return 0;
-  var a=new Date(iso+'T00:00:00'), b=new Date(new Date().toISOString().slice(0,10)+'T00:00:00');
+  var a=new Date(iso+'T00:00:00'), b=new Date(homNayVN_()+'T00:00:00');
   return Math.max(0,Math.round((b-a)/86400000));
 }
 
@@ -7115,6 +7115,11 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261112h', ngay:'12/11/2026', ten:'Đếm ngày theo giờ Việt Nam',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['sua','Trước 7 giờ sáng, số ngày nợ/khách chưa mua và hạn đi thu nợ bị tính lùi 1 ngày (máy lấy theo giờ quốc tế). Nay tính theo giờ Việt Nam.']
+  ]},
  {ban:'20261112g', ngay:'12/11/2026', ten:'Tab Khách hàng riêng · đồng bộ giá toàn diện',
   vaPhieu:[], vaNoi:[],
   muc:[
