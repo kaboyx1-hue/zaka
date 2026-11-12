@@ -995,7 +995,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20261112b';
+var APP_VER='20261112c';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1294,6 +1294,7 @@ var MK_PHIEN='', DANG_DN=false;
                    if(o.thu)KH[sdt].thu=o.thu; if(o.lh)KH[sdt].lh=o.lh; }
       else KH[sdt]=o;                     // khach nhan vien tu them -> giu lai
     }); }
+  gopSdtMat0_();                        // 12/11/2026: khoá SĐT mất số 0 gộp ngay khi mở app
   set('kh',KH); set('seedv',SEEDV);
   BG=get('bg',BG);
   var tai=get('bgsp',null);              // bang gia may chu phat xuong
@@ -1897,10 +1898,10 @@ async function taiNV(ver){
 
 /* 12/11/2026: Sheet từng làm mất số 0 đầu SĐT (0909… thành 909…) → máy này có khoá 9 số, gõ đúng
    0909… không ra khách/giá riêng. Gộp khoá 9 số vào khoá có số 0 (giữ giá riêng mới hơn). */
-function sdtCo0_(s){ s=String(s||'').trim(); return /^\d{9}$/.test(s)?'0'+s:s }
+function sdtCo0_(s){ s=String(s||'').trim(); return /^(2\d{9}|\d{9})$/.test(s)?'0'+s:s }   // di động 9 số, máy bàn 2xxxxxxxxx
 function gopSdtMat0_(){
   Object.keys(KH).forEach(function(s){
-    if(!/^\d{9}$/.test(s)) return;
+    if(sdtCo0_(s)===s) return;
     var dung='0'+s, a=KH[s], b=KH[dung];
     if(!b){ a.sdt=dung; KH[dung]=a }
     else{
@@ -5741,7 +5742,7 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
- {ban:'20261112b', ngay:'12/11/2026', ten:'Khách cũ gõ SĐT có số 0 vẫn ra đúng khách và giá riêng',
+ {ban:'20261112c', ngay:'12/11/2026', ten:'Khách cũ gõ SĐT có số 0 vẫn ra đúng khách và giá riêng',
   vaPhieu:[],
   muc:[
    ['sua','Sheet từng làm mất số 0 đầu SĐT nên gõ 0909… ra "khách mới" dù khách đã mua nhiều lần, giá riêng cũng không hiện. Máy tự gộp lại, không cần làm gì.']
