@@ -1107,7 +1107,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261112e';
+var APP_VER='20261112f';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -2047,6 +2047,13 @@ function veLam(){
     ham:"tab('gia')"
   });
 
+  if(PHAT_KET) viec.push({
+    ten:'Bảng giá CHƯA phát được cho nhân viên — '+PHAT_KET+' món giá sỉ vô lý',
+    vi:'Máy đã tự lưu giá lên Sheet nhưng không phát xuống máy bán hàng vì còn món bán sỉ rẻ hơn 50% hoặc đắt hơn giá lẻ. '+
+       'Nhân viên đang bán theo bảng giá cũ cho tới khi sửa xong.',
+    nut:'Sửa giá sỉ',
+    ham:"tab('gia');phatGia()"
+  });
   // ── Việc 3: bảng giá đã đổi mà chưa gửi cho nhân viên ──
   try{
     var b=goiGia().length;
@@ -2237,7 +2244,7 @@ function gomTheoYToi(){
   var tenMoi=($('tenGiuLai')&&$('tenGiuLai').value||'').trim();
   var lyDo=($('lyDoGom')&&$('lyDoGom').value||'').trim();
   if(tenMoi && GIA[chinh]) GIA[chinh].ten=tenMoi;
-  gomVaDon_(phu, chinh, lyDo);
+  gomVaDon_(phu, chinh, lyDo); henDayVon_();   // 12/11/2026: gộp xong tự lưu Sheet + phát (trước chỉ lưu máy này)
   HOI_I++;
   if(HOI_I<HOI_DS.length) veCauHoi(); else dongHoi();
 }
@@ -2289,7 +2296,7 @@ function traLoiGom(cungMon){
     var a=c[0], b=c[1];
     var chinh = diemGiuLai_(a)>=diemGiuLai_(b) ? a : b;
     var phu = chinh===a ? b : a;
-    gomVaDon_(phu, chinh);
+    gomVaDon_(phu, chinh); henDayVon_();
   }else if(c){
     ghiKhacMon_(c[0],c[1]);   // SỬA 10/09/2026 — phiếu 34: nhớ luôn, đừng hỏi lại
   }
@@ -2313,7 +2320,7 @@ function hoanTacGom(i){
   if(LY_DO_GOM[g.phu]){ delete LY_DO_GOM[g.phu]; set('lydogom',LY_DO_GOM) }
   if(g.daXoa && g.banCu){ GIA[g.phu]=JSON.parse(JSON.stringify(g.banCu)) }  // dựng lại y nguyên dòng đã xoá
   if(GIA[g.phu]){ GIA[g.phu].ngung=false; delete GIA[g.phu].gopVao }
-  set('alias',ALIAS); set('gia',GIA);
+  set('alias',ALIAS); set('gia',GIA); henDayVon_();
   tinhLaiToanBoSO();
   NHAT_KY_GOM.splice(i,1);
   veCB(); veSo(); veBC(); veGia(); vePhat(); veLam();
@@ -4876,7 +4883,7 @@ function donNgung(){
       'Xoá xong phải vào từng đơn sửa giá vốn bằng tay.\n':'')+
     '\nBảng giá còn lại '+(Object.keys(GIA).length-ds.length)+' mặt hàng.'))return;
   ds.forEach(function(k){ delete GIA[k] });
-  set('gia',GIA); XEMNGUNG=false; GLIM=40; veGia(); vePhat(); dayVon(false);
+  set('gia',GIA); XEMNGUNG=false; GLIM=40; veGia(); vePhat(); henDayVon_();   // 12/11/2026: trước chỉ dayVon, máy NV vẫn thấy món đã xoá
   bao('giaMsg','Đã xoá hẳn <b>'+ds.length+' mặt hàng ngừng bán</b>. '+
     'Bảng giá còn <b>'+Object.keys(GIA).length.toLocaleString('vi-VN')+' mặt hàng</b>.'+
     '<br><span class="sm">Đơn đã bán không đổi. Đang lưu bản gọn lên Sheet để điện thoại khớp theo.</span>','ok');
@@ -4918,6 +4925,7 @@ function vePhat(){
     : '<span style="color:var(--warn)">Chưa phát lần nào.</span> Máy nhân viên đang dùng bảng giá chép tay trong file. '+
       'Bấm phát một lần để chúng tự nhận từ nay về sau.';
 }
+var PHAT_KET=0;   // 12/11/2026: số món giá sỉ vô lý đang chặn tự phát bảng giá (hiện ở tab Cần làm)
 async function phatGia(im){
   // im=true : goi lang le tu cac hanh dong khac (vi du xoaSP) — khong hoi lai,
   // khong hien loi to, chi lang le bo qua neu thieu dieu kien.
@@ -4940,8 +4948,8 @@ async function phatGia(im){
       bao('giaMsg','Đã huỷ phát — có người khác vừa phát bảng giá. Vào tab Nạp đơn bấm Tải lại rồi thử lại.','wa');
       return;
     }
-    var loi=loiQD();
-    if(loi.length){
+    var loi=loiQD(); PHAT_KET=loi.length;
+    if(loi.length){ try{veLam()}catch(e){}
       if(im){
         bao('giaMsg','Đã lưu, nhưng <b>CHƯA phát được cho máy nhân viên</b> vì còn '+loi.length+
           ' món giá sỉ vô lý trong bảng giá. '+
@@ -4973,7 +4981,7 @@ async function phatGia(im){
       body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'banggia',bang:b})});
     var j=JSON.parse(await r.text());
     if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
-    BGV={ver:j.ver,luc:nowStr(),so:j.so}; set('bgv',BGV); vePhat();
+    BGV={ver:j.ver,luc:nowStr(),so:j.so}; set('bgv',BGV); vePhat(); PHAT_KET=0; try{veLam()}catch(e){}
     if(im) bao('giaMsg','Đã tự lưu lên Sheet và phát cho máy nhân viên ('+j.so.toLocaleString('vi-VN')+
       ' mặt hàng) — máy nhân viên nhận trong vòng một phút.','ok');
     else bao('giaMsg','Đã phát <b>'+j.so.toLocaleString('vi-VN')+' mặt hàng</b> (bản '+esc(j.ver)+').<br>'+
@@ -5132,11 +5140,11 @@ function apDungNapGia(){
     if(GIA[x.sku]) sua++; else them++;
     GIA[x.sku]=p;
   });
-  set('gia',GIA); GLIM=40; tinhLaiToanBoSO();
+  set('gia',GIA); GLIM=40; tinhLaiToanBoSO(); henDayVon_();
   veGia(); vePhat(); veCB(); veSo(); veBC(); veLam();
   $('dlgNap').close(); NAP_CHO=null;
   bao('giaMsg','Đã ghi: <b>'+sua+' món cập nhật</b>, <b>'+them+' món thêm mới</b>. '+
-    'Bấm <b>Cập nhật bảng giá</b> để máy nhân viên nhận.<br>'+
+    'Máy tự lưu lên Sheet và phát cho nhân viên trong giây lát.<br>'+
     '<button class="mini mt" onclick="hoanTacNapGia()">Hoàn tác lần nạp này</button>','ok');
 }
 
@@ -5144,9 +5152,9 @@ function hoanTacNapGia(){
   if(!NAP_BAN_CU){ bao('giaMsg','Không còn bản trước để quay lại.','wa'); return }
   if(!confirm('Trả bảng giá về đúng như trước?\n\nMọi thay đổi của lần vừa rồi sẽ mất.')) return;
   GIA=JSON.parse(JSON.stringify(NAP_BAN_CU)); NAP_BAN_CU=null;
-  set('gia',GIA); tinhLaiToanBoSO();
+  set('gia',GIA); tinhLaiToanBoSO(); henDayVon_();
   veGia(); vePhat(); veCB(); veSo(); veBC(); veLam();
-  bao('giaMsg','Đã trả bảng giá về như trước.','ok');
+  bao('giaMsg','Đã trả bảng giá về như trước — máy tự lưu lên Sheet và phát lại cho nhân viên.','ok');
 }
 
 /* ═══ SỬA HÀNG LOẠT NGAY TRONG APP — thêm 11/09/2026 ═══
@@ -5248,10 +5256,10 @@ function apDungSuaLo(){
     p.nhom=x.ap.nhom||p.nhom; p.brand=x.ap.brand||p.brand;
     p.gb=Number(x.ap.gb)||p.gb; p.ngung=!!x.ap.ngung;
   });
-  set('gia',GIA); tinhLaiToanBoSO();
+  set('gia',GIA); tinhLaiToanBoSO(); henDayVon_();
   veGia(); vePhat(); veCB(); veSo(); veBC();
   $('dlgSuaLo').close(); SUA_LO_CHO=null;
-  bao('giaMsg','Đã đổi <b>'+ra.length+' món</b>. Bấm <b>Cập nhật bảng giá</b> để máy nhân viên nhận.<br>'+
+  bao('giaMsg','Đã đổi <b>'+ra.length+' món</b>. Máy tự lưu lên Sheet và phát cho nhân viên trong giây lát.<br>'+
     '<button class="mini mt" onclick="hoanTacNapGia()">Hoàn tác lần sửa này</button>','ok');
 }
 
@@ -6961,6 +6969,13 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261112f', ngay:'12/11/2026', ten:'Sửa giá ở đâu cũng tự đồng bộ',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['sua','Nạp bảng giá từ file CSV, sửa hàng loạt, hoàn tác, gộp mã trùng: giờ <b>tự lưu lên Sheet và tự phát</b> cho máy nhân viên — trước đây chỉ lưu trên máy đang bấm, máy khác không thấy.'],
+   ['sua','Xoá hàng ngừng bán: máy nhân viên cũng hết thấy món đó.'],
+   ['moi','Bảng giá chưa phát được vì có giá sỉ vô lý: báo rõ ở tab <b>Cần làm</b>.']
+  ]},
  {ban:'20261112e', ngay:'12/11/2026', ten:'Điền giá vốn không còn nhảy dòng',
   vaPhieu:[], vaNoi:[],
   muc:[
