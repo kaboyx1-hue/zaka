@@ -3,6 +3,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ZAKA — Quản lý</title>
+<!-- 12/11/2026 chủ: biểu tượng riêng khi thêm máy quản lý ra màn hình chính điện thoại (chỉ máy quản lý) -->
+<link rel="manifest" href="ql.webmanifest">
+<link rel="apple-touch-icon" href="icons/ql-180.png">
+<link rel="icon" type="image/png" href="icons/ql-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ZAKA QL">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#0A0C0B">
 <style>
 /* ══ Bảng màu — chốt theo bản duyệt 2026-09-08: tối = "Xanh rêu" (mặc định :root),
    sáng = "Mùn cưa" (body.sang). Thêm 2 biến mới --brand/--brandTx (màu thương hiệu
@@ -595,6 +604,14 @@ body:not(.sang) .zToast{border-radius:0;background:var(--acc);color:var(--codTx)
 .ipDuoi{display:flex;justify-content:space-between;width:min(100%,290px)}
 .ipChu{background:none!important;border:0;color:#fff!important;font-size:17px;padding:8px 6px;cursor:pointer;font-family:inherit;scale:1!important;clip-path:none!important}
 @media (prefers-reduced-motion:reduce){.ipCham.lac{animation:none}}
+/* tab Khách hàng — 12/11/2026 */
+.khDong{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:10px 8px;border-top:1px solid var(--line);cursor:pointer}
+.khDong:hover,.khDong.mo{background:var(--c2)}
+.khTen{min-width:0}.khSo{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.khHoSo{padding:10px 12px 14px;border-left:3px solid var(--acc);background:var(--c2);margin-bottom:6px}
+.khHoSo table{width:100%}
+.khHoSo a.btn2{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;padding:9px 16px;flex:0 0 auto}
+.khHoSo .row>*{flex:0 0 auto}
 </style></head><body>
 <div id="khoa">
   <div class="logoMark">🐾</div>
@@ -639,6 +656,7 @@ body:not(.sang) .zToast{border-radius:0;background:var(--acc);color:var(--codTx)
     <button id="tb-lam" class="on" onclick="tab('lam')">Cần làm <span id="lamSo"></span></button>
     <button id="tb-bc" onclick="tab('bc')">Báo cáo</button>
     <button id="tb-so" onclick="tab('so')">Sổ cái</button>
+    <button id="tb-kh" onclick="tab('kh')">Khách hàng</button>
     <button id="tb-gia" onclick="tab('gia')">Bảng giá</button>
     <button id="tb-ts" onclick="tab('ts')">Tính giá sàn</button>
     <button id="tb-vc" onclick="tab('vc')">Điều hành công việc</button>
@@ -745,6 +763,21 @@ body:not(.sang) .zToast{border-radius:0;background:var(--acc);color:var(--codTx)
   <div id="so"></div>
 </section>
 
+<section id="pg-kh" class="hide">
+  <div class="card">
+    <input id="khQ" placeholder="Tìm tên khách hoặc số điện thoại…" oninput="KH_LIM=60;veKH()" autocomplete="off">
+    <div class="row mt" style="margin-top:8px;flex-wrap:wrap">
+      <select id="khKenh" onchange="KH_LIM=60;veKH()"></select>
+      <select id="khSap" onchange="veKH()">
+        <option value="tong">Mua nhiều nhất</option><option value="gan">Mua gần đây nhất</option>
+        <option value="no">Còn nợ nhiều nhất</option><option value="lau">Lâu chưa quay lại</option><option value="don">Nhiều đơn nhất</option>
+      </select>
+    </div>
+    <div id="khLoc" class="row mt" style="margin-top:8px;gap:6px;flex-wrap:wrap"></div>
+  </div>
+  <div id="khTom"></div>
+  <div id="khDs"></div>
+</section>
 <section id="pg-gia" class="hide">
   <div id="giaMsg"></div>
 
@@ -1107,7 +1140,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261112f';
+var APP_VER='20261112g';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -2057,7 +2090,7 @@ function veLam(){
   // ── Việc 3: bảng giá đã đổi mà chưa gửi cho nhân viên ──
   try{
     var b=goiGia().length;
-    if(BGV && BGV.ver && b!==BGV.so) viec.push({
+    if(BGV && BGV.ver && (BGV.dau ? dauGia_()!==BGV.dau : b!==BGV.so)) viec.push({
       ten:'Bảng giá trong máy này đã khác bản nhân viên đang dùng',
       vi:'Anh/chị vừa sửa bảng giá nhưng các máy bán hàng chưa nhận được. '+
          'Bấm gửi thì lát nữa máy nào mở lên cũng có bản mới.',
@@ -3164,15 +3197,15 @@ function tab(t){
      nhịp: đổi tab hiện ra NGAY, rồi nhường cho trình duyệt vẽ xong màn hình,
      xong mới tính nội dung. Tổng thời gian y như cũ nhưng cảm giác nhanh hẳn
      vì tab phản hồi tức thì và có chữ "Đang tính…" trong lúc chờ. */
-  ['lam','in','bc','so','gia','ts','vc','ns','cb','vh'].forEach(function(x){
+  ['lam','in','bc','so','kh','gia','ts','vc','ns','cb','vh'].forEach(function(x){
     $('pg-'+x).classList.toggle('hide',x!==t);$('tb-'+x).classList.toggle('on',x===t)});
-  var oCho={lam:'lamDs',bc:'bc',so:'dsSo',cb:'cb'}[t];
+  var oCho={lam:'lamDs',bc:'bc',so:'dsSo',cb:'cb',kh:'khDs'}[t];
   if(oCho && $(oCho) && !$(oCho).innerHTML) $(oCho).innerHTML='<div class="card"><div class="empty dangTinh">Đang tính…</div></div>';
   requestAnimationFrame(function(){ setTimeout(function(){ veTab_(t) },0) });
 }
 function veTab_(t){
   if(t==='lam')veLam();
-  if(t==='bc')veBC(); if(t==='so')veSo(); if(t==='gia'){veGia();vePhat()} if(t==='cb')veCB();
+  if(t==='bc')veBC(); if(t==='so')veSo(); if(t==='kh')veKH(); if(t==='gia'){veGia();vePhat()} if(t==='cb')veCB();
   if(t==='ts'){guiCatalogChoTs();guiTinhGiaChoTs();guiLuongShipperChoTs()}
   if(t==='vc'){guiViecChoVc()}
   if(t==='ns'){veNV();veNhanSu();veMayGui()}  // guiNguoiPTChoVc() bo hang 23/09 — khong con ai ben truc.html nghe
@@ -4561,7 +4594,7 @@ async function khoiPhuc(f){
       '  · Bảng giá hiện có '+Object.keys(GIA).length+' sp → '+Object.keys(g.gia||{}).length+' sp\n\n'+
       'Không hoàn tác được. Nên sao lưu bản hiện tại trước.'))return;
     SO=g.so||[]; GIA=g.gia||{}; set('so',SO); set('gia',GIA);
-    veSo();veBC();veGia();veCB();
+    veSo();veBC();veGia();veCB(); henDayVon_();   // 12/11/2026: không lưu lên Sheet thì lần đồng bộ sau đè mất bản vừa khôi phục
     bao('inMsg','Đã khôi phục từ bản sao lưu <b>'+esc(g.luc||'')+'</b>.','ok');
   }catch(e){ bao('inMsg','Không đọc được file: '+esc(e.message),'er') }
 }
@@ -4581,7 +4614,7 @@ var GIA_GIU={};
 function giaReset(){GLIM=40;GIA_GIU={};veGia()}
 function giaThem(n){GLIM=n?1e9:GLIM+60;veGia()}
 function veGia(){
-  dongBoQuyDoi_();
+  if(dongBoQuyDoi_() && !VON_CHO_DAY) henDayVon_();   // vốn món quy đổi đổi theo món gốc → lưu cho máy khác thấy
   var oSku=$('skuMoi'), gSku=oSku?{v:oSku.value,f:document.activeElement===oSku}:null;   // đồng bộ nền vẽ lại bảng không làm mất mã đang gõ
   var q=kd(($('gq').value||'').trim()), nh=$('gn').value;
   var tatca=Object.keys(GIA).map(function(k){return GIA[k]});
@@ -4926,6 +4959,8 @@ function vePhat(){
       'Bấm phát một lần để chúng tự nhận từ nay về sau.';
 }
 var PHAT_KET=0;   // 12/11/2026: số món giá sỉ vô lý đang chặn tự phát bảng giá (hiện ở tab Cần làm)
+/* dấu vân tay bảng giá phát cho nhân viên — đổi giá mà không đổi số món cũng nhận ra (trước chỉ so số món) */
+function dauGia_(){ var t=JSON.stringify(goiGia()), h=5381; for(var i=0;i<t.length;i++) h=((h<<5)+h+t.charCodeAt(i))|0; return String(h) }
 async function phatGia(im){
   // im=true : goi lang le tu cac hanh dong khac (vi du xoaSP) — khong hoi lai,
   // khong hien loi to, chi lang le bo qua neu thieu dieu kien.
@@ -4981,7 +5016,7 @@ async function phatGia(im){
       body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'banggia',bang:b})});
     var j=JSON.parse(await r.text());
     if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
-    BGV={ver:j.ver,luc:nowStr(),so:j.so}; set('bgv',BGV); vePhat(); PHAT_KET=0; try{veLam()}catch(e){}
+    BGV={ver:j.ver,luc:nowStr(),so:j.so,dau:dauGia_()}; set('bgv',BGV); vePhat(); PHAT_KET=0; try{veLam()}catch(e){}
     if(im) bao('giaMsg','Đã tự lưu lên Sheet và phát cho máy nhân viên ('+j.so.toLocaleString('vi-VN')+
       ' mặt hàng) — máy nhân viên nhận trong vòng một phút.','ok');
     else bao('giaMsg','Đã phát <b>'+j.so.toLocaleString('vi-VN')+' mặt hàng</b> (bản '+esc(j.ver)+').<br>'+
@@ -5466,6 +5501,83 @@ function soNgay(iso){
    khách đã có TỪ 3 ĐƠN TRỞ LÊN — mua 1-2 lần rồi thôi chưa chắc là "khách quen
    bỏ đi", có thể chỉ là khách vãng lai. */
 var NGUONG_ROIBO_KENH_={'Sỉ':30,'Breeder':30,'Thú y':30}, NGUONG_ROIBO_MACDINH_=45;
+/* ══════════ TAB KHÁCH HÀNG — 12/11/2026 chủ: khách hàng phải có tab riêng, không nén chung mục nào ══════════
+   Máy quản lý không có danh bạ KHACH_HANG — gom thẳng từ đơn (SO) theo SĐT chuẩn hoá (chuanSdt_, chịu được SĐT mất số 0).
+   Đơn không SĐT (khách lẻ vãng lai) không tính. Chỉ xem, không sửa gì. */
+var KH_LIM=60, KH_LOC='', KH_MO='';
+function dsKhachQL_(){
+  var m={};
+  SO.forEach(function(d){
+    if(d.huy) return; var k=chuanSdt_(d.sdt); if(!k) return;
+    var o=m[k]||(m[k]={k:k,sdt:String(d.sdt||'').trim(),ten:'',don:[],tong:0,no:0,dem:{},cuoi:'',dau:'9999'});
+    o.don.push(d); o.tong+=Number(d.tong)||0; o.no+=conThuDon(d)||0;
+    var kn=d.kenh||'?'; o.dem[kn]=(o.dem[kn]||0)+1;
+    var iso=String(d.iso||''); if(iso>=o.cuoi){ o.cuoi=iso; o.ten=d.khach||o.ten; if(d.sdt) o.sdt=String(d.sdt).trim() } if(iso&&iso<o.dau) o.dau=iso;
+  });
+  return Object.keys(m).map(function(k){
+    var o=m[k], max=0; Object.keys(o.dem).forEach(function(x){ if(o.dem[x]>max){max=o.dem[x];o.kenh=x} });
+    o.ngay=o.cuoi?soNgay(o.cuoi):9999; o.roiBo=o.don.length>=3 && o.ngay>=(NGUONG_ROIBO_KENH_[o.kenh]||NGUONG_ROIBO_MACDINH_);
+    o.moi=o.dau!=='9999' && soNgay(o.dau)<=30; o.hh=huyHieuKhach_(o.sdt,o.don).mang;
+    return o;
+  });
+}
+function veKH(){
+  var all=dsKhachQL_(), q=kd(($('khQ').value||'').trim()), qs=q.replace(/\D/g,'').replace(/^0+/,'');
+  var sel=$('khKenh'), kenhCu=sel.value, dsK={}; all.forEach(function(o){dsK[o.kenh]=1});
+  sel.innerHTML='<option value="">Tất cả kênh</option>'+Object.keys(dsK).sort().map(function(k){return '<option'+(k===kenhCu?' selected':'')+'>'+esc(k)+'</option>'}).join('');
+  var loc={'':['Tất cả',function(){return true}], no:['Còn nợ',function(o){return o.no>0}], roi:['Lâu chưa quay lại',function(o){return o.roiBo}],
+    vip:['VIP / Khách quen',function(o){return o.hh.some(function(b){return /vip|vvip|quen/.test(b.loai)})}], moi:['Khách mới (30 ngày)',function(o){return o.moi}]};
+  $('khLoc').innerHTML=Object.keys(loc).map(function(k){var n=all.filter(loc[k][1]).length;
+    return '<button class="chip'+(KH_LOC===k?' on':'')+'" onclick="KH_LOC=\''+k+'\';KH_LIM=60;veKH()">'+loc[k][0]+' ('+n+')</button>'}).join('');
+  var ds=all.filter(loc[KH_LOC]?loc[KH_LOC][1]:loc[''][1]).filter(function(o){
+    if(sel.value&&o.kenh!==sel.value) return false;
+    if(!q) return true;
+    return kd(o.ten+' '+o.sdt).indexOf(q)>=0 || (qs.length>=3 && o.k.indexOf(qs)>=0);
+  });
+  var sap=$('khSap').value;
+  ds.sort(function(a,b){ return sap==='gan'?(b.cuoi>a.cuoi?1:-1):sap==='no'?b.no-a.no:sap==='lau'?b.ngay-a.ngay:sap==='don'?b.don.length-a.don.length:b.tong-a.tong });
+  var tongNo=all.reduce(function(a,o){return a+o.no},0);
+  $('khTom').innerHTML='<div class="card"><div class="kpi">'+
+    '<div class="k-info"><small>Khách có số điện thoại</small><b>'+all.length.toLocaleString('vi-VN')+'</b></div>'+
+    '<div class="k-ok"><small>Mua trong 30 ngày</small><b>'+all.filter(function(o){return o.ngay<=30}).length.toLocaleString('vi-VN')+'</b></div>'+
+    '<div><small>Khách còn nợ</small><b>'+all.filter(function(o){return o.no>0}).length+'</b><span class="sm" style="display:block">'+tien(tongNo)+'</span></div>'+
+    '<div class="k-pur"><small>Lâu chưa quay lại</small><b>'+all.filter(function(o){return o.roiBo}).length+'</b></div></div></div>';
+  if(!ds.length){ $('khDs').innerHTML='<div class="card"><div class="empty">Không thấy khách nào khớp.</div></div>'; return }
+  $('khDs').innerHTML='<div class="card"><div class="sm" style="margin-bottom:6px">'+ds.length.toLocaleString('vi-VN')+' khách — bấm vào một khách để xem hồ sơ</div>'+
+    ds.slice(0,KH_LIM).map(function(o){
+      return '<div class="khDong'+(KH_MO===o.k?' mo':'')+'" onclick="KH_MO=KH_MO===\''+o.k+'\'?\'\':\''+o.k+'\';veKH()">'+
+        '<div class="khTen"><b>'+esc(o.ten||'(chưa có tên)')+'</b> '+o.hh.map(function(b){return '<span class="badge '+b.loai+'">'+esc(b.nhan)+'</span>'}).join('')+
+          '<div class="sm">'+esc(o.sdt)+' · '+esc(o.kenh)+' · '+o.don.length+' đơn · lần cuối '+(o.cuoi?o.cuoi.split('-').reverse().join('/')+' ('+o.ngay+' ngày trước)':'—')+'</div></div>'+
+        '<div class="khSo"><b>'+tien(o.tong)+'</b>'+(o.no>0?'<div class="sm" style="color:var(--warn)">còn nợ '+tien(o.no)+'</div>':'')+'</div></div>'+
+        (KH_MO===o.k?hoSoKH_(o):'');
+    }).join('')+
+    (ds.length>KH_LIM?'<div style="text-align:center;padding:10px 0"><button class="btn2" onclick="KH_LIM+=60;veKH()">Xem thêm · còn '+(ds.length-KH_LIM)+'</button></div>':'')+'</div>';
+}
+function hoSoKH_(o){
+  var mon={}; o.don.forEach(function(d){ (d.dong||[]).forEach(function(x){ var t=x.ten||x.sku; mon[t]=(mon[t]||0)+(Number(x.sl)||0) }) });
+  var top=Object.keys(mon).sort(function(a,b){return mon[b]-mon[a]}).slice(0,6);
+  var dsDon=o.don.slice().sort(function(a,b){return String(b.iso)>String(a.iso)?1:-1});
+  var tb=o.don.length>1&&o.dau!==o.cuoi?Math.round((new Date(o.cuoi)-new Date(o.dau))/864e5/(o.don.length-1)):0;
+  var so=String(o.sdt).replace(/\D/g,''); if(so&&so[0]!=='0') so='0'+so;
+  return '<div class="khHoSo" onclick="event.stopPropagation()">'+
+    '<div class="row" style="gap:6px;flex-wrap:wrap">'+
+      (so?'<a class="btn2" href="tel:'+so+'">📞 Gọi</a><a class="btn2" target="_blank" rel="noopener" href="https://zalo.me/'+so+'">Zalo</a>':'')+
+      '<button class="btn2" onclick="xemDonKhach_(\''+o.k+'\')">Xem '+o.don.length+' đơn ở Sổ cái</button></div>'+
+    '<div class="kpi mt"><div><small>Tổng mua</small><b>'+tien(o.tong)+'</b></div><div><small>Còn nợ</small><b>'+tien(o.no)+'</b></div>'+
+      '<div><small>Khách từ</small><b>'+(o.dau!=='9999'?o.dau.split('-').reverse().join('/'):'—')+'</b></div><div><small>Thường quay lại</small><b>'+(tb?tb+' ngày':'—')+'</b></div></div>'+
+    '<div class="sm mt"><b>Hay mua:</b> '+top.map(function(t){return esc(t)+' ×'+String(Math.round(mon[t]*1000)/1000).replace('.',',')}).join(' · ')+'</div>'+
+    '<div class="sm mt"><b>Đơn gần nhất:</b></div>'+
+    '<table class="mt"><tr><th>Mã</th><th>Ngày</th><th class="r">Tiền</th><th>Thanh toán</th></tr>'+
+      dsDon.slice(0,8).map(function(d){ var con=conThuDon(d);
+        return '<tr><td>'+esc(d.ma)+'</td><td>'+esc(String(d.iso||'').split('-').reverse().join('/'))+'</td><td class="r">'+tien(d.tong)+'</td>'+
+          '<td>'+(con>0?'<span style="color:var(--warn)">còn '+tien(con)+'</span>':'Đã thu')+'</td></tr>' }).join('')+
+    '</table></div>';
+}
+function xemDonKhach_(k){
+  var o=dsKhachQL_().filter(function(x){return x.k===k})[0]; if(!o) return;
+  LOCMA=o.don.map(function(d){return d.ma}); LOCTEN='đơn của '+(o.ten||o.sdt); LOC_TOANBO_KY=true;
+  $('fso').value=''; tab('so'); window.scrollTo({top:0,behavior:'smooth'});
+}
 function khachRoiBo_(){
   var theo={};
   SO.forEach(function(d){
@@ -5632,13 +5744,53 @@ function vonNhanhHen_(){
 /* ══════════════════ GIÁ VỐN HAI CHIỀU VỚI SHEET ══════════════════ */
 /* Bản đầy đủ của bảng giá — dùng để hai máy quản lý soi gương nhau.
    Đi qua trang BANG_GIA_QL, chỉ mở được bằng mật khẩu quản lý. */
-function goiVon(){
-  return Object.keys(GIA).map(function(k){var p=GIA[k];
-    return {sku:p.sku, nhom:p.nhom||'KHÁC', brand:p.brand||'', ten:p.ten||'',
-            dvt:p.dvt||'', gb:p.gb||0, qd_dv:p.qd_dv||'', qd_sl:p.qd_sl||0, qd_gb:p.qd_gb||0,
-            von:p.von||0, qd_von:p.qd_von||0, ngung:p.ngung?1:'', moi:p.moi?1:'', soat:p.soat?1:'',
-            suaTay:p.suaTay?1:'', vonLuc:p.vonLuc||'', vonLyDo:p.vonLyDo||'',
-            vat:(p.vat===null||p.vat===undefined?'':p.vat)}});
+function goiVonMot_(p){
+  return {sku:p.sku, nhom:p.nhom||'KHÁC', brand:p.brand||'', ten:p.ten||'',
+          dvt:p.dvt||'', gb:p.gb||0, qd_dv:p.qd_dv||'', qd_sl:p.qd_sl||0, qd_gb:p.qd_gb||0,
+          von:p.von||0, qd_von:p.qd_von||0, ngung:p.ngung?1:'', moi:p.moi?1:'', soat:p.soat?1:'',
+          suaTay:p.suaTay?1:'', vonLuc:p.vonLuc||'', vonLyDo:p.vonLyDo||'',
+          vat:(p.vat===null||p.vat===undefined?'':p.vat)};
+}
+function goiVon(){ return Object.keys(GIA).map(function(k){ return goiVonMot_(GIA[k]) }) }
+/* GỘP BẢNG GIÁ 3 CHIỀU — 12/11/2026 chủ: "sửa toàn diện" đồng bộ giá. Trước đây mỗi lần lưu là GHI ĐÈ CẢ BẢNG lên Sheet:
+   2 máy quản lý cùng sửa trong vài giây thì máy lưu sau xoá mất phần máy kia, và tự lưu thì bật hộp hỏi "người khác vừa sửa".
+   Nay giữ GIA_GOC = bảng giá trên Sheet ở lần đồng bộ gần nhất. Trước khi lưu, nếu Sheet đã đổi (máy khác vừa lưu) thì kéo bản
+   mới về và gộp TỪNG Ô: ô nào máy này sửa (khác gốc) giữ của máy này, ô máy này không đụng lấy của máy kia. Món thêm/xoá cũng vậy. */
+var GIA_TRUONG=['nhom','brand','ten','dvt','gb','qd_dv','qd_sl','qd_gb','von','qd_von','ngung','moi','soat','suaTay','vonLuc','vonLyDo','vat'];
+var GIA_GOC=get('giagoc',null);
+function chuanP_(p){ var x=goiVonMot_(p), o={}; GIA_TRUONG.forEach(function(f){ o[f]=String(x[f]===undefined||x[f]===null?'':x[f]) }); return o }
+function dongSheetVaoP_(x,p){
+  p.nhom=x.nhom||'KHÁC'; p.brand=x.brand||''; p.ten=x.ten||p.sku; p.dvt=x.dvt||'';
+  p.gb=Number(x.gb)||0; p.qd_dv=x.qd_dv||''; p.qd_sl=Number(x.qd_sl)||0; p.qd_gb=Number(x.qd_gb)||0;
+  p.von=Number(x.von)||null; p.qd_von=Number(x.qd_von)||0;
+  p.ngung=!!x.ngung; p.moi=!!x.moi; p.soat=x.soat?1:0;
+  p.suaTay=!!x.suaTay; p.vonLuc=x.vonLuc||''; p.vonLyDo=x.vonLyDo||''; p.vat=x.vat!==undefined&&x.vat!==''?Number(x.vat):null;
+  return p;
+}
+function chupGoc_(){ var g={}; Object.keys(GIA).forEach(function(k){ g[k]=chuanP_(GIA[k]) }); GIA_GOC=g; set('giagoc',g) }
+function gopBangGia_(ds){
+  var B=GIA_GOC, R={}, n=0; if(!B) return 0;   // chưa có gốc (máy mới) → giữ cách cũ: bản máy này thắng
+  ds.forEach(function(x){ var k=String(x.sku||'').trim(); if(k) R[k]=x });
+  var keys={}; [B,R,GIA].forEach(function(m){ Object.keys(m).forEach(function(k){ keys[k]=1 }) });
+  Object.keys(keys).forEach(function(k){
+    var b=B[k], r=R[k], l=GIA[k];
+    if(!l){ if(!b && r){ GIA[k]=dongSheetVaoP_(r,{sku:k}); n++ } return }          // máy kia thêm → thêm; máy này đã xoá → giữ xoá
+    if(!r){ if(b && JSON.stringify(chuanP_(l))===JSON.stringify(b)){ delete GIA[k]; n++ } return }   // máy kia xoá, máy này không sửa → xoá theo
+    if(!b) return;                                                              // máy này thêm mới → giữ
+    var rp=dongSheetVaoP_(r,{sku:k}), rc=chuanP_(rp), lc=chuanP_(l);
+    GIA_TRUONG.forEach(function(f){ if(lc[f]===b[f] && rc[f]!==b[f]){ l[f]=rp[f]; n++ } });
+  });
+  return n;
+}
+async function gopNeuMayKhacVuaLuu_(){
+  if(!QCFG.url||!QCFG.key) return;
+  var r=await fetch(QCFG.url+'?tt=1&may=QUANLY&key='+encodeURIComponent(QCFG.key)); var j=JSON.parse(await r.text());
+  if(!j.ok||!j.ver||!j.ver.von||j.ver.von===VONVER) return;
+  var g=await (await fetch(QCFG.url+'?key='+encodeURIComponent(QCFG.key)+'&tu='+homNayVN_())).json();   // chỉ cần bảng giá, đơn lấy từ hôm nay cho nhẹ
+  if(!g.ok||!g.von) return;
+  var n=gopBangGia_(g.von); VERQL.von=g.vonVer; set('verql',VERQL);
+  if(n){ set('gia',GIA); dongBoQuyDoi_(); setTimeout(function(){ try{ veGia(); vePhat() }catch(e){} },0);
+    bao('giaMsg','Máy quản lý kia vừa sửa bảng giá — đã <b>gộp '+n+' thay đổi</b> của máy đó vào, không ô nào bị ghi đè.','ok') }
 }
 function goiSuaVon(){
   var o=[];
@@ -5715,16 +5867,14 @@ async function dayVon(im){
   // fetch bên trong) trước khi bất kỳ cú bấm nào kịp khoá được nút.
   var bDV=im?$('btnDayVon'):null; if(bDV) bDV.disabled=true;
   try{
-    if(!(await kiemXungDot('von','giá vốn'))){
-      bao('giaMsg','Đã huỷ lưu — có người khác vừa sửa giá vốn. Vào tab Nạp đơn bấm Tải lại rồi thử lại.','wa');
-      return;
-    }
+    try{ await gopNeuMayKhacVuaLuu_() }catch(eG){}   // máy kia vừa lưu → gộp từng ô thay vì hỏi/ghi đè
+    b=goiVon();
     var r=await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'giavon',bang:b})});
     var j=JSON.parse(await r.text());
     if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
     VONVER=j.ver; set('vonver',VONVER); VON_CHO_DAY=false;
-    VERQL.von=j.ver; set('verql',VERQL);   // lần lưu của chính máy này không tính là "người khác vừa sửa" — tự lưu lần sau khỏi bị hỏi oan
+    VERQL.von=j.ver; set('verql',VERQL); chupGoc_();   // lần lưu của chính máy này không tính là "người khác vừa sửa" — tự lưu lần sau khỏi bị hỏi oan
     if(im) bao('giaMsg','Đã lưu <b>'+j.so.toLocaleString('vi-VN')+' dòng</b> lên Google Sheet '+
       '(trang BANG_GIA_QL, chỉ mở được bằng mật khẩu quản lý).<br>'+
       '<span class="sm">Gồm cả giá bán, giá vốn, hàng ngừng bán. Điện thoại và máy quản lý kia '+
@@ -5748,17 +5898,13 @@ function napVonTuSheet(ds,ver){
                ss('qd_sl',Number(x.qd_sl)||0) || ss('qd_dv',x.qd_dv) ||
                ss('vat',x.vat!==undefined&&x.vat!==''?Number(x.vat):null);
     if(khac && !moiTinh){ doi.push({ten:p.ten||x.ten,cu:p.gb||0,moi:Number(x.gb)||0}); sua++ }
-    p.nhom=x.nhom||'KHÁC'; p.brand=x.brand||''; p.ten=x.ten||sku; p.dvt=x.dvt||'';
-    p.gb=Number(x.gb)||0; p.qd_dv=x.qd_dv||''; p.qd_sl=Number(x.qd_sl)||0; p.qd_gb=Number(x.qd_gb)||0;
-    p.von=Number(x.von)||null; p.qd_von=Number(x.qd_von)||0;
-    p.ngung=!!x.ngung; p.moi=!!x.moi; p.soat=x.soat?1:0;
-    p.suaTay=!!x.suaTay; p.vonLuc=x.vonLuc||''; p.vonLyDo=x.vonLyDo||''; p.vat=x.vat!==undefined&&x.vat!==''?Number(x.vat):null;
+    dongSheetVaoP_(x,p);
   });
   // Máy kia đã xoá hẳn món nào thì máy này cũng bỏ
   var xoa=0;
   Object.keys(GIA).forEach(function(k){ if(!coTrongSheet[k]){ delete GIA[k]; xoa++ } });
 
-  set('gia',GIA); VONVER=ver; set('vonver',ver);
+  set('gia',GIA); VONVER=ver; set('vonver',ver); chupGoc_();
   if(them||sua||xoa){
     setTimeout(function(){ bao('giaMsg','Đã đồng bộ bảng giá với máy quản lý kia: '+
       '<b>'+sua+' sửa</b> · <b>'+them+' thêm</b>'+(xoa?' · <b>'+xoa+' xoá</b>':'')+
@@ -6969,6 +7115,15 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261112g', ngay:'12/11/2026', ten:'Tab Khách hàng riêng · đồng bộ giá toàn diện',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['moi','Thêm máy quản lý ra <b>màn hình chính điện thoại</b> giờ có biểu tượng riêng (chữ Z chanh trên nền đen, tên "ZAKA QL") và mở toàn màn hình như app.'],
+   ['sua','Hai máy quản lý cùng sửa bảng giá: máy lưu sau giờ <b>gộp từng ô</b> với máy kia thay vì ghi đè cả bảng — không còn hộp hỏi "người khác vừa sửa", không ô nào bị mất.'],
+   ['sua','Khôi phục từ file sao lưu và giá vốn tự tính của món quy đổi giờ cũng tự lưu lên Sheet.'],
+   ['sua','Việc "Bảng giá khác bản nhân viên" ở Cần làm nhận ra cả khi chỉ đổi giá (trước chỉ so số món).'],
+   ['moi','Tab mới <b>Khách hàng</b> (cạnh Sổ cái): tìm theo tên hoặc số điện thoại, lọc Còn nợ / Lâu chưa quay lại / VIP–Khách quen / Khách mới, lọc kênh, sắp xếp. Bấm một khách để xem hồ sơ: tổng mua, còn nợ, hay mua món gì, đơn gần nhất, nút Gọi / Zalo / Xem đơn ở Sổ cái.'],
+  ]},
  {ban:'20261112f', ngay:'12/11/2026', ten:'Sửa giá ở đâu cũng tự đồng bộ',
   vaPhieu:[], vaNoi:[],
   muc:[

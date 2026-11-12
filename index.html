@@ -995,7 +995,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20261028b';
+var APP_VER='20261112a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -2033,9 +2033,11 @@ async function xinDuyetGap(sku){
   try{
     var kq=await guiGoi(url,{may:CFG.ma,nv:CFG.ten,hanhdong:'spmoi',gap:1,
       sp:{sku:p.sku,ten:p.ten,nhom:p.nhom,brand:p.brand||'',dvt:p.dvt,gb:p.gb}});
-    if(kq.doc===false || (kq.j&&kq.j.ok)){
+    if(kq.j&&kq.j.ok){
       bao('newMsg','<b>Đã xin duyệt.</b> Chủ mở máy quản lý là thấy ngay. '+
         'Chủ gật xong, máy này nhận trong vòng một phút — khỏi tải lại trang.','ok');
+    }else if(kq.doc===false){   // 12/11/2026: gửi mù — chưa chắc tới nơi, nói thật để nhân viên bấm lại (Sheet chặn trùng)
+      bao('newMsg','Đã gửi nhưng <b>chưa nhận được xác nhận</b> từ cửa hàng. Một phút nữa chưa được duyệt thì bấm lại — không bị gửi trùng.','wa');
     }else{
       bao('newMsg','Chưa gửi được lời xin duyệt — kiểm tra mạng rồi bấm lại.','er');
     }
@@ -5640,9 +5642,9 @@ async function ksGuiChoChu(ph){
          bại nên lần mở app sau lại gửi lại — chủ nhận cùng một chuyện hai ba
          lần. Nay coi như đã gửi: phía Sheet đã có bước chống ghi trùng, nên
          kể cả lỡ gửi lại cũng không sinh thêm bản. */
-      ph.daGui=true; ksLuu();
-      if(o) o.innerHTML='<b>Đã gửi về cho chủ.</b> (Máy không đọc được xác nhận, '+
-        'nhưng phiếu đã đi và Sheet có chặn trùng nên không lo bị gửi hai lần.)';
+      /* 12/11/2026: gửi mù chưa chắc tới nơi → KHÔNG đánh dấu đã gửi; lần mở sau tự gửi lại (Sheet chặn trùng nên không ra 2 phiếu). */
+      if(o) o.innerHTML='<b>Đã gửi về cho chủ</b> nhưng máy chưa nhận được xác nhận. '+
+        'Lần mở sau máy tự gửi lại cho chắc — Sheet có chặn trùng nên không bị hai phiếu.';
     } else throw new Error((kq.j&&kq.j.loi)||'chủ chưa nhận được');
   }catch(e){
     if(o) o.innerHTML='<b>Chưa gửi được</b> ('+esc(e.message)+'). Phiếu vẫn nằm trong máy, '+
@@ -5719,6 +5721,11 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261112a', ngay:'12/11/2026', ten:'Gửi phiếu và xin duyệt chắc chắn hơn',
+  vaPhieu:[],
+  muc:[
+   ['sua','Mạng chập chờn mà máy chưa nhận được xác nhận từ cửa hàng: phiếu báo kỹ sư không còn bị coi là đã gửi, máy tự gửi lại lần sau; nút "Xin duyệt gấp" nói rõ là chưa chắc tới nơi.'],
+  ]},
  {ban:'20261028b', ngay:'28/10/2026', ten:'Thêm ô Ship shop chịu',
   vaPhieu:[],
   muc:[
