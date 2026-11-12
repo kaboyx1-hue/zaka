@@ -1107,7 +1107,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261112b';
+var APP_VER='20261112c';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -6599,18 +6599,18 @@ async function moKhoa(){
 function vaoQL(){
   $('khoa').style.display='none'; $('thanApp').classList.remove('hide');
   $('khKey').value=''; khoiDongQL();
-  if(!get('pinql',null) && !get('pinbo',false)) setTimeout(moDatPin,1200);
   vePinVH_();
 }
-/* MÃ PIN — 12/11/2026 chủ: gõ mật khẩu đầy đủ mỗi lần mở quá mất thời gian. Mã PIN 6 số do CHỦ tự đặt trên từng máy
-   (chỉ lưu dấu băm SHA-256 + muối trong máy này, không gửi đi, không nằm trong mã nguồn, không đồng bộ sang máy khác).
-   PIN chỉ mở khoá máy đã từng đăng nhập bằng mật khẩu thật; sai 5 lần là xoá PIN, phải dùng mật khẩu đầy đủ. */
+/* MÃ PIN — 12/11/2026 chủ: PIN 6 số THAY HẲN mật khẩu trên mọi máy admin. Máy chủ Apps Script kiểm PIN (Thuộc tính
+   tập lệnh MA_PIN_QL, chủ tự đặt) và trả mật khẩu quản lý cho máy đó; sai nhiều thì máy chủ khoá 15 phút.
+   Có mạng: luôn hỏi máy chủ. Mất mạng: so với dấu băm SHA-256 + muối của lần mở đúng gần nhất trên máy này. */
 async function bamPin_(pin,muoi){
   var b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(muoi+':'+pin));
   return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0')}).join('');
 }
+function urlQL_(){ return (get('qcfg',{}).url)||(typeof URL_DRIVE!=='undefined'?URL_DRIVE:'') }
 function hienPin_(bat){
-  var coPin=!!get('pinql',null) && !!(get('qcfg',{}).key);
+  var coPin=!!urlQL_();
   $('pinKhung').style.display=bat&&coPin?'':'none';
   document.querySelector('#khoa .khCard:not(#pinKhung)').style.display=bat&&coPin?'none':'';
   $('khQuaPin').style.display=!bat&&coPin?'':'none';
@@ -6634,17 +6634,28 @@ function pinPhim_(k){
   if(PIN_GO.length===6) setTimeout(pinGo_,120);   // để chấm thứ 6 kịp sáng như iPhone
 }
 async function pinGo_(){
-  var luu=get('pinql',null), v=PIN_GO; PIN_BAN=true;
-  if(luu && await bamPin_(v,luu.muoi)===luu.bam){ PIN_BAN=false; PIN_GO=''; set('pinsai',0); vaoQL(); return }
-  var sai=(get('pinsai',0)||0)+1; set('pinsai',sai);
+  var v=PIN_GO, url=urlQL_(), loi='Sai mật mã'; PIN_BAN=true; $('pinErr').textContent='';
+  if(navigator.onLine && url){
+    try{
+      var j=await (await fetch(url+'?pinql='+encodeURIComponent(v))).json();
+      if(j.ok && j.key){
+        var c=get('qcfg',{}); c.url=url; c.key=j.key; set('qcfg',c); set('mkql',j.key);
+        var muoi=Array.from(crypto.getRandomValues(new Uint8Array(8))).map(function(x){return x.toString(16)}).join('');
+        set('pinql',{muoi:muoi,bam:await bamPin_(v,muoi)});
+        PIN_BAN=false; PIN_GO=''; vaoQL(); return;
+      }
+      if(j.chuaCoPin){ PIN_BAN=false; PIN_GO=''; pinVe_(); hienPin_(0);
+        bao('khErr','Máy chủ chưa có mã PIN — dùng mật khẩu đầy đủ. (Đặt PIN: Apps Script → ⚙ Cài đặt dự án → Thuộc tính tập lệnh → <code>MA_PIN_QL</code> = 6 chữ số.)','wa'); return }
+      loi=j.khoa?'Tạm khoá 15 phút vì gõ sai nhiều lần':('Sai mật mã'+(j.conLan>=0?' — còn '+j.conLan+' lần thử':''));
+    }catch(e){ loi='Không kết nối được máy chủ — thử lại' }
+  } else {
+    var luu=get('pinql',null);
+    if(luu && get('qcfg',{}).key && await bamPin_(v,luu.muoi)===luu.bam){ PIN_BAN=false; PIN_GO=''; vaoQL(); return }
+    loi=luu?'Sai mật mã':'Mất mạng và máy này chưa từng mở bằng PIN';
+  }
   var c=$('pinCham'); c.classList.remove('lac'); void c.offsetWidth; c.classList.add('lac');
   try{ navigator.vibrate&&navigator.vibrate(200) }catch(e){}
-  setTimeout(function(){
-    PIN_BAN=false; PIN_GO=''; pinVe_();
-    if(sai>=5){ set('pinql',null); set('pinsai',0); hienPin_(0);
-      bao('khErr','Sai mã PIN 5 lần — đã xoá mã PIN của máy này. Mở bằng mật khẩu đầy đủ rồi đặt lại PIN.','er'); return }
-    $('pinErr').textContent='Sai mật mã — còn '+(5-sai)+' lần thử';
-  },450);
+  setTimeout(function(){ PIN_BAN=false; PIN_GO=''; pinVe_(); $('pinErr').textContent=loi },450);
 }
 // gõ bằng bàn phím máy tính
 document.addEventListener('keydown',function(e){
@@ -6654,23 +6665,9 @@ document.addEventListener('keydown',function(e){
   else if(e.key==='Backspace'){ if(PIN_GO) pinPhim_('x') }
   else if(e.key==='Escape') hienPin_(0);
 });
-function moDatPin(){
-  var a=prompt('Đặt mã PIN 6 số cho MÁY NÀY (lần sau mở chỉ cần gõ PIN).\n\nBấm Huỷ nếu không muốn dùng PIN.','');
-  if(a===null){ set('pinbo',true); return }
-  if(!/^\d{6}$/.test(a)){ alert('Mã PIN phải đúng 6 chữ số.'); return moDatPin() }
-  var b=prompt('Gõ lại mã PIN để xác nhận:','');
-  if(b===null) return;
-  if(a!==b){ alert('Hai lần gõ không khớp, đặt lại nhé.'); return moDatPin() }
-  var muoi=Array.from(crypto.getRandomValues(new Uint8Array(8))).map(function(x){return x.toString(16)}).join('');
-  bamPin_(a,muoi).then(function(h){ set('pinql',{muoi:muoi,bam:h}); set('pinbo',false); set('pinsai',0);
-    bao('vhMsg','Đã đặt mã PIN cho máy này. Lần sau mở máy quản lý chỉ cần gõ PIN.','ok'); try{vePinVH_()}catch(e){} });
-}
-function xoaPin(){ if(!confirm('Xoá mã PIN của máy này? Lần sau phải gõ mật khẩu đầy đủ.')) return;
-  set('pinql',null); bao('vhMsg','Đã xoá mã PIN của máy này.','ok'); vePinVH_() }
 function vePinVH_(){ var e=$('pinVH'); if(!e) return;
-  e.innerHTML=get('pinql',null)
-    ?'Máy này <b>đang dùng mã PIN</b>. <button class="btn2" onclick="moDatPin()">Đổi PIN</button> <button class="btn2" style="color:var(--bad)" onclick="xoaPin()">Xoá PIN</button>'
-    :'Máy này chưa có mã PIN. <button class="btn2" onclick="moDatPin()">Đặt mã PIN</button>' }
+  e.innerHTML='<b>Mã PIN mở máy quản lý</b> (dùng chung mọi máy admin) nằm ở Apps Script: ⚙ Cài đặt dự án → Thuộc tính tập lệnh → '+
+    '<code>MA_PIN_QL</code> = 6 chữ số. Đổi ở đó là mọi máy dùng PIN mới ngay, không cần triển khai lại.' }
 function doiMkQL(){
   alert('Mật khẩu quản lý nằm trong Apps Script.\n\n'+
     'Đổi ở đó:\n'+
@@ -6960,6 +6957,11 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261112c', ngay:'12/11/2026', ten:'Mã PIN dùng chung mọi máy admin',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['sua','Mở máy quản lý giờ <b>luôn là màn mã PIN</b> trên mọi máy admin, kể cả máy mới — không phải gõ mật khẩu dài lần nào nữa. Máy chủ kiểm PIN; gõ sai 10 lần trong 15 phút thì tạm khoá 15 phút. Nút "Mật khẩu" ở góc vẫn dùng được khi cần.'],
+  ]},
  {ban:'20261112b', ngay:'12/11/2026', ten:'Màn mã PIN kiểu iPhone',
   vaPhieu:[], vaNoi:[],
   muc:[
