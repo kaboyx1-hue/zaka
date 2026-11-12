@@ -1107,7 +1107,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261112d';
+var APP_VER='20261112e';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -4568,7 +4568,10 @@ var NHOM=['CÁT VỆ SINH','THỨC ĂN','THÚ NHỎ','PHỤ KIỆN','CHĂM SÓC'
 function giaLai(){ try{if(document.activeElement&&document.activeElement.blur)document.activeElement.blur()}catch(e){}
   setTimeout(veGia,0) }
 var GLIM=40;
-function giaReset(){GLIM=40;veGia()}
+/* 12/11/2026 chủ: điền giá vốn xong món nhảy mất (bảng xếp món thiếu vốn lên đầu), chưa kịp điền VAT. Món vừa điền vốn
+   giữ nguyên vị trí cho tới khi đổi ô tìm/nhóm. */
+var GIA_GIU={};
+function giaReset(){GLIM=40;GIA_GIU={};veGia()}
 function giaThem(n){GLIM=n?1e9:GLIM+60;veGia()}
 function veGia(){
   dongBoQuyDoi_();
@@ -4589,7 +4592,8 @@ function veGia(){
      chưa từng kéo tay — kéo-thả chỉ gán thuTu cho món vừa kéo, mọi món khác vẫn
      đứng nguyên vị trí cũ theo hệ quy chiếu này (dùng số cách nhau 1000 để luôn còn
      chỗ chèn số ở giữa), dù đang lọc theo nhóm/tìm kiếm nào cũng ra đúng vị trí. */
-  var nen=tatca.slice().sort(function(a,b){return (a.von?1:0)-(b.von?1:0)||a.sku.localeCompare(b.sku)});
+  var coVon=function(p){return p.von&&!GIA_GIU[p.sku]?1:0};   // món vừa điền vốn vẫn đứng yên chỗ cũ (GIA_GIU)
+  var nen=tatca.slice().sort(function(a,b){return coVon(a)-coVon(b)||a.sku.localeCompare(b.sku)});
   var KHOA={}; nen.forEach(function(p,i){KHOA[p.sku]=i*1000});
   ds.sort(function(a,b){
     var ka=typeof a.thuTu==='number'?a.thuTu:KHOA[a.sku];
@@ -5364,7 +5368,7 @@ function henDayVon_(){
     await phatGia(true);   // 28/10/2026 chủ: không cần bấm "Cập nhật bảng giá" — tự phát cho máy nhân viên
   },1500);
 }
-function setN(sku,f,v){var p=GIA[sku]; p[f]=n2(v)||null;
+function setN(sku,f,v){var p=GIA[sku]; if(f==='von'&&!p.von) GIA_GIU[sku]=1; p[f]=n2(v)||null;
   if(f==='von'||f==='qd_von'){p.moi=false;p.suaTay=true;p.vonLuc=nowStr()}
   // Đổi hệ số quy đổi (1 Thùng = mấy lẻ) thì tự gợi ý lại giá sỉ theo cấp số nhân
   // (hệ số × giá lẻ) — vẫn sửa tay đè lại được ngay ở ô "Giá sỉ" bên cạnh.
@@ -6957,6 +6961,11 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261112e', ngay:'12/11/2026', ten:'Điền giá vốn không còn nhảy dòng',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['sua','Bảng giá: điền giá vốn cho món chưa có vốn xong, món đó <b>đứng yên tại chỗ</b> để điền tiếp VAT — trước đây nhảy xuống cuối bảng ngay. Đổi ô tìm hoặc nhóm thì bảng mới xếp lại.'],
+  ]},
  {ban:'20261112d', ngay:'12/11/2026', ten:'Chỉ còn mã PIN',
   vaPhieu:[], vaNoi:[],
   muc:[
