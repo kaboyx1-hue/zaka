@@ -609,7 +609,7 @@ body:not(.sang) .zToast{border-radius:0;background:var(--acc);color:var(--codTx)
     </div>
     <div id="pinPhim" class="ipPhim"></div>
     <div class="ipDuoi">
-      <button class="ipChu" onclick="hienPin_(0)">Mật khẩu</button>
+      <span></span>
       <button class="ipChu" id="pinXoa" onclick="pinPhim_('x')">Huỷ</button>
     </div>
   </div>
@@ -1107,7 +1107,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261112c';
+var APP_VER='20261112d';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -6610,7 +6610,7 @@ async function bamPin_(pin,muoi){
 }
 function urlQL_(){ return (get('qcfg',{}).url)||(typeof URL_DRIVE!=='undefined'?URL_DRIVE:'') }
 function hienPin_(bat){
-  var coPin=!!urlQL_();
+  bat=1; var coPin=true;   // 12/11/2026 chủ: chỉ cần mã PIN, bỏ hẳn lớp mật khẩu
   $('pinKhung').style.display=bat&&coPin?'':'none';
   document.querySelector('#khoa .khCard:not(#pinKhung)').style.display=bat&&coPin?'none':'';
   $('khQuaPin').style.display=!bat&&coPin?'':'none';
@@ -6624,11 +6624,11 @@ function hienPin_(bat){
 var PIN_GO='', PIN_BAN=false;
 function pinVe_(){
   $('pinCham').innerHTML=[0,1,2,3,4,5].map(function(i){ return '<span'+(i<PIN_GO.length?' class="on"':'')+'></span>' }).join('');
-  var x=$('pinXoa'); if(x) x.textContent=PIN_GO?'Xoá':'Huỷ';
+  var x=$('pinXoa'); if(x) x.style.visibility=PIN_GO?'visible':'hidden', x.textContent='Xoá';
 }
 function pinPhim_(k){
   if(PIN_BAN) return;
-  if(k==='x'){ if(PIN_GO) PIN_GO=PIN_GO.slice(0,-1); else return hienPin_(0); pinVe_(); return }
+  if(k==='x'){ if(PIN_GO) PIN_GO=PIN_GO.slice(0,-1); pinVe_(); return }
   if(PIN_GO.length>=6) return;
   PIN_GO+=k; pinVe_();
   if(PIN_GO.length===6) setTimeout(pinGo_,120);   // để chấm thứ 6 kịp sáng như iPhone
@@ -6644,8 +6644,8 @@ async function pinGo_(){
         set('pinql',{muoi:muoi,bam:await bamPin_(v,muoi)});
         PIN_BAN=false; PIN_GO=''; vaoQL(); return;
       }
-      if(j.chuaCoPin){ PIN_BAN=false; PIN_GO=''; pinVe_(); hienPin_(0);
-        bao('khErr','Máy chủ chưa có mã PIN — dùng mật khẩu đầy đủ. (Đặt PIN: Apps Script → ⚙ Cài đặt dự án → Thuộc tính tập lệnh → <code>MA_PIN_QL</code> = 6 chữ số.)','wa'); return }
+      if(j.chuaCoPin) loi='Máy chủ chưa có mã PIN — đặt MA_PIN_QL trong Apps Script';
+      else
       loi=j.khoa?'Tạm khoá 15 phút vì gõ sai nhiều lần':('Sai mật mã'+(j.conLan>=0?' — còn '+j.conLan+' lần thử':''));
     }catch(e){ loi='Không kết nối được máy chủ — thử lại' }
   } else {
@@ -6663,7 +6663,7 @@ document.addEventListener('keydown',function(e){
   if(/^[0-9]$/.test(e.key)){ pinPhim_(e.key); var b=document.querySelector('#pinPhim button[aria-label="'+e.key+'"]');
     if(b){ b.classList.add('bam'); setTimeout(function(){ b.classList.remove('bam') },120) } }
   else if(e.key==='Backspace'){ if(PIN_GO) pinPhim_('x') }
-  else if(e.key==='Escape') hienPin_(0);
+
 });
 function vePinVH_(){ var e=$('pinVH'); if(!e) return;
   e.innerHTML='<b>Mã PIN mở máy quản lý</b> (dùng chung mọi máy admin) nằm ở Apps Script: ⚙ Cài đặt dự án → Thuộc tính tập lệnh → '+
@@ -6957,6 +6957,11 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261112d', ngay:'12/11/2026', ten:'Chỉ còn mã PIN',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['sua','Mở máy quản lý <b>chỉ bằng mã PIN</b> — bỏ hẳn ô mật khẩu và nút "Mật khẩu".'],
+  ]},
  {ban:'20261112c', ngay:'12/11/2026', ten:'Mã PIN dùng chung mọi máy admin',
   vaPhieu:[], vaNoi:[],
   muc:[
