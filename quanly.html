@@ -575,12 +575,22 @@ body:not(.sang) .zToast{border-radius:0;background:var(--acc);color:var(--codTx)
   <div class="logoMark">🐾</div>
   <h1>ZAKA — Máy quản lý</h1>
   <p class="sub">Máy này chứa giá vốn và toàn bộ sổ cái</p>
+  <div id="pinKhung" class="khCard" style="display:none;text-align:center">
+    <div class="sm" style="margin-bottom:10px">Nhập mã PIN của máy này</div>
+    <div id="pinCham" style="display:flex;gap:12px;justify-content:center;margin-bottom:6px"></div>
+    <div id="pinErr" class="sm" style="min-height:20px;color:var(--bad)"></div>
+    <input id="pinO" inputmode="numeric" autocomplete="off" maxlength="6" aria-label="Mã PIN"
+      style="position:absolute;opacity:0;width:1px;height:1px" oninput="pinGo_(this)">
+    <div id="pinPhim" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:280px;margin:10px auto 0"></div>
+    <button class="btn2 mt" style="width:100%" onclick="hienPin_(0)">Dùng mật khẩu đầy đủ</button>
+  </div>
   <div class="khCard">
     <div id="khErr"></div>
     <label class="sm">Mật khẩu máy quản lý</label>
     <input id="khKey" type="password" autocomplete="off" style="width:100%"
       onkeydown="if(event.key==='Enter')moKhoa()">
     <button class="btn mt" style="width:100%" onclick="moKhoa()">Mở</button>
+    <button id="khQuaPin" class="btn2 mt" style="width:100%;display:none" onclick="hienPin_(1)">Mở bằng mã PIN</button>
     <div class="sm" style="margin-top:14px;opacity:.75">Dùng <b>mật khẩu quản lý</b> — cùng mật khẩu
     đặt trong Apps Script. Máy sẽ hỏi thẳng Google Sheet để xác minh, nên xoá trình duyệt
     cũng không ai tự đặt mật khẩu mới được.</div>
@@ -816,6 +826,7 @@ body:not(.sang) .zToast{border-radius:0;background:var(--acc);color:var(--codTx)
       <button class="btn2" onclick="doiMaDangKy()">Đổi mã đăng ký cửa hàng</button>
       <button class="btn2" onclick="doiMkQL()">Đổi mật khẩu máy quản lý</button>
     </div>
+    <div id="pinVH" class="sm mt"></div>
 </div>
 
   <div class="card"><h2>Điều kiện ghi nhận doanh thu</h2>
@@ -1067,7 +1078,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261103a';
+var APP_VER='20261112a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1695,13 +1706,59 @@ var NHAT_KY_GOM=[];
      - chủ TỪ CHỐI         → món bị gỡ khỏi máy nhân viên, kèm lý do
    KHÔNG ghi thẳng vào trang BANG_GIA từ đây: việc đó vẫn đi đúng một cửa duy
    nhất là "Phát bảng giá", để không có hai nguồn ghi cùng một bảng. */
-function spChoDuyet_(){
+function spChoDuyetTho_(){
   return (SPCD||[]).filter(function(x){
     var tt=String(x.tt||'').trim().toUpperCase();
     return tt==='' || tt==='CHO DUYET';
   });
 }
+/* 12/11/2026 chủ: món nhân viên thêm mà chủ ĐÃ xử lý ở Bảng giá (gộp quy đổi, gộp thường, hoặc đã điền giá vốn) vẫn nằm
+   trong "Duyệt hàng nhân viên thêm" → nhân viên vẫn bị chặn bán, chủ phải duyệt lại lần nữa và dễ gộp nhầm thành gộp thường.
+   Nay coi như đã duyệt: quy đổi / có giá vốn → Nhận; gộp thường → báo nhân viên dùng mã gốc. */
+function spDaXuLy_(x){
+  if(ALIAS[x.sku]){
+    var g=skuChinh(x.sku);
+    return (Number(ALIAS_HS[x.sku])||1)!==1 ? {tt:'DA DUYET',ly:''}
+      : {tt:'TU CHOI',ly:'Món này đã có rồi — dùng "'+((GIA[g]&&GIA[g].ten)||g)+'" (mã '+g+')'};
+  }
+  var p=GIA[x.sku];
+  return (p && p.von>0 && !p.ngung) ? {tt:'DA DUYET',ly:''} : null;
+}
+function spChoDuyet_(){ return spChoDuyetTho_().filter(function(x){ return !spDaXuLy_(x) }) }
+var SPD_DANG_GUI=false;
+async function dongBoDuyetSP_(){
+  if(SPD_DANG_GUI||!QCFG.url||!QCFG.key) return;
+  var goi=spChoDuyetTho_().map(function(x){ var k=spDaXuLy_(x); return k&&{sku:x.sku,tt:k.tt,lyDo:k.ly} }).filter(Boolean);
+  if(!goi.length) return;
+  SPD_DANG_GUI=true;
+  try{
+    var r=await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'duyetsp',sp:goi})});
+    var j=JSON.parse(await r.text());
+    if(j.ok){ goi.forEach(function(g){ SPCD.forEach(function(x){ if(x.sku===g.sku){ x.tt=g.tt; x.lyDo=g.lyDo } }) }); set('spcd',SPCD); try{veLam()}catch(e){} }
+  }catch(e){} finally{ SPD_DANG_GUI=false }
+}
+async function quyDoiSPCho(i,k){
+  var ds=spChoDuyet_(), x=ds[i]; if(!x||!GIA[k]) return;
+  var a=luongTrongTen_(x.ten), b=luongTrongTen_(GIA[k].ten), goiY=(a&&b)?Math.round(a/b*1000)/1000:'';
+  var t=prompt('1 '+(x.dvt||'đơn vị')+' "'+x.ten+'" bằng bao nhiêu '+(GIA[k].dvt||'đơn vị')+' "'+GIA[k].ten+'"?\n\n'+
+    'Vd bao 5kg của gói 1kg thì điền 5. Giá vốn bao sẽ tự = số này × giá vốn món gốc.', String(goiY).replace('.',','));
+  if(t===null) return;
+  var hs=Number(String(t).replace(',','.'));
+  if(!(hs>0)){ bao('dsErr','Hệ số phải là số lớn hơn 0.','er'); return }
+  if(hs===1){ bao('dsErr','Hệ số 1 nghĩa là cùng một món — dùng nút <b>Chính là món này</b>.','er'); return }
+  try{ await guiDuyetSP_(x.sku,'DA DUYET','') }catch(e){ bao('dsErr','Không ghi được lên Sheet: '+esc(e.message),'er'); return }
+  if(!GIA[x.sku]) GIA[x.sku]={sku:x.sku,ten:x.ten,brand:x.brand||'',nhom:x.nhom||GIA[k].nhom||'KHÁC',dvt:x.dvt||'',
+    gb:Number(x.gb)||0,von:null,qd_dv:'',qd_sl:0,qd_gb:0,qd_von:0};
+  GIA[x.sku].moi=false;
+  gomVaDon_(x.sku, k, 'Nhân viên thêm — quy đổi lúc duyệt', hs);
+  dongBoQuyDoi_(); henDayVon_();
+  veGia(); veCB(); veSo(); veBC(); vePhat(); veLam(); moDuyetSP();
+  bao('giaMsg','Đã nhận <b>'+esc(x.ten)+'</b> là quy đổi của <b>'+esc(GIA[k].ten)+'</b>: 1 '+esc(x.dvt||'')+' = '+String(hs).replace('.',',')+' '+
+    esc(GIA[k].dvt||'')+' → giá vốn tự '+(GIA[x.sku].von?tien(GIA[x.sku].von):'theo món gốc')+'. Nhân viên bán được ngay.','ok');
+}
 function moDuyetSP(){
+  dongBoDuyetSP_();
   var ds=spChoDuyet_();
   $('dsDan').innerHTML = ds.length
     ? 'Nhân viên vừa thêm <b>'+ds.length+' mã hàng</b>. Mấy món này <b>chưa bán được</b> '+
@@ -1724,7 +1781,8 @@ function moDuyetSP(){
         ? '<div class="sm" style="margin-top:8px;padding:8px;border-radius:10px;background:var(--warnBg);color:var(--warn)">'+
           '<b>Coi chừng trùng.</b> Bảng giá đã có món tên gần giống:<br>'+
           goiY.map(function(k){ return '• '+esc(GIA[k].ten)+' <code>'+esc(k)+'</code>'+(choSku[k]?' <i>(nhân viên cũng vừa thêm, đang chờ duyệt)</i>':'')+
-            ' <button class="mini" onclick="gopSPCho('+i+',\''+esc(k)+'\')">Chính là món này</button>' }).join('<br>')+
+            ' <button class="mini" onclick="gopSPCho('+i+',\''+esc(k)+'\')">Chính là món này</button>'+
+            ' <button class="mini" onclick="quyDoiSPCho('+i+',\''+esc(k)+'\')">Là bao/thùng quy đổi của món này</button>' }).join('<br>')+
           '</div>'
         : '')+
       /* SỬA 11/09/2026 — CHỦ TỰ CHỈ RA MÓN CŨ.
@@ -1842,7 +1900,9 @@ function timGopSP(i){
       '<span style="min-width:0"><b>'+esc(p.ten)+'</b><br><span style="opacity:.7">'+esc(k)+' · '+
       esc(p.dvt||'')+' · '+(p.von?'giá nhập '+tien(p.von):'<span style="color:var(--warn)">chưa có giá nhập</span>')+
       '</span></span>'+
-      '<button class="mini" style="flex:none" onclick="gopSPCho('+i+',\''+esc(k)+'\')">Chính là món này</button></div>';
+      '<span style="flex:none;display:flex;flex-direction:column;gap:4px">'+
+        '<button class="mini" onclick="gopSPCho('+i+',\''+esc(k)+'\')">Chính là món này</button>'+
+        '<button class="mini" onclick="quyDoiSPCho('+i+',\''+esc(k)+'\')">Quy đổi của món này</button></span></div>';
   }).join('');
 }
 
@@ -4691,7 +4751,7 @@ function hopDoiSku_(p){
       'style="display:block;width:100%;margin-top:6px;padding:8px;font-family:ui-monospace,Consolas,monospace;text-transform:uppercase">'+
     '<div id="skuLoi" class="sm" style="color:var(--bad);margin-top:4px"></div>'+
     '<ul class="sm" style="margin:6px 0;padding-left:18px">'+
-      '<li><b>'+don+' đơn cũ</b>: giữ nguyên, không sửa. Báo cáo, lãi lỗ, giá vốn tự hiểu mã cũ = mã mới.</li>'+
+      '<li><b>'+don+' đơn đã có</b> (kể cả đơn đang giao, chưa hoàn thành): giữ nguyên mã cũ, giá vốn và lãi đã ghi — không sửa gì. Báo cáo tự hiểu mã cũ = mã mới.</li>'+
       '<li><b><span id="dsGrDem">'+(DOI_SKU_GR===null?'…':DOI_SKU_GR)+'</span> khách có giá riêng</b> món này: chuyển theo sang mã mới.</li>'+
       '<li><b>Bảng giá nhân viên</b>: đổi sang mã mới ở lần bấm "Cập nhật bảng giá" kế tiếp.</li>'+
       '<li>Tìm theo mã cũ vẫn ra món này.</li></ul>'+
@@ -4717,7 +4777,9 @@ async function luuDoiSku_(){
     Object.keys(ALIAS).forEach(function(k){ if(ALIAS[k]===cu) ALIAS[k]=moi });
     ALIAS[cu]=moi; delete GIA_CHON[cu];
     Object.keys(GIA).forEach(function(k){ if(GIA[k].gopVao===cu) GIA[k].gopVao=moi });
-    set('alias',ALIAS); set('gia',GIA); tinhLaiToanBoSO();
+    /* 12/11/2026 chủ: đổi mã KHÔNG được động vào đơn đã có (kể cả đơn đang giao). Trước đây gọi tinhLaiToanBoSO()
+       → tính lại giá vốn/lãi MỌI đơn theo giá vốn hiện tại. Nay chỉ điền vốn cho đơn còn đang chờ vốn. */
+    set('alias',ALIAS); set('gia',GIA); if(tinhLaiIm_()) set('so',SO);
     DOI_SKU=null; veGia(); veSo(); veBC(); vePhat();
     await dayVon(false); phatGia(true);
     bao('giaMsg','Đã đổi <b>'+esc(cu)+'</b> → <b>'+esc(moi)+'</b>. Đơn cũ giữ nguyên, '+(j.doi||0)+' giá riêng của khách đã chuyển theo. '+
@@ -5268,6 +5330,7 @@ function henDayVon_(){
     dongBoQuyDoi_();
     if(tinhLaiIm_()){ veSo(); veBC(); veCB() }
     await dayVon(false);
+    dongBoDuyetSP_();
     if(VON_CHO_DAY){ VON_HEN_BG=setTimeout(henDayVon_,30000); bao('giaMsg','Chưa lưu được bảng giá lên Sheet (mạng?) — sẽ tự thử lại.','wa'); return }
     await phatGia(true);   // 28/10/2026 chủ: không cần bấm "Cập nhật bảng giá" — tự phát cho máy nhân viên
   },1500);
@@ -6453,6 +6516,7 @@ function nhacSaoLuu(){
 /* Mở khoá bằng MẬT KHẨU QUẢN LÝ, và xác minh với Google Sheet.
    Không dùng kiểu "ai mở đầu tiên thì đặt mật khẩu" — kiểu đó khi đưa
    lên web mà trình duyệt xoá dữ liệu là người lạ đặt được mật khẩu mới. */
+document.addEventListener('DOMContentLoaded',function(){ try{ hienPin_(1) }catch(e){} });
 async function moKhoa(){
   var v=$('khKey').value.trim();
   if(!v){bao('khErr','Chưa nhập mật khẩu','er');return}
@@ -6506,7 +6570,63 @@ async function moKhoa(){
 function vaoQL(){
   $('khoa').style.display='none'; $('thanApp').classList.remove('hide');
   $('khKey').value=''; khoiDongQL();
+  if(!get('pinql',null) && !get('pinbo',false)) setTimeout(moDatPin,1200);
+  vePinVH_();
 }
+/* MÃ PIN — 12/11/2026 chủ: gõ mật khẩu đầy đủ mỗi lần mở quá mất thời gian. Mã PIN 6 số do CHỦ tự đặt trên từng máy
+   (chỉ lưu dấu băm SHA-256 + muối trong máy này, không gửi đi, không nằm trong mã nguồn, không đồng bộ sang máy khác).
+   PIN chỉ mở khoá máy đã từng đăng nhập bằng mật khẩu thật; sai 5 lần là xoá PIN, phải dùng mật khẩu đầy đủ. */
+async function bamPin_(pin,muoi){
+  var b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(muoi+':'+pin));
+  return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0')}).join('');
+}
+function hienPin_(bat){
+  var coPin=!!get('pinql',null) && !!(get('qcfg',{}).key);
+  $('pinKhung').style.display=bat&&coPin?'':'none';
+  document.querySelector('#khoa .khCard:not(#pinKhung)').style.display=bat&&coPin?'none':'';
+  $('khQuaPin').style.display=!bat&&coPin?'':'none';
+  if(bat&&coPin){
+    $('pinPhim').innerHTML=['1','2','3','4','5','6','7','8','9','','0','⌫'].map(function(k){
+      return k?'<button class="btn2" style="padding:16px 0;font-size:22px;font-weight:700" onclick="pinPhim_(\''+k+'\')">'+k+'</button>':'<span></span>' }).join('');
+    $('pinO').value=''; pinVe_(); $('pinErr').textContent='';
+    setTimeout(function(){ $('pinO').focus() },50);
+  }
+}
+function pinVe_(){
+  var n=$('pinO').value.length;
+  $('pinCham').innerHTML=[0,1,2,3,4,5].map(function(i){
+    return '<span style="width:14px;height:14px;border-radius:50%;border:2px solid var(--acc);'+(i<n?'background:var(--acc)':'')+'"></span>' }).join('');
+}
+function pinPhim_(k){
+  var o=$('pinO'); o.value=k==='⌫'?o.value.slice(0,-1):(o.value+k).slice(0,6); pinGo_(o);
+}
+async function pinGo_(o){
+  o.value=o.value.replace(/\D/g,'').slice(0,6); pinVe_();
+  if(o.value.length<6) return;
+  var luu=get('pinql',null), v=o.value; o.value=''; pinVe_();
+  if(luu && await bamPin_(v,luu.muoi)===luu.bam){ set('pinsai',0); vaoQL(); return }
+  var sai=(get('pinsai',0)||0)+1; set('pinsai',sai);
+  if(sai>=5){ set('pinql',null); set('pinsai',0); hienPin_(0);
+    bao('khErr','Sai mã PIN 5 lần — đã xoá mã PIN của máy này. Mở bằng mật khẩu đầy đủ rồi đặt lại PIN.','er'); return }
+  $('pinErr').textContent='Sai mã PIN (còn '+(5-sai)+' lần thử).';
+}
+function moDatPin(){
+  var a=prompt('Đặt mã PIN 6 số cho MÁY NÀY (lần sau mở chỉ cần gõ PIN).\n\nBấm Huỷ nếu không muốn dùng PIN.','');
+  if(a===null){ set('pinbo',true); return }
+  if(!/^\d{6}$/.test(a)){ alert('Mã PIN phải đúng 6 chữ số.'); return moDatPin() }
+  var b=prompt('Gõ lại mã PIN để xác nhận:','');
+  if(b===null) return;
+  if(a!==b){ alert('Hai lần gõ không khớp, đặt lại nhé.'); return moDatPin() }
+  var muoi=Array.from(crypto.getRandomValues(new Uint8Array(8))).map(function(x){return x.toString(16)}).join('');
+  bamPin_(a,muoi).then(function(h){ set('pinql',{muoi:muoi,bam:h}); set('pinbo',false); set('pinsai',0);
+    bao('vhMsg','Đã đặt mã PIN cho máy này. Lần sau mở máy quản lý chỉ cần gõ PIN.','ok'); try{vePinVH_()}catch(e){} });
+}
+function xoaPin(){ if(!confirm('Xoá mã PIN của máy này? Lần sau phải gõ mật khẩu đầy đủ.')) return;
+  set('pinql',null); bao('vhMsg','Đã xoá mã PIN của máy này.','ok'); vePinVH_() }
+function vePinVH_(){ var e=$('pinVH'); if(!e) return;
+  e.innerHTML=get('pinql',null)
+    ?'Máy này <b>đang dùng mã PIN</b>. <button class="btn2" onclick="moDatPin()">Đổi PIN</button> <button class="btn2" style="color:var(--bad)" onclick="xoaPin()">Xoá PIN</button>'
+    :'Máy này chưa có mã PIN. <button class="btn2" onclick="moDatPin()">Đặt mã PIN</button>' }
 function doiMkQL(){
   alert('Mật khẩu quản lý nằm trong Apps Script.\n\n'+
     'Đổi ở đó:\n'+
@@ -6796,6 +6916,13 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261112a', ngay:'12/11/2026', ten:'Mở máy bằng mã PIN · Đổi SKU không đụng đơn · Duyệt món quy đổi',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['moi','Mở máy quản lý bằng <b>mã PIN 6 số</b> do anh/chị tự đặt trên từng máy (bàn phím số to). Đăng nhập bằng mật khẩu xong máy sẽ hỏi đặt PIN; đổi/xoá PIN ở tab Vận hành. Sai 5 lần thì phải dùng mật khẩu đầy đủ.'],
+   ['sua','<b>Đổi SKU</b> không còn tính lại giá vốn/lãi của đơn đã có — kể cả đơn đang giao. Chỉ đơn đang chờ giá vốn mới được điền.'],
+   ['sua','<b>Duyệt hàng nhân viên thêm</b>: có nút <b>Là bao/thùng quy đổi của món này</b> (giá vốn tự = hệ số × vốn món gốc, nhân viên bán được ngay). Món đã gộp/điền giá vốn ở Bảng giá thì tự coi là đã duyệt, không hiện lại.'],
+  ]},
  {ban:'20261103a', ngay:'03/11/2026', ten:'Giá vốn nhập ở Cần làm lưu luôn',
   vaPhieu:[], vaNoi:[],
   muc:[
