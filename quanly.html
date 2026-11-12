@@ -570,19 +570,48 @@ body:not(.sang) dialog::backdrop{background:rgba(0,0,0,.7);backdrop-filter:blur(
 body:not(.sang) .zToast{border-radius:0;background:var(--acc);color:var(--codTx);border-left:0;font-weight:600}
 @media (prefers-reduced-motion:reduce){body:not(.sang) main>section.vaoTab,body:not(.sang) dialog[open]{animation:none}
   body:not(.sang) .side nav button,body:not(.sang) .btn2,body:not(.sang) .mini,body:not(.sang) .btn-nho,body:not(.sang) .chip,body:not(.sang) .zSync{transition:none}}
+/* Màn mã PIN kiểu iPhone — 12/11/2026 */
+.ipPin{position:fixed;inset:0;z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:space-between;
+  padding:calc(56px + env(safe-area-inset-top,0px)) 20px calc(28px + env(safe-area-inset-bottom,0px));color:#fff;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased;
+  background:radial-gradient(120% 70% at 20% 0%,#5b4630 0%,transparent 60%),radial-gradient(110% 70% at 100% 100%,#1f4a3a 0%,transparent 60%),#15130f}
+.ipPin::before{content:"";position:absolute;inset:0;backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);background:rgba(0,0,0,.25);z-index:-1}
+.ipTren{display:flex;flex-direction:column;align-items:center;gap:10px}
+.ipTieuDe{font-size:20px;font-weight:400;letter-spacing:.2px}
+.ipCham{display:flex;gap:22px;margin-top:14px}
+.ipCham span{width:13px;height:13px;border-radius:50%;border:1.5px solid #fff;transition:background .12s}
+.ipCham span.on{background:#fff}
+.ipCham.lac{animation:ipLac .45s cubic-bezier(.36,.07,.19,.97)}
+@keyframes ipLac{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(4px)}30%,50%,70%{transform:translateX(-10px)}40%,60%{transform:translateX(10px)}}
+.ipLoi{min-height:20px;font-size:14px;color:rgba(255,255,255,.85)}
+.ipPhim{display:grid;grid-template-columns:repeat(3,78px);gap:16px 26px;justify-content:center}
+.ipPhim button{width:78px;height:78px;border-radius:50%;border:0;padding:0;color:#fff;cursor:pointer;
+  background:rgba(255,255,255,.16);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;transition:background .25s;
+  -webkit-tap-highlight-color:transparent;scale:1!important;clip-path:none!important;font-family:inherit}
+.ipPhim button:active,.ipPhim button.bam{background:rgba(255,255,255,.55);transition:background 0s}
+.ipPhim b{font-size:36px;font-weight:300}
+.ipPhim i{font-style:normal;font-size:10px;font-weight:600;letter-spacing:2px;margin-top:3px;opacity:.95;min-height:10px}
+.ipDuoi{display:flex;justify-content:space-between;width:min(100%,290px)}
+.ipChu{background:none!important;border:0;color:#fff!important;font-size:17px;padding:8px 6px;cursor:pointer;font-family:inherit;scale:1!important;clip-path:none!important}
+@media (prefers-reduced-motion:reduce){.ipCham.lac{animation:none}}
 </style></head><body>
 <div id="khoa">
   <div class="logoMark">🐾</div>
   <h1>ZAKA — Máy quản lý</h1>
   <p class="sub">Máy này chứa giá vốn và toàn bộ sổ cái</p>
-  <div id="pinKhung" class="khCard" style="display:none;text-align:center">
-    <div class="sm" style="margin-bottom:10px">Nhập mã PIN của máy này</div>
-    <div id="pinCham" style="display:flex;gap:12px;justify-content:center;margin-bottom:6px"></div>
-    <div id="pinErr" class="sm" style="min-height:20px;color:var(--bad)"></div>
-    <input id="pinO" inputmode="numeric" autocomplete="off" maxlength="6" aria-label="Mã PIN"
-      style="position:absolute;opacity:0;width:1px;height:1px" oninput="pinGo_(this)">
-    <div id="pinPhim" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:280px;margin:10px auto 0"></div>
-    <button class="btn2 mt" style="width:100%" onclick="hienPin_(0)">Dùng mật khẩu đầy đủ</button>
+  <div id="pinKhung" class="ipPin" style="display:none" role="dialog" aria-label="Nhập mã PIN">
+    <div class="ipTren">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm-3 8V7a3 3 0 1 1 6 0v3H9z"/></svg>
+      <div class="ipTieuDe">Nhập mật mã</div>
+      <div id="pinCham" class="ipCham"></div>
+      <div id="pinErr" class="ipLoi"></div>
+    </div>
+    <div id="pinPhim" class="ipPhim"></div>
+    <div class="ipDuoi">
+      <button class="ipChu" onclick="hienPin_(0)">Mật khẩu</button>
+      <button class="ipChu" id="pinXoa" onclick="pinPhim_('x')">Huỷ</button>
+    </div>
   </div>
   <div class="khCard">
     <div id="khErr"></div>
@@ -1078,7 +1107,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261112a';
+var APP_VER='20261112b';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -6586,30 +6615,45 @@ function hienPin_(bat){
   document.querySelector('#khoa .khCard:not(#pinKhung)').style.display=bat&&coPin?'none':'';
   $('khQuaPin').style.display=!bat&&coPin?'':'none';
   if(bat&&coPin){
-    $('pinPhim').innerHTML=['1','2','3','4','5','6','7','8','9','','0','⌫'].map(function(k){
-      return k?'<button class="btn2" style="padding:16px 0;font-size:22px;font-weight:700" onclick="pinPhim_(\''+k+'\')">'+k+'</button>':'<span></span>' }).join('');
-    $('pinO').value=''; pinVe_(); $('pinErr').textContent='';
-    setTimeout(function(){ $('pinO').focus() },50);
+    var chu={'2':'ABC','3':'DEF','4':'GHI','5':'JKL','6':'MNO','7':'PQRS','8':'TUV','9':'WXYZ'};
+    $('pinPhim').innerHTML=['1','2','3','4','5','6','7','8','9','','0',''].map(function(k){
+      return k?'<button onclick="pinPhim_(\''+k+'\')" aria-label="'+k+'"><b>'+k+'</b><i>'+(chu[k]||'')+'</i></button>':'<span></span>' }).join('');
+    PIN_GO=''; pinVe_(); $('pinErr').textContent='';
   }
 }
+var PIN_GO='', PIN_BAN=false;
 function pinVe_(){
-  var n=$('pinO').value.length;
-  $('pinCham').innerHTML=[0,1,2,3,4,5].map(function(i){
-    return '<span style="width:14px;height:14px;border-radius:50%;border:2px solid var(--acc);'+(i<n?'background:var(--acc)':'')+'"></span>' }).join('');
+  $('pinCham').innerHTML=[0,1,2,3,4,5].map(function(i){ return '<span'+(i<PIN_GO.length?' class="on"':'')+'></span>' }).join('');
+  var x=$('pinXoa'); if(x) x.textContent=PIN_GO?'Xoá':'Huỷ';
 }
 function pinPhim_(k){
-  var o=$('pinO'); o.value=k==='⌫'?o.value.slice(0,-1):(o.value+k).slice(0,6); pinGo_(o);
+  if(PIN_BAN) return;
+  if(k==='x'){ if(PIN_GO) PIN_GO=PIN_GO.slice(0,-1); else return hienPin_(0); pinVe_(); return }
+  if(PIN_GO.length>=6) return;
+  PIN_GO+=k; pinVe_();
+  if(PIN_GO.length===6) setTimeout(pinGo_,120);   // để chấm thứ 6 kịp sáng như iPhone
 }
-async function pinGo_(o){
-  o.value=o.value.replace(/\D/g,'').slice(0,6); pinVe_();
-  if(o.value.length<6) return;
-  var luu=get('pinql',null), v=o.value; o.value=''; pinVe_();
-  if(luu && await bamPin_(v,luu.muoi)===luu.bam){ set('pinsai',0); vaoQL(); return }
+async function pinGo_(){
+  var luu=get('pinql',null), v=PIN_GO; PIN_BAN=true;
+  if(luu && await bamPin_(v,luu.muoi)===luu.bam){ PIN_BAN=false; PIN_GO=''; set('pinsai',0); vaoQL(); return }
   var sai=(get('pinsai',0)||0)+1; set('pinsai',sai);
-  if(sai>=5){ set('pinql',null); set('pinsai',0); hienPin_(0);
-    bao('khErr','Sai mã PIN 5 lần — đã xoá mã PIN của máy này. Mở bằng mật khẩu đầy đủ rồi đặt lại PIN.','er'); return }
-  $('pinErr').textContent='Sai mã PIN (còn '+(5-sai)+' lần thử).';
+  var c=$('pinCham'); c.classList.remove('lac'); void c.offsetWidth; c.classList.add('lac');
+  try{ navigator.vibrate&&navigator.vibrate(200) }catch(e){}
+  setTimeout(function(){
+    PIN_BAN=false; PIN_GO=''; pinVe_();
+    if(sai>=5){ set('pinql',null); set('pinsai',0); hienPin_(0);
+      bao('khErr','Sai mã PIN 5 lần — đã xoá mã PIN của máy này. Mở bằng mật khẩu đầy đủ rồi đặt lại PIN.','er'); return }
+    $('pinErr').textContent='Sai mật mã — còn '+(5-sai)+' lần thử';
+  },450);
 }
+// gõ bằng bàn phím máy tính
+document.addEventListener('keydown',function(e){
+  var k=$('pinKhung'); if(!k||k.style.display==='none') return;
+  if(/^[0-9]$/.test(e.key)){ pinPhim_(e.key); var b=document.querySelector('#pinPhim button[aria-label="'+e.key+'"]');
+    if(b){ b.classList.add('bam'); setTimeout(function(){ b.classList.remove('bam') },120) } }
+  else if(e.key==='Backspace'){ if(PIN_GO) pinPhim_('x') }
+  else if(e.key==='Escape') hienPin_(0);
+});
 function moDatPin(){
   var a=prompt('Đặt mã PIN 6 số cho MÁY NÀY (lần sau mở chỉ cần gõ PIN).\n\nBấm Huỷ nếu không muốn dùng PIN.','');
   if(a===null){ set('pinbo',true); return }
@@ -6916,6 +6960,11 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261112b', ngay:'12/11/2026', ten:'Màn mã PIN kiểu iPhone',
+  vaPhieu:[], vaNoi:[],
+  muc:[
+   ['sua','Màn nhập mã PIN làm lại giống iPhone: toàn màn hình, 6 chấm tròn, phím số tròn có chữ ABC…, gõ sai thì chấm rung lắc. Gõ được bằng bàn phím máy tính.'],
+  ]},
  {ban:'20261112a', ngay:'12/11/2026', ten:'Mở máy bằng mã PIN · Đổi SKU không đụng đơn · Duyệt món quy đổi',
   vaPhieu:[], vaNoi:[],
   muc:[
