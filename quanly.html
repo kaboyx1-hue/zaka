@@ -849,6 +849,7 @@ tr.hgThua td{background:color-mix(in srgb,var(--warn) 15%,transparent)}
       <div style="flex:none"><button class="btn" onclick="moThemSP()">+ Thêm sản phẩm</button></div>
       <div style="flex:none"><button class="btn2" onclick="moLS_()">🕘 Lịch sử</button></div>
       <div style="flex:none"><button class="btn2" onclick="moSaoLuu_()">🗄 Bản sao lưu</button></div>
+      <div style="flex:none"><button class="btn2" style="color:var(--pur);font-weight:700" onclick="moRaDong_()">⇄ Rà dòng hàng</button></div>
       <div style="flex:none"><button class="btn2" onclick="moDonPL_()">🧹 Dọn phân loại</button></div>
       <div style="flex:none"><button class="btn2" onclick="moSuaLo()" style="color:var(--pur);font-weight:700">✏ Sửa hàng loạt món đang hiện</button></div>
     </div>
@@ -1197,7 +1198,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261116j';
+var APP_VER='20261116k';
 /* 16/11/2026: mọi lần máy quản lý GỬI lên Sheet đều kèm số phiên bản (máy chủ chặn bản cũ ghi bảng giá) và tên máy
    (ghi vào NHAT_KY để biết máy nào làm gì). Gắn ở một chỗ duy nhất thay vì sửa từng lệnh gửi. */
 (function(){
@@ -2860,7 +2861,7 @@ var TRUC_DA_NAP=false, TRUC_LUU_LUC=0, KEO_BAT_DAU=0;
    CAI_DAT_QL (1 dòng/khoá, giá trị JSON). Lần đầu một máy nối vào: GỘP phần máy đó đang có với
    phần trên Sheet (không mất quyết định nào của máy nào) rồi đẩy lên. Từ đó Sheet là bản gốc.
    ponytail: ghi đè cả gói — hai máy cùng sửa trong ~20 giây thì bản ghi sau thắng. */
-var CD_KHOA=['alias','khacmon','ksxong','anviec','hanthu','nguongHuyHieu','lydogom','ks_phieu','tinhgia','cpcd','aliashs','maunhom','lsbg'];
+var CD_KHOA=['alias','khacmon','ksxong','anviec','hanthu','nguongHuyHieu','lydogom','ks_phieu','tinhgia','cpcd','aliashs','maunhom','lsbg','dongxet'];
 var CD_DANG_NAP=false, CD_HEN=null, CD_DA_NAP=false, CHO_GUI_KHO=false, CD_CHO_DAY=false, CD_SO=0;
 /* 28/09/2026 — dữ liệu trang Tính giá sàn (khoá 'tinhgia' = {khoá trình duyệt: giá trị}) lưu mỗi khoá một dòng
    'tg:<khoá>' trên CAI_DAT_QL (tránh 1 ô quá dài). Chỉ gửi xuống trang con SAU khi đã kéo Sheet về — gửi sớm
@@ -2891,7 +2892,7 @@ function napCaiDat_(ds){
   CD_DANG_NAP=false;
   // nạp lại biến đang chạy
   ALIAS=get('alias',{}); KHAC_MON=get('khacmon',{}); KS_XONG=get('ksxong',{})||{}; LY_DO_GOM=get('lydogom',{});
-  HAN_THU=get('hanthu',7); NGUONG_HH_=get('nguongHuyHieu',NGUONG_HH_MACDINH_); CPCD=get('cpcd',{}); ALIAS_HS=get('aliashs',{}); MAU_NHOM=get('maunhom',{}); LS_BG=get('lsbg',[]);
+  HAN_THU=get('hanthu',7); NGUONG_HH_=get('nguongHuyHieu',NGUONG_HH_MACDINH_); CPCD=get('cpcd',{}); ALIAS_HS=get('aliashs',{}); MAU_NHOM=get('maunhom',{}); LS_BG=get('lsbg',[]); DH_XET=get('dongxet',{});
   NGUONG_QUEN_=NGUONG_HH_.quen; NGUONG_VIP_=NGUONG_HH_.vip; NGUONG_VVIP_BREEDER_=NGUONG_HH_.vvipBreeder;
   if(GIA){ if(donAlias_() && !lanDau) henDayVon_();   // 16/11/2026: dọn tự gộp vào chính nó / gộp vòng tròn / quy đổi cũ
     var va=false; Object.keys(ALIAS).forEach(function(k){ if(GIA[k]&&!GIA[k].gopVao&&ALIAS[k]!==k){ GIA[k].gopVao=skuChinh(k); GIA[k].ngung=true; va=true } }); if(va) set('gia',GIA); dongBoQuyDoi_() }
@@ -4718,7 +4719,7 @@ function hoaDauTen_(){
   return doi>0
 }
 function veGia(){
-  try{ DH_QL=dongHang_(Object.keys(GIA).map(function(k){return GIA[k]}).filter(function(p){return !p.ngung})) }catch(e){ DH_QL={} }
+  try{ DH_QL=dongHangQL_() }catch(e){ DH_QL={} }
   var doiTen=hoaDauTen_();
   if((dongBoQuyDoi_()||doiTen) && !VON_CHO_DAY) henDayVon_();   // vốn món quy đổi đổi theo món gốc → lưu cho máy khác thấy
   var oSku=$('skuMoi'), gSku=oSku?{v:oSku.value,f:document.activeElement===oSku}:null;   // đồng bộ nền vẽ lại bảng không làm mất mã đang gõ
@@ -4949,6 +4950,7 @@ function veHG_(){
   if(HG.kieu==='ls') return veLS_();
   if(HG.kieu==='don') return veDonPL_();
   if(HG.kieu==='sl') return veSaoLuu_();
+  if(HG.kieu==='dh') return veRaDong_();
   var chinh=HG.chinh, pc=GIA[chinh], phu=hgPhu_();
   var qc=phu.filter(function(k){ return khacQC_(k,chinh) });
   var moiChua=pc.moi && phu.some(function(k){ return !GIA[k].moi });
@@ -5104,6 +5106,81 @@ function hgXoa_(){
   });
   set('gia',GIA); $('dlgHG').close(); HG=null; giaLai(); vePhat(); henDayVon_(); veChonGia();
   bao('giaMsg','Đã xoá <b>'+duoc.length+' mã</b> khỏi bảng giá và chép vào Lịch sử (khôi phục được). Đang lưu Sheet và phát cho máy nhân viên.','wa');
+}
+
+/* ═════════════ RÀ DÒNG HÀNG NHIỀU CỠ — 16/11/2026 chủ: "tạo hệ thống để tôi duyệt, dựa trên đó làm cho chính xác".
+   Máy gom theo tên (bỏ khối lượng) + nhóm; chủ bấm Đúng / Không phải, bỏ tích món lạc nhóm. Quyết định lưu 'dongxet'
+   (CAI_DAT_QL — mọi máy quản lý cùng thấy). Bảng giá máy quản lý đi theo quyết định ngay; máy nhân viên hiện vẫn gom tự động. */
+var DH_XET=get('dongxet',{}), RD_LOC='can';
+function raDong_(){
+  var g={};
+  Object.keys(GIA).forEach(function(k){ var p=GIA[k]; if(p.ngung) return; var goc=dhGoc_(p.ten); if(!goc) return;
+    var key=(p.nhom||'')+'|'+goc; (g[key]=g[key]||[]).push({sku:k,kl:dhKl_(p.ten)}) });
+  return Object.keys(g).filter(function(k){ return g[k].length>=2 && g[k].some(function(x){return x.kl}) }).map(function(k){
+    var a=g[k].sort(function(x,y){ return x.kl-y.kl }), xet=DH_XET[k]||{}, bo=xet.bo||{}, canh=[], dem={};
+    var trong=a.filter(function(x){ return !bo[x.sku] });
+    trong.forEach(function(x){ if(x.kl) dem[x.kl]=(dem[x.kl]||0)+1 });
+    var trung=Object.keys(dem).filter(function(kl){ return dem[kl]>1 });
+    if(trung.length) canh.push({loai:'trung',vi:'Có 2 mã trùng cỡ '+trung.map(function(kl){return dhNhan_(Number(kl))}).join(', ')+' — gộp 2 mã đó hoặc bỏ tích 1 mã'});
+    var thieu=trong.filter(function(x){ return !x.kl });
+    if(thieu.length) canh.push({loai:'thieu',vi:'Tên không ghi khối lượng: '+thieu.map(function(x){return GIA[x.sku].ten}).join(', ')+' — sửa tên (vd thêm "50g") hoặc bỏ tích'});
+    var coKl=trong.filter(function(x){ return x.kl && GIA[x.sku].gb });
+    for(var i=1;i<coKl.length;i++){ var nho=coKl[i-1], lon=coKl[i], g1=GIA[nho.sku].gb/nho.kl, g2=GIA[lon.sku].gb/lon.kl;
+      if(g2>g1*1.02) canh.push({loai:'gia',vi:'Cỡ '+dhNhan_(lon.kl)+' tính ra '+f0_(Math.round(g2*100))+'/100g — đắt hơn cỡ '+dhNhan_(nho.kl)+' ('+f0_(Math.round(g1*100))+'/100g). Kiểm lại giá'}) }
+    var dv={}; trong.forEach(function(x){ dv[kd(GIA[x.sku].dvt||'')]=1 });
+    if(Object.keys(dv).length>1) canh.push({loai:'dv',vi:'Đơn vị tính khác nhau ('+trong.map(function(x){return GIA[x.sku].dvt||'—'}).filter(function(v,i,a){return a.indexOf(v)===i}).join(', ')+')'});
+    return {key:k, ds:a, canh:canh, xet:xet};
+  });
+}
+function dongHangQL_(){
+  var out={};
+  raDong_().forEach(function(n){ if(n.xet.tt==='sai') return;
+    var a=n.ds.filter(function(x){ return x.kl && !(n.xet.bo||{})[x.sku] }), da={}, trung=false;
+    a.forEach(function(x){ if(da[x.kl]) trung=true; da[x.kl]=1 }); if(trung||a.length<2) return;
+    a.forEach(function(x){ out[x.sku]={key:n.key,ds:a} }) });
+  return out;
+}
+function moRaDong_(){ HG={kieu:'dh'}; veHG_(); if(!$('dlgHG').open) $('dlgHG').showModal() }
+function rdLoc_(v){ RD_LOC=v; veHG_() }
+function rdLuu_(key,doi){ var x=DH_XET[key]||{}; doi(x); x.luc=nowStr(); DH_XET[key]=x; set('dongxet',DH_XET); veHG_(); try{ giaLai() }catch(e){} }
+function rdDat_(key,tt){ rdLuu_(key,function(x){ x.tt=tt }) }
+function rdBo_(key,sku,bo){ rdLuu_(key,function(x){ x.bo=x.bo||{}; if(bo) x.bo[sku]=1; else delete x.bo[sku]; if(x.tt==='dung') delete x.tt }) }
+function rdTim_(sku){ $('dlgHG').close(); tab('gia'); $('gq').value=sku; giaReset() }
+function rdGop_(key){ var n=raDong_().filter(function(z){return z.key===key})[0]; if(!n) return; var dem={};
+  n.ds.forEach(function(x){ if(x.kl&&!(n.xet.bo||{})[x.sku]) (dem[x.kl]=dem[x.kl]||[]).push(x.sku) });
+  var cap=Object.keys(dem).map(function(k){return dem[k]}).filter(function(a){return a.length>1})[0]; if(!cap) return;
+  $('dlgHG').close(); var chinh=cap.filter(function(k){return GIA[k].von})[0]||cap[0];
+  moHopGop_(cap.filter(function(k){return k!==chinh}),chinh,{onXong:function(){ moRaDong_() }}) }
+function veRaDong_(){
+  var ds=raDong_(), dem={can:0,chua:0,xong:0,sai:0};
+  ds.forEach(function(n){ var tt=n.xet.tt; if(tt==='dung') dem.xong++; else if(tt==='sai') dem.sai++; else { dem.chua++; if(n.canh.length) dem.can++ } });
+  var loc=ds.filter(function(n){ var tt=n.xet.tt;
+    return RD_LOC==='tatca' || (RD_LOC==='can'&&!tt&&n.canh.length) || (RD_LOC==='chua'&&!tt) || (RD_LOC==='xong'&&tt==='dung') || (RD_LOC==='sai'&&tt==='sai') });
+  loc.sort(function(a,b){ return b.canh.length-a.canh.length || b.ds.length-a.ds.length });
+  var chip=function(v,t,n){ return '<button class="chip'+(RD_LOC===v?' on':'')+'" onclick="rdLoc_(\''+v+'\')">'+t+' <b>'+n+'</b></button>' };
+  var h='<h2 style="margin-top:0">⇄ Rà dòng hàng nhiều cỡ</h2>'+
+    '<div class="sm" style="margin-bottom:8px">Máy tự gom các món cùng nhóm, cùng tên, chỉ khác khối lượng. Anh/chị xem từng dòng: <b>✓ Đúng</b> nếu đúng là 1 món nhiều cỡ, <b>✗ Không phải</b> nếu không; bỏ tích món nào lạc vào. Quyết định lưu chung mọi máy quản lý.</div>'+
+    '<div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:10px">'+chip('can','⚠ Cần xem',dem.can)+chip('chua','Chưa duyệt',dem.chua)+chip('xong','✓ Đúng',dem.xong)+chip('sai','✗ Không phải',dem.sai)+chip('tatca','Tất cả',ds.length)+'</div>';
+  if(!loc.length) h+='<div class="empty">Không có dòng nào ở mục này.</div>';
+  h+=loc.slice(0,60).map(function(n){
+    var bo=n.xet.bo||{}, tt=n.xet.tt;
+    return '<div class="card" style="padding:10px 12px;margin-bottom:10px;border-left:4px solid '+(tt==='dung'?'var(--ok)':tt==='sai'?'var(--bad)':n.canh.length?'var(--warn)':'var(--line)')+'">'+
+      '<div class="sm" style="opacity:.7">'+esc(n.key.split('|')[0])+(tt?' · '+(tt==='dung'?'✓ đã xác nhận':'✗ không phải 1 dòng')+(n.xet.luc?' ('+esc(n.xet.luc)+')':''):'')+'</div>'+
+      '<div class="bangnap"><table><tr><th></th><th>Mã</th><th>Tên</th><th>Cỡ</th><th>ĐVT</th><th class="r">Giá</th><th class="r">Giá/100g</th><th class="r">Vốn/100g</th></tr>'+
+      n.ds.map(function(x){ var p=GIA[x.sku];
+        return '<tr style="'+(bo[x.sku]?'opacity:.45':'')+'"><td><input type="checkbox" '+(bo[x.sku]?'':'checked')+' style="width:17px;height:17px" onchange="rdBo_(\''+esc(n.key)+'\',\''+esc(x.sku)+'\',!this.checked)" title="Thuộc dòng này"></td>'+
+          '<td><a href="#" onclick="rdTim_(\''+esc(x.sku)+'\');return false">'+esc(x.sku)+'</a></td><td>'+esc(p.ten)+'</td><td>'+(x.kl?dhNhan_(x.kl):'<b style="color:var(--warn)">?</b>')+'</td><td>'+esc(p.dvt||'')+'</td>'+
+          '<td class="r">'+f0_(p.gb||0)+'</td><td class="r">'+(x.kl&&p.gb?f0_(Math.round(p.gb/x.kl*100)):'—')+'</td><td class="r">'+(x.kl&&p.von?f0_(Math.round(p.von/x.kl*100)):'—')+'</td></tr>' }).join('')+'</table></div>'+
+      (n.canh.length?'<div class="sm" style="margin-top:6px;color:var(--warn)">'+n.canh.map(function(c){return '⚠ '+esc(c.vi)}).join('<br>')+'</div>':'')+
+      '<div class="row mt" style="gap:6px;flex-wrap:wrap">'+
+        '<button class="btn2" style="color:var(--ok)" onclick="rdDat_(\''+esc(n.key)+'\',\'dung\')">✓ Đúng là 1 món nhiều cỡ</button>'+
+        '<button class="btn2" style="color:var(--bad)" onclick="rdDat_(\''+esc(n.key)+'\',\'sai\')">✗ Không phải</button>'+
+        (n.canh.some(function(c){return c.loai==='trung'})?'<button class="btn2" style="color:var(--pur)" onclick="rdGop_(\''+esc(n.key)+'\')">⇢ Gộp 2 mã trùng cỡ</button>':'')+
+        (tt?'<button class="btn2" onclick="rdLuu_(\''+esc(n.key)+'\',function(x){delete x.tt})">Bỏ quyết định</button>':'')+
+      '</div></div>' }).join('')+
+    (loc.length>60?'<div class="sm">Hiện 60 dòng đầu — duyệt xong sẽ hiện tiếp.</div>':'');
+  h+='<div class="row mt"><button class="btn2" onclick="document.getElementById(\'dlgHG\').close()">Đóng</button></div>';
+  $('hgThan').innerHTML=h;
 }
 
 /* ═════════════ BẢN SAO LƯU HẰNG NGÀY (máy chủ tự chụp, giữ 14 ngày) ═════════════ */
@@ -7883,6 +7960,9 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261116k', ngay:'16/11/2026', ten:'Rà dòng hàng nhiều cỡ',
+  vaPhieu:[], vaNoi:[],
+  muc:[['moi','Bảng giá có nút <b>⇄ Rà dòng hàng</b>: xem từng nhóm món nhiều cỡ máy tự nhận ra, bấm <b>Đúng / Không phải</b>, bỏ tích món lạc nhóm. Máy báo trước chỗ đáng ngờ: 2 mã trùng cỡ, tên thiếu khối lượng, cỡ lớn đắt hơn cỡ nhỏ tính theo 100g, đơn vị khác nhau.']]},
  {ban:'20261116j', ngay:'16/11/2026', ten:'Dòng hàng nhiều cỡ · sửa màu danh sách chọn chế độ tối',
   vaPhieu:[], vaNoi:[],
   muc:[['moi','Bảng giá ghi <b>⇄ Cùng dòng</b> dưới món có nhiều cỡ (50g · 200g · 1kg…) kèm giá quy ra 100g để so cỡ nào lời. Máy nhân viên gom các cỡ về 1 dòng, mặc định cỡ nhỏ.'],
