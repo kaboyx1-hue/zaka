@@ -1190,7 +1190,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261116e';
+var APP_VER='20261116h';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -2141,7 +2141,7 @@ function veLam(){
     vi:'Mấy đơn này bán món chưa điền <b>giá nhập vào</b>, nên máy không tính được lời. '+
        'Điền giá nhập cho mấy món đó là mấy đơn này tự có số.',
     nut:'Đi điền giá nhập',
-    ham:"tab('gia')"
+    ham:"moCanDuyet_('von')"
   });
 
   if(PHAT_KET) viec.push({
@@ -2380,7 +2380,7 @@ function gomVaDon_(phu, chinh, lyDo, hs){
      ẩn đi như cũ, để chủ tự xem lại rồi quyết. */
   var pPhu=GIA[phu]||{}, pChinh=GIA[chinh]||{};
   var dangGiu = (pPhu.suaTay && pPhu.von) || (pPhu.gb && pChinh.gb && pPhu.gb!==pChinh.gb);
-  if(!dangGiu && GIA[phu] && !g.hs){ delete GIA[phu]; g.daXoa=true }   // món quy đổi (bao 5kg…) là hàng bán thật — không xoá
+  if(!dangGiu && GIA[phu] && !g.hs){ xoaGia_(phu); g.daXoa=true }   // món quy đổi (bao 5kg…) là hàng bán thật — không xoá
   NHAT_KY_GOM.push(g);
   if(lyDo){ LY_DO_GOM[phu]={chinh:chinh,lyDo:lyDo,luc:nowStr()}; set('lydogom',LY_DO_GOM) }
   set('alias',ALIAS); set('gia',GIA);
@@ -4267,7 +4267,7 @@ function ctDon(ma){
     '<th class="r">VAT</th><th class="r">VAT ròng</th></tr>'+
     d.dong.map(function(x){
       var th=tinhThueDong(x);
-      return '<tr><td>'+esc(x.ten)+'</td><td>'+esc(x.dv)+
+      return '<tr><td>'+esc(x.ten)+'<div class="sm" style="opacity:.7"><code>'+esc(x.sku||'')+'</code>'+(skuChinh(x.sku)!==x.sku?' → '+esc(skuChinh(x.sku)):'')+(GIA[skuChinh(x.sku)]?(GIA[skuChinh(x.sku)].ngung?' · <b style="color:var(--warn)">ngừng bán</b>':''):' · <b style="color:var(--bad)">không có trong bảng giá</b>')+'</div></td><td>'+esc(x.dv)+
       '</td><td class="r">'+x.sl+'</td>'+
       (tgGiaoCua(d)==='DU'?'':'<td class="r" style="color:var(--warn)">'+daGiaoDong(d,x)+'</td>')+
       '<td class="r">'+tien(x.gia)+'</td><td class="r">'+tien(x.thanhTien||x.gia*x.sl)+
@@ -4731,7 +4731,9 @@ function veGia(){
     '</b> · đang bán '+tatca.filter(function(p){return !p.ngung}).length.toLocaleString('vi-VN')+
     (soNgung?' · ngừng bán '+soNgung.toLocaleString('vi-VN'):'')+
     (thieu?' · <span style="color:var(--warn)"><b>'+thieu+'</b> chưa có giá vốn</span>':'');
-  if(!ds.length){$('dsGia').innerHTML='<div class="empty">Không tìm thấy'+(nh?' trong nhóm <b>'+esc(nh)+'</b>':'')+'.'+
+  var ngKhop=(!ds.length&&!XEMNGUNG&&q)?tatca.filter(function(p){ return p.ngung && khop_(p.ten+' '+(p.brand||'')+' '+p.sku+' '+maCuCua_(p.sku).join(' '),q) }).length:0;
+  if(!ds.length){$('dsGia').innerHTML='<div class="empty">Không tìm thấy'+(nh?' trong nhóm <b>'+esc(nh)+'</b>':'')+' trong hàng đang bán.'+
+    (ngKhop?'<br><button class="btn2" style="margin-top:8px" onclick="toggleNgung()">Có '+ngKhop+' món <b>ngừng bán</b> khớp — bấm xem</button>':'')+
     (nh?'<br><button class="btn2" style="margin-top:8px" onclick="document.getElementById(\'gn\').value=\'\';giaReset()">Tìm trong tất cả nhóm</button>':'')+'</div>';veChonGia();return}
   $('dsGia').innerHTML='<table><colgroup><col style="width:3%"><col style="width:8%"><col style="width:27%"><col style="width:7%">'+
     '<col style="width:9%"><col style="width:14%"><col style="width:11%"><col style="width:7%">'+
@@ -5067,7 +5069,7 @@ function hgXoa_(){
   duoc.forEach(function(k){
     var p=GIA[k];
     ghiLS_({loai:'xoa', sku:k, ten:p.ten, snap:JSON.parse(JSON.stringify(p)), noi:'Xoá '+k+' · '+p.ten+' · giá '+f0_(p.gb)+' · vốn '+(p.von?f0_(p.von):'chưa có')});
-    delete GIA[k]; delete GIA_CHON[k];
+    xoaGia_(k); delete GIA_CHON[k];
   });
   set('gia',GIA); $('dlgHG').close(); HG=null; giaLai(); vePhat(); henDayVon_(); veChonGia();
   bao('giaMsg','Đã xoá <b>'+duoc.length+' mã</b> khỏi bảng giá và chép vào Lịch sử (khôi phục được). Đang lưu Sheet và phát cho máy nhân viên.','wa');
@@ -5247,7 +5249,12 @@ function veCDKhac_(){
       return '<div class="cdThe" style="--cn:'+mauNhom_(p.nhom||'KHÁC')+'"><div class="sm">'+esc(z.sku)+' · '+z.d.don+' đơn · treo '+z.d.ngay+' ngày · doanh thu treo '+tien(z.d.dt)+'</div>'+
         '<div class="row" style="gap:10px;align-items:flex-end;flex-wrap:wrap;margin-top:4px"><b style="flex:1;min-width:180px">'+esc(p.ten||z.d.ten)+'</b>'+
         '<label class="sm">Giá bán<div><b>'+(p.gb?f0_(p.gb):'—')+'</b></div></label>'+
-        '<label class="sm">Giá vốn<input inputmode="numeric" placeholder="điền vào" style="width:110px;border-color:var(--warn)" onchange="vonNhanh(\''+esc(z.sku)+'\',this.value);this.closest(\'.cdThe\').style.opacity=.5"></label></div></div>' }).join('');
+        '<label class="sm">Giá vốn<input inputmode="numeric" placeholder="điền vào" style="width:110px;border-color:var(--warn)" onchange="vonNhanh(\''+esc(z.sku)+'\',this.value);this.closest(\'.cdThe\').style.opacity=.5"></label></div>'+
+        (function(){ var gy=timGanGiong_(z.d.ten).filter(function(k){ return k!==z.sku && GIA[k] && !GIA[k].ngung && GIA[k].von }).slice(0,3);
+          return (GIA[z.sku]?'':'<div class="sm" style="color:var(--warn);margin-top:4px">Mã này không còn trong bảng giá (nhân viên tạo trùng hoặc đã bị xoá) nên không thấy ở tab Bảng giá.</div>')+
+            (gy.length?'<div class="sm" style="margin-top:6px">Có thể trùng món đã có giá vốn: '+gy.map(function(k){
+              return '<button class="btn2" style="margin:3px 4px 0 0;padding:4px 10px" onclick="cdGopVao_(\''+esc(z.sku)+'\',\''+esc(k)+'\')">⇢ Gộp vào <b>'+esc(GIA[k].ten)+'</b> · vốn '+f0_(GIA[k].von)+'</button>' }).join('')+'</div>':'') })()+
+        '</div>' }).join('');
   } else {
     $('dsDan').innerHTML='Các mã tên gần giống nhau. Chọn mã giữ lại rồi bấm Gộp — hộp gộp sẽ hiện từng đơn bị ảnh hưởng trước khi làm.';
     $('dsThan').innerHTML=veTrungTen()||'<div class="empty">Không có mã nào gần giống.</div>';
@@ -5463,7 +5470,7 @@ async function luuDoiSku_(){
     var r=await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'doisku',cu:cu,moi:moi})});
     var j=JSON.parse(await r.text()); if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
-    var p=GIA[cu]; delete GIA[cu]; p.sku=moi; GIA[moi]=p;
+    var p=GIA[cu]; xoaGia_(cu); p.sku=moi; GIA[moi]=p;
     Object.keys(ALIAS).forEach(function(k){ if(ALIAS[k]===cu) ALIAS[k]=moi });
     ALIAS[cu]=moi; delete GIA_CHON[cu];
     Object.keys(GIA).forEach(function(k){ if(GIA[k].gopVao===cu) GIA[k].gopVao=moi });
@@ -5503,7 +5510,7 @@ function xoaChonGia(){
   if(!confirm('Xoá '+xoaDuoc.length+' sản phẩm khỏi bảng giá?'+
     (chan.length?'\n\n('+chan.length+' món khác trong lựa chọn còn đơn cũ dùng và CHƯA gộp — sẽ bỏ qua, không xoá.)':'')+
     '\n\nNhân viên sẽ không tìm thấy những món này nữa. Đơn cũ đã bán giữ nguyên.'))return;
-  xoaDuoc.forEach(function(k){ delete GIA[k]; delete GIA_CHON[k] });
+  xoaDuoc.forEach(function(k){ xoaGia_(k); delete GIA_CHON[k] });
   set('gia',GIA); giaLai(); vePhat(); dayVon(false); phatGia(true);
   bao('giaMsg','Đã xoá <b>'+xoaDuoc.length+' sản phẩm</b> khỏi bảng giá'+
     (chan.length?', bỏ qua '+chan.length+' món còn đơn cũ chưa gộp':'')+'. Đang phát lại cho máy nhân viên.','wa');
@@ -5533,7 +5540,7 @@ function donNgung(){
     (choVon?'\n⚠ '+choVon+' đơn đang CHỜ GIÁ VỐN của những món này.\n'+
       'Xoá xong phải vào từng đơn sửa giá vốn bằng tay.\n':'')+
     '\nBảng giá còn lại '+(Object.keys(GIA).length-ds.length)+' mặt hàng.'))return;
-  ds.forEach(function(k){ delete GIA[k] });
+  ds.forEach(function(k){ xoaGia_(k) });
   set('gia',GIA); XEMNGUNG=false; GLIM=40; veGia(); vePhat(); henDayVon_();   // 12/11/2026: trước chỉ dayVon, máy NV vẫn thấy món đã xoá
   bao('giaMsg','Đã xoá hẳn <b>'+ds.length+' mặt hàng ngừng bán</b>. '+
     'Bảng giá còn <b>'+Object.keys(GIA).length.toLocaleString('vi-VN')+' mặt hàng</b>.'+
@@ -5686,7 +5693,8 @@ var TRUONG_NAP=[
   {k:'qd_dv', nhan:'ĐVT sỉ',       cot:['DVT quy doi','ĐVT quy đổi']},
   {k:'qd_sl', nhan:'Số lẻ mỗi sỉ', cot:['1 dv = may le'],        so:1},
   {k:'qd_gb', nhan:'Giá sỉ',       cot:['Gia ban quy doi','Giá bán quy đổi'], so:1},
-  {k:'qd_von',nhan:'Giá vốn sỉ',   cot:['Gia von quy doi'],      so:1}
+  {k:'qd_von',nhan:'Giá vốn sỉ',   cot:['Gia von quy doi'],      so:1},
+  {k:'vat',   nhan:'VAT %',        cot:['Thue VAT','VAT'],       so:1}
 ];
 
 async function napGiaCSV(f){
@@ -5716,9 +5724,10 @@ async function napGiaCSV(f){
     TRUONG_NAP.forEach(function(T){
       var v=lay(row,T.cot);
       if(v===null){ gia[T.k]=cu?cu[T.k]:(T.so?0:''); return }
-      var vm = T.so ? (v===''?0:n2(v)) : v;
+      var laVat=T.k==='vat';   // VAT trống = chưa gán (khác 0%)
+      var vm = T.so ? (v===''?(laVat?'':0):n2(v)) : v;
       gia[T.k]=vm;
-      var vc = cu ? (cu[T.k]||(T.so?0:'')) : (T.so?0:'');
+      var vc = laVat ? (cu&&cu.vat!==null&&cu.vat!==undefined&&cu.vat!==''?cu.vat:'') : cu ? (cu[T.k]||(T.so?0:'')) : (T.so?0:'');
       if(String(vc)!==String(vm)) doi.push({nhan:T.nhan, cu:vc, moi:vm, so:!!T.so});
     });
     var ngRaw=lay(row,['Ngung ban','Ngừng bán']);
@@ -5788,12 +5797,13 @@ function apDungNapGia(){
       gb:Number(x.gia.gb)||0, von:Number(x.gia.von)||null,
       qd_dv:x.gia.qd_dv||'', qd_sl:Number(x.gia.qd_sl)||0,
       qd_gb:Number(x.gia.qd_gb)||0, qd_von:Number(x.gia.qd_von)||0,
-      ngung:!!x.gia.ngung, moi:false};
+      ngung:!!x.gia.ngung, moi:false, vat:(x.gia.vat===''||x.gia.vat===null||x.gia.vat===undefined)?(cu.vat===undefined?null:cu.vat):Number(x.gia.vat)};
+    if(cu.thuTu!==undefined) p.thuTu=cu.thuTu;
     if(p.von){ p.suaTay=true; p.vonLuc=nowStr(); p.vonLyDo='nạp từ file CSV' }
     if(GIA[x.sku]) sua++; else them++;
     GIA[x.sku]=p;
   });
-  set('gia',GIA); GLIM=40; tinhLaiToanBoSO(); henDayVon_();
+  set('gia',GIA); GLIM=40; tinhLaiIm_(); henDayVon_();   // chỉ tính lại đơn đang chờ vốn — đơn cũ giữ giá vốn đã chốt (P0 #2)
   veGia(); vePhat(); veCB(); veSo(); veBC(); veLam();
   $('dlgNap').close(); NAP_CHO=null;
   bao('giaMsg','Đã ghi: <b>'+sua+' món cập nhật</b>, <b>'+them+' món thêm mới</b>. '+
@@ -6080,7 +6090,7 @@ function xoaSP(sku){
       (daGop?' (đã gộp giá vốn sang mã '+esc(skuChinh(sku))+' — đơn cũ vẫn tra được giá vốn qua đó sau khi xoá)':'')+
       '. Các đơn đó GIỮ NGUYÊN giá và lãi — không bị ảnh hưởng.\n\n':'')+
     'Nhân viên sẽ không tìm thấy món này nữa.'))return;
-  delete GIA[sku]; set('gia',GIA); giaLai(); vePhat(); dayVon(false); phatGia(true);
+  xoaGia_(sku); set('gia',GIA); giaLai(); vePhat(); dayVon(false); phatGia(true);
   bao('giaMsg','Đã xoá <b>'+esc(p.ten)+'</b> khỏi bảng giá — đang lưu lên Sheet (BANG_GIA_QL) để máy quản lý kia '+
     'khớp theo, và đang phát lại cho máy nhân viên (sẽ hết thấy món này trong vòng một phút). '+
     'Đơn cũ không đổi.','wa');
@@ -6353,12 +6363,21 @@ function veCB(){
   $('cb').innerHTML=gia+tt+h; nhanCB();
 }
 function anViec_(k,n){ var a=get('anviec',{}); a[k]=n; set('anviec',a); veLam() }
+function taoLaiMaDaBan_(sku){   // món đã mất khỏi bảng giá nhưng đơn cũ còn dùng — tạo lại dòng ngừng bán để giữ giá vốn / gộp được
+  if(GIA[sku]) return;
+  var x=null; SO.some(function(d){ return (d.dong||[]).some(function(y){ if(skuChinh(y.sku)===sku){x=y;return true} }) });
+  GIA[sku]={sku:sku,ten:(x&&x.ten)||sku,brand:(x&&x.brand)||'',nhom:'KHÁC',dvt:(x&&x.dv)||'',gb:(x&&x.gia)||0,
+    von:null,qd_dv:'',qd_sl:0,qd_gb:0,qd_von:0,ngung:true};
+}
+/* 16/11/2026 chủ: 611 đơn "chưa biết lời lỗ" mà món nào cũng có vốn. Thật ra 88 mã đã bán KHÔNG còn trong bảng giá
+   (món NV tạo trùng hồi 09/2026, món duyệt trước 03/11 chưa lưu Sheet) → không thấy ở Bảng giá để điền. Đa số trùng
+   món đã có vốn → cho gộp thẳng vào món đó từ tab Thiếu giá vốn. */
+function cdGopVao_(sku,chinh){
+  taoLaiMaDaBan_(sku); set('gia',GIA); $('dlgSPD').close();
+  moHopGop_([sku],chinh,{onXong:function(){ moCanDuyet_('von') }});
+}
 function vonNhanh(sku,v){
-  if(!GIA[sku]){   // món đã xoá khỏi bảng giá nhưng đơn cũ còn dùng — tạo lại dòng ngừng bán để giữ giá vốn
-    var x=null; SO.some(function(d){ return (d.dong||[]).some(function(y){ if(skuChinh(y.sku)===sku){x=y;return true} }) });
-    GIA[sku]={sku:sku,ten:(x&&x.ten)||sku,brand:(x&&x.brand)||'',nhom:'KHÁC',dvt:(x&&x.dv)||'',gb:(x&&x.gia)||0,
-      von:null,qd_dv:'',qd_sl:0,qd_gb:0,qd_von:0,ngung:true};
-  }
+  taoLaiMaDaBan_(sku);
   GIA[sku].von=n2(v)||null; GIA[sku].moi=false;
   GIA[sku].suaTay=true; GIA[sku].vonLuc=nowStr(); set('gia',GIA);
   henDayVon_();
@@ -6407,14 +6426,20 @@ function dongSheetVaoP_(x,p){
   return p;
 }
 function chupGoc_(){ var g={}; Object.keys(GIA).forEach(function(k){ g[k]=chuanP_(GIA[k]) }); GIA_GOC=g; set('giagoc',g) }
+var XOA_TAY={};   // món chủ tự tay xoá từ lần lưu trước — chỉ những món này mới được phép thiếu khi lưu lên Sheet
+function xoaGia_(k){ if(GIA[k]){ delete GIA[k]; XOA_TAY[k]=1 } }
 function gopBangGia_(ds){
   var B=GIA_GOC, R={}, n=0; if(!B) return 0;   // chưa có gốc (máy mới) → giữ cách cũ: bản máy này thắng
   ds.forEach(function(x){ var k=String(x.sku||'').trim(); if(k) R[k]=x });
   var keys={}; [B,R,GIA].forEach(function(m){ Object.keys(m).forEach(function(k){ keys[k]=1 }) });
+  /* 16/11/2026 SỰ CỐ: 14:33 đọc Sheet trúng lúc máy khác đang ghi dở → chỉ đọc được 1112/1470 dòng → coi 358 món là
+     "máy kia xoá" → xoá theo rồi lưu đè lên Sheet. Máy kia xoá thật thì chỉ vài món một lần: quá 5 món thì KHÔNG xoá gì. */
+  var xoaTheo=Object.keys(GIA).filter(function(k){ return B[k] && !R[k] }).length, choXoa=xoaTheo<=5;
+  if(!choXoa) console.warn('gopBangGia_: Sheet thiếu '+xoaTheo+' món — nghi đọc dở, không xoá theo');
   Object.keys(keys).forEach(function(k){
     var b=B[k], r=R[k], l=GIA[k];
     if(!l){ if(!b && r){ GIA[k]=dongSheetVaoP_(r,{sku:k}); n++ } return }          // máy kia thêm → thêm; máy này đã xoá → giữ xoá
-    if(!r){ if(b && JSON.stringify(chuanP_(l))===JSON.stringify(b)){ delete GIA[k]; n++ } return }   // máy kia xoá, máy này không sửa → xoá theo
+    if(!r){ if(choXoa && b && JSON.stringify(chuanP_(l))===JSON.stringify(b)){ delete GIA[k]; n++ } return }   // máy kia xoá, máy này không sửa → xoá theo
     if(!b) return;                                                              // máy này thêm mới → giữ
     var rp=dongSheetVaoP_(r,{sku:k}), rc=chuanP_(rp), lc=chuanP_(l);
     GIA_TRUONG.forEach(function(f){ if(lc[f]===b[f] && rc[f]!==b[f]){ l[f]=rp[f]; n++ } });
@@ -6508,11 +6533,18 @@ async function dayVon(im){
   try{
     try{ await gopNeuMayKhacVuaLuu_() }catch(eG){}   // máy kia vừa lưu → gộp từng ô thay vì hỏi/ghi đè
     b=goiVon();
+    /* Chốt chặn cuối (sự cố 16/11/2026): không bao giờ lưu đè lên Sheet một bảng giá hụt nhiều món mà chủ không tự tay xoá. */
+    var hut=GIA_GOC?Object.keys(GIA_GOC).filter(function(k){ return !GIA[k] && !XOA_TAY[k] }):[];
+    if(hut.length>5){
+      bao('giaMsg','⛔ <b>Dừng lưu bảng giá</b>: máy này đang thiếu <b>'+hut.length+' món</b> so với Sheet mà không phải do anh/chị xoá ('+
+        hut.slice(0,5).map(esc).join(', ')+'…). Lưu bây giờ sẽ làm mất các món đó trên mọi máy. Tải lại trang (F5) để lấy lại bảng giá từ Sheet.','er');
+      return;
+    }
     var r=await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'giavon',bang:b})});
     var j=JSON.parse(await r.text());
     if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
-    VONVER=j.ver; set('vonver',VONVER); VON_CHO_DAY=false;
+    VONVER=j.ver; set('vonver',VONVER); VON_CHO_DAY=false; XOA_TAY={};
     VERQL.von=j.ver; set('verql',VERQL); chupGoc_();   // lần lưu của chính máy này không tính là "người khác vừa sửa" — tự lưu lần sau khỏi bị hỏi oan
     if(im) bao('giaMsg','Đã lưu <b>'+j.so.toLocaleString('vi-VN')+' dòng</b> lên Google Sheet '+
       '(trang BANG_GIA_QL, chỉ mở được bằng mật khẩu quản lý).<br>'+
@@ -6540,8 +6572,9 @@ function napVonTuSheet(ds,ver){
     dongSheetVaoP_(x,p);
   });
   // Máy kia đã xoá hẳn món nào thì máy này cũng bỏ
-  var xoa=0;
-  Object.keys(GIA).forEach(function(k){ if(!coTrongSheet[k]){ delete GIA[k]; xoa++ } });
+  var xoa=0, thieuSheet=Object.keys(GIA).filter(function(k){ return !coTrongSheet[k] });
+  if(thieuSheet.length<=20) thieuSheet.forEach(function(k){ delete GIA[k]; xoa++ });   // nhiều hơn thì nghi Sheet đọc dở/bị cắt — không xoá (sự cố 16/11/2026)
+  else console.warn('napVonTuSheet: Sheet thiếu '+thieuSheet.length+' món — không xoá theo');
 
   set('gia',GIA); VONVER=ver; set('vonver',ver); chupGoc_();
   if(them||sua||xoa){
@@ -7754,6 +7787,17 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261116h', ngay:'16/11/2026', ten:'Chi tiết đơn hiện mã SKU · tìm ra cả món ngừng bán',
+  vaPhieu:[], vaNoi:[],
+  muc:[['sua','Chi tiết đơn ở Sổ cái hiện <b>mã SKU</b> từng món (kèm "ngừng bán" / "không có trong bảng giá"), chép mã đó vào ô tìm Bảng giá là ra.'],
+       ['sua','Tìm ở Bảng giá không ra món đang bán thì báo <b>có bao nhiêu món ngừng bán khớp</b>, bấm là xem.']]},
+ {ban:'20261116g', ngay:'16/11/2026', ten:'Chặn mất bảng giá khi 2 lần lưu chồng nhau',
+  vaPhieu:[], vaNoi:[],
+  muc:[['sua','Máy không còn tự xoá hàng loạt món khi đọc bảng giá trên Sheet bị dở, và <b>dừng lưu</b> nếu bảng giá hụt nhiều món mà anh/chị không tự xoá.'],
+       ['sua','Nạp bảng giá từ file CSV nhận cả cột <b>VAT</b>, và không tính lại giá vốn đơn cũ.']]},
+ {ban:'20261116f', ngay:'16/11/2026', ten:'Đơn chưa biết lời lỗ: thấy được mã mất khỏi bảng giá, gộp thẳng',
+  vaPhieu:[], vaNoi:[],
+  muc:[['sua','Nút <b>Đi điền giá nhập</b> mở thẳng tab <b>Thiếu giá vốn</b>. Mã đã bán mà không còn trong bảng giá được ghi rõ, kèm nút <b>⇢ Gộp vào</b> món trùng đã có giá vốn.']]},
  {ban:'20261116e', ngay:'16/11/2026', ten:'Tìm theo từng chữ · nhãn đã thu dễ đọc · gộp 2 món dễ thấy',
   vaPhieu:[], vaNoi:[],
   muc:[['sua','Ô tìm khớp theo <b>từng chữ</b>: gõ "gà viên" ra cả "Gà sấy viên" (Bảng giá, Sổ cái, Khách hàng, ô gộp).'],
