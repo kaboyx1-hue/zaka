@@ -564,6 +564,11 @@ body:not(.sang) .kpi div.k-pur{border-left-color:var(--pur)}
 body:not(.sang) .kpiclick:hover{border-color:var(--acc)!important;background:#141A17}
 /* ô nhập */
 body:not(.sang) input,body:not(.sang) select,body:not(.sang) textarea{border-radius:0;background:#0E1211;border:1px solid var(--line)}
+/* 16/11/2026: danh sách thả xuống ở chế độ tối bị chữ tối trên nền tối */
+body:not(.sang) select{color:var(--tx)}
+body:not(.sang) select option{background:#1A1F1D;color:#E8EEE9}
+body:not(.sang) select option:checked{background:#2F7FD8;color:#fff}
+body:not(.sang) #dsGia select.gnSel{color:var(--tx);background:color-mix(in srgb,var(--cn) 22%,#0E1211)}
 body:not(.sang) input:focus,body:not(.sang) select:focus,body:not(.sang) textarea:focus{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc);outline:none}
 /* bảng: dòng đang rê có vạch chanh bên trái */
 body:not(.sang) .card table tr:hover td{background:rgba(200,240,60,.05)}
@@ -1192,7 +1197,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261116i';
+var APP_VER='20261116j';
 /* 16/11/2026: mọi lần máy quản lý GỬI lên Sheet đều kèm số phiên bản (máy chủ chặn bản cũ ghi bảng giá) và tên máy
    (ghi vào NHAT_KY để biết máy nào làm gì). Gắn ở một chỗ duy nhất thay vì sửa từng lệnh gửi. */
 (function(){
@@ -4713,6 +4718,7 @@ function hoaDauTen_(){
   return doi>0
 }
 function veGia(){
+  try{ DH_QL=dongHang_(Object.keys(GIA).map(function(k){return GIA[k]}).filter(function(p){return !p.ngung})) }catch(e){ DH_QL={} }
   var doiTen=hoaDauTen_();
   if((dongBoQuyDoi_()||doiTen) && !VON_CHO_DAY) henDayVon_();   // vốn món quy đổi đổi theo món gốc → lưu cho máy khác thấy
   var oSku=$('skuMoi'), gSku=oSku?{v:oSku.value,f:document.activeElement===oSku}:null;   // đồng bộ nền vẽ lại bảng không làm mất mã đang gõ
@@ -4776,6 +4782,9 @@ function veGia(){
           ' <button class="mini" style="padding:1px 6px" title="Sửa hệ số quy đổi" onclick="suaHsGop(\''+p.sku+'\')">✏ quy đổi</button>':'')+'</td>'+
         '<td><input class="ten" style="padding:5px" value="'+esc(p.ten)+'" onchange="setF(\''+p.sku+'\',\'ten\',this.value)">'+
         (p.brand?'<div class="sm" style="color:var(--pur)">'+esc(p.brand)+'</div>':'')+
+        (DH_QL[p.sku]?'<div class="sm" style="margin-top:3px;color:var(--tx2)">⇄ Cùng dòng: '+DH_QL[p.sku].ds.map(function(x){ var c=GIA[x.sku]; if(!c) return '';
+          var s100=c.gb?Math.round(c.gb/x.kl*100):0;
+          return (x.sku===p.sku?'<b>':'')+dhNhan_(x.kl)+' '+f0_(c.gb)+(s100?' <span style="opacity:.7">('+f0_(s100)+'/100g)</span>':'')+(x.sku===p.sku?'</b>':'') }).join(' · ')+'</div>':'')+
         '<select class="mini gnSel" style="margin-top:4px;max-width:100%" onchange="setF(\''+p.sku+'\',\'nhom\',this.value);giaLai()">'+
           NHOM.map(function(n){return '<option value="'+n+'"'+(p.nhom===n?' selected':'')+'>'+esc(n)+'</option>'}).join('')+
         '</select>'+
@@ -5353,6 +5362,7 @@ async function duyetHetCD_(){
   $('dsErr').innerHTML='<div class="msg ok">✓ Đã duyệt <b>'+ten.length+' món</b>: '+ten.map(esc).join(', ')+'. Máy tự lưu bảng giá và phát cho nhân viên trong giây lát.</div>';   // không qua bao(): bao 'ok' thành toast góc, nằm dưới hộp thoại
 }
 
+var DH_QL={};
 var XEMNGUNG=false, LOCQD=null, GIA_CHON={}, DRAG_SKU=null;
 function toggleNgung(){ XEMNGUNG=!XEMNGUNG; GLIM=40; veGia() }
 
@@ -6486,6 +6496,24 @@ function dongSheetVaoP_(x,p){
 function chupGoc_(){ var g={}; Object.keys(GIA).forEach(function(k){ g[k]=chuanP_(GIA[k]) }); GIA_GOC=g; set('giagoc',g) }
 var XOA_TAY=get('xoatay',{});   // món chủ tự tay xoá từ lần lưu trước — chỉ những món này mới được phép thiếu khi lưu lên Sheet (máy chủ cũng kiểm)
 function xoaGia_(k){ if(GIA[k]){ delete GIA[k]; XOA_TAY[k]=1; set('xoatay',XOA_TAY) } }
+
+/* ═══ DÒNG HÀNG NHIỀU CỠ — 16/11/2026 chủ: "1 món nhiều quy cách 50g/200g/500g/1kg, nhân viên mặc định cỡ nhỏ".
+   Không đổi Sheet: mỗi cỡ vẫn là 1 mã riêng (giá bán, giá vốn, đơn cũ giữ nguyên). Máy tự nhận cùng dòng khi tên
+   giống nhau sau khi bỏ phần khối lượng (cùng nhóm). Dòng nào có 2 mã trùng đúng một cỡ thì KHÔNG gom (chờ chủ gộp). */
+function dhW_(){ return /(\d+(?:[.,]\d+)?)\s*(kg|kgs|gr|gram|g|ml|l|lit)\b/g }   // tạo mới mỗi lần: trang gọi tìm kiếm trước khi chạy tới dòng khai báo
+function dhKl_(t){ var s=kd(t), m, cuoi=null; var re=dhW_(); while((m=re.exec(s))) cuoi=m; if(!cuoi) return 0;
+  var n=parseFloat(cuoi[1].replace(',','.')); return /^(kg|kgs|l|lit)$/.test(cuoi[2])?n*1000:n }
+function dhGoc_(t){ return kd(t).replace(dhW_(),' ').replace(/\b(tui|goi|hu|hop|bich|chiet|seal|loai)\b/g,' ').replace(/[^a-z0-9]+/g,' ').trim() }
+function dhNhan_(kl){ return kl>=1000?String(kl/1000).replace('.',',')+'kg':kl+'g' }
+function dongHang_(ds){
+  var g={}, out={};
+  ds.forEach(function(p){ var kl=dhKl_(p.ten), goc=dhGoc_(p.ten); if(!kl||!goc) return;
+    var k=(p.nhom||'')+'|'+goc; (g[k]=g[k]||[]).push({sku:p.sku,kl:kl}) });
+  Object.keys(g).forEach(function(k){ var a=g[k], da={}, trung=false; if(a.length<2) return;
+    a.forEach(function(x){ if(da[x.kl]) trung=true; da[x.kl]=1 }); if(trung) return;
+    a.sort(function(x,y){ return x.kl-y.kl }); a.forEach(function(x){ out[x.sku]={key:k,ds:a} }) });
+  return out;
+}
 function gopBangGia_(ds){
   var B=GIA_GOC, R={}, n=0; if(!B) return 0;   // chưa có gốc (máy mới) → giữ cách cũ: bản máy này thắng
   ds.forEach(function(x){ var k=String(x.sku||'').trim(); if(k) R[k]=x });
@@ -7855,6 +7883,10 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261116j', ngay:'16/11/2026', ten:'Dòng hàng nhiều cỡ · sửa màu danh sách chọn chế độ tối',
+  vaPhieu:[], vaNoi:[],
+  muc:[['moi','Bảng giá ghi <b>⇄ Cùng dòng</b> dưới món có nhiều cỡ (50g · 200g · 1kg…) kèm giá quy ra 100g để so cỡ nào lời. Máy nhân viên gom các cỡ về 1 dòng, mặc định cỡ nhỏ.'],
+       ['sua','Danh sách chọn nhóm ở chế độ tối không còn chữ tối trên nền tối.']]},
  {ban:'20261116i', ngay:'16/11/2026', ten:'Bảo vệ bảng giá 4 lớp',
   vaPhieu:[], vaNoi:[],
   muc:[['moi','Máy chủ <b>từ chối</b> bảng giá gửi lên bị hụt nhiều món mà không phải anh/chị tự xoá, và chặn máy quản lý bản cũ ghi bảng giá.'],

@@ -995,7 +995,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20261112d';
+var APP_VER='20261116a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -2788,11 +2788,35 @@ function veChips(){
 }
 function datLoc(n){LOC=n;SLIM=30;veChips();timSP()}
 function spThem(all){SLIM=all?1e9:SLIM+60;timSP()}
+
+/* ═══ DÒNG HÀNG NHIỀU CỠ — 16/11/2026 chủ: "1 món nhiều quy cách 50g/200g/500g/1kg, nhân viên mặc định cỡ nhỏ".
+   Không đổi Sheet: mỗi cỡ vẫn là 1 mã riêng (giá bán, giá vốn, đơn cũ giữ nguyên). Máy tự nhận cùng dòng khi tên
+   giống nhau sau khi bỏ phần khối lượng (cùng nhóm). Dòng nào có 2 mã trùng đúng một cỡ thì KHÔNG gom (chờ chủ gộp). */
+function dhW_(){ return /(\d+(?:[.,]\d+)?)\s*(kg|kgs|gr|gram|g|ml|l|lit)\b/g }   // tạo mới mỗi lần: trang gọi tìm kiếm trước khi chạy tới dòng khai báo
+function dhKl_(t){ var s=kd(t), m, cuoi=null; var re=dhW_(); while((m=re.exec(s))) cuoi=m; if(!cuoi) return 0;
+  var n=parseFloat(cuoi[1].replace(',','.')); return /^(kg|kgs|l|lit)$/.test(cuoi[2])?n*1000:n }
+function dhGoc_(t){ return kd(t).replace(dhW_(),' ').replace(/\b(tui|goi|hu|hop|bich|chiet|seal|loai)\b/g,' ').replace(/[^a-z0-9]+/g,' ').trim() }
+function dhNhan_(kl){ return kl>=1000?String(kl/1000).replace('.',',')+'kg':kl+'g' }
+function dongHang_(ds){
+  var g={}, out={};
+  ds.forEach(function(p){ var kl=dhKl_(p.ten), goc=dhGoc_(p.ten); if(!kl||!goc) return;
+    var k=(p.nhom||'')+'|'+goc; (g[k]=g[k]||[]).push({sku:p.sku,kl:kl}) });
+  Object.keys(g).forEach(function(k){ var a=g[k], da={}, trung=false; if(a.length<2) return;
+    a.forEach(function(x){ if(da[x.kl]) trung=true; da[x.kl]=1 }); if(trung) return;
+    a.sort(function(x,y){ return x.kl-y.kl }); a.forEach(function(x){ out[x.sku]={key:k,ds:a} }) });
+  return out;
+}
+var DH={}, DH_SP={};
+function dhLai_(){ DH=dongHang_(SP.filter(function(p){ return !p.choDuyet })); DH_SP={}; SP.forEach(function(p){ DH_SP[p.sku]=p }) }
 function timSP(){
   var q=kd($('q').value.trim());
-  var kq=SP.filter(function(p){
+  dhLai_();
+  var kq0=SP.filter(function(p){
     if(LOC&&p.nhom!==LOC)return false;
-    return !q||kd(p.ten+' '+(p.brand||'')+' '+p.sku).indexOf(q)>=0});
+    return !q||String(q).split(/\s+/).every(function(w){ return kd(p.ten+' '+(p.brand||'')+' '+p.sku).indexOf(w)>=0 }) });
+  // cùng dòng nhiều cỡ → chỉ 1 thẻ, mặc định cỡ nhỏ nhất, các cỡ khác là nút bên dưới
+  var daDH={}, kq=[];
+  kq0.forEach(function(p){ var d=DH[p.sku]; if(!d){ kq.push(p); return } if(daDH[d.key]) return; daDH[d.key]=1; kq.push(DH_SP[d.ds[0].sku]||p) });
   $('cnt').innerHTML = kq.length
     ? 'Hiện <b>'+Math.min(kq.length,SLIM).toLocaleString('vi-VN')+'</b> / <b>'+kq.length.toLocaleString('vi-VN')+'</b> sản phẩm'
     : '';
@@ -2824,6 +2848,9 @@ function timSP(){
         :'<button class="opt" onclick="them(\''+p.sku+'\',0)">1 '+esc(p.dvt)+'<b>'+tien(gle)+'</b></button>');
     if(p.qd_sl && !(p.choDuyet && !CHO_BAN_CHUA_DUYET)) h+='<button class="opt" onclick="them(\''+p.sku+'\',1)">1 '+esc(p.qd_dv)+
       '<b>'+tien(p.qd_gb||gle*p.qd_sl)+'</b><small>= '+p.qd_sl+' '+esc(p.dvt)+'</small></button>';
+    var dh=DH[p.sku];
+    if(dh) h+=dh.ds.slice(1).map(function(x){ var c=DH_SP[x.sku]; if(!c) return '';
+      return '<button class="opt" style="border-style:dashed" title="'+esc(c.ten)+'" onclick="them(\''+x.sku+'\',0)">Cỡ '+dhNhan_(x.kl)+'<b>'+tien(c.gb)+'</b></button>' }).join('');
     return h+'</div></div></div>';
   }).join('')+
   (kq.length>SLIM
@@ -2965,7 +2992,13 @@ function veTabNhap(){
       '</span>';
   }).join('')+'<button class="tabnhap-them" onclick="themTabNhap()">+ Đơn khác</button>';
 }
+function doiCo_(i,sku2){
+  var g=GIO[i]; if(!g||g.sku===sku2) return; var sl=g.sl, p=SP.filter(function(x){return x.sku===sku2})[0]; if(!p) return;
+  GIO.splice(i,1); them(sku2,0);
+  var c=GIO.filter(function(x){return x.sku===sku2&&x.dv===p.dvt})[0]; if(c) c.sl+=sl-1; veGio();
+}
 function veGio(){
+  if(!Object.keys(DH).length) try{ dhLai_() }catch(e){}
   luuGio(); veTabNhap();
   var ship=so($('ship').value), giam=so($('giam').value);
   if(!GIO.length){
@@ -2980,6 +3013,8 @@ function veGio(){
       (g.brand?'<span class="br" style="color:var(--pur);font-size:11px">'+esc(g.brand)+'</span> ':'')+
       esc(g.ten)+'<div class="v" style="font-size:11.5px;color:var(--tx2)">'+esc(g.dv)+
       (g.hs>1?' (= '+g.hs+' '+esc(dvLe_(g.sku))+')':'')+'</div>'+
+      (g.hs===1&&DH[g.sku]?'<div class="opts" style="margin-top:4px">'+DH[g.sku].ds.map(function(x){
+        return '<button class="opt" style="padding:3px 9px;font-size:12px'+(x.sku===g.sku?';background:var(--acc,#A86A33);color:#fff':'')+'" onclick="doiCo_('+i+',\''+x.sku+'\')">'+dhNhan_(x.kl)+'</button>' }).join('')+'</div>':'')+
       (g.riêng?'<span class="tag kh">giá riêng</span>':'')+
       (doi?'<span class="tag qd">đã sửa giá — sẽ nhớ cho khách này</span>':'')+
       '</div><button class="del" onclick="xoa('+i+')">&times;</button></div><div class="qty">'+
@@ -5749,6 +5784,13 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261116a', ngay:'16/11/2026', ten:'Món nhiều cỡ gom về 1 dòng',
+  vaPhieu:[],
+  muc:[
+   ['moi','Món có nhiều cỡ (50g, 200g, 500g, 1kg…) hiện thành <b>1 dòng</b>, bấm là thêm <b>cỡ nhỏ nhất</b>; cần cỡ khác thì bấm nút <b>Cỡ …</b> ngay bên dưới.'],
+   ['moi','Trong giỏ hàng có nút đổi cỡ ngay trên dòng món, giá tự đổi theo.'],
+   ['sua','Ô tìm khớp theo từng chữ: gõ "gà viên" ra cả "Gà sấy viên".']
+  ]},
  {ban:'20261112d', ngay:'12/11/2026', ten:'Khách cũ gõ SĐT có số 0 vẫn ra đúng khách và giá riêng',
   vaPhieu:[],
   muc:[
