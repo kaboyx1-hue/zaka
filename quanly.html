@@ -843,6 +843,7 @@ tr.hgThua td{background:color-mix(in srgb,var(--warn) 15%,transparent)}
       <div><select id="gn" onchange="giaReset()"></select></div>
       <div style="flex:none"><button class="btn" onclick="moThemSP()">+ Thêm sản phẩm</button></div>
       <div style="flex:none"><button class="btn2" onclick="moLS_()">🕘 Lịch sử</button></div>
+      <div style="flex:none"><button class="btn2" onclick="moSaoLuu_()">🗄 Bản sao lưu</button></div>
       <div style="flex:none"><button class="btn2" onclick="moDonPL_()">🧹 Dọn phân loại</button></div>
       <div style="flex:none"><button class="btn2" onclick="moSuaLo()" style="color:var(--pur);font-weight:700">✏ Sửa hàng loạt món đang hiện</button></div>
     </div>
@@ -939,6 +940,7 @@ tr.hgThua td{background:color-mix(in srgb,var(--warn) 15%,transparent)}
       <button class="btn2" onclick="doiMkQL()">Đổi mật khẩu máy quản lý</button>
     </div>
     <div id="pinVH" class="sm mt"></div>
+    <div id="tenMayVH" class="sm mt"></div>
 </div>
 
   <div class="card"><h2>Điều kiện ghi nhận doanh thu</h2>
@@ -1190,7 +1192,26 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261116h';
+var APP_VER='20261116i';
+/* 16/11/2026: mọi lần máy quản lý GỬI lên Sheet đều kèm số phiên bản (máy chủ chặn bản cũ ghi bảng giá) và tên máy
+   (ghi vào NHAT_KY để biết máy nào làm gì). Gắn ở một chỗ duy nhất thay vì sửa từng lệnh gửi. */
+(function(){
+  var f0=window.fetch; if(!f0) return;
+  window.fetch=function(u,o){
+    try{
+      if(o && String(o.method||'').toUpperCase()==='POST' && typeof o.body==='string' && o.body.indexOf('QUANLY')>=0){
+        var g=JSON.parse(o.body);
+        if(g && String(g.may||'').toUpperCase()==='QUANLY'){
+          g.qlver=APP_VER;
+          var tm=''; try{ tm=(typeof get==='function')?get('tenmay',''):'' }catch(e){}
+          if(tm) g.tenmay=tm;
+          o=Object.assign({},o,{body:JSON.stringify(g)});
+        }
+      }
+    }catch(e){}
+    return f0.call(this,u,o);
+  };
+})();
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -4918,6 +4939,7 @@ function veHG_(){
   if(HG.kieu==='xoa') return veHGXoa_();
   if(HG.kieu==='ls') return veLS_();
   if(HG.kieu==='don') return veDonPL_();
+  if(HG.kieu==='sl') return veSaoLuu_();
   var chinh=HG.chinh, pc=GIA[chinh], phu=hgPhu_();
   var qc=phu.filter(function(k){ return khacQC_(k,chinh) });
   var moiChua=pc.moi && phu.some(function(k){ return !GIA[k].moi });
@@ -5073,6 +5095,42 @@ function hgXoa_(){
   });
   set('gia',GIA); $('dlgHG').close(); HG=null; giaLai(); vePhat(); henDayVon_(); veChonGia();
   bao('giaMsg','Đã xoá <b>'+duoc.length+' mã</b> khỏi bảng giá và chép vào Lịch sử (khôi phục được). Đang lưu Sheet và phát cho máy nhân viên.','wa');
+}
+
+/* ═════════════ BẢN SAO LƯU HẰNG NGÀY (máy chủ tự chụp, giữ 14 ngày) ═════════════ */
+async function moSaoLuu_(){
+  HG={kieu:'sl', ds:null, loi:''}; veHG_(); if(!$('dlgHG').open) $('dlgHG').showModal();
+  try{
+    var r=await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'saoluugia'})});
+    var j=JSON.parse(await r.text()); if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
+    HG.ds=j.ngay||[];
+  }catch(e){ HG.loi=e.message }
+  veHG_();
+}
+function veSaoLuu_(){
+  var h='<h2 style="margin-top:0">🗄 Bản sao lưu bảng giá</h2><div class="sm" style="margin-bottom:10px">Máy chủ tự chụp bảng giá mỗi ngày một lần (lần lưu đầu tiên trong ngày), giữ 14 ngày gần nhất. '+
+    'Lấy lại = mở bảng xem trước như <b>Nạp bảng giá từ file CSV</b>: món nào bị mất thì thêm lại, món nào khác thì hiện từng thay đổi để anh/chị chọn — <b>không xoá món nào</b>.</div>';
+  if(HG.loi) h+='<div class="msg er">Chưa đọc được: '+esc(HG.loi)+'</div>';
+  else if(!HG.ds) h+='<div class="sm">Đang tải danh sách…</div>';
+  else if(!HG.ds.length) h+='<div class="empty">Chưa có bản sao lưu nào. Bản đầu tiên được chụp ở lần lưu bảng giá kế tiếp.</div>';
+  else h+='<div class="bangnap"><table><tr><th>Ngày</th><th class="r">Số món</th><th></th></tr>'+HG.ds.map(function(x){
+    return '<tr><td>'+esc(String(x.ngay).split('-').reverse().join('/'))+'</td><td class="r">'+x.so+'</td><td><button class="btn2" onclick="layLaiSaoLuu_(\''+esc(x.ngay)+'\')">Xem &amp; lấy lại</button></td></tr>' }).join('')+'</table></div>';
+  h+='<div class="row mt"><button class="btn2" onclick="document.getElementById(\'dlgHG\').close()">Đóng</button></div>';
+  $('hgThan').innerHTML=h;
+}
+async function layLaiSaoLuu_(ngay){
+  try{
+    var r=await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'saoluugia',ngay:ngay})});
+    var j=JSON.parse(await r.text()); if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
+    var q=function(v){ v=(v===null||v===undefined)?'':String(v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v };
+    var csv='SKU,Ten san pham,Nhom,Thuong hieu,DVT,Gia ban,Gia von,DVT quy doi,1 dv = may le,Gia ban quy doi,Gia von quy doi,Ngung ban,Thue VAT\n'+
+      j.bang.map(function(x){ return [x.sku,x.ten,x.nhom,x.brand,x.dvt,x.gb,x.von,x.qd_dv,x.qd_sl,x.qd_gb,x.qd_von,
+        (x.ngung===true||String(x.ngung)==='1'||String(x.ngung).toLowerCase()==='true')?'x':'',x.vat].map(q).join(',') }).join('\n');
+    $('dlgHG').close();
+    await napGiaCSV(new File([csv],'sao-luu-'+ngay+'.csv',{type:'text/csv'}));
+  }catch(e){ HG.loi=e.message; veHG_() }
 }
 
 /* ═════════════ LỊCH SỬ ═════════════ */
@@ -6426,8 +6484,8 @@ function dongSheetVaoP_(x,p){
   return p;
 }
 function chupGoc_(){ var g={}; Object.keys(GIA).forEach(function(k){ g[k]=chuanP_(GIA[k]) }); GIA_GOC=g; set('giagoc',g) }
-var XOA_TAY={};   // món chủ tự tay xoá từ lần lưu trước — chỉ những món này mới được phép thiếu khi lưu lên Sheet
-function xoaGia_(k){ if(GIA[k]){ delete GIA[k]; XOA_TAY[k]=1 } }
+var XOA_TAY=get('xoatay',{});   // món chủ tự tay xoá từ lần lưu trước — chỉ những món này mới được phép thiếu khi lưu lên Sheet (máy chủ cũng kiểm)
+function xoaGia_(k){ if(GIA[k]){ delete GIA[k]; XOA_TAY[k]=1; set('xoatay',XOA_TAY) } }
 function gopBangGia_(ds){
   var B=GIA_GOC, R={}, n=0; if(!B) return 0;   // chưa có gốc (máy mới) → giữ cách cũ: bản máy này thắng
   ds.forEach(function(x){ var k=String(x.sku||'').trim(); if(k) R[k]=x });
@@ -6541,16 +6599,16 @@ async function dayVon(im){
       return;
     }
     var r=await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'giavon',bang:b})});
+      body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'giavon',bang:b,xoa:Object.keys(XOA_TAY)})});
     var j=JSON.parse(await r.text());
     if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
-    VONVER=j.ver; set('vonver',VONVER); VON_CHO_DAY=false; XOA_TAY={};
+    VONVER=j.ver; set('vonver',VONVER); VON_CHO_DAY=false; XOA_TAY={}; set('xoatay',{});
     VERQL.von=j.ver; set('verql',VERQL); chupGoc_();   // lần lưu của chính máy này không tính là "người khác vừa sửa" — tự lưu lần sau khỏi bị hỏi oan
     if(im) bao('giaMsg','Đã lưu <b>'+j.so.toLocaleString('vi-VN')+' dòng</b> lên Google Sheet '+
       '(trang BANG_GIA_QL, chỉ mở được bằng mật khẩu quản lý).<br>'+
       '<span class="sm">Gồm cả giá bán, giá vốn, hàng ngừng bán. Điện thoại và máy quản lý kia '+
       'sẽ khớp theo trong vòng một phút.</span>','ok');
-  }catch(e){ if(im) bao('giaMsg','Chưa lưu được lên Sheet: '+esc(e.message),'er') } finally { if(bDV) bDV.disabled=false; }
+  }catch(e){ if(im || /F5|bản cũ|thiếu/.test(e.message)) bao('giaMsg','⛔ Chưa lưu được lên Sheet: '+esc(e.message),'er') } finally { if(bDV) bDV.disabled=false; }
 }
 /* Nhận bản đầy đủ từ máy quản lý kia — giá bán, tên, đơn vị, quy đổi, giá vốn,
    hàng ngừng bán, hàng mới. Tất cả. Đây là chỗ điện thoại và máy bàn khớp nhau. */
@@ -6573,7 +6631,8 @@ function napVonTuSheet(ds,ver){
   });
   // Máy kia đã xoá hẳn món nào thì máy này cũng bỏ
   var xoa=0, thieuSheet=Object.keys(GIA).filter(function(k){ return !coTrongSheet[k] });
-  if(thieuSheet.length<=20) thieuSheet.forEach(function(k){ delete GIA[k]; xoa++ });   // nhiều hơn thì nghi Sheet đọc dở/bị cắt — không xoá (sự cố 16/11/2026)
+  var lanDauNap=!GIA_GOC||!Object.keys(GIA_GOC).length;   // máy mới: bảng trong máy chỉ là bản cài đặt sẵn → lấy đúng theo Sheet
+  if(lanDauNap||thieuSheet.length<=20) thieuSheet.forEach(function(k){ delete GIA[k]; xoa++ });   // nhiều hơn thì nghi Sheet đọc dở/bị cắt — không xoá (sự cố 16/11/2026)
   else console.warn('napVonTuSheet: Sheet thiếu '+thieuSheet.length+' món — không xoá theo');
 
   set('gia',GIA); VONVER=ver; set('vonver',ver); chupGoc_();
@@ -7429,8 +7488,17 @@ async function moKhoa(){
 function vaoQL(){
   $('khoa').style.display='none'; $('thanApp').classList.remove('hide');
   $('khKey').value=''; khoiDongQL();
-  vePinVH_();
+  vePinVH_(); veTenMayVH_();
+  if(!get('tenmay','')) setTimeout(function(){ doiTenMay_(true) },1500);
 }
+function doiTenMay_(lanDau){
+  var t=prompt((lanDau?'Đặt tên cho máy quản lý này để nhật ký ghi rõ máy nào sửa bảng giá.\n\n':'')+'Tên máy (ví dụ: PC anh, ĐT anh, Laptop chị):',get('tenmay','')||'');
+  if(t===null) return; t=t.trim().slice(0,40); if(!t) return;
+  set('tenmay',t); veTenMayVH_();
+}
+function veTenMayVH_(){ var el=$('tenMayVH'); if(!el) return;
+  var t=get('tenmay','');
+  el.innerHTML='Tên máy này: <b>'+(t?esc(t):'<span style="color:var(--warn)">chưa đặt</span>')+'</b> — ghi vào nhật ký Sheet mỗi lần máy này lưu. <button class="btn-nho" onclick="doiTenMay_()">'+(t?'Đổi tên':'Đặt tên')+'</button>' }
 /* MÃ PIN — 12/11/2026 chủ: PIN 6 số THAY HẲN mật khẩu trên mọi máy admin. Máy chủ Apps Script kiểm PIN (Thuộc tính
    tập lệnh MA_PIN_QL, chủ tự đặt) và trả mật khẩu quản lý cho máy đó; sai nhiều thì máy chủ khoá 15 phút.
    Có mạng: luôn hỏi máy chủ. Mất mạng: so với dấu băm SHA-256 + muối của lần mở đúng gần nhất trên máy này. */
@@ -7787,6 +7855,12 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261116i', ngay:'16/11/2026', ten:'Bảo vệ bảng giá 4 lớp',
+  vaPhieu:[], vaNoi:[],
+  muc:[['moi','Máy chủ <b>từ chối</b> bảng giá gửi lên bị hụt nhiều món mà không phải anh/chị tự xoá, và chặn máy quản lý bản cũ ghi bảng giá.'],
+       ['moi','Máy chủ <b>tự sao lưu bảng giá mỗi ngày</b>, giữ 14 ngày. Lấy lại ở Bảng giá → <b>🗄 Bản sao lưu</b>.'],
+       ['moi','Mỗi máy quản lý có <b>tên riêng</b> (đặt 1 lần, đổi ở Vận hành) — nhật ký Sheet ghi rõ máy nào lưu.'],
+       ['sua','Máy quản lý mở lần đầu lấy đúng bảng giá theo Sheet, không giữ món thừa từ bản cài đặt.']]},
  {ban:'20261116h', ngay:'16/11/2026', ten:'Chi tiết đơn hiện mã SKU · tìm ra cả món ngừng bán',
   vaPhieu:[], vaNoi:[],
   muc:[['sua','Chi tiết đơn ở Sổ cái hiện <b>mã SKU</b> từng món (kèm "ngừng bán" / "không có trong bảng giá"), chép mã đó vào ô tìm Bảng giá là ra.'],
