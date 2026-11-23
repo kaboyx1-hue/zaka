@@ -1208,7 +1208,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261123e';
+var APP_VER='20261123f';
 /* 16/11/2026: mọi lần máy quản lý GỬI lên Sheet đều kèm số phiên bản (máy chủ chặn bản cũ ghi bảng giá) và tên máy
    (ghi vào NHAT_KY để biết máy nào làm gì). Gắn ở một chỗ duy nhất thay vì sửa từng lệnh gửi. */
 (function(){
@@ -5709,11 +5709,13 @@ function kiemSkuMoi_(){
   var v=($('skuMoi').value||'').trim().toUpperCase(), l='';
   if(v && !/^[A-Z0-9][A-Z0-9._-]{1,23}$/.test(v)) l='Chỉ dùng chữ không dấu, số, dấu gạch ngang/chấm/gạch dưới, 2–24 ký tự.';
   else if(v===DOI_SKU) l='Mã mới giống mã hiện tại.';
-  else if(v && GIA[v]) l='Mã '+v+' đang là của món "'+GIA[v].ten+'"'+(GIA[v].ngung?' (ngừng bán)':'')+' — chọn mã khác, hoặc xoá/gộp món đó trước.';
+  else if(v && GIA[v] && !GIA[v].ngung) l='Mã '+v+' đang là của món "'+GIA[v].ten+'" (đang bán) — chọn mã khác, hoặc xoá/gộp món đó trước.';
   /* 23/11/2026 chủ: mã "từng dùng" không còn bị chặn cứng. Mã cũ của CHÍNH món này → đổi lại được; mã cũ của món khác
      → được đổi, chỉ báo trước (và hỏi lại khi bấm nếu còn đơn cũ ghi mã đó). */
   var canh='';
-  if(v && !l && ALIAS[v]){ var tg=skuChinh(v), soDon=SO.filter(function(d){ return (d.dong||[]).some(function(x){return x.sku===v}) }).length;
+  if(v && !l && GIA[v] && GIA[v].ngung){ var sd=SO.filter(function(d){ return (d.dong||[]).some(function(x){return x.sku===v}) }).length;
+    canh='Mã '+v+' đang thuộc món NGỪNG BÁN "'+GIA[v].ten+'" — đổi sẽ nhường mã cho món này (món ngừng bán chép vào Lịch sử, khôi phục được)'+(sd?'; '+sd+' đơn cũ ghi mã này sẽ tính sang món này':'')+'.' }
+  else if(v && !l && ALIAS[v]){ var tg=skuChinh(v), soDon=SO.filter(function(d){ return (d.dong||[]).some(function(x){return x.sku===v}) }).length;
     canh = tg===DOI_SKU ? 'Mã '+v+' là mã cũ của chính món này — đổi lại được.'
       : 'Mã '+v+' từng là của "'+((GIA[tg]||{}).ten||tg)+'"'+(soDon?' — '+soDon+' đơn cũ ghi mã này sẽ tính sang món này.':' — không còn đơn nào dùng, đổi được.') }
   $('skuLoi').textContent=l||canh; $('skuLoi').style.color=l?'':'var(--warn)'; $('btnDoiSku').disabled=!v||!!l; return l?'':v;
@@ -5721,6 +5723,8 @@ function kiemSkuMoi_(){
 async function luuDoiSku_(){
   var cu=DOI_SKU, moi=kiemSkuMoi_(); if(!cu||!moi||!GIA[cu]) return;
   if(!QCFG.url||!QCFG.key){ bao('giaMsg','Cần link và mật khẩu quản lý ở tab Nạp đơn.','er'); return }
+  if(GIA[moi] && GIA[moi].ngung && !confirm('Mã '+moi+' đang thuộc món NGỪNG BÁN "'+GIA[moi].ten+'".\n\nĐổi sẽ nhường mã này cho "'+GIA[cu].ten+'". Món ngừng bán được chép vào Lịch sử (khôi phục được); đơn cũ giữ nguyên tiền và giá vốn đã chốt.\n\nVẫn đổi?')) return;
+  if(GIA[moi] && !GIA[moi].ngung){ bao('giaMsg','Mã '+esc(moi)+' đang là của món đang bán — chọn mã khác.','er'); return }
   if(ALIAS[moi] && skuChinh(moi)!==cu){ var soDon=SO.filter(function(d){ return (d.dong||[]).some(function(x){return x.sku===moi}) }).length;
     if(soDon && !confirm('Mã '+moi+' từng là của "'+((GIA[skuChinh(moi)]||{}).ten||skuChinh(moi))+'".\n\n'+soDon+' đơn cũ ghi mã này sẽ được tính sang "'+GIA[cu].ten+'" trong báo cáo theo sản phẩm (tiền và giá vốn đã chốt của từng đơn KHÔNG đổi).\n\nVẫn đổi?')) return }
   var b=$('btnDoiSku'); b.disabled=true; b.textContent='Đang đổi…';
@@ -5728,6 +5732,9 @@ async function luuDoiSku_(){
     var r=await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'doisku',cu:cu,moi:moi})});
     var j=JSON.parse(await r.text()); if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
+    if(GIA[moi] && GIA[moi].ngung){ var pn=GIA[moi];   // món ngừng bán đang giữ mã → chép vào lịch sử rồi nhường mã
+      ghiLS_({loai:'xoa', sku:moi, ten:pn.ten, snap:JSON.parse(JSON.stringify(pn)), noi:'Nhường mã '+moi+' (món ngừng bán "'+pn.ten+'") cho '+cu+' — '+GIA[cu].ten});
+      xoaGia_(moi) }
     var aCu=ALIAS[moi]; delete ALIAS[moi]; if(typeof ALIAS_HS!=='undefined') delete ALIAS_HS[moi];   // mã mới từng là mã cũ → gỡ dấu gộp cũ, tránh vòng
     if(aCu) ghiLS_({loai:'gop', chinh:moi, tenChinh:GIA[cu].ten, phu:[], snap:{}, noi:'Dùng lại mã '+moi+' (trước là mã cũ của '+aCu+') cho '+cu+' → '+moi});
     var p=GIA[cu]; xoaGia_(cu); p.sku=moi; GIA[moi]=p;
@@ -8075,6 +8082,9 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261123f', ngay:'23/11/2026', ten:'Đổi SKU lấy lại mã của món ngừng bán',
+  vaPhieu:[], vaNoi:[],
+  muc:[['sua','Đổi SKU sang mã đang thuộc một món <b>ngừng bán</b>: máy hỏi xác nhận, chép món ngừng bán vào Lịch sử (khôi phục được) rồi nhường mã — trước đây nút Đổi mã bị khoá, bấm không có phản ứng.']]},
  {ban:'20261123e', ngay:'23/11/2026', ten:'Đổi SKU dùng lại được mã cũ',
   vaPhieu:[], vaNoi:[],
   muc:[['sua','Đổi SKU: dùng lại được mã cũ của chính món đó, hoặc mã cũ không còn món nào dùng (trước bị chặn hết). Mã đang là của món khác thì báo rõ món nào.']]},
