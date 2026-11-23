@@ -847,6 +847,7 @@ tr.hgThua td{background:color-mix(in srgb,var(--warn) 15%,transparent)}
       <div style="flex:2"><input id="gq" placeholder="Tìm tên, thương hiệu hoặc SKU…" oninput="giaReset()" autocomplete="off"></div>
       <div><select id="gn" onchange="$('gq').value='';giaReset()"></select></div>
       <div style="flex:none"><button class="btn" onclick="moThemSP()">+ Thêm sản phẩm</button></div>
+      <div style="flex:none"><button class="btn2" style="font-weight:700" onclick="moPL_()">+ Nhiều phân loại</button></div>
       <div style="flex:none"><button class="btn2" onclick="moLS_()">🕘 Lịch sử</button></div>
       <div style="flex:none"><button class="btn2" onclick="moSaoLuu_()">🗄 Bản sao lưu</button></div>
       <div style="flex:none"><button class="btn2" style="color:var(--pur);font-weight:700" onclick="moRaDong_()">⇄ Rà dòng hàng</button></div>
@@ -1026,6 +1027,14 @@ tr.hgThua td{background:color-mix(in srgb,var(--warn) 15%,transparent)}
 </div>
 </div>
 
+<dialog id="dlgPL" style="max-width:860px;width:96vw">
+  <button class="dlgX" onclick="document.getElementById('dlgPL').close()" title="Đóng">✕</button>
+  <h2 style="margin-top:0">Thêm sản phẩm nhiều phân loại</h2>
+  <div class="sm" style="margin-bottom:8px">Gõ tên món mẹ một lần, khai các phân loại (cỡ, mùi…). Máy tạo mỗi tổ hợp thành <b>1 sản phẩm riêng</b> (mã SKU, giá bán, giá vốn riêng), tên theo khuôn "Tên mẹ - phân loại" nên các cỡ tự gom 1 dòng ở máy nhân viên.</div>
+  <div id="plThan"></div>
+  <div id="plErr"></div>
+  <div class="row mt"><button class="btn2" onclick="document.getElementById('dlgPL').close()">Huỷ</button><button class="btn" id="plNut" onclick="taoPL_()">Tạo sản phẩm</button></div>
+</dialog>
 <dialog id="dlgSP">
   <button class="dlgX" onclick="document.getElementById('dlgSP').close()" title="Đóng">✕</button>
   <h2 style="margin-top:0" id="spTitle">Thêm sản phẩm mới</h2>
@@ -1199,7 +1208,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261123c';
+var APP_VER='20261123d';
 /* 16/11/2026: mọi lần máy quản lý GỬI lên Sheet đều kèm số phiên bản (máy chủ chặn bản cũ ghi bảng giá) và tên máy
    (ghi vào NHAT_KY để biết máy nào làm gì). Gắn ở một chỗ duy nhất thay vì sửa từng lệnh gửi. */
 (function(){
@@ -5448,6 +5457,68 @@ async function duyetHetCD_(){
 }
 
 var DH_QL={};
+/* ═══ THÊM SẢN PHẨM NHIỀU PHÂN LOẠI — 23/11/2026 chủ (demo BfVAradwHCkM83kwD2EeMK): tạo 1 lần, máy tách ra nhiều sản phẩm. ═══ */
+var PL=null;
+function moPL_(){ PL={ten:($('gq').value||'').trim(), nhom:NHOM[0], brand:'', ds:[{ten:'Quy cách',gt:[]}], rieng:{}, chung:{dv:'',gb:0,von:0,vat:''}};
+  vePL_(); $('plErr').innerHTML=''; $('dlgPL').showModal(); setTimeout(function(){ var o=$('plTen'); if(o) o.focus() },50) }
+var PL_PRE={'CÁT VỆ SINH':'CAT','THỨC ĂN':'TA','THÚ NHỎ':'TN','PHỤ KIỆN':'PK','CHĂM SÓC':'CS','KHÁC':'KH'};
+function plToHop_(){ var r=[[]]; PL.ds.forEach(function(p){ if(!p.gt.length) return; var n=[]; r.forEach(function(a){ p.gt.forEach(function(g){ n.push(a.concat(g)) }) }); r=n }); return r.filter(function(a){return a.length}) }
+function plSku_(n){ var pre=PL_PRE[PL.nhom]||'KH', m=0; Object.keys(GIA).forEach(function(k){ var x=k.match(new RegExp('^'+pre+'-(\\d+)')); if(x) m=Math.max(m,parseInt(x[1])) });
+  var o=[]; for(var i=1;i<=n;i++) o.push(pre+'-'+('000'+(m+i)).slice(-4)); return o }
+function plTenDu_(a){ return (PL.ten||'').trim()+' - '+a.join(' - ') }
+function plDong_(k){ return PL.rieng[k]||(PL.rieng[k]={dv:PL.chung.dv,gb:PL.chung.gb,von:PL.chung.von,vat:PL.chung.vat}) }
+function plThemGT_(i,o){ var v=(o.value||'').trim(); if(!v) return; if(PL.ds[i].gt.indexOf(v)<0) PL.ds[i].gt.push(v); o.value=''; vePL_(); var e=document.querySelectorAll('#plThan .plThem')[i]; if(e) e.focus() }
+function plApChung_(tr,v){ PL.chung[tr]=v; Object.keys(PL.rieng).forEach(function(k){ PL.rieng[k][tr]=v }); vePL_() }
+function vePL_(){
+  var th=plToHop_(), tenCo={};
+  Object.keys(GIA).forEach(function(k){ tenCo[kd(GIA[k].ten)]=k });
+  var skus=plSku_(th.length), soMa={}, j=0; th.forEach(function(x){ if(!tenCo[kd(plTenDu_(x))]) soMa[x.join('|')]=skus[j++] });   // mã chỉ cấp cho món sẽ tạo thật, khớp đúng mã lúc bấm Tạo
+  var h='<div class="row" style="gap:8px;flex-wrap:wrap">'+
+    '<label style="flex:2;min-width:200px">Tên món mẹ<input id="plTen" value="'+esc(PL.ten)+'" oninput="PL.ten=this.value" onchange="vePL_()"></label>'+
+    '<label>Nhóm<select onchange="PL.nhom=this.value;vePL_()">'+NHOM.map(function(n){return '<option'+(n===PL.nhom?' selected':'')+'>'+esc(n)+'</option>'}).join('')+'</select></label>'+
+    '<label>Thương hiệu<input value="'+esc(PL.brand)+'" oninput="PL.brand=this.value"></label></div>';
+  h+=PL.ds.map(function(p,i){
+    return '<div style="border:1px dashed var(--line);border-radius:10px;padding:8px 10px;margin-top:8px"><div class="row" style="gap:8px;align-items:center">'+
+      '<span class="sm">Phân loại '+(i+1)+':</span><input style="width:140px" value="'+esc(p.ten)+'" oninput="PL.ds['+i+'].ten=this.value">'+
+      (i?'<button class="btn-nho" onclick="PL.ds.splice('+i+',1);vePL_()">Bỏ phân loại này</button>':'')+'</div>'+
+      '<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:6px;align-items:center">'+p.gt.map(function(g,j){
+        return '<span class="chip on" style="padding:3px 6px 3px 10px">'+esc(g)+' <button class="btn-nho" style="padding:0 6px" title="Bỏ" onclick="PL.ds['+i+'].gt.splice('+j+',1);vePL_()">×</button></span>' }).join('')+
+      '<input class="plThem" style="width:170px" placeholder="+ gõ rồi Enter (vd 10kg)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();plThemGT_('+i+',this)}" onblur="plThemGT_('+i+',this)"></div></div>' }).join('')+
+    (PL.ds.length<2?'<button class="btn-nho mt" onclick="PL.ds.push({ten:\'Mùi\',gt:[]});vePL_()">+ Thêm phân loại thứ 2 (vd mùi)</button>':'');
+  h+='<div class="mt" style="overflow-x:auto"><table style="width:100%;min-width:640px"><tr><th>Tên sản phẩm</th><th>SKU</th><th>Đơn vị</th><th class="r">Giá bán</th><th class="r">Giá vốn</th><th class="r">VAT %</th></tr>'+
+    '<tr style="background:var(--warnBg)"><td><b>Áp dụng cho tất cả →</b></td><td></td>'+
+    '<td><input style="width:80px" value="'+esc(PL.chung.dv)+'" placeholder="vd Bao" onchange="plApChung_(\'dv\',this.value.trim())"></td>'+
+    '<td class="r"><input style="width:100px;text-align:right" value="'+(PL.chung.gb?f0_(PL.chung.gb):'')+'" placeholder="giá bán" onchange="plApChung_(\'gb\',n2(this.value))"></td>'+
+    '<td class="r"><input style="width:100px;text-align:right" value="'+(PL.chung.von?f0_(PL.chung.von):'')+'" placeholder="giá vốn" onchange="plApChung_(\'von\',n2(this.value))"></td>'+
+    '<td class="r"><input style="width:60px;text-align:right" value="'+esc(PL.chung.vat)+'" placeholder="%" onchange="plApChung_(\'vat\',this.value.trim())"></td></tr>'+
+    th.map(function(a,i){ var k=a.join('|'), r=plDong_(k), ten=plTenDu_(a), trung=tenCo[kd(ten)];
+      return '<tr'+(trung?' style="opacity:.6"':'')+'><td>'+esc(ten)+(trung?'<div class="sm" style="color:var(--warn)">Đã có: '+esc(trung)+' — sẽ bỏ qua</div>':'')+'</td><td class="sm">'+(trung?'—':soMa[k])+'</td>'+
+        '<td><input style="width:80px" value="'+esc(r.dv)+'" onchange="PL.rieng[\''+esc(k).replace(/'/g,"\\'")+'\'].dv=this.value.trim()"></td>'+
+        '<td class="r"><input style="width:100px;text-align:right" value="'+(r.gb?f0_(r.gb):'')+'" onchange="PL.rieng[\''+esc(k).replace(/'/g,"\\'")+'\'].gb=n2(this.value);this.value=f0_(n2(this.value))"></td>'+
+        '<td class="r"><input style="width:100px;text-align:right" value="'+(r.von?f0_(r.von):'')+'" onchange="PL.rieng[\''+esc(k).replace(/'/g,"\\'")+'\'].von=n2(this.value);this.value=f0_(n2(this.value))"></td>'+
+        '<td class="r"><input style="width:60px;text-align:right" value="'+esc(r.vat)+'" onchange="PL.rieng[\''+esc(k).replace(/'/g,"\\'")+'\'].vat=this.value.trim()"></td></tr>' }).join('')+
+    '</table></div>';
+  $('plThan').innerHTML=h;
+  var moi=th.filter(function(a){ return !tenCo[kd(plTenDu_(a))] }).length;
+  $('plNut').textContent='Tạo '+moi+' sản phẩm';
+}
+function taoPL_(){
+  var a=document.activeElement; if(a&&a.classList&&a.classList.contains('plThem')&&a.value.trim()) plThemGT_([].indexOf.call(document.querySelectorAll('#plThan .plThem'),a),a);
+  if(!(PL.ten||'').trim()){ bao('plErr','Chưa có tên món mẹ.','er'); return }
+  var th=plToHop_(); if(!th.length){ bao('plErr','Chưa có phân loại nào — gõ giá trị rồi Enter.','er'); return }
+  var tenCo={}; Object.keys(GIA).forEach(function(k){ tenCo[kd(GIA[k].ten)]=k });
+  var lam=th.filter(function(x){ return !tenCo[kd(plTenDu_(x))] });
+  if(!lam.length){ bao('plErr','Tất cả phân loại đều đã có trong bảng giá.','wa'); return }
+  var thieu=lam.filter(function(x){ return !plDong_(x.join('|')).gb });
+  if(thieu.length){ bao('plErr','Còn <b>'+thieu.length+'</b> sản phẩm chưa có giá bán: '+thieu.map(function(x){return esc(x.join(' - '))}).join(', ')+'.','er'); return }
+  var skus=plSku_(lam.length), ten=[];
+  lam.forEach(function(x,i){ var r=plDong_(x.join('|')), vat=r.vat===''||r.vat===undefined?(PL.nhom==='THỨC ĂN'?0:null):Number(String(r.vat).replace(',','.'));
+    GIA[skus[i]]={sku:skus[i], ten:plTenDu_(x), brand:(PL.brand||'').trim(), nhom:PL.nhom, dvt:r.dv||'Cái', gb:r.gb, von:r.von||null, vat:isNaN(vat)?null:vat,
+      qd_dv:'',qd_sl:0,qd_gb:0,qd_von:0, moi:false, suaTay:!!r.von, vonLuc:r.von?nowStr():'', vonLyDo:r.von?'tạo nhiều phân loại':''};
+    ten.push(skus[i]) });
+  set('gia',GIA); $('dlgPL').close(); $('gq').value=(PL.ten||'').trim(); giaReset(); henDayVon_();
+  bao('giaMsg','Đã tạo <b>'+ten.length+' sản phẩm</b> ('+ten.join(', ')+'). Máy tự lưu lên Sheet và phát cho máy nhân viên trong giây lát.','ok');
+}
 /* ═══ BÁN LẦN CUỐI — 23/11/2026 chủ: "thấy món nào lâu chưa có khách đặt để tìm hướng đẩy hàng". Mốc chủ chốt 7/30/60 ngày,
    chỉ theo ngày bán (chưa có tồn kho), món chưa bán lần nào để riêng ô xám. Tính từ sổ cái (bỏ đơn huỷ, mã đã gộp tính vào mã chính). */
 var LOC_BAN='', BAN_CACHE={k:'',m:{}};
@@ -7994,6 +8065,9 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261123d', ngay:'23/11/2026', ten:'Thêm sản phẩm nhiều phân loại',
+  vaPhieu:[], vaNoi:[],
+  muc:[['moi','Bảng giá có nút <b>+ Nhiều phân loại</b>: gõ tên món mẹ + các phân loại (cỡ, mùi…), máy tạo mỗi tổ hợp thành 1 sản phẩm riêng với SKU tự cấp; dòng "Áp dụng cho tất cả" điền giá/vốn/VAT/đơn vị một lần. Tên đã có thì bỏ qua, không tạo trùng.']]},
  {ban:'20261123c', ngay:'23/11/2026', ten:'Chuyển nhóm tự xoá ô tìm',
   vaPhieu:[], vaNoi:[],
   muc:[['sua','Bảng giá: bấm sang nhóm khác (Cát vệ sinh, Thức ăn…, Tất cả, lọc bán lần cuối) thì từ khoá đang gõ ở ô tìm tự xoá.']]},
