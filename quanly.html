@@ -1208,7 +1208,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261123f';
+var APP_VER='20261123g';
 /* 16/11/2026: mọi lần máy quản lý GỬI lên Sheet đều kèm số phiên bản (máy chủ chặn bản cũ ghi bảng giá) và tên máy
    (ghi vào NHAT_KY để biết máy nào làm gì). Gắn ở một chỗ duy nhất thay vì sửa từng lệnh gửi. */
 (function(){
@@ -6321,7 +6321,7 @@ function henDayVon_(){
     if(tinhLaiIm_()){ veSo(); veBC(); veCB() }
     await dayVon(false);
     dongBoDuyetSP_();
-    if(VON_CHO_DAY){ VON_HEN_BG=setTimeout(henDayVon_,30000); bao('giaMsg','Chưa lưu được bảng giá lên Sheet (mạng?) — sẽ tự thử lại.','wa'); return }
+    if(VON_CHO_DAY){ VON_HEN_BG=setTimeout(henDayVon_,30000); bao('giaMsg','⛔ Chưa lưu được bảng giá lên Sheet'+(DAYVON_LOI?': '+esc(DAYVON_LOI):' (mạng?)')+' — sẽ tự thử lại sau 30 giây.','er'); return }
     await phatGia(true);   // 28/10/2026 chủ: không cần bấm "Cập nhật bảng giá" — tự phát cho máy nhân viên
   },1500);
 }
@@ -6806,9 +6806,11 @@ async function kiemXungDot(loaiVer, tenViec){
       'Bấm Huỷ để dừng — vào tab Nạp đơn bấm Tải lại rồi thử lưu lại sau.');
   }catch(e){ return true }   // mang loi thi khong chan, de fetch that su ben duoi tu bao loi
 }
+var DAYVON_LOI='';   // lý do lần lưu bảng giá gần nhất không thành (hiện cho chủ thay câu chung chung "mạng?")
 async function dayVon(im){
-  if(!QCFG.url||!QCFG.key){ if(im)bao('giaMsg','Cần link và mật khẩu quản lý ở tab Nạp đơn.','er'); return }
-  var b=goiVon();
+  DAYVON_LOI='';
+  if(!QCFG.url||!QCFG.key){ DAYVON_LOI='Máy này chưa có link/mật khẩu quản lý.'; if(im)bao('giaMsg','Cần link và mật khẩu quản lý ở tab Nạp đơn.','er'); return }
+  var b; try{ b=goiVon() }catch(eB){ DAYVON_LOI='Lỗi đọc bảng giá trong máy: '+eB.message; bao('giaMsg','⛔ '+esc(DAYVON_LOI),'er'); return }
   if(!b.length){ if(im)bao('giaMsg','Chưa có giá vốn nào để lưu.','wa'); return }
   // SỬA 19/09/2026 — cùng bẫy vừa bắt được ở phatGia(): khoá nút phải đứng
   // TRƯỚC await kiemXungDot() bên dưới, không phải sau — nếu khoá sau thì
@@ -6819,23 +6821,26 @@ async function dayVon(im){
     try{ await gopNeuMayKhacVuaLuu_() }catch(eG){}   // máy kia vừa lưu → gộp từng ô thay vì hỏi/ghi đè
     b=goiVon();
     /* Chốt chặn cuối (sự cố 16/11/2026): không bao giờ lưu đè lên Sheet một bảng giá hụt nhiều món mà chủ không tự tay xoá. */
+    /* 23/11/2026: trước đây gặp chỗ này là DỪNG hẳn — F5 cũng không hết (bảng trong máy vẫn thiếu) nên bảng giá kẹt không lên Sheet
+       suốt 16/11→23/11. Nay lấy lại đúng các món đó từ bản Sheet đã nhớ (GIA_GOC) rồi lưu tiếp: không mất món nào, không kẹt. */
     var hut=GIA_GOC?Object.keys(GIA_GOC).filter(function(k){ return !GIA[k] && !XOA_TAY[k] }):[];
     if(hut.length>5){
-      bao('giaMsg','⛔ <b>Dừng lưu bảng giá</b>: máy này đang thiếu <b>'+hut.length+' món</b> so với Sheet mà không phải do anh/chị xoá ('+
-        hut.slice(0,5).map(esc).join(', ')+'…). Lưu bây giờ sẽ làm mất các món đó trên mọi máy. Tải lại trang (F5) để lấy lại bảng giá từ Sheet.','er');
-      return;
+      hut.forEach(function(k){ GIA[k]=dongSheetVaoP_(GIA_GOC[k],{sku:k}) }); set('gia',GIA); b=goiVon();
+      console.warn('dayVon: lấy lại '+hut.length+' món máy này bị thiếu so với Sheet',hut);
+      setTimeout(function(){ try{ veGia() }catch(e){} },0);
     }
     var r=await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'giavon',bang:b,xoa:Object.keys(XOA_TAY)})});
     var j=JSON.parse(await r.text());
     if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
+    if(hut.length>5) setTimeout(function(){ bao('giaMsg','Máy này bị thiếu <b>'+hut.length+' món</b> so với Sheet ('+hut.slice(0,5).map(esc).join(', ')+'…) — đã lấy lại từ bản Sheet trước rồi mới lưu, không mất món nào.','wa') },50);
     VONVER=j.ver; set('vonver',VONVER); VON_CHO_DAY=false; XOA_TAY={}; set('xoatay',{});
     VERQL.von=j.ver; set('verql',VERQL); chupGoc_();   // lần lưu của chính máy này không tính là "người khác vừa sửa" — tự lưu lần sau khỏi bị hỏi oan
     if(im) bao('giaMsg','Đã lưu <b>'+j.so.toLocaleString('vi-VN')+' dòng</b> lên Google Sheet '+
       '(trang BANG_GIA_QL, chỉ mở được bằng mật khẩu quản lý).<br>'+
       '<span class="sm">Gồm cả giá bán, giá vốn, hàng ngừng bán. Điện thoại và máy quản lý kia '+
       'sẽ khớp theo trong vòng một phút.</span>','ok');
-  }catch(e){ if(im || /F5|bản cũ|thiếu/.test(e.message)) bao('giaMsg','⛔ Chưa lưu được lên Sheet: '+esc(e.message),'er') } finally { if(bDV) bDV.disabled=false; }
+  }catch(e){ DAYVON_LOI=e.message||String(e); if(im || /F5|bản cũ|thiếu/.test(DAYVON_LOI)) bao('giaMsg','⛔ Chưa lưu được lên Sheet: '+esc(DAYVON_LOI),'er') } finally { if(bDV) bDV.disabled=false; }
 }
 /* Nhận bản đầy đủ từ máy quản lý kia — giá bán, tên, đơn vị, quy đổi, giá vốn,
    hàng ngừng bán, hàng mới. Tất cả. Đây là chỗ điện thoại và máy bàn khớp nhau. */
@@ -8082,6 +8087,9 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261123g', ngay:'23/11/2026', ten:'Bảng giá lưu lên Sheet trở lại',
+  vaPhieu:[], vaNoi:[],
+  muc:[['sua','Từ 16/11 bảng giá trên máy này không lưu lên Sheet được (máy tự dừng vì thấy thiếu món so với Sheet) — nên máy nhân viên không nhận giá mới và món đã đổi mã hiện thành "ngừng bán". Nay máy tự lấy lại món thiếu rồi lưu tiếp; lưu không được thì báo đúng lý do.']]},
  {ban:'20261123f', ngay:'23/11/2026', ten:'Đổi SKU lấy lại mã của món ngừng bán',
   vaPhieu:[], vaNoi:[],
   muc:[['sua','Đổi SKU sang mã đang thuộc một món <b>ngừng bán</b>: máy hỏi xác nhận, chép món ngừng bán vào Lịch sử (khôi phục được) rồi nhường mã — trước đây nút Đổi mã bị khoá, bấm không có phản ứng.']]},
