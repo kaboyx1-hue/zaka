@@ -845,7 +845,7 @@ tr.hgThua td{background:color-mix(in srgb,var(--warn) 15%,transparent)}
   <div class="card"><h2>Bảng giá — chỉ máy này có giá vốn</h2>
     <div class="row">
       <div style="flex:2"><input id="gq" placeholder="Tìm tên, thương hiệu hoặc SKU…" oninput="giaReset()" autocomplete="off"></div>
-      <div><select id="gn" onchange="giaReset()"></select></div>
+      <div><select id="gn" onchange="$('gq').value='';giaReset()"></select></div>
       <div style="flex:none"><button class="btn" onclick="moThemSP()">+ Thêm sản phẩm</button></div>
       <div style="flex:none"><button class="btn2" onclick="moLS_()">🕘 Lịch sử</button></div>
       <div style="flex:none"><button class="btn2" onclick="moSaoLuu_()">🗄 Bản sao lưu</button></div>
@@ -854,6 +854,7 @@ tr.hgThua td{background:color-mix(in srgb,var(--warn) 15%,transparent)}
       <div style="flex:none"><button class="btn2" onclick="moSuaLo()" style="color:var(--pur);font-weight:700">✏ Sửa hàng loạt món đang hiện</button></div>
     </div>
     <div id="gnChip" class="gnChips"></div>
+    <div id="banChip" class="gnChips" style="margin-top:6px"></div>
     <div class="sm" style="margin-top:6px;opacity:.8">Có 2 món trùng? Tích ô vuông đầu dòng của <b>cả 2 món</b> → bấm <b>⇢ Gộp các món đã chọn</b> ở thanh hiện ra dưới màn hình.</div>
     <div class="sm" id="gcnt" style="margin-top:8px"></div>
     <div id="dsGia" style="margin-top:6px;max-height:60vh;overflow:auto"></div>
@@ -1198,7 +1199,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261116k';
+var APP_VER='20261123c';
 /* 16/11/2026: mọi lần máy quản lý GỬI lên Sheet đều kèm số phiên bản (máy chủ chặn bản cũ ghi bảng giá) và tên máy
    (ghi vào NHAT_KY để biết máy nào làm gì). Gắn ở một chỗ duy nhất thay vì sửa từng lệnh gửi. */
 (function(){
@@ -4732,9 +4733,10 @@ function veGia(){
   if(bd){ bd.style.display=soNgung?'':'none'; bd.textContent='Xoá hẳn '+soNgung+' hàng ngừng bán' }
   var all=tatca.filter(function(p){return XEMNGUNG?p.ngung:!p.ngung});
   if(LOCQD) all=all.filter(function(p){return LOCQD.indexOf(p.sku)>=0});
-  veChipNhom_(all);
+  veChipNhom_(all); veChipBan_(all);
   var locN=Object.keys(LOC_NHOM);
   var ds=all.filter(function(p){
+    if(LOC_BAN && mucBan_(p.sku)!==LOC_BAN) return false;
     if(locN.length){ if(!LOC_NHOM[p.nhom||'KHÁC']) return false }
     else if(nh&&p.nhom!==nh)return false;
     return khop_(p.ten+' '+(p.brand||'')+' '+p.sku+' '+maCuCua_(p.sku).join(' '),q)});
@@ -4743,13 +4745,18 @@ function veGia(){
      đứng nguyên vị trí cũ theo hệ quy chiếu này (dùng số cách nhau 1000 để luôn còn
      chỗ chèn số ở giữa), dù đang lọc theo nhóm/tìm kiếm nào cũng ra đúng vị trí. */
   var coVon=function(p){return p.von&&!GIA_GIU[p.sku]?1:0};   // món vừa điền vốn vẫn đứng yên chỗ cũ (GIA_GIU)
-  var nen=tatca.slice().sort(function(a,b){return coVon(a)-coVon(b)||a.sku.localeCompare(b.sku)});
+  /* 23/11/2026 chủ: xếp theo SKU làm bảng lộn xộn (cùng món mà các cỡ nằm rải rác) và đổi SKU là món "biến mất" (nhảy xuống cuối).
+     Nay: thiếu vốn lên đầu → tên gốc (bỏ khối lượng) → khối lượng nhỏ trước → tên đầy đủ → SKU. */
+  var soSanh=function(x,y){ return String(x).localeCompare(String(y),'vi',{numeric:true,sensitivity:'base'}) };
+  var KX={}; tatca.forEach(function(p){ KX[p.sku]={g:dhGoc_(p.ten),k:dhKl_(p.ten)} });   // tính trước 1 lần, khỏi chạy regex trong mỗi lần so
+  var nen=tatca.slice().sort(function(a,b){return coVon(a)-coVon(b)||soSanh(KX[a.sku].g,KX[b.sku].g)||(KX[a.sku].k-KX[b.sku].k)||soSanh(a.ten,b.ten)||a.sku.localeCompare(b.sku)});
   var KHOA={}; nen.forEach(function(p,i){KHOA[p.sku]=i*1000});
   ds.sort(function(a,b){
     var ka=typeof a.thuTu==='number'?a.thuTu:KHOA[a.sku];
     var kb=typeof b.thuTu==='number'?b.thuTu:KHOA[b.sku];
     return ka-kb;
   });
+  if(LOC_BAN){ var bc=banCuoi_(); ds.sort(function(a,b){ return ((bc[b.sku]||{ngay:1e6}).ngay)-((bc[a.sku]||{ngay:1e6}).ngay) }) }   // đang lọc theo ngày bán → lâu chưa bán nhất lên đầu
   var thieu=all.filter(function(p){return !p.von}).length;
   var hien=Math.min(ds.length,GLIM);
   $('gcnt').innerHTML=(LOCQD?'<b style="color:var(--bad)">ĐANG XEM '+LOCQD.length+' MÓN GIÁ SỈ LỖI</b> '+
@@ -4783,6 +4790,7 @@ function veGia(){
           ' <button class="mini" style="padding:1px 6px" title="Sửa hệ số quy đổi" onclick="suaHsGop(\''+p.sku+'\')">✏ quy đổi</button>':'')+'</td>'+
         '<td><input class="ten" style="padding:5px" value="'+esc(p.ten)+'" onchange="setF(\''+p.sku+'\',\'ten\',this.value)">'+
         (p.brand?'<div class="sm" style="color:var(--pur)">'+esc(p.brand)+'</div>':'')+
+        nhanBan_(p.sku)+
         (DH_QL[p.sku]?'<div class="sm" style="margin-top:3px;color:var(--tx2)">⇄ Cùng dòng: '+DH_QL[p.sku].ds.map(function(x){ var c=GIA[x.sku]; if(!c) return '';
           var s100=c.gb?Math.round(c.gb/x.kl*100):0;
           return (x.sku===p.sku?'<b>':'')+dhNhan_(x.kl)+' '+f0_(c.gb)+(s100?' <span style="opacity:.7">('+f0_(s100)+'/100g)</span>':'')+(x.sku===p.sku?'</b>':'') }).join(' · ')+'</div>':'')+
@@ -5296,11 +5304,11 @@ function veChipNhom_(ds){
   var dem={}; ds.forEach(function(p){ var n=p.nhom||'KHÁC'; dem[n]=(dem[n]||0)+1 });
   var ns=NHOM.slice(); Object.keys(dem).forEach(function(n){ if(ns.indexOf(n)<0) ns.push(n) });
   var co=Object.keys(LOC_NHOM).length;
-  el.innerHTML='<button class="gnC'+(co?'':' on')+'" style="--cn:var(--acc)" onclick="LOC_NHOM={};$(\'gn\').value=\'\';giaReset()">Tất cả <i>'+ds.length+'</i></button>'+
+  el.innerHTML='<button class="gnC'+(co?'':' on')+'" style="--cn:var(--acc)" onclick="LOC_NHOM={};$(\'gn\').value=\'\';$(\'gq\').value=\'\';giaReset()">Tất cả <i>'+ds.length+'</i></button>'+
     ns.map(function(n){ return '<button class="gnC'+(LOC_NHOM[n]?' on':'')+'" style="--cn:'+mauNhom_(n)+'" onclick="locNhom_(\''+esc(n)+'\')">'+
       '<span class="gnD" title="Đổi màu nhóm" onclick="event.stopPropagation();moMau_(this,\''+esc(n)+'\')"></span>'+esc(n)+' <i>'+(dem[n]||0)+'</i></button>' }).join('');
 }
-function locNhom_(n){ if(LOC_NHOM[n]) delete LOC_NHOM[n]; else LOC_NHOM[n]=1; $('gn').value=''; giaReset() }
+function locNhom_(n){ if(LOC_NHOM[n]) delete LOC_NHOM[n]; else LOC_NHOM[n]=1; $('gn').value=''; $('gq').value=''; giaReset() }   // 23/11/2026 chủ: chuyển nhóm thì xoá từ khoá đang tìm
 function moMau_(el,n){
   dongMau_();
   var p=document.createElement('div'); p.className='gnPal'; p.id='gnPal';
@@ -5440,6 +5448,32 @@ async function duyetHetCD_(){
 }
 
 var DH_QL={};
+/* ═══ BÁN LẦN CUỐI — 23/11/2026 chủ: "thấy món nào lâu chưa có khách đặt để tìm hướng đẩy hàng". Mốc chủ chốt 7/30/60 ngày,
+   chỉ theo ngày bán (chưa có tồn kho), món chưa bán lần nào để riêng ô xám. Tính từ sổ cái (bỏ đơn huỷ, mã đã gộp tính vào mã chính). */
+var LOC_BAN='', BAN_CACHE={k:'',m:{}};
+var MUC_BAN=[['t1','Bán đều ≤ 7 ngày','#3E8E5B'],['t2','Chậm 8–30 ngày','#B8A23A'],['t3','Đứng 31–60 ngày','#D9822B'],['t4','Đứng > 60 ngày','#C8412F'],['t0','Chưa bán lần nào','#8C8C8C']];
+function banCuoi_(){
+  var k=SO.length+'|'+(SO[0]&&SO[0].ma)+'|'+Object.keys(ALIAS).length; if(BAN_CACHE.k===k) return BAN_CACHE.m;
+  var m={};
+  SO.forEach(function(d){ if(d.huy||!d.iso) return; var n=soNgay(String(d.iso).slice(0,10)); if(!(n>=0)) n=0;
+    var da={}; (d.dong||[]).forEach(function(x){ var sku=skuChinh(x.sku); if(da[sku]) return; da[sku]=1;
+      var o=m[sku]||(m[sku]={ngay:99999,iso:'',don30:0});
+      if(n<o.ngay){ o.ngay=n; o.iso=String(d.iso).slice(0,10) } if(n<30) o.don30++ }) });
+  BAN_CACHE={k:k,m:m}; return m;
+}
+function mucBan_(sku){ var o=banCuoi_()[sku]; if(!o) return 't0'; var n=o.ngay; return n<=7?'t1':n<=30?'t2':n<=60?'t3':'t4' }
+function nhanBan_(sku){ var o=banCuoi_()[sku], m=mucBan_(sku), mau=MUC_BAN.filter(function(a){return a[0]===m})[0][2];
+  return '<div class="sm" style="margin-top:3px"><span style="display:inline-block;padding:1px 8px;border-radius:999px;color:#fff;font-weight:700;background:'+mau+'">'+
+    (o?(o.ngay===0?'Bán hôm nay':'Bán lần cuối '+o.ngay+' ngày trước'):'Chưa bán lần nào')+'</span>'+
+    (o?' <span style="opacity:.75">'+o.iso.slice(8,10)+'/'+o.iso.slice(5,7)+' · '+o.don30+' đơn/30 ngày</span>':'')+'</div>' }
+function veChipBan_(all){
+  var el=$('banChip'); if(!el) return; var dem={};
+  all.forEach(function(p){ var m=mucBan_(p.sku); dem[m]=(dem[m]||0)+1 });
+  el.innerHTML='<span class="sm" style="opacity:.75;margin-right:4px">Bán lần cuối:</span>'+MUC_BAN.map(function(a){
+    return '<button class="chip'+(LOC_BAN===a[0]?' on':'')+'" style="border-left:4px solid '+a[2]+'" onclick="locBan_(\''+a[0]+'\')">'+a[1]+' <b>'+(dem[a[0]]||0)+'</b></button>' }).join('')+
+    (LOC_BAN?'<button class="chip" onclick="locBan_(\'\')">✕ Bỏ lọc</button>':'');
+}
+function locBan_(m){ LOC_BAN=(LOC_BAN===m?'':m); $('gq').value=''; GLIM=40; veGia() }
 var XEMNGUNG=false, LOCQD=null, GIA_CHON={}, DRAG_SKU=null;
 function toggleNgung(){ XEMNGUNG=!XEMNGUNG; GLIM=40; veGia() }
 
@@ -6580,7 +6614,7 @@ function xoaGia_(k){ if(GIA[k]){ delete GIA[k]; XOA_TAY[k]=1; set('xoatay',XOA_T
 function dhW_(){ return /(\d+(?:[.,]\d+)?)\s*(kg|kgs|gr|gram|g|ml|l|lit)\b/g }   // tạo mới mỗi lần: trang gọi tìm kiếm trước khi chạy tới dòng khai báo
 function dhKl_(t){ var s=kd(t), m, cuoi=null; var re=dhW_(); while((m=re.exec(s))) cuoi=m; if(!cuoi) return 0;
   var n=parseFloat(cuoi[1].replace(',','.')); return /^(kg|kgs|l|lit)$/.test(cuoi[2])?n*1000:n }
-function dhGoc_(t){ return kd(t).replace(dhW_(),' ').replace(/\b(tui|goi|hu|hop|bich|chiet|seal|loai)\b/g,' ').replace(/[^a-z0-9]+/g,' ').trim() }
+function dhGoc_(t){ return kd(t).replace(dhW_(),' ').replace(/\b(tui|goi|hu|hop|bich|chiet|seal|loai|bao|thung|tai)\b/g,' ').replace(/[^a-z0-9]+/g,' ').trim() }
 function dhNhan_(kl){ return kl>=1000?String(kl/1000).replace('.',',')+'kg':kl+'g' }
 function dongHang_(ds){
   var g={}, out={};
@@ -7960,6 +7994,15 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261123c', ngay:'23/11/2026', ten:'Chuyển nhóm tự xoá ô tìm',
+  vaPhieu:[], vaNoi:[],
+  muc:[['sua','Bảng giá: bấm sang nhóm khác (Cát vệ sinh, Thức ăn…, Tất cả, lọc bán lần cuối) thì từ khoá đang gõ ở ô tìm tự xoá.']]},
+ {ban:'20261123b', ngay:'23/11/2026', ten:'Bảng giá xếp theo tên và khối lượng',
+  vaPhieu:[], vaNoi:[],
+  muc:[['sua','Bảng giá xếp theo <b>tên món rồi khối lượng</b> (10kg → 25kg → 30kg đứng liền nhau) thay vì theo mã SKU; đổi SKU không còn làm món nhảy xuống cuối bảng.']]},
+ {ban:'20261123a', ngay:'23/11/2026', ten:'Bảng giá: bán lần cuối từng món',
+  vaPhieu:[], vaNoi:[],
+  muc:[['moi','Mỗi món trong Bảng giá có nhãn màu <b>Bán lần cuối … ngày trước</b> + số đơn 30 ngày. Hàng chip lọc: Bán đều ≤7 ngày · Chậm 8–30 · Đứng 31–60 · Đứng >60 · Chưa bán lần nào; bấm để lọc, món lâu chưa bán nhất lên đầu.']]},
  {ban:'20261116k', ngay:'16/11/2026', ten:'Rà dòng hàng nhiều cỡ',
   vaPhieu:[], vaNoi:[],
   muc:[['moi','Bảng giá có nút <b>⇄ Rà dòng hàng</b>: xem từng nhóm món nhiều cỡ máy tự nhận ra, bấm <b>Đúng / Không phải</b>, bỏ tích món lạc nhóm. Máy báo trước chỗ đáng ngờ: 2 mã trùng cỡ, tên thiếu khối lượng, cỡ lớn đắt hơn cỡ nhỏ tính theo 100g, đơn vị khác nhau.']]},

@@ -995,7 +995,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20261116b';
+var APP_VER='20261123a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -2795,7 +2795,7 @@ function spThem(all){SLIM=all?1e9:SLIM+60;timSP()}
 function dhW_(){ return /(\d+(?:[.,]\d+)?)\s*(kg|kgs|gr|gram|g|ml|l|lit)\b/g }   // tạo mới mỗi lần: trang gọi tìm kiếm trước khi chạy tới dòng khai báo
 function dhKl_(t){ var s=kd(t), m, cuoi=null; var re=dhW_(); while((m=re.exec(s))) cuoi=m; if(!cuoi) return 0;
   var n=parseFloat(cuoi[1].replace(',','.')); return /^(kg|kgs|l|lit)$/.test(cuoi[2])?n*1000:n }
-function dhGoc_(t){ return kd(t).replace(dhW_(),' ').replace(/\b(tui|goi|hu|hop|bich|chiet|seal|loai)\b/g,' ').replace(/[^a-z0-9]+/g,' ').trim() }
+function dhGoc_(t){ return kd(t).replace(dhW_(),' ').replace(/\b(tui|goi|hu|hop|bich|chiet|seal|loai|bao|thung|tai)\b/g,' ').replace(/[^a-z0-9]+/g,' ').trim() }
 function dhNhan_(kl){ return kl>=1000?String(kl/1000).replace('.',',')+'kg':kl+'g' }
 function dongHang_(ds){
   var g={}, out={};
@@ -5784,6 +5784,9 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261123a', ngay:'23/11/2026', ten:'Gom cỡ đúng hơn',
+  vaPhieu:[],
+  muc:[['sua','Món ghi kiểu "Bao 25kg" và "10kg" giờ được gom chung một dòng nhiều cỡ.']]},
  {ban:'20261116b', ngay:'16/11/2026', ten:'Sửa lỗi màn đăng nhập trống mã máy',
   vaPhieu:[],
   muc:[['sua','Bản 20261116a làm trang dừng lúc mở nên ô Mã máy trống, không đăng nhập được. Đã sửa.']]},
