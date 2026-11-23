@@ -663,6 +663,28 @@ tr.hgThua td{background:color-mix(in srgb,var(--warn) 15%,transparent)}
 .cdTabs button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
 .cdTabs span{background:rgba(0,0,0,.15);border-radius:999px;padding:0 7px;font-size:12px;margin-left:3px}
 .cdThe{border:1px solid var(--line);border-left:5px solid var(--cn);border-radius:10px;padding:9px 11px;margin-bottom:8px}
+/* 23/11/2026 — trạng thái bán trong Bảng giá + hiệu ứng */
+.ttBar{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.ttChip .ttSo{display:inline-block;font-variant-numeric:tabular-nums}
+.ttChip.t-ngung .ttSo{color:var(--warn)}.ttChip.t-gop .ttSo{color:var(--tx2)}
+.ttSo.nay{animation:ttNay .5s}
+@keyframes ttNay{40%{transform:translateY(-5px) scale(1.3)}}
+.ttO{white-space:nowrap}
+.ttSt{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:700;margin-right:4px}
+.ttSt i{width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block}
+.ttSt.ban{color:var(--ok);background:var(--okBg)}.ttSt.ban i{animation:ttTho 1.8s infinite}
+.ttSt.ngung{color:var(--warn);background:var(--warnBg)}
+.ttSt.gop{color:var(--tx2);background:rgba(127,127,127,.14)}
+.ttSt.lat{animation:ttLat .4s}
+@keyframes ttLat{0%{transform:rotateX(90deg)}100%{transform:none}}
+@keyframes ttTho{50%{opacity:.45}}
+.ttNut.lai{color:var(--ok);border-color:var(--ok)}.ttNut.dung{color:var(--warn)}
+tr.ttMo>td:not(.ttO){opacity:.6}
+tr.ttChop>td{animation:ttChop 1s}
+tr.ttTat>td{animation:ttTat 1s}
+@keyframes ttChop{0%{background:var(--okBg)}100%{background:transparent}}
+@keyframes ttTat{0%{background:var(--warnBg)}100%{background:transparent}}
+@media (prefers-reduced-motion:reduce){.ttSo.nay,.ttSt.lat,.ttSt.ban i,tr.ttChop>td,tr.ttTat>td{animation:none}}
 </style></head><body>
 <div id="khoa">
   <div class="logoMark">🐾</div>
@@ -857,6 +879,7 @@ tr.hgThua td{background:color-mix(in srgb,var(--warn) 15%,transparent)}
     <div id="gnChip" class="gnChips"></div>
     <div id="banChip" class="gnChips" style="margin-top:6px"></div>
     <div class="sm" style="margin-top:6px;opacity:.8">Có 2 món trùng? Tích ô vuông đầu dòng của <b>cả 2 món</b> → bấm <b>⇢ Gộp các món đã chọn</b> ở thanh hiện ra dưới màn hình.</div>
+    <div class="ttBar" id="ttBar"></div>
     <div class="sm" id="gcnt" style="margin-top:8px"></div>
     <div id="dsGia" style="margin-top:6px;max-height:60vh;overflow:auto"></div>
     <div id="ggChonBar" style="display:none;position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));max-width:760px;margin:0 auto;z-index:50;padding:10px 12px;flex-wrap:wrap;
@@ -872,7 +895,6 @@ tr.hgThua td{background:color-mix(in srgb,var(--warn) 15%,transparent)}
       <button class="btn2" onclick="tinhLai()">Tính lại các đơn đang chờ</button>
       <button class="btn2" id="btnDayVon" onclick="dayVon(true)" style="color:var(--ok)">Lưu giá vốn lên Sheet</button>
       <button class="btn2" onclick="taiBangGia()">Tải bảng giá ra CSV</button>
-      <button class="btn2" id="btnNgung" onclick="toggleNgung()">Hàng ngừng bán</button>
       <button class="btn2" id="btnDonNgung" onclick="donNgung()" style="color:var(--bad);display:none">Xoá hẳn hàng ngừng bán</button>
       <button class="btn2" onclick="document.getElementById('fgia').click()">Nạp bảng giá từ file CSV</button>
       <input type="file" id="fgia" accept=".csv" class="hide" onchange="napGiaCSV(this.files[0])">
@@ -1208,7 +1230,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261123g';
+var APP_VER='20261123h';
 /* 16/11/2026: mọi lần máy quản lý GỬI lên Sheet đều kèm số phiên bản (máy chủ chặn bản cũ ghi bảng giá) và tên máy
    (ghi vào NHAT_KY để biết máy nào làm gì). Gắn ở một chỗ duy nhất thay vì sửa từng lệnh gửi. */
 (function(){
@@ -2537,7 +2559,7 @@ function thucHienGop(khac, chinh, hs){
     'HIỂN THỊ báo cáo (lãi/lỗ), KHÔNG đụng gì tới giá bán — mã này vẫn bán bình thường cho nhân viên với '+
     'đúng giá bán riêng của nó (giá có thể khác mã chính, tuỳ khách/kênh).\n\n'+
     'Mã thừa sẽ được DỌN KHỎI BẢNG GIÁ cho gọn. Mã nào có giá vốn bạn tự tay điền, hoặc có giá bán '+
-    'khác mã chính, thì được giữ lại và chỉ ẩn đi (xem trong mục "Hàng ngừng bán").\n\n'+
+    'khác mã chính, thì được giữ lại và chỉ ẩn đi (xem ở nút lọc "Ngừng bán" trong Bảng giá).\n\n'+
     'Đơn hàng cũ KHÔNG bị sửa. Gom nhầm thì bấm Hoàn tác ở tab Cần làm, mọi thứ về y như cũ.'))
     return false;
   /* SỬA 10/09/2026 — đi chung một đường với gomVaDon_ để mã thừa nào không còn
@@ -2551,7 +2573,7 @@ function thucHienGop(khac, chinh, hs){
     (daXoa?('Đã <b>dọn hẳn '+daXoa+' mã thừa</b> khỏi bảng giá. '):'')+
     (hs!==1?('Món quy đổi vẫn bán bình thường, giá vốn tự = '+hs+' × giá vốn mã gốc. '):
     (khac.length-daXoa)?('Còn '+(khac.length-daXoa)+' mã được giữ lại (vì có giá vốn bạn tự điền hoặc có giá bán riêng) — '+
-      'xem ở mục "Hàng ngừng bán". '):'')+
+      'xem ở nút lọc "Ngừng bán" trong Bảng giá. '):'')+
     'Đơn cũ trên Google Sheet không sửa một chữ nào; lãi/lỗ đã tính lại theo nhóm gộp. '+
     'Gom nhầm thì bấm <b>Hoàn tác</b> ở tab Cần làm.','ok');
   return true;
@@ -3052,7 +3074,7 @@ function khoiDongQL(){
       'Cập nhật '+kq.capnhat+' · thêm mới '+kq.them+
       (kq.giuVon?' · <b style="color:var(--ok)">giữ nguyên '+kq.giuVon+' giá vốn anh đã điền tay</b>':'')+'<br>'+
       (kq.ngung?'<b style="color:var(--warn)">'+kq.ngung+' mặt hàng không còn trong bảng giá mới</b> — '+
-        'đã chuyển sang <b>ngừng bán</b>, KHÔNG xoá. Bấm nút "Hàng ngừng bán" bên dưới để xem.':'')+
+        'đã chuyển sang <b>ngừng bán</b>, KHÔNG xoá. Bấm nút lọc "Ngừng bán" trên Bảng giá để xem.':'')+
       '<br><span class="sm">Đơn đã bán không đổi — mỗi đơn giữ giá vốn của chính ngày bán.</span>','ok'); },400);
   }
   veSo();veBC();nhanCB();veGia();veGhiNhan();veNhanSu();veTaiKhoanQL();
@@ -4736,11 +4758,9 @@ function veGia(){
   var q=kd(($('gq').value||'').trim()), nh=$('gn').value;
   var tatca=Object.keys(GIA).map(function(k){return GIA[k]});
   var soNgung=tatca.filter(function(p){return p.ngung}).length;
-  $('btnNgung').textContent=XEMNGUNG?('Quay lại hàng đang bán'):('Hàng ngừng bán ('+soNgung+')');
-  $('btnNgung').style.color=XEMNGUNG?'var(--warn)':'';
   var bd=$('btnDonNgung');
   if(bd){ bd.style.display=soNgung?'':'none'; bd.textContent='Xoá hẳn '+soNgung+' hàng ngừng bán' }
-  var all=tatca.filter(function(p){return XEMNGUNG?p.ngung:!p.ngung});
+  var all=tatca.filter(locTT_); veTTBar_(tatca);
   if(LOCQD) all=all.filter(function(p){return LOCQD.indexOf(p.sku)>=0});
   veChipNhom_(all); veChipBan_(all);
   var locN=Object.keys(LOC_NHOM);
@@ -4770,25 +4790,25 @@ function veGia(){
   var hien=Math.min(ds.length,GLIM);
   $('gcnt').innerHTML=(LOCQD?'<b style="color:var(--bad)">ĐANG XEM '+LOCQD.length+' MÓN GIÁ SỈ LỖI</b> '+
       '<button class="mini" onclick="boLocQD()">Xem tất cả</button> · ':'')+
-    (XEMNGUNG?'<b style="color:var(--warn)">ĐANG XEM HÀNG NGỪNG BÁN</b> · ':'')+
+    (LOC_TT!=='ban'?'<b style="color:var(--warn)">ĐANG XEM: '+({ngung:'HÀNG NGỪNG BÁN',gop:'MÃ ĐÃ GỘP',tat:'TẤT CẢ'})[LOC_TT]+'</b> · ':'')+
     'Hiện <b>'+hien.toLocaleString('vi-VN')+'</b> / <b>'+ds.length.toLocaleString('vi-VN')+
     '</b> · đang bán '+tatca.filter(function(p){return !p.ngung}).length.toLocaleString('vi-VN')+
     (soNgung?' · ngừng bán '+soNgung.toLocaleString('vi-VN'):'')+
     (thieu?' · <span style="color:var(--warn)"><b>'+thieu+'</b> chưa có giá vốn</span>':'');
   var ngKhop=(!ds.length&&!XEMNGUNG&&q)?tatca.filter(function(p){ return p.ngung && khop_(p.ten+' '+(p.brand||'')+' '+p.sku+' '+maCuCua_(p.sku).join(' '),q) }).length:0;
   if(!ds.length){$('dsGia').innerHTML='<div class="empty">Không tìm thấy'+(nh?' trong nhóm <b>'+esc(nh)+'</b>':'')+' trong hàng đang bán.'+
-    (ngKhop?'<br><button class="btn2" style="margin-top:8px" onclick="toggleNgung()">Có '+ngKhop+' món <b>ngừng bán</b> khớp — bấm xem</button>':'')+
+    (ngKhop?'<br><button class="btn2" style="margin-top:8px" onclick="datTT_(\'tat\')">Có '+ngKhop+' món <b>ngừng bán</b> khớp — bấm xem</button>':'')+
     (nh?'<br><button class="btn2" style="margin-top:8px" onclick="document.getElementById(\'gn\').value=\'\';giaReset()">Tìm trong tất cả nhóm</button>':'')+'</div>';veChonGia();return}
-  $('dsGia').innerHTML='<table><colgroup><col style="width:3%"><col style="width:8%"><col style="width:27%"><col style="width:7%">'+
+  $('dsGia').innerHTML='<table><colgroup><col style="width:3%"><col style="width:8%"><col style="width:23%"><col style="width:7%">'+
     '<col style="width:9%"><col style="width:14%"><col style="width:11%"><col style="width:7%">'+
-    '<col style="width:6%"><col style="width:8%"></colgroup>'+
+    '<col style="width:6%"><col style="width:12%"></colgroup>'+
     '<tr><th></th><th>SKU</th><th>Sản phẩm</th><th>Bán lẻ</th><th class="r">Giá lẻ</th>'+
-    '<th>Bán sỉ / quy đổi</th><th class="r">Giá vốn</th><th class="r">VAT %</th><th class="r">Biên</th><th></th></tr>'+
+    '<th>Bán sỉ / quy đổi</th><th class="r">Giá vốn</th><th class="r">VAT %</th><th class="r">Biên</th><th>Trạng thái</th></tr>'+
     ds.slice(0,GLIM).map(function(p){
       var b=(p.gb&&p.von)?((p.gb-p.von)/p.gb*100).toFixed(1)+'%':'—';
       var xau=(p.gb&&p.von&&p.von>=p.gb);
       var khoa=typeof p.thuTu==='number'?p.thuTu:KHOA[p.sku];
-      return '<tr class="gnRow" style="--cn:'+mauNhom_(p.nhom||'KHÁC')+'" data-sku="'+p.sku+'" data-khoa="'+khoa+'" ondragover="event.preventDefault()" ondrop="ggDrop(event,\''+p.sku+'\')">'+
+      return '<tr class="gnRow'+(ttCua_(p)!=='ban'?' ttMo':'')+(TT_CHOP&&TT_CHOP.sku===p.sku?' '+TT_CHOP.cls:'')+'" style="--cn:'+mauNhom_(p.nhom||'KHÁC')+'" data-sku="'+p.sku+'" data-khoa="'+khoa+'" ondragover="event.preventDefault()" ondrop="ggDrop(event,\''+p.sku+'\')">'+
         '<td class="r" draggable="true" ondragstart="ggDragStart(event,\''+p.sku+'\')" '+
           'style="cursor:grab;color:var(--tx2);user-select:none" title="Kéo để đổi thứ tự đứng cùng nhóm">⠿</td>'+
         '<td>'+esc(p.sku)+' <button class="mini" style="padding:1px 6px" title="Đổi mã SKU" onclick="moDoiSku(\''+p.sku+'\')">✏ Đổi</button>'+
@@ -4822,10 +4842,7 @@ function veGia(){
           'value="'+(p.vat===null||p.vat===undefined?'':p.vat)+'" placeholder="— " title="Để trống = chưa có hoá đơn đầu vào, không tính VAT. Thức ăn tự để 0%." '+
           'onchange="setN(\''+p.sku+'\',\'vat\',this.value)"></td>'+
         '<td class="r"'+(xau?' style="color:var(--bad)"':'')+'>'+b+'</td>'+
-        '<td class="r">'+(p.ngung
-          ?'<button class="mini" onclick="banLai(\''+p.sku+'\')">Bán lại</button>'
-          :'<input type="checkbox" '+(GIA_CHON[p.sku]?'checked':'')+' onchange="chonGia(\''+p.sku+'\',this.checked)" title="Chọn để xoá/gộp hàng loạt">')+
-        '</td></tr>'+(DOI_SKU===p.sku?'<tr><td colspan="10">'+hopDoiSku_(p)+'</td></tr>':'')+(VON_NGAY===p.sku?'<tr><td colspan="10">'+hopVonNgay_(p)+'</td></tr>':'')
+        '<td class="ttO">'+ttO_(p)+'</td></tr>'+(DOI_SKU===p.sku?'<tr><td colspan="10">'+hopDoiSku_(p)+'</td></tr>':'')+(VON_NGAY===p.sku?'<tr><td colspan="10">'+hopVonNgay_(p)+'</td></tr>':'')
     }).join('')+'</table>'+
     (ds.length>GLIM
       ? '<div style="text-align:center;padding:12px 0;display:flex;gap:8px;justify-content:center">'+
@@ -5546,7 +5563,33 @@ function veChipBan_(all){
 }
 function locBan_(m){ LOC_BAN=(LOC_BAN===m?'':m); $('gq').value=''; GLIM=40; veGia() }
 var XEMNGUNG=false, LOCQD=null, GIA_CHON={}, DRAG_SKU=null;
-function toggleNgung(){ XEMNGUNG=!XEMNGUNG; GLIM=40; veGia() }
+/* 23/11/2026 chủ: trạng thái bán phải thấy ngay trong bảng + bật lại được. LOC_TT: ban | ngung | gop | tat (XEMNGUNG = đang không xem "đang bán"). */
+var LOC_TT='ban', TT_CHOP=null, TT_NAY=null;
+function ttCua_(p){ return p.gopVao?'gop':(p.ngung?'ngung':'ban') }
+function locTT_(p){ return LOC_TT==='tat'||ttCua_(p)===LOC_TT }
+function datTT_(t){ LOC_TT=t; XEMNGUNG=t!=='ban'; GLIM=40; veGia() }
+function toggleNgung(){ datTT_(LOC_TT==='ban'?'ngung':'ban') }
+function ttO_(p){
+  var t=ttCua_(p), c=TT_CHOP&&TT_CHOP.sku===p.sku?' lat':'';
+  if(t==='ban') return '<span class="ttSt ban'+c+'"><i></i>Đang bán</span><button class="mini ttNut dung" onclick="ngungBan_(\''+p.sku+'\')">Ngừng bán</button>'+
+    ' <input type="checkbox" '+(GIA_CHON[p.sku]?'checked':'')+' onchange="chonGia(\''+p.sku+'\',this.checked)" title="Chọn để xoá/gộp hàng loạt">';
+  if(t==='ngung') return '<span class="ttSt ngung'+c+'"><i></i>Ngừng bán</span><button class="mini ttNut lai" onclick="banLai(\''+p.sku+'\')">▶ Bán lại</button>';
+  return '<span class="ttSt gop'+c+'"><i></i>Đã gộp → '+esc(p.gopVao)+'</span><button class="mini ttNut" onclick="banLai(\''+p.sku+'\')">Tách ra bán lại</button>';
+}
+function veTTBar_(tatca){
+  var d={tat:tatca.length,ban:0,ngung:0,gop:0}; tatca.forEach(function(p){ d[ttCua_(p)]++ });
+  var a=[['ban','Đang bán'],['ngung','Ngừng bán'],['gop','Đã gộp'],['tat','Tất cả']];
+  $('ttBar').innerHTML=a.map(function(x){ return '<button class="chip ttChip t-'+x[0]+(LOC_TT===x[0]?' on':'')+'" onclick="datTT_(\''+x[0]+'\')">'+x[1]+
+    ' <b class="ttSo'+(TT_NAY&&TT_NAY.indexOf(x[0])>=0?' nay':'')+'">'+d[x[0]].toLocaleString('vi-VN')+'</b></button>' }).join('');
+  TT_NAY=null;
+}
+function ttVuaDoi_(sku,cu,moi){ TT_CHOP={sku:sku,cls:moi==='ban'?'ttChop':'ttTat'}; TT_NAY=[cu,moi]; setTimeout(function(){ TT_CHOP=null },1200) }
+function ngungBan_(sku){
+  var p=GIA[sku]; if(!p||p.ngung) return;
+  if(!confirm('Cho "'+p.ten+'" ('+sku+') NGỪNG BÁN?\n\nMáy nhân viên sẽ không thấy món này nữa. Đơn cũ giữ nguyên. Bấm "Bán lại" bất cứ lúc nào để bật lại.')) return;
+  p.ngung=true; delete GIA_CHON[sku]; ttVuaDoi_(sku,'ban','ngung'); set('gia',GIA); giaLai(); henDayVon_();
+  bao('giaMsg','⏸ Đã cho <b>'+esc(p.ten)+'</b> ngừng bán — đang tự lưu và phát cho máy nhân viên.','ok');
+}
 
 /* Kéo-thả đổi thứ tự hiển thị trong Bảng giá (chỉ để nhìn cho gọn — không ảnh
    hưởng giá/đơn/bảng giá phát cho nhân viên). Thả lên hàng nào thì món đang kéo
@@ -5808,7 +5851,7 @@ function donNgung(){
       'Xoá xong phải vào từng đơn sửa giá vốn bằng tay.\n':'')+
     '\nBảng giá còn lại '+(Object.keys(GIA).length-ds.length)+' mặt hàng.'))return;
   ds.forEach(function(k){ xoaGia_(k) });
-  set('gia',GIA); XEMNGUNG=false; GLIM=40; veGia(); vePhat(); henDayVon_();   // 12/11/2026: trước chỉ dayVon, máy NV vẫn thấy món đã xoá
+  set('gia',GIA); LOC_TT='ban'; XEMNGUNG=false; GLIM=40; veGia(); vePhat(); henDayVon_();   // 12/11/2026: trước chỉ dayVon, máy NV vẫn thấy món đã xoá
   bao('giaMsg','Đã xoá hẳn <b>'+ds.length+' mặt hàng ngừng bán</b>. '+
     'Bảng giá còn <b>'+Object.keys(GIA).length.toLocaleString('vi-VN')+' mặt hàng</b>.'+
     '<br><span class="sm">Đơn đã bán không đổi. Đang lưu bản gọn lên Sheet để điện thoại khớp theo.</span>','ok');
@@ -5820,11 +5863,12 @@ function banLai(sku){
       'Bán lại dưới mã này nghĩa là tách nó ra làm sản phẩm RIÊNG trở lại (không còn dùng chung giá vốn/báo cáo với mã kia nữa).\n\n'+
       'Tiếp tục?')) return;
     delete ALIAS[sku]; set('alias',ALIAS);
-    delete GIA[sku].gopVao;
+    ttVuaDoi_(sku,'gop','ban'); delete GIA[sku].gopVao;
     tinhLaiToanBoSO(); veCB(); veSo(); veBC();
   }
+  if(!TT_CHOP) ttVuaDoi_(sku,'ngung','ban');
   GIA[sku].ngung=false; set('gia',GIA); giaLai(); henDayVon_();
-  bao('giaMsg','Đã cho bán lại <b>'+esc(GIA[sku].ten)+'</b>. Đang tự lưu và phát cho máy nhân viên.','ok');
+  bao('giaMsg','▶ Đã cho bán lại <b>'+esc(GIA[sku].ten)+'</b>. Đang tự lưu và phát cho máy nhân viên.','ok');
 }
 
 /* ══════════ PHÁT BẢNG GIÁ CHO MÁY NHÂN VIÊN ══════════ */
@@ -6094,7 +6138,7 @@ function hoanTacNapGia(){
 function loDangLoc_(){
   var q=kd(($('gq').value||'').trim()), nh=$('gn').value;
   return Object.keys(GIA).map(function(k){return GIA[k]})
-    .filter(function(p){ return XEMNGUNG?p.ngung:!p.ngung })
+    .filter(locTT_)
     .filter(function(p){ if(LOCQD) return LOCQD.indexOf(p.sku)>=0; return true })
     .filter(function(p){
       var locN=Object.keys(LOC_NHOM);
@@ -6252,7 +6296,7 @@ function loiQD(){
 function xemLoiQD(){
   var ds=loiQD();
   LOCQD=ds.map(function(p){return p.sku});
-  $('gq').value=''; $('gn').value=''; XEMNGUNG=false; GLIM=1e9; veGia();
+  $('gq').value=''; $('gn').value=''; LOC_TT='ban'; XEMNGUNG=false; GLIM=1e9; veGia();
   window.scrollTo({top:document.getElementById('dsGia').offsetTop-60,behavior:'smooth'});
 }
 function boLocQD(){ LOCQD=null; GLIM=40; veGia() }
@@ -8087,6 +8131,9 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261123h', ngay:'23/11/2026', ten:'Trạng thái bán ngay trong Bảng giá',
+  vaPhieu:[], vaNoi:[],
+  muc:[['moi','Bảng giá có cột <b>Trạng thái</b> ở mọi dòng (Đang bán / Ngừng bán / Đã gộp) với nút <b>Bán lại</b> / <b>Ngừng bán</b> ngay trên dòng, và hàng nút lọc theo trạng thái kèm số đếm.']]},
  {ban:'20261123g', ngay:'23/11/2026', ten:'Bảng giá lưu lên Sheet trở lại',
   vaPhieu:[], vaNoi:[],
   muc:[['sua','Từ 16/11 bảng giá trên máy này không lưu lên Sheet được (máy tự dừng vì thấy thiếu món so với Sheet) — nên máy nhân viên không nhận giá mới và món đã đổi mã hiện thành "ngừng bán". Nay máy tự lấy lại món thiếu rồi lưu tiếp; lưu không được thì báo đúng lý do.']]},
