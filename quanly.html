@@ -696,6 +696,15 @@ tr.ttTat>td{animation:ttTat 1s}
 .bgLoc{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:8px}
 .bgLoc .ttBar{margin-top:0}.bgLoc #gcnt{margin-left:auto}
 .bgSel{width:auto!important;padding:4px 8px;font-size:12px}.bgSel.on{border-color:var(--acc)}
+/* 25/11/2026 — gộp 2 khách */
+.khgHai{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:stretch}
+@media(max-width:560px){.khgHai{grid-template-columns:1fr}.khgMui{transform:rotate(90deg);justify-self:center}}
+.khgThe{border:2px solid var(--line);border-radius:10px;padding:10px;cursor:pointer}
+.khgThe.giu{border-color:var(--ok);background:var(--okBg)}
+.khgVt{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--line);margin-bottom:4px}
+.khgThe.giu .khgVt{background:var(--ok);color:var(--bg,#000)}
+.khgMui{align-self:center;font-size:22px;opacity:.6}
+.khgHq{margin:4px 0 0;padding-left:18px;font-size:13px;line-height:1.55}
 </style></head><body>
 <div id="khoa">
   <div class="logoMark">🐾</div>
@@ -859,6 +868,7 @@ tr.ttTat>td{animation:ttTat 1s}
     </div>
     <div id="khLoc" class="row mt" style="margin-top:8px;gap:6px;flex-wrap:wrap"></div>
   </div>
+  <div id="khMsg"></div>
   <div id="khTom"></div>
   <div id="khDs"></div>
 </section>
@@ -1231,7 +1241,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261125b';
+var APP_VER='20261125c';
 /* 16/11/2026: mọi lần máy quản lý GỬI lên Sheet đều kèm số phiên bản (máy chủ chặn bản cũ ghi bảng giá) và tên máy
    (ghi vào NHAT_KY để biết máy nào làm gì). Gắn ở một chỗ duy nhất thay vì sửa từng lệnh gửi. */
 (function(){
@@ -6525,7 +6535,8 @@ function hoSoKH_(o){
   return '<div class="khHoSo" onclick="event.stopPropagation()">'+
     '<div class="row" style="gap:6px;flex-wrap:wrap">'+
       (so?'<a class="btn2" href="tel:'+so+'">📞 Gọi</a><a class="btn2" target="_blank" rel="noopener" href="https://zalo.me/'+so+'">Zalo</a>':'')+
-      '<button class="btn2" onclick="xemDonKhach_(\''+o.k+'\')">Xem '+o.don.length+' đơn ở Sổ cái</button></div>'+
+      '<button class="btn2" onclick="xemDonKhach_(\''+o.k+'\')">Xem '+o.don.length+' đơn ở Sổ cái</button>'+
+      '<button class="btn2" style="color:var(--pur);font-weight:700" onclick="moGopKH_(\''+o.k+'\')">⇄ Gộp với khách khác</button></div>'+
     '<div class="kpi mt"><div><small>Tổng mua</small><b>'+tien(o.tong)+'</b></div><div><small>Còn nợ</small><b>'+tien(o.no)+'</b></div>'+
       '<div><small>Khách từ</small><b>'+(o.dau!=='9999'?o.dau.split('-').reverse().join('/'):'—')+'</b></div><div><small>Thường quay lại</small><b>'+(tb?tb+' ngày':'—')+'</b></div></div>'+
     '<div class="sm mt"><b>Hay mua:</b> '+top.map(function(t){return esc(t)+' ×'+String(Math.round(mon[t]*1000)/1000).replace('.',',')}).join(' · ')+'</div>'+
@@ -6535,6 +6546,90 @@ function hoSoKH_(o){
         return '<tr><td>'+esc(d.ma)+'</td><td>'+esc(String(d.iso||'').split('-').reverse().join('/'))+'</td><td class="r">'+tien(d.tong)+'</td>'+
           '<td>'+(con>0?'<span style="color:var(--warn)">còn '+tien(con)+'</span>':'Đã thu')+'</td></tr>' }).join('')+
     '</table></div>';
+}
+/* ═══ GỘP 2 KHÁCH LÀ 1 NGƯỜI — 25/11/2026 chủ (vd chị Phương: 0776868106 và số gõ thừa 07076868106).
+   Không cần việc mới trên máy chủ: đơn đổi SĐT+tên qua 'gui' (sửa đơn, sualan+1, ghi lịch sử từng đơn), giá riêng chép
+   sang số giữ lại qua 'giarieng' (món cả 2 số đều có thì giữ bản mới hơn), xoá số bỏ khỏi danh bạ qua 'xoakhachgop'.
+   Tiền, vốn, lãi, trạng thái thu, mã đơn không đổi. */
+var KHG=null;
+function sdtHopLe_(s){ var d=String(s||'').replace(/\D/g,''); return d.length===10 && d[0]==='0' }
+function moGopKH_(k){
+  if(!$('dlgGopKH')){ var dl=document.createElement('dialog'); dl.id='dlgGopKH'; dl.style.maxWidth='720px'; dl.style.width='calc(100% - 32px)';
+    dl.innerHTML='<button class="dlgX" onclick="this.closest(\'dialog\').close()" aria-label="Đóng">✕</button><div id="khgND"></div>'; document.body.appendChild(dl) }
+  KHG={a:k,b:'',giu:'',q:''}; veGopKH_(); $('dlgGopKH').showModal();
+}
+function khgTim_(v){ KHG.q=v; veGopKH_(true) }
+function khgChon_(k){ KHG.b=k; var ds=dsKhachQL_(), A=ds.filter(function(x){return x.k===KHG.a})[0], B=ds.filter(function(x){return x.k===k})[0];
+  KHG.giu=(sdtHopLe_(A.sdt)&&!sdtHopLe_(B.sdt))?A.k:(sdtHopLe_(B.sdt)&&!sdtHopLe_(A.sdt))?B.k:(A.don.length>=B.don.length?A.k:B.k); veGopKH_() }
+function veGopKH_(chiDs){
+  var all=dsKhachQL_(), A=all.filter(function(x){return x.k===KHG.a})[0]; if(!A){ $('dlgGopKH').close(); return }
+  function the(o,giu){ return '<div class="khgThe'+(giu?' giu':'')+'" onclick="KHG.giu=\''+o.k+'\';veGopKH_()"><span class="khgVt">'+(giu?'GIỮ LẠI':'GỘP VÀO')+'</span><b>'+esc(o.ten||'(chưa có tên)')+'</b>'+
+    '<div class="sm">'+esc(o.sdt)+' · '+o.don.length+' đơn · '+tien(o.tong)+(o.cuoi?' · lần cuối '+o.cuoi.split('-').reverse().join('/'):'')+'</div></div>' }
+  if(!KHG.b){
+    var q=kd(KHG.q.trim()), qs=KHG.q.replace(/\D/g,'').replace(/^0+/,''), t1=kd(A.ten).split(/\s+/).filter(function(w){return w.length>2&&!/^(chi|anh|em|co|chu|ba|ong)$/.test(w)})[0]||'';
+    var ds=all.filter(function(o){ if(o.k===A.k) return false;
+      if(q) return khop_(o.ten+' '+o.sdt,q) || (qs.length>=3 && o.k.indexOf(qs)>=0);
+      return t1 && kd(o.ten).indexOf(t1)>=0 }).sort(function(a,b){return b.tong-a.tong}).slice(0,12);
+    var dsH=ds.length?ds.map(function(o){ return '<div class="khDong" onclick="khgChon_(\''+o.k+'\')"><div class="khTen"><b>'+esc(o.ten||'(chưa có tên)')+'</b><div class="sm">'+esc(o.sdt)+' · '+o.don.length+' đơn'+(sdtHopLe_(o.sdt)?'':' · <b style="color:var(--warn)">số không hợp lệ</b>')+'</div></div><div class="khSo"><b>'+tien(o.tong)+'</b></div></div>' }).join('')
+      :'<div class="empty">'+(q?'Không thấy khách nào khớp.':'Gõ tên hoặc số điện thoại khách cần gộp.')+'</div>';
+    if(chiDs&&$('khgDs')){ $('khgDs').innerHTML=dsH; return }
+    $('khgND').innerHTML='<h2>Gộp "'+esc(A.ten||A.sdt)+'" với khách nào?</h2><div class="sm">'+esc(A.sdt)+' · '+A.don.length+' đơn. Chọn khách cùng là một người'+(t1&&!q?' — đang gợi ý khách có tên giống':'')+'.</div>'+
+      '<input id="khgQ" class="mt" placeholder="Tìm tên hoặc số điện thoại…" autocomplete="off" oninput="khgTim_(this.value)" value="'+esc(KHG.q)+'"><div id="khgDs" class="mt">'+dsH+'</div>';
+    setTimeout(function(){ var i=$('khgQ'); if(i){ i.focus(); i.setSelectionRange(i.value.length,i.value.length) } },0); return;
+  }
+  var B=all.filter(function(x){return x.k===KHG.b})[0], G=KHG.giu===A.k?A:B, P=G===A?B:A;
+  var don=P.don.slice().sort(function(a,b){return String(a.iso)>String(b.iso)?1:-1}), no=A.no+B.no;
+  $('khgND').innerHTML='<h2>Gộp 2 khách thành một</h2><div class="sm">Bấm vào ô để đổi khách giữ lại.</div>'+
+    '<div class="khgHai mt">'+the(G,true)+'<div class="khgMui">⇠</div>'+the(P,false)+'</div>'+
+    (!sdtHopLe_(G.sdt)?'<div class="msg er mt">⚠ Đang chọn GIỮ số <b>'+esc(G.sdt)+'</b> — số này không đúng 10 chữ số. Nên bấm vào khách kia để đổi chiều.</div>'
+      :!sdtHopLe_(P.sdt)?'<div class="msg wa mt">Số <b>'+esc(P.sdt)+'</b> không đúng 10 chữ số (số di động Việt Nam có 10) — gần như chắc là gõ sai.</div>':'')+
+    '<div class="sm mt"><b>Gộp xong:</b></div><ul class="khgHq">'+
+      '<li><b>'+don.length+' đơn</b> của "'+esc(P.ten)+'" đổi SĐT thành <b>'+esc(G.sdt)+'</b> và tên thành <b>'+esc(G.ten)+'</b>. Mỗi đơn ghi 1 dòng lịch sử sửa: "Gộp khách: '+esc(P.sdt)+' → '+esc(G.sdt)+'".</li>'+
+      '<li>Tab Khách hàng còn 1 dòng: '+esc(G.ten)+' · '+(A.don.length+B.don.length)+' đơn · tổng mua '+tien(A.tong+B.tong)+(no?' · còn nợ '+tien(no):'')+'.</li>'+
+      '<li>Giá riêng của số '+esc(P.sdt)+' chép sang số '+esc(G.sdt)+' (món cả hai số đều có thì giữ giá đặt gần nhất).</li>'+
+      '<li>Danh bạ máy nhân viên xoá số '+esc(P.sdt)+'.</li>'+
+      '<li>Không đổi: tiền hàng, giá vốn, lãi, trạng thái đã thu, mã đơn.</li></ul>'+
+    '<table class="mt"><tr><th>Mã đơn</th><th>Ngày</th><th class="r">Tổng</th><th>SĐT</th></tr>'+don.map(function(d){
+      return '<tr><td>'+esc(d.ma)+'</td><td>'+esc(String(d.iso||'').split('-').reverse().join('/'))+'</td><td class="r">'+tien(d.tong)+'</td><td>'+esc(d.sdt)+' → <b>'+esc(G.sdt)+'</b></td></tr>' }).join('')+'</table>'+
+    '<div id="khgMsg" class="mt"></div><div class="row mt" style="gap:8px;flex-wrap:wrap"><button class="btn" id="btnGopKH" onclick="gopKH_()">Gộp 2 khách</button>'+
+    '<button class="btn2" onclick="KHG.b=\'\';veGopKH_()">← Chọn khách khác</button></div>';
+}
+async function gopKH_(){
+  if(!QCFG.url||!QCFG.key){ $('khgMsg').innerHTML='<div class="msg er">Cần link và mật khẩu quản lý.</div>'; return }
+  var all=dsKhachQL_(), G=all.filter(function(x){return x.k===KHG.giu})[0], P=all.filter(function(x){return x.k===(KHG.giu===KHG.a?KHG.b:KHG.a)})[0];
+  if(!G||!P) return;
+  var bt=$('btnGopKH'); bt.disabled=true; $('khgMsg').innerHTML='<div class="sm">Đang gộp…</div>';
+  try{
+    // 1) đơn: mọi đơn (chưa huỷ) mang số bỏ đổi sang số + tên giữ lại
+    var dsDon=SO.filter(function(d){ return !d.huy && chuanSdt_(d.sdt)===P.k }), goi=dsDon.map(function(d){
+      var sl=(d.sualan||0)+1, ls=d.ls?String(d.ls).split('||').map(function(x){return x.trim()}).filter(Boolean):[];
+      ls.push('[Lan '+sl+' - '+nowStr()+' - QUẢN LÝ] Gộp khách: '+(d.khach||'')+' '+(d.sdt||'')+' → '+G.ten+' '+G.sdt);
+      return {ma:d.ma, ngay:d.ngay, iso:d.iso, kenh:d.kenh, sdt:G.sdt, khach:G.ten, dc:d.dc||'',
+        ship:d.ship||0, giam:d.giam||0, phiChanh:d.phiChanh||0, shipShop:d.shipShop||0, nguoiGiao:d.nguoiGiao||'', tong:d.tong, sualan:sl, gc:d.gc||'',
+        tt:d.tt||'CHUA', ttHt:d.ttHt||'', tkNhan:d.tkNhan||'', daTra:d.daTra||0, inLan:d.inLan||0, inLuc:d.inLuc||'', bgv:d.bgv||'',
+        tgGiao:d.tgGiao||'DU', daGiao:d.daGiao||null, dot:d.dot||null, ls:ls.join(' || '),
+        dong:(d.dong||[]).map(function(x){return {sku:x.sku,ten:x.ten,brand:x.brand||'',dv:x.dv,hs:x.hs||1,sl:x.sl,gia:x.gia,thanhTien:x.thanhTien!=null?x.thanhTien:x.sl*x.gia}})} });
+    if(goi.length){
+      var j=JSON.parse(await (await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUẢN LÝ',hanhdong:'gui',don:goi})})).text());
+      if(!j.ok && !(j.vaCham&&j.vaCham.length)) throw new Error(j.loi||'Sheet từ chối sửa đơn');
+      if(j.vaCham&&j.vaCham.length) throw new Error('Đơn '+j.vaCham.join(', ')+' vừa được sửa ở máy khác — tải lại rồi gộp lại (các đơn khác đã đổi xong).');
+    }
+    // 2) giá riêng: chép sang số giữ lại
+    var gr=[], nGr=0;
+    try{ var g=await (await fetch(QCFG.url+'?gr=1&key='+encodeURIComponent(QCFG.key))).json();
+      if(g&&g.ok&&g.ds){ var giu={}; g.ds.forEach(function(x){ if(chuanSdt_(x.sdt)===G.k) giu[x.sku]=x });
+        g.ds.forEach(function(x){ if(chuanSdt_(x.sdt)!==P.k) return; var c=giu[x.sku]; if(c && String(c.luc||'')>=String(x.luc||'')) return;
+          gr.push({sdt:G.sdt,sku:x.sku,ten:x.ten||'',gia:x.gia,luc:x.luc,het:x.het,nv:'QUAN LY'}) });
+        if(gr.length){ var jg=JSON.parse(await (await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+          body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'giarieng',gr:gr})})).text()); if(jg.ok) nGr=gr.length } } }catch(eG){}
+    // 3) danh bạ: xoá số bỏ
+    try{ await fetch(QCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({key:QCFG.key,may:'QUANLY',nv:'QUAN LY',hanhdong:'xoakhachgop',sdt:[P.sdt]})}) }catch(eX){}
+    await keoDon(0);
+    $('dlgGopKH').close(); KH_MO=G.k; veKH();
+    bao('khMsg','⇄ Đã gộp <b>'+esc(P.ten||P.sdt)+'</b> ('+esc(P.sdt)+') vào <b>'+esc(G.ten)+'</b> ('+esc(G.sdt)+'): '+goi.length+' đơn đổi số'+(nGr?', '+nGr+' giá riêng chép sang':'')+'. Máy nhân viên nhận trong vài giây.','ok');
+  }catch(e){ $('khgMsg').innerHTML='<div class="msg er">'+esc(e.message||String(e))+'</div>'; bt.disabled=false }
 }
 function xemDonKhach_(k){
   var o=dsKhachQL_().filter(function(x){return x.k===k})[0]; if(!o) return;
@@ -8159,6 +8254,9 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261125c', ngay:'25/11/2026', ten:'Gộp 2 khách là một người',
+  vaPhieu:[], vaNoi:[],
+  muc:[['moi','Tab Khách hàng → mở hồ sơ khách → <b>⇄ Gộp với khách khác</b>: đơn của số gõ sai chuyển sang số đúng (ghi lịch sử từng đơn), giá riêng chép theo, danh bạ máy nhân viên xoá số sai.']]},
  {ban:'20261125b', ngay:'25/11/2026', ten:'Đầu Bảng giá gọn lại',
   vaPhieu:[], vaNoi:[],
   muc:[['moi','Phần đầu Bảng giá thu còn 1 dòng trạng thái; 6 nút công cụ gom vào <b>Công cụ ▾</b>; lọc "Bán lần cuối" thành 1 ô chọn; bảng kéo dài tới đáy màn hình.']]},
