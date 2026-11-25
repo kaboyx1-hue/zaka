@@ -1241,7 +1241,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261125c';
+var APP_VER='20261125d';
 /* 16/11/2026: mọi lần máy quản lý GỬI lên Sheet đều kèm số phiên bản (máy chủ chặn bản cũ ghi bảng giá) và tên máy
    (ghi vào NHAT_KY để biết máy nào làm gì). Gắn ở một chỗ duy nhất thay vì sửa từng lệnh gửi. */
 (function(){
@@ -4816,7 +4816,7 @@ function veGia(){
     '<col style="width:9%"><col style="width:14%"><col style="width:11%"><col style="width:7%">'+
     '<col style="width:6%"><col style="width:12%"></colgroup>'+
     '<tr><th></th><th>SKU</th><th>Sản phẩm</th><th>Bán lẻ</th><th class="r">Giá lẻ</th>'+
-    '<th>Bán sỉ / quy đổi</th><th class="r">Giá vốn</th><th class="r">VAT %</th><th class="r">Biên</th><th>Trạng thái</th></tr>'+
+    '<th>Quy đổi (thùng/bao…)</th><th class="r">Giá vốn</th><th class="r">VAT %</th><th class="r">Biên</th><th>Trạng thái</th></tr>'+
     ds.slice(0,GLIM).map(function(p){
       var b=(p.gb&&p.von)?((p.gb-p.von)/p.gb*100).toFixed(1)+'%':'—';
       var xau=(p.gb&&p.von&&p.von>=p.gb);
@@ -6274,7 +6274,7 @@ function apDungSuaLo(){
 function oQD(p){
   var dv=p.dvt||'đv';
   if(!p.qd_dv&&!p.qd_sl)
-    return '<button class="mini" onclick="themQD(\''+p.sku+'\')">+ Thêm giá sỉ</button>';
+    return '<button class="mini" onclick="themQD(\''+p.sku+'\')">+ Quy đổi</button>';
   var hs=p.qd_sl||0, gia=p.qd_gb||0, gb=p.gb||0;
   var moi = hs>0 ? gia/hs : 0;
   var ghi='', cls='';
@@ -6288,12 +6288,12 @@ function oQD(p){
     '<input class="so" value="'+hs+'" onchange="setN(\''+p.sku+'\',\'qd_sl\',this.value)"> '+esc(dv)+' → '+
     '<input class="gia" value="'+(gia||'')+'" onchange="setN(\''+p.sku+'\',\'qd_gb\',this.value)"></div>'+
     '<div class="suyra '+cls+'">'+(cls==='xau'?'⚠ ':'→ ')+ghi+'</div>'+
-    '<div><button class="mini" onclick="boQD(\''+p.sku+'\')">Bỏ giá sỉ</button></div></div>';
+    '<div><button class="mini" onclick="boQD(\''+p.sku+'\')">Bỏ quy đổi</button></div></div>';
 }
 function themQD(sku){ var p=GIA[sku]; if(!p)return;
   p.qd_dv='Thùng'; p.qd_sl=1; p.qd_gb=p.gb||0; set('gia',GIA); giaLai() }
 function boQD(sku){ var p=GIA[sku]; if(!p)return;
-  if(!confirm('Bỏ giá sỉ của "'+p.ten+'"?\n\nNhân viên sẽ chỉ bán được theo '+(p.dvt||'đơn vị lẻ')+'.'))return;
+  if(!confirm('Bỏ quy đổi của "'+p.ten+'"?\n\nNhân viên sẽ chỉ bán được theo '+(p.dvt||'đơn vị lẻ')+'.'))return;
   p.qd_dv='';p.qd_sl=0;p.qd_gb=0;p.qd_von=0;p.soat=0; set('gia',GIA); giaLai(); vePhat(); henDayVon_() }
 
 /* Dòng nào giá sỉ vô lý thì chặn không cho phát */
@@ -6320,7 +6320,7 @@ function boQDLoat(){
   if(!confirm('Bỏ giá sỉ của '+ds.length+' món?\n\n'+
     'Những món này nhân viên sẽ CHỈ BÁN LẺ được.\n'+
     'Giá lẻ, tên hàng, giá vốn giữ nguyên — không mất gì.\n\n'+
-    'Sau này có giá sỉ đúng thì vào từng món bấm "+ Thêm giá sỉ".'))return;
+    'Sau này có giá sỉ đúng thì vào từng món bấm "+ Quy đổi".'))return;
   ds.forEach(function(p){ p.qd_dv='';p.qd_sl=0;p.qd_gb=0;p.qd_von=0;p.soat=1 });
   set('gia',GIA); LOCQD=null; GLIM=40; veGia(); vePhat(); henDayVon_();
   bao('giaMsg','Đã bỏ giá sỉ của <b>'+ds.length+' món</b>. Giờ bấm <b>Cập nhật bảng giá</b> được rồi.<br>'+
@@ -8254,6 +8254,9 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261125d', ngay:'25/11/2026', ten:'Nút "+ Quy đổi"',
+  vaPhieu:[], vaNoi:[],
+  muc:[['sua','Nút "+ Thêm giá sỉ" ở Bảng giá đổi tên thành <b>+ Quy đổi</b> (1 Thùng/Bao = mấy đơn vị lẻ → giá).']]},
  {ban:'20261125c', ngay:'25/11/2026', ten:'Gộp 2 khách là một người',
   vaPhieu:[], vaNoi:[],
   muc:[['moi','Tab Khách hàng → mở hồ sơ khách → <b>⇄ Gộp với khách khác</b>: đơn của số gõ sai chuyển sang số đúng (ghi lịch sử từng đơn), giá riêng chép theo, danh bạ máy nhân viên xoá số sai.']]},
