@@ -1230,7 +1230,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261123h';
+var APP_VER='20261125a';
 /* 16/11/2026: mọi lần máy quản lý GỬI lên Sheet đều kèm số phiên bản (máy chủ chặn bản cũ ghi bảng giá) và tên máy
    (ghi vào NHAT_KY để biết máy nào làm gì). Gắn ở một chỗ duy nhất thay vì sửa từng lệnh gửi. */
 (function(){
@@ -2927,7 +2927,8 @@ function napCaiDat_(ds){
   HAN_THU=get('hanthu',7); NGUONG_HH_=get('nguongHuyHieu',NGUONG_HH_MACDINH_); CPCD=get('cpcd',{}); ALIAS_HS=get('aliashs',{}); MAU_NHOM=get('maunhom',{}); LS_BG=get('lsbg',[]); DH_XET=get('dongxet',{});
   NGUONG_QUEN_=NGUONG_HH_.quen; NGUONG_VIP_=NGUONG_HH_.vip; NGUONG_VVIP_BREEDER_=NGUONG_HH_.vvipBreeder;
   if(GIA){ if(donAlias_() && !lanDau) henDayVon_();   // 16/11/2026: dọn tự gộp vào chính nó / gộp vòng tròn / quy đổi cũ
-    var va=false; Object.keys(ALIAS).forEach(function(k){ if(GIA[k]&&!GIA[k].gopVao&&ALIAS[k]!==k){ GIA[k].gopVao=skuChinh(k); GIA[k].ngung=true; va=true } }); if(va) set('gia',GIA); dongBoQuyDoi_() }
+    var va=false; Object.keys(ALIAS).forEach(function(k){ if(GIA[k]&&!GIA[k].gopVao&&ALIAS[k]!==k){ GIA[k].gopVao=skuChinh(k); GIA[k].ngung=true; va=true } });
+    if(goSotGop_()) va=true; if(va) set('gia',GIA); dongBoQuyDoi_() }
   xoaDemNang_();
   if(lanDau){ set('cddanoi',true); cdDay_() }
   try{ veLam(); veCB(); veNguongHuyHieu(); veCPCD() }catch(e){}
@@ -3061,6 +3062,7 @@ function khoiDongQL(){
         GIA[k].gopVao=skuChinh(k); GIA[k].ngung=true; vaXong=true;
       }
     });
+    if(goSotGop_()) vaXong=true;
     if(vaXong) set('gia',GIA);
   }
   BGV=get('bgv',{ver:'',luc:'',so:0});
@@ -6357,7 +6359,7 @@ function setF(sku,f,v){
    đơn đang chờ vốn + tự lưu lên Sheet; còn thay đổi chưa gửi thì không nhận bản từ Sheet đè vào. */
 var VON_CHO_DAY=false, VON_HEN_BG=0;
 function henDayVon_(){
-  VON_CHO_DAY=true; clearTimeout(VON_HEN_BG);
+  danhDauSua_(); VON_CHO_DAY=true; clearTimeout(VON_HEN_BG);
   VON_HEN_BG=setTimeout(async function(){
     var a=document.activeElement;
     if(a && /^(INPUT|SELECT)$/.test(a.tagName) && a.closest && a.closest('#dsGia,#cb,#dsDan,#dsThan,#dlgHG')){ henDayVon_(); return }   // còn đang gõ ô khác
@@ -6736,7 +6738,28 @@ function dongSheetVaoP_(x,p){
   p.suaTay=!!x.suaTay; p.vonLuc=x.vonLuc||''; p.vonLyDo=x.vonLyDo||''; p.vat=x.vat!==undefined&&x.vat!==''?Number(x.vat):null;
   return p;
 }
-function chupGoc_(){ var g={}; Object.keys(GIA).forEach(function(k){ g[k]=chuanP_(GIA[k]) }); GIA_GOC=g; set('giagoc',g) }
+/* 25/11/2026: TM.04 trên Sheet đang bán nhưng máy PC xếp vào "Đã gộp" (và sẽ không phát cho nhân viên) vì còn dấu gopVao
+   từ một lần gộp cũ đã huỷ — dấu này chỉ nằm trong máy, không đi theo Sheet. Mã không còn trong danh sách gộp thì gỡ dấu,
+   trạng thái bán lấy theo Sheet. */
+function goSotGop_(){
+  var va=false; Object.keys(GIA).forEach(function(k){ var p=GIA[k];
+    if(p.gopVao && !ALIAS[k]){ delete p.gopVao; if(GIA_GOC&&GIA_GOC[k]) p.ngung=!!GIA_GOC[k].ngung; va=true } });
+  return va;
+}
+function chupGoc_(){ var g={}; Object.keys(GIA).forEach(function(k){ g[k]=chuanP_(GIA[k]) }); GIA_GOC=g; set('giagoc',g); SUA_LUC={}; set('sualuc',SUA_LUC) }
+/* 25/11/2026 SỰ CỐ: 2 máy quản lý giữ 2 bản cũ khác nhau, mỗi lần lưu thì "sửa" cũ nhiều ngày của máy này đè lên số mới của máy kia
+   (4 mã BYS về giá cũ, mã đã gộp sống lại). Nay mỗi ô khác bản Sheet được đóng dấu GIỜ máy này sửa; khi gộp, ô mà cả hai máy đều
+   đổi khác nhau thì máy này chỉ thắng nếu vừa sửa trong SUA_MOI_MS — cũ hơn thì nhường bản trên Sheet. */
+var SUA_LUC=get('sualuc',null), SUA_MOI_MS=10*60*1000;
+function danhDauSua_(){
+  if(!GIA_GOC||!GIA) return;
+  var now=Date.now(), dau=SUA_LUC===null; if(dau) SUA_LUC={};   // lần đầu có bản này: mọi chỗ đang khác coi là CŨ
+  Object.keys(GIA).forEach(function(k){ var b=GIA_GOC[k], l=chuanP_(GIA[k]);
+    GIA_TRUONG.forEach(function(f){ var key=k+'|'+f;
+      if(!b||l[f]!==b[f]){ if(!(key in SUA_LUC)) SUA_LUC[key]=dau?0:now } else delete SUA_LUC[key] }) });
+  set('sualuc',SUA_LUC);
+}
+function suaMoi_(k,f){ return SUA_LUC && (SUA_LUC[k+'|'+f]||0) > Date.now()-SUA_MOI_MS }
 var XOA_TAY=get('xoatay',{});   // món chủ tự tay xoá từ lần lưu trước — chỉ những món này mới được phép thiếu khi lưu lên Sheet (máy chủ cũng kiểm)
 function xoaGia_(k){ if(GIA[k]){ delete GIA[k]; XOA_TAY[k]=1; set('xoatay',XOA_TAY) } }
 
@@ -6763,15 +6786,17 @@ function gopBangGia_(ds){
   var keys={}; [B,R,GIA].forEach(function(m){ Object.keys(m).forEach(function(k){ keys[k]=1 }) });
   /* 16/11/2026 SỰ CỐ: 14:33 đọc Sheet trúng lúc máy khác đang ghi dở → chỉ đọc được 1112/1470 dòng → coi 358 món là
      "máy kia xoá" → xoá theo rồi lưu đè lên Sheet. Máy kia xoá thật thì chỉ vài món một lần: quá 5 món thì KHÔNG xoá gì. */
-  var xoaTheo=Object.keys(GIA).filter(function(k){ return B[k] && !R[k] }).length, choXoa=xoaTheo<=5;
+  /* 25/11/2026: máy chủ đã ghi bảng giá bằng 1 lệnh (không còn đọc dở) — Sheet đủ ≥90% số món thì máy kia xoá thật, xoá theo. */
+  var xoaTheo=Object.keys(GIA).filter(function(k){ return B[k] && !R[k] }).length,
+      choXoa=xoaTheo<=5 || Object.keys(R).length>=Object.keys(B).length*0.9;
   if(!choXoa) console.warn('gopBangGia_: Sheet thiếu '+xoaTheo+' món — nghi đọc dở, không xoá theo');
   Object.keys(keys).forEach(function(k){
     var b=B[k], r=R[k], l=GIA[k];
     if(!l){ if(!b && r){ GIA[k]=dongSheetVaoP_(r,{sku:k}); n++ } return }          // máy kia thêm → thêm; máy này đã xoá → giữ xoá
-    if(!r){ if(choXoa && b && JSON.stringify(chuanP_(l))===JSON.stringify(b)){ delete GIA[k]; n++ } return }   // máy kia xoá, máy này không sửa → xoá theo
+    if(!r){ if(choXoa && b && (JSON.stringify(chuanP_(l))===JSON.stringify(b) || !GIA_TRUONG.some(function(f){ return suaMoi_(k,f) }))){ delete GIA[k]; n++ } return }   // máy kia xoá, máy này không sửa → xoá theo
     if(!b) return;                                                              // máy này thêm mới → giữ
     var rp=dongSheetVaoP_(r,{sku:k}), rc=chuanP_(rp), lc=chuanP_(l);
-    GIA_TRUONG.forEach(function(f){ if(lc[f]===b[f] && rc[f]!==b[f]){ l[f]=rp[f]; n++ } });
+    GIA_TRUONG.forEach(function(f){ if(rc[f]!==b[f] && rc[f]!==lc[f] && (lc[f]===b[f] || !suaMoi_(k,f))){ l[f]=rp[f]; n++ } });
   });
   return n;
 }
@@ -6862,6 +6887,7 @@ async function dayVon(im){
   // fetch bên trong) trước khi bất kỳ cú bấm nào kịp khoá được nút.
   var bDV=im?$('btnDayVon'):null; if(bDV) bDV.disabled=true;
   try{
+    danhDauSua_();
     try{ await gopNeuMayKhacVuaLuu_() }catch(eG){}   // máy kia vừa lưu → gộp từng ô thay vì hỏi/ghi đè
     b=goiVon();
     /* Chốt chặn cuối (sự cố 16/11/2026): không bao giờ lưu đè lên Sheet một bảng giá hụt nhiều món mà chủ không tự tay xoá. */
@@ -6908,7 +6934,7 @@ function napVonTuSheet(ds,ver){
   // Máy kia đã xoá hẳn món nào thì máy này cũng bỏ
   var xoa=0, thieuSheet=Object.keys(GIA).filter(function(k){ return !coTrongSheet[k] });
   var lanDauNap=!GIA_GOC||!Object.keys(GIA_GOC).length;   // máy mới: bảng trong máy chỉ là bản cài đặt sẵn → lấy đúng theo Sheet
-  if(lanDauNap||thieuSheet.length<=20) thieuSheet.forEach(function(k){ delete GIA[k]; xoa++ });   // nhiều hơn thì nghi Sheet đọc dở/bị cắt — không xoá (sự cố 16/11/2026)
+  if(lanDauNap||thieuSheet.length<=20||ds.length>=Object.keys(GIA_GOC).length*0.9) thieuSheet.forEach(function(k){ delete GIA[k]; xoa++ });   // nhiều hơn thì nghi Sheet đọc dở/bị cắt — không xoá (sự cố 16/11/2026)
   else console.warn('napVonTuSheet: Sheet thiếu '+thieuSheet.length+' món — không xoá theo');
 
   set('gia',GIA); VONVER=ver; set('vonver',ver); chupGoc_();
@@ -8131,6 +8157,11 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261125a', ngay:'25/11/2026', ten:'Hai máy quản lý không còn đè giá của nhau',
+  vaPhieu:[], vaNoi:[],
+  muc:[['sua','Hai máy quản lý cùng mở: số anh vừa sửa thắng, còn số cũ nằm lâu trong máy (chưa lưu được) thì nhường bản trên Sheet — hết cảnh giá vừa nhập bị máy kia trả về số cũ.'],
+       ['sua','Mã đã gộp/đã xoá ở máy này không còn "sống lại" khi máy kia lưu.'],
+       ['sua','Món đang bán (vd TM.04) không còn bị xếp nhầm vào "Đã gộp".']]},
  {ban:'20261123h', ngay:'23/11/2026', ten:'Trạng thái bán ngay trong Bảng giá',
   vaPhieu:[], vaNoi:[],
   muc:[['moi','Bảng giá có cột <b>Trạng thái</b> ở mọi dòng (Đang bán / Ngừng bán / Đã gộp) với nút <b>Bán lại</b> / <b>Ngừng bán</b> ngay trên dòng, và hàng nút lọc theo trạng thái kèm số đếm.']]},
