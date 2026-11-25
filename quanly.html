@@ -685,6 +685,17 @@ tr.ttTat>td{animation:ttTat 1s}
 @keyframes ttChop{0%{background:var(--okBg)}100%{background:transparent}}
 @keyframes ttTat{0%{background:var(--warnBg)}100%{background:transparent}}
 @media (prefers-reduced-motion:reduce){.ttSo.nay,.ttSt.lat,.ttSt.ban i,tr.ttChop>td,tr.ttTat>td{animation:none}}
+/* 25/11/2026 — đầu Bảng giá gọn */
+.bgDau{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.bgPill{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:12px;color:var(--tx2);background:var(--c2);border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+.bgPill i{width:7px;height:7px;border-radius:50%;background:var(--ok);flex:none}
+.bgPill a{color:var(--tx);font-weight:700;cursor:pointer;text-decoration:underline}
+.bgCC{position:relative}.bgCC>summary{list-style:none;cursor:pointer;white-space:nowrap}.bgCC>summary::-webkit-details-marker{display:none}
+.bgCCds{position:absolute;right:0;top:calc(100% + 4px);z-index:30;display:flex;flex-direction:column;gap:4px;min-width:240px;padding:6px;background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.3)}
+.bgCCds button{text-align:left;width:100%}
+.bgLoc{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:8px}
+.bgLoc .ttBar{margin-top:0}.bgLoc #gcnt{margin-left:auto}
+.bgSel{width:auto!important;padding:4px 8px;font-size:12px}.bgSel.on{border-color:var(--acc)}
 </style></head><body>
 <div id="khoa">
   <div class="logoMark">🐾</div>
@@ -854,33 +865,23 @@ tr.ttTat>td{animation:ttTat 1s}
 <section id="pg-gia" class="hide">
   <div id="giaMsg"></div>
 
-  <div class="card" style="border-color:var(--acc)">
-    <h2>Bảng giá của <span id="soMayNV">các</span> máy nhân viên</h2>
-    <div id="phatInfo" class="sm"></div>
-    <div class="row mt">
-      <button class="btn2" onclick="xemNhanGia()">Máy nào đã nhận?</button>
-    </div>
-    <div class="sm" style="margin-top:8px">Bấm <b>Cập nhật bảng giá</b> (cuối bảng) là lưu và gửi luôn cho máy nhân viên,
-    nhận <b>trong vòng một phút</b>. <b>Giá vốn không đi theo</b> — chỉ tên hàng, đơn vị, giá bán và giá quy đổi.</div>
-  </div>
-
-  <div class="card"><h2>Bảng giá — chỉ máy này có giá vốn</h2>
-    <div class="row">
+  <div class="card"><div class="bgDau"><h2 style="margin:0">Bảng giá</h2>
+      <span class="bgPill" title="Bấm Cập nhật bảng giá (cuối bảng) là lưu và gửi luôn cho máy nhân viên, nhận trong vòng một phút. Giá vốn không đi theo."><i></i><span id="phatInfo"></span> · <span id="soMayNV">các</span> máy NV · <a onclick="xemNhanGia()">Máy nào đã nhận?</a></span>
+      <span class="bgPill" title="Giá vốn chỉ nằm ở máy quản lý, không gửi cho nhân viên">🔒 Giá vốn chỉ ở máy quản lý</span></div>
+    <div class="row" style="margin-top:8px">
       <div style="flex:2"><input id="gq" placeholder="Tìm tên, thương hiệu hoặc SKU…" oninput="giaReset()" autocomplete="off"></div>
       <div><select id="gn" onchange="$('gq').value='';giaReset()"></select></div>
       <div style="flex:none"><button class="btn" onclick="moThemSP()">+ Thêm sản phẩm</button></div>
-      <div style="flex:none"><button class="btn2" style="font-weight:700" onclick="moPL_()">+ Nhiều phân loại</button></div>
-      <div style="flex:none"><button class="btn2" onclick="moLS_()">🕘 Lịch sử</button></div>
-      <div style="flex:none"><button class="btn2" onclick="moSaoLuu_()">🗄 Bản sao lưu</button></div>
-      <div style="flex:none"><button class="btn2" style="color:var(--pur);font-weight:700" onclick="moRaDong_()">⇄ Rà dòng hàng</button></div>
-      <div style="flex:none"><button class="btn2" onclick="moDonPL_()">🧹 Dọn phân loại</button></div>
-      <div style="flex:none"><button class="btn2" onclick="moSuaLo()" style="color:var(--pur);font-weight:700">✏ Sửa hàng loạt món đang hiện</button></div>
+      <div style="flex:none"><details class="bgCC"><summary class="btn2">Công cụ ▾</summary><div class="bgCCds" onclick="this.parentNode.open=false">
+        <button class="btn2" onclick="moPL_()">+ Nhiều phân loại</button>
+        <button class="btn2" onclick="moSuaLo()">✏ Sửa hàng loạt món đang hiện</button>
+        <button class="btn2" onclick="moRaDong_()">⇄ Rà dòng hàng</button>
+        <button class="btn2" onclick="moDonPL_()">🧹 Dọn phân loại</button>
+        <button class="btn2" onclick="moLS_()">🕘 Lịch sử</button>
+        <button class="btn2" onclick="moSaoLuu_()">🗄 Bản sao lưu</button></div></details></div>
     </div>
     <div id="gnChip" class="gnChips"></div>
-    <div id="banChip" class="gnChips" style="margin-top:6px"></div>
-    <div class="sm" style="margin-top:6px;opacity:.8">Có 2 món trùng? Tích ô vuông đầu dòng của <b>cả 2 món</b> → bấm <b>⇢ Gộp các món đã chọn</b> ở thanh hiện ra dưới màn hình.</div>
-    <div class="ttBar" id="ttBar"></div>
-    <div class="sm" id="gcnt" style="margin-top:8px"></div>
+    <div class="bgLoc"><div class="ttBar" id="ttBar"></div><span id="banChip"></span><span class="sm" id="gcnt"></span></div>
     <div id="dsGia" style="margin-top:6px;max-height:60vh;overflow:auto"></div>
     <div id="ggChonBar" style="display:none;position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));max-width:760px;margin:0 auto;z-index:50;padding:10px 12px;flex-wrap:wrap;
       background:var(--c2);border:1px solid var(--line);border-radius:10px;align-items:center;gap:10px;
@@ -1230,7 +1231,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261125a';
+var APP_VER='20261125b';
 /* 16/11/2026: mọi lần máy quản lý GỬI lên Sheet đều kèm số phiên bản (máy chủ chặn bản cũ ghi bảng giá) và tên máy
    (ghi vào NHAT_KY để biết máy nào làm gì). Gắn ở một chỗ duy nhất thay vì sửa từng lệnh gửi. */
 (function(){
@@ -5556,12 +5557,15 @@ function nhanBan_(sku){ var o=banCuoi_()[sku], m=mucBan_(sku), mau=MUC_BAN.filte
   return '<div class="sm" style="margin-top:3px"><span style="display:inline-block;padding:1px 8px;border-radius:999px;color:#fff;font-weight:700;background:'+mau+'">'+
     (o?(o.ngay===0?'Bán hôm nay':'Bán lần cuối '+o.ngay+' ngày trước'):'Chưa bán lần nào')+'</span>'+
     (o?' <span style="opacity:.75">'+o.iso.slice(8,10)+'/'+o.iso.slice(5,7)+' · '+o.don30+' đơn/30 ngày</span>':'')+'</div>' }
+function caoDsGia_(){ var el=$('dsGia'); if(!el||!el.offsetParent) return; var t=el.getBoundingClientRect().top;
+  el.style.maxHeight=Math.max(320, innerHeight-Math.max(t,0)-90)+'px' }
+addEventListener('resize',function(){ try{ caoDsGia_() }catch(e){} });
 function veChipBan_(all){
   var el=$('banChip'); if(!el) return; var dem={};
   all.forEach(function(p){ var m=mucBan_(p.sku); dem[m]=(dem[m]||0)+1 });
-  el.innerHTML='<span class="sm" style="opacity:.75;margin-right:4px">Bán lần cuối:</span>'+MUC_BAN.map(function(a){
-    return '<button class="chip'+(LOC_BAN===a[0]?' on':'')+'" style="border-left:4px solid '+a[2]+'" onclick="locBan_(\''+a[0]+'\')">'+a[1]+' <b>'+(dem[a[0]]||0)+'</b></button>' }).join('')+
-    (LOC_BAN?'<button class="chip" onclick="locBan_(\'\')">✕ Bỏ lọc</button>':'');
+  /* 25/11/2026 chủ: phần đầu Bảng giá chiếm 1/4 màn hình — hàng chip "Bán lần cuối" thu thành 1 ô chọn */
+  el.innerHTML='<select class="bgSel'+(LOC_BAN?' on':'')+'" onchange="LOC_BAN=this.value;$(\'gq\').value=\'\';GLIM=40;veGia()"><option value="">Bán lần cuối: tất cả</option>'+
+    MUC_BAN.map(function(a){ return '<option value="'+a[0]+'"'+(LOC_BAN===a[0]?' selected':'')+'>'+a[1]+' ('+(dem[a[0]]||0)+')</option>' }).join('')+'</select>'; setTimeout(caoDsGia_,0);
 }
 function locBan_(m){ LOC_BAN=(LOC_BAN===m?'':m); $('gq').value=''; GLIM=40; veGia() }
 var XEMNGUNG=false, LOCQD=null, GIA_CHON={}, DRAG_SKU=null;
@@ -5890,11 +5894,9 @@ function soMayNV_(){ var ds=(NVS&&NVS.length)?NVS:(get('nvs',[])||[]), n=ds.filt
 function vePhat(){
   var b=goiGia().length; if($('soMayNV')) $('soMayNV').textContent=soMayNV_();
   $('phatInfo').innerHTML = BGV.ver
-    ? 'Bản đang phát: <b>'+esc(BGV.luc)+'</b> · <b>'+BGV.so.toLocaleString('vi-VN')+' mặt hàng</b>'+
-      (b!==BGV.so?'<br><span style="color:var(--warn)">Bảng giá trên máy này giờ có <b>'+b.toLocaleString('vi-VN')+
-        '</b> mặt hàng — đã khác bản đang phát. Bấm phát lại.</span>':'')
-    : '<span style="color:var(--warn)">Chưa phát lần nào.</span> Máy nhân viên đang dùng bảng giá chép tay trong file. '+
-      'Bấm phát một lần để chúng tự nhận từ nay về sau.';
+    ? 'Máy NV đang có bản <b>'+esc(BGV.luc)+'</b> · '+BGV.so.toLocaleString('vi-VN')+' món'+
+      (b!==BGV.so?' <b style="color:var(--warn)">· máy này '+b.toLocaleString('vi-VN')+' món, chưa phát</b>':'')
+    : '<b style="color:var(--warn)">Chưa phát bảng giá lần nào</b>';
 }
 var PHAT_KET=0;   // 12/11/2026: số món giá sỉ vô lý đang chặn tự phát bảng giá (hiện ở tab Cần làm)
 /* dấu vân tay bảng giá phát cho nhân viên — đổi giá mà không đổi số món cũng nhận ra (trước chỉ so số món) */
@@ -8157,6 +8159,9 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261125b', ngay:'25/11/2026', ten:'Đầu Bảng giá gọn lại',
+  vaPhieu:[], vaNoi:[],
+  muc:[['moi','Phần đầu Bảng giá thu còn 1 dòng trạng thái; 6 nút công cụ gom vào <b>Công cụ ▾</b>; lọc "Bán lần cuối" thành 1 ô chọn; bảng kéo dài tới đáy màn hình.']]},
  {ban:'20261125a', ngay:'25/11/2026', ten:'Hai máy quản lý không còn đè giá của nhau',
   vaPhieu:[], vaNoi:[],
   muc:[['sua','Hai máy quản lý cùng mở: số anh vừa sửa thắng, còn số cũ nằm lâu trong máy (chưa lưu được) thì nhường bản trên Sheet — hết cảnh giá vừa nhập bị máy kia trả về số cũ.'],
