@@ -422,8 +422,8 @@ body.sang .badge.breeder{background:#e9f3e0;color:#5c8a3a}
 .ksKpi div{background:var(--c2);border-radius:8px;padding:8px 10px}
 .ksKpi b{display:block;font-size:20px;font-variant-numeric:tabular-nums}
 .ksTag{font-size:11.5px;font-weight:700;border-radius:999px;padding:1px 8px;white-space:nowrap}
-.ksTag.lau{color:var(--warn);background:color-mix(in srgb,var(--warn) 15%,transparent)}
-.ksTag.moi{color:var(--ok);background:color-mix(in srgb,var(--ok) 15%,transparent)}
+.ksTag.lau{color:var(--bad);background:color-mix(in srgb,var(--bad) 15%,transparent)}
+.ksTag.moi{color:#2B2100;background:#F5C518}
 @media (max-width:600px){.ksAn{display:none}}
 .edt{background:var(--card);border:1px solid var(--acc);border-radius:11px;padding:12px;margin-top:9px}
 .edt h3{font-size:12.5px;color:var(--acc);margin:0 0 9px;letter-spacing:.04em;text-transform:uppercase}
@@ -1025,7 +1025,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20261126b';
+var APP_VER='20261126c';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -4594,7 +4594,7 @@ function veKhSP(){
     ' <button class="btn-nho" onclick="KSP.sku=\'\';$(\'fksp\').value=\'\';veKhSP();$(\'fksp\').focus()">← Chọn món khác</button></div>'+
     '<div class="ksKpi"><div><b>'+ds.length+'</b><span class="sm">khách đã mua</span></div>'+
       '<div><b>'+(Math.round(tong*100)/100).toLocaleString('vi-VN')+'</b><span class="sm">'+esc(dvL)+' tổng cộng</span></div>'+
-      '<div><b style="color:var(--warn)">'+lau+'</b><span class="sm">quá 45 ngày chưa mua lại</span></div></div>'+
+      '<div><b style="color:var(--bad)">'+lau+'</b><span class="sm">quá 45 ngày chưa mua lại</span></div></div>'+
     (ds.length?'<div style="overflow-x:auto"><table><tr><th>Khách</th><th class="ksAn">SĐT</th><th class="ksAn">Kênh</th><th class="r">Lần mua</th><th class="r">Tổng SL</th><th>Mua cuối</th><th></th></tr>'+
     ds.map(function(c){ var n=ksNgay_(c.cuoi), l=linkLH(c.sdt), k=KH[c.sdt];
       return '<tr><td><a href="#" class="lnk" onclick="lichSuKH(\''+esc(c.sdt)+'\');return false">'+esc((k&&k.ten)||c.ten||c.sdt)+'</a>'+
@@ -5899,6 +5899,9 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261126c', ngay:'26/11/2026', ten:'Nhãn "vừa mua" nổi bật hơn',
+  vaPhieu:[],
+  muc:[['sua','Khách theo sản phẩm: nhãn "vừa mua" đổi sang nền vàng cho dễ thấy; nhãn "lâu chưa mua lại" đổi sang màu đỏ nhạt để không lẫn.']]},
  {ban:'20261126b', ngay:'26/11/2026', ten:'Xem khách theo sản phẩm',
   vaPhieu:[],
   muc:[['moi','Tab Khách hàng có nút "Theo sản phẩm": gõ tên món để xem khách nào đã mua, mua mấy lần, lần cuối khi nào, giá bao nhiêu. Khách quá 45 ngày chưa mua lại có nhãn vàng để hỏi thăm. Có nút chép danh sách số điện thoại.']]},
