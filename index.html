@@ -408,6 +408,23 @@ body.sang .badge.breeder{background:#e9f3e0;color:#5c8a3a}
 }
 .ckNhan{display:flex;flex-direction:column;align-items:center;gap:1px;font-size:10px;line-height:1;color:var(--tx2);cursor:pointer;flex:none}
 .ckNhan.huy{color:var(--bad)}
+/* Khách theo sản phẩm (26/11/2026) */
+.khSeg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:10px}
+.khSeg button{font:inherit;font-size:13px;font-weight:600;padding:7px 14px;border:0;background:var(--card);color:var(--tx2);cursor:pointer}
+.khSeg button.on{background:var(--tx);color:var(--bg)}
+.ksGoiY{display:flex;flex-direction:column;margin-top:8px}
+.ksGoiY button{font:inherit;text-align:left;padding:8px 10px;border:0;border-top:1px solid var(--line);background:none;color:var(--tx);cursor:pointer}
+.ksGoiY button:first-child{border-top:0}
+.ksLoc{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px}
+.ksChip{font:inherit;font-size:12.5px;padding:5px 11px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--tx);cursor:pointer}
+.ksChip.on{background:var(--info);border-color:var(--info);color:#fff}
+.ksKpi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:10px}
+.ksKpi div{background:var(--c2);border-radius:8px;padding:8px 10px}
+.ksKpi b{display:block;font-size:20px;font-variant-numeric:tabular-nums}
+.ksTag{font-size:11.5px;font-weight:700;border-radius:999px;padding:1px 8px;white-space:nowrap}
+.ksTag.lau{color:var(--warn);background:color-mix(in srgb,var(--warn) 15%,transparent)}
+.ksTag.moi{color:var(--ok);background:color-mix(in srgb,var(--ok) 15%,transparent)}
+@media (max-width:600px){.ksAn{display:none}}
 .edt{background:var(--card);border:1px solid var(--acc);border-radius:11px;padding:12px;margin-top:9px}
 .edt h3{font-size:12.5px;color:var(--acc);margin:0 0 9px;letter-spacing:.04em;text-transform:uppercase}
 .el{display:flex;gap:8px;align-items:center;background:var(--c2);border-radius:9px;padding:8px 9px;margin-bottom:6px}
@@ -712,8 +729,16 @@ body.ks-chi *{cursor:crosshair!important}
 
 <section id="pg-kh" class="hide">
   <div id="khMsg"></div>
+  <div class="khSeg"><button id="khSegKH" class="on" onclick="khChe('kh')">Theo khách</button><button id="khSegSP" onclick="khChe('sp')">Theo sản phẩm</button></div>
+  <div id="khTheoKH">
   <div class="card"><input id="fkh" placeholder="Tìm khách theo tên hoặc số…" oninput="veKH()"></div>
   <div id="dsKH"></div>
+  </div>
+  <div id="khTheoSP" class="hide">
+    <div class="card"><input id="fksp" placeholder="Gõ tên hoặc mã sản phẩm…" oninput="KSP.sku='';veKhSP()" autocomplete="off">
+      <div id="ksGoiY" class="ksGoiY"></div></div>
+    <div id="ksKQ"></div>
+  </div>
 </section>
 
 <section id="pg-out" class="hide">
@@ -1000,7 +1025,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20261126a';
+var APP_VER='20261126b';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -4522,7 +4547,74 @@ function luuHoSo(sdt){
   setTimeout(function(){ $('kHsMsg').innerHTML='' },2500);
 }
 
+/* ═══ Khách theo sản phẩm — chỉ ĐỌC DON trên máy, không ghi gì, không có giá vốn ═══ */
+var KH_CHE='kh', KSP={sku:'',ky:0,sap:'cuoi'}, KSP_NHO={k:''};
+function khChe(c){ KH_CHE=c;
+  $('khSegKH').classList.toggle('on',c==='kh'); $('khSegSP').classList.toggle('on',c==='sp');
+  $('khTheoKH').classList.toggle('hide',c!=='kh'); $('khTheoSP').classList.toggle('hide',c!=='sp');
+  if(c==='sp') veKhSP(); else veKH() }
+function ksNgay_(iso){ var a=new Date(String(iso||'').slice(0,10)+'T00:00:00'), b=new Date(today()+'T00:00:00');
+  return isNaN(a)?9999:Math.round((b-a)/864e5) }
+function ksGom_(){   // sku -> {ten, kh:{sdt:{...}}}  (dòng bán thùng/bao = cùng sku, nhân hệ số về đơn vị lẻ)
+  var k=DON.length+'|'+(DON[0]&&DON[0].ma)+'|'+(DON[0]&&DON[0].sualan); if(KSP_NHO.k===k) return KSP_NHO.m;
+  var m={};
+  DON.forEach(function(d){ if(d.huy||!d.sdt) return; var iso=String(d.iso||'');
+    (d.dong||[]).forEach(function(x){ if(!x.sku) return;
+      var s=m[x.sku]||(m[x.sku]={ten:x.ten,cuoi:'',kh:{}});
+      if(iso>=s.cuoi){ s.cuoi=iso; s.ten=x.ten }
+      var c=s.kh[d.sdt]||(s.kh[d.sdt]={sdt:d.sdt,ten:d.khach,kenh:d.kenh,lan:{},sl:0,cuoi:'',gia:0,dv:''});
+      c.lan[d.ma]=1; c.sl+=(Number(x.sl)||0)*(Number(x.hs)||1);
+      if(iso>=c.cuoi){ c.cuoi=iso; c.gia=Number(x.gia)||0; c.dv=x.dv||''; c.ten=d.khach||c.ten; c.kenh=d.kenh||c.kenh }
+    }) });
+  KSP_NHO={k:k,m:m}; return m }
+function ksTenSP_(sku,m){ var p=SP.filter(function(x){return x.sku===sku})[0]; return (p&&p.ten)||(m[sku]&&m[sku].ten)||sku }
+function veKhSP(){
+  var m=ksGom_(), q=kd(($('fksp').value||'').trim()).split(/\s+/).filter(Boolean);
+  if(!KSP.sku){
+    var ds=Object.keys(m).filter(function(s){ var t=kd(ksTenSP_(s,m)+' '+s); return q.every(function(w){return t.indexOf(w)>=0}) })
+      .sort(function(a,b){ return Object.keys(m[b].kh).length-Object.keys(m[a].kh).length });
+    $('ksGoiY').innerHTML=!q.length?'<div class="sm">Gõ vài chữ của tên món, ví dụ "pani lav", "citycat cà phê".</div>':
+      (ds.slice(0,12).map(function(s){ return '<button onclick="KSP.sku=\''+esc(s)+'\';$(\'fksp\').value=this.dataset.t;veKhSP()" data-t="'+esc(ksTenSP_(s,m))+'">'+
+        esc(ksTenSP_(s,m))+' <span class="sm">· '+esc(s)+' · '+Object.keys(m[s].kh).length+' khách đã mua</span></button>' }).join('')||
+       '<div class="sm">Chưa có khách nào mua món khớp với chữ này (chỉ tính đơn có số điện thoại).</div>');
+    $('ksKQ').innerHTML=''; return }
+  $('ksGoiY').innerHTML='';
+  var sp=m[KSP.sku]; if(!sp){ $('ksKQ').innerHTML='<div class="empty">Món này chưa có khách nào mua.</div>'; return }
+  var dvL=dvLe_(KSP.sku);
+  var ds=Object.keys(sp.kh).map(function(s){return sp.kh[s]}).filter(function(c){return !KSP.ky||ksNgay_(c.cuoi)<=KSP.ky});
+  ds.sort(function(a,b){ var la=Object.keys(a.lan).length, lb=Object.keys(b.lan).length;
+    return KSP.sap==='lan'?lb-la||b.sl-a.sl : KSP.sap==='lau'?a.cuoi.localeCompare(b.cuoi) : b.cuoi.localeCompare(a.cuoi) });
+  var tong=0,lau=0; ds.forEach(function(c){ tong+=c.sl; if(ksNgay_(c.cuoi)>45) lau++ });
+  KSP.ds=ds.map(function(c){return c.sdt});
+  $('ksKQ').innerHTML='<div class="card">'+
+    '<div class="ksLoc"><span class="sm">Mua trong:</span>'+[[0,'Tất cả'],[30,'30 ngày'],[90,'90 ngày'],[180,'6 tháng']].map(function(k){
+      return '<button class="ksChip'+(KSP.ky===k[0]?' on':'')+'" onclick="KSP.ky='+k[0]+';veKhSP()">'+k[1]+'</button>'}).join('')+
+    ' <select onchange="KSP.sap=this.value;veKhSP()">'+[['cuoi','Mua gần nhất lên đầu'],['lan','Mua nhiều lần nhất'],['lau','Lâu chưa mua lại lên đầu']].map(function(o){
+      return '<option value="'+o[0]+'"'+(KSP.sap===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select>'+
+    ' <button class="btn-nho" onclick="KSP.sku=\'\';$(\'fksp\').value=\'\';veKhSP();$(\'fksp\').focus()">← Chọn món khác</button></div>'+
+    '<div class="ksKpi"><div><b>'+ds.length+'</b><span class="sm">khách đã mua</span></div>'+
+      '<div><b>'+(Math.round(tong*100)/100).toLocaleString('vi-VN')+'</b><span class="sm">'+esc(dvL)+' tổng cộng</span></div>'+
+      '<div><b style="color:var(--warn)">'+lau+'</b><span class="sm">quá 45 ngày chưa mua lại</span></div></div>'+
+    (ds.length?'<div style="overflow-x:auto"><table><tr><th>Khách</th><th class="ksAn">SĐT</th><th class="ksAn">Kênh</th><th class="r">Lần mua</th><th class="r">Tổng SL</th><th>Mua cuối</th><th></th></tr>'+
+    ds.map(function(c){ var n=ksNgay_(c.cuoi), l=linkLH(c.sdt), k=KH[c.sdt];
+      return '<tr><td><a href="#" class="lnk" onclick="lichSuKH(\''+esc(c.sdt)+'\');return false">'+esc((k&&k.ten)||c.ten||c.sdt)+'</a>'+
+        (n>45?' <span class="ksTag lau">'+n+' ngày chưa mua lại</span>':n<=7?' <span class="ksTag moi">vừa mua</span>':'')+'</td>'+
+        '<td class="ksAn">'+esc(c.sdt)+'</td><td class="ksAn">'+esc(c.kenh||'')+'</td>'+
+        '<td class="r">'+Object.keys(c.lan).length+'</td><td class="r">'+(Math.round(c.sl*100)/100).toLocaleString('vi-VN')+'</td>'+
+        '<td>'+esc(c.cuoi.split('-').reverse().join('/'))+'<div class="sm">'+tien(c.gia)+'/'+esc(c.dv)+'</div></td>'+
+        '<td class="r">'+(l?'<button class="btn-nho" onclick="moLH(\''+esc(c.sdt)+'\')" style="color:var(--pur)">'+esc(l.ten)+(l.mac?' ?':'')+'</button>':'')+'</td></tr>' }).join('')+
+    '</table></div>'+
+    '<div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn-nho" onclick="ksChepSdt()">📋 Chép '+ds.length+' số điện thoại</button>'+
+    '<span class="sm" id="ksChep"></span></div>'
+    :'<div class="empty">Không có khách nào mua món này trong khoảng thời gian đã chọn.</div>')+
+    '<div class="sm" style="margin-top:8px">Chỉ tính đơn có số điện thoại, không tính đơn đã huỷ. Bán theo thùng/bao được đổi ra '+esc(dvL)+'. Danh sách theo các đơn máy này đang có.</div></div>';
+}
+function ksChepSdt(){ var t=(KSP.ds||[]).join('\n'); if(!t) return;
+  var xong=function(){ $('ksChep').textContent='Đã chép '+KSP.ds.length+' số' };
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(xong,function(){ prompt('Chép danh sách này:',t.replace(/\n/g,', ')) });
+  else prompt('Chép danh sách này:',t.replace(/\n/g,', ')) }
 function veKH(){
+  if(KH_CHE==='sp'){ veKhSP(); return }
   var q=kd(($('fkh').value||'').trim());
   var ds=Object.keys(KH).map(function(k){return KH[k]})
     .filter(function(k){return !q||kd(k.ten+' '+k.sdt).indexOf(q)>=0})
@@ -5807,6 +5899,9 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261126b', ngay:'26/11/2026', ten:'Xem khách theo sản phẩm',
+  vaPhieu:[],
+  muc:[['moi','Tab Khách hàng có nút "Theo sản phẩm": gõ tên món để xem khách nào đã mua, mua mấy lần, lần cuối khi nào, giá bao nhiêu. Khách quá 45 ngày chưa mua lại có nhãn vàng để hỏi thăm. Có nút chép danh sách số điện thoại.']]},
  {ban:'20261126a', ngay:'26/11/2026', ten:'Báo tình trạng máy cho quản lý',
   vaPhieu:[],
   muc:[['sua','Máy tự báo cho quản lý đang chạy bản nào và đã nhận bảng giá mới chưa, để quản lý biết máy nào bị kẹt. Nhân viên không phải làm gì.']]},
