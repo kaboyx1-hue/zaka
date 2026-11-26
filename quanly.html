@@ -727,6 +727,7 @@ tr.ttTat>td{animation:ttTat 1s}
 .ksGoiY button:first-child{border-top:0}
 .ksLoc{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px}
 .ksTag{font-size:11.5px;font-weight:700;border-radius:999px;padding:1px 8px;white-space:nowrap}
+.ksTen{color:var(--tx);text-decoration:none}.ksTen:hover b{text-decoration:underline;text-underline-offset:3px}
 .ksTag.lau{color:var(--bad);background:color-mix(in srgb,var(--bad) 15%,transparent)}
 .ksTag.moi{color:#2B2100;background:#F5C518}
 .msTag{display:inline-block;margin-top:3px;font-size:11.5px;font-weight:700;border-radius:999px;padding:1px 8px;color:var(--warn);background:color-mix(in srgb,var(--warn) 15%,transparent)}
@@ -1282,7 +1283,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261126d';
+var APP_VER='20261126e';
 /* 16/11/2026: mọi lần máy quản lý GỬI lên Sheet đều kèm số phiên bản (máy chủ chặn bản cũ ghi bảng giá) và tên máy
    (ghi vào NHAT_KY để biết máy nào làm gì). Gắn ở một chỗ duy nhất thay vì sửa từng lệnh gửi. */
 (function(){
@@ -6655,7 +6656,7 @@ function veKhSP(){
       '<div class="k-pur"><small>Quá 45 ngày chưa mua lại</small><b>'+lau+'</b></div></div>'+
     (ds.length?'<div style="overflow-x:auto"><table><tr><th>Khách</th><th class="ksAn">Kênh</th><th class="r">Lần</th><th class="r">SL</th><th class="r">Doanh thu</th><th class="r">Lãi</th><th>Mua cuối</th></tr>'+
     ds.map(function(c){ var n=soNgay(c.cuoi);
-      return '<tr><td><a href="#" onclick="ksMoKhach_(\''+esc(c.k)+'\');return false"><b>'+esc(c.ten||c.sdt)+'</b></a>'+
+      return '<tr><td><a href="#" class="ksTen" onclick="ksMoKhach_(\''+esc(c.k)+'\');return false"><b>'+esc(c.ten||c.sdt)+'</b></a>'+
         (n>45?' <span class="ksTag lau">'+n+' ngày chưa mua lại</span>':n<=7?' <span class="ksTag moi">vừa mua</span>':'')+'<div class="sm">'+esc(c.sdt)+'</div></td>'+
         '<td class="ksAn">'+esc(c.kenh||'')+'</td><td class="r">'+Object.keys(c.lan).length+'</td><td class="r">'+(Math.round(c.sl*100)/100).toLocaleString('vi-VN')+'</td>'+
         '<td class="r">'+tien(c.dt)+'</td><td class="r" style="color:var(--ok)">'+tien(c.lai)+'</td>'+
@@ -8441,6 +8442,9 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261126e', ngay:'26/11/2026', ten:'Khách theo sản phẩm dễ đọc hơn',
+  vaPhieu:[],
+  muc:[['sua','Tên khách trong danh sách Theo sản phẩm hiện cùng màu chữ thường (trước là xanh gạch chân, khó đọc trên nền tối). Rê chuột vào tên mới gạch chân.']]},
  {ban:'20261126d', ngay:'26/11/2026', ten:'Ô tìm nhận cả mã cũ và ID Shopee',
   vaPhieu:[],
   muc:[['moi','Ô tìm ở Bảng giá và Khách theo sản phẩm: gõ tên, SKU, mã cũ (trước khi đổi sang mã Shopee), mã Shopee hoặc ID sản phẩm Shopee đều ra đúng món — giống ô tìm trên Shopee.']]},
