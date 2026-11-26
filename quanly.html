@@ -1277,7 +1277,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261126b';
+var APP_VER='20261126c';
 /* 16/11/2026: mọi lần máy quản lý GỬI lên Sheet đều kèm số phiên bản (máy chủ chặn bản cũ ghi bảng giá) và tên máy
    (ghi vào NHAT_KY để biết máy nào làm gì). Gắn ở một chỗ duy nhất thay vì sửa từng lệnh gửi. */
 (function(){
@@ -7166,6 +7166,9 @@ function napVonTuSheet(ds,ver){
   var lanDauNap=!GIA_GOC||!Object.keys(GIA_GOC).length;   // máy mới: bảng trong máy chỉ là bản cài đặt sẵn → lấy đúng theo Sheet
   if(lanDauNap||thieuSheet.length<=20||ds.length>=Object.keys(GIA_GOC).length*0.9) thieuSheet.forEach(function(k){ delete GIA[k]; xoa++ });   // nhiều hơn thì nghi Sheet đọc dở/bị cắt — không xoá (sự cố 16/11/2026)
   else console.warn('napVonTuSheet: Sheet thiếu '+thieuSheet.length+' món — không xoá theo');
+  /* 26/11/2026: mã cũ đã được ĐỔI sang mã mới (có trong ALIAS, món mới đang có trên Sheet) thì luôn bỏ khỏi máy — không tính vào
+     giới hạn xoá ở trên (đợt đổi 229 mã SKU Shopee làm máy đang mở hiện 2 dòng cho 1 món: mã cũ + mã mới). */
+  thieuSheet.forEach(function(k){ if(GIA[k] && ALIAS[k] && coTrongSheet[skuChinh(k)]){ delete GIA[k]; xoa++ } });
 
   set('gia',GIA); VONVER=ver; set('vonver',ver); chupGoc_();
   if(them||sua||xoa){
@@ -8422,6 +8425,9 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261126c', ngay:'26/11/2026', ten:'Bỏ dòng mã cũ sau khi đổi mã',
+  vaPhieu:[],
+  muc:[['sua','Sau đợt đổi sang mã Shopee, máy nào đang mở có thể thấy 1 món 2 dòng (mã cũ + mã mới, vd TA-0199 và RPC182). Nay máy tự bỏ dòng mã cũ, chỉ còn mã mới. Đơn cũ vẫn tính đúng món.']]},
  {ban:'20261126b', ngay:'26/11/2026', ten:'Khách theo sản phẩm · Mã Shopee dùng chung',
   vaPhieu:[],
   muc:[['moi','Tab Khách hàng có nút "Theo sản phẩm": gõ tên/mã món để xem khách nào đã mua, bao nhiêu lần, doanh thu, lãi, lần cuối mua. Đơn ghi mã cũ được tính chung vào món mới. Có chép số điện thoại và xuất Excel.'],
