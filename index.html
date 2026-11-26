@@ -1000,7 +1000,7 @@ if(THIEU_SEED.length) setTimeout(function(){
    chan trinh duyet phai tai file MOI, khong dung lai ban cu dang cache.
    Chi tu-reload TOI DA 1 LAN moi phien, tranh vong lap neu vi ly do gi
    do khong doc duoc ban moi (mat mang...). */
-var APP_VER='20261125a';
+var APP_VER='20261126a';
 /* Nhãn phiên bản LUÔN HIỆN trên màn hình (góc dưới trái, chữ nhỏ mờ) — để biết
    ngay upload lên có thật sự ăn hay chưa, khỏi phải mở "Chẩn đoán máy này". */
 (function(){
@@ -1807,7 +1807,8 @@ async function dongBo(im){
   var url=CFG.url||URL_DRIVE; if(!url||!CFG.ma||!MK_PHIEN) return;
   DANGDB=true;
   try{
-    var r=await fetch(url+'?tt=1&may='+encodeURIComponent(CFG.ma)+'&nv='+encodeURIComponent(CFG.ten||'')+'&mk='+encodeURIComponent(MK_PHIEN));
+    var r=await fetch(url+'?tt=1&may='+encodeURIComponent(CFG.ma)+'&nv='+encodeURIComponent(CFG.ten||'')+'&mk='+encodeURIComponent(MK_PHIEN)+
+      '&app='+encodeURIComponent(APP_VER)+'&bgv='+encodeURIComponent(VER.bg||''));   // 26/11/2026: cho máy quản lý biết máy này đang chạy bản nào, giữ bảng giá nào
     var j=JSON.parse(await r.text());
     if(!j.ok){ if(j.canDN) dangNhapLai_(j.loi); if(im)bao('cfgMsg','Máy chủ từ chối: '+esc(j.loi||''),'er'); return }
     var v=j.ver||{}, doi=[];
@@ -5806,6 +5807,9 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261126a', ngay:'26/11/2026', ten:'Báo tình trạng máy cho quản lý',
+  vaPhieu:[],
+  muc:[['sua','Máy tự báo cho quản lý đang chạy bản nào và đã nhận bảng giá mới chưa, để quản lý biết máy nào bị kẹt. Nhân viên không phải làm gì.']]},
  {ban:'20261125a', ngay:'25/11/2026', ten:'Thấy giá bảng cạnh giá của khách',
   vaPhieu:[],
   muc:[['moi','Khách có giá riêng hoặc giá lần trước: dưới giá hiện thêm "Giá bảng … · giảm …" (đỏ nếu khách trả cao hơn). Trong giỏ ghi cả dòng được giảm bao nhiêu.'],

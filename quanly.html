@@ -705,6 +705,19 @@ tr.ttTat>td{animation:ttTat 1s}
 .khgThe.giu .khgVt{background:var(--ok);color:var(--bg,#000)}
 .khgMui{align-self:center;font-size:22px;opacity:.6}
 .khgHq{margin:4px 0 0;padding-left:18px;font-size:13px;line-height:1.55}
+/* 26/11/2026 — khung Máy nhân viên */
+.mnDs{display:flex;flex-direction:column;gap:8px}
+.mnMay{--c:var(--tx2);--cb:var(--c2);display:grid;grid-template-columns:auto 1fr auto;gap:4px 12px;align-items:center;border:1px solid var(--line);border-left:4px solid var(--c);border-radius:8px;padding:10px 12px}
+.mn-ok{--c:var(--ok);--cb:rgba(46,160,90,.14)}.mn-warn{--c:var(--warn);--cb:rgba(220,160,60,.16)}.mn-bad{--c:var(--bad);--cb:rgba(230,100,80,.16)}.mn-mute{opacity:.7}
+.mnMa{font-weight:800;font-size:17px;letter-spacing:.03em}
+.mnAi{font-weight:600;min-width:0}.mnAi small{display:block;font-weight:400;color:var(--tx2);font-size:12px}
+.mnTag{font-size:12px;font-weight:700;border-radius:999px;padding:2px 9px;white-space:nowrap;color:var(--c);background:var(--cb)}
+.mnCt{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:4px}
+.mnCt>div{background:var(--c2);border-radius:6px;padding:6px 8px;font-variant-numeric:tabular-nums}
+.mnCt i{display:block;font-style:normal;font-size:11px;color:var(--tx2);text-transform:uppercase;letter-spacing:.04em}
+.mnCt b{color:var(--c)}
+.mnGoi{grid-column:1/-1;font-size:12.5px;font-weight:600;color:var(--c);background:var(--cb);border-radius:6px;padding:5px 9px}
+@media (max-width:520px){.mnCt{grid-template-columns:1fr 1fr}.mnCt>div:last-child{grid-column:1/-1}}
 </style></head><body>
 <div id="khoa">
   <div class="logoMark">🐾</div>
@@ -876,7 +889,7 @@ tr.ttTat>td{animation:ttTat 1s}
   <div id="giaMsg"></div>
 
   <div class="card"><div class="bgDau"><h2 style="margin:0">Bảng giá</h2>
-      <span class="bgPill" title="Bấm Cập nhật bảng giá (cuối bảng) là lưu và gửi luôn cho máy nhân viên, nhận trong vòng một phút. Giá vốn không đi theo."><i></i><span id="phatInfo"></span> · <span id="soMayNV">các</span> máy NV · <a onclick="xemNhanGia()">Máy nào đã nhận?</a></span>
+      <span class="bgPill" title="Bấm Cập nhật bảng giá (cuối bảng) là lưu và gửi luôn cho máy nhân viên, nhận trong vòng một phút. Giá vốn không đi theo."><i></i><span id="phatInfo"></span> · <span id="soMayNV">các</span> máy NV<span id="mayNVNhan"></span> · <a onclick="xemNhanGia()">Xem máy nào</a></span>
       <span class="bgPill" title="Giá vốn chỉ nằm ở máy quản lý, không gửi cho nhân viên">🔒 Giá vốn chỉ ở máy quản lý</span></div>
     <div class="row" style="margin-top:8px">
       <div style="flex:2"><input id="gq" placeholder="Tìm tên, thương hiệu hoặc SKU…" oninput="giaReset()" autocomplete="off"></div>
@@ -941,7 +954,7 @@ tr.ttTat>td{animation:ttTat 1s}
     </div>
     <div id="nsHoSo"></div>
   </div>
-  <div class="card mt"><h2>Máy bán hàng — lần gửi dữ liệu gần nhất</h2><div id="dsMay"></div></div>
+  <div class="card mt" id="mayNVCard"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px"><h2 style="margin:0;margin-right:auto">Máy nhân viên</h2><span class="sm" id="mayNVLuc"></span><button class="btn2" onclick="taiMayNV_(1)">↻ Xem lại</button></div><div id="dsMay" style="margin-top:10px"></div></div>
 </section>
 
 <section id="pg-cb" class="hide"><div id="cb"></div></section>
@@ -1241,7 +1254,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261125d';
+var APP_VER='20261126a';
 /* 16/11/2026: mọi lần máy quản lý GỬI lên Sheet đều kèm số phiên bản (máy chủ chặn bản cũ ghi bảng giá) và tên máy
    (ghi vào NHAT_KY để biết máy nào làm gì). Gắn ở một chỗ duy nhất thay vì sửa từng lệnh gửi. */
 (function(){
@@ -3346,10 +3359,10 @@ function tab(t){
 }
 function veTab_(t){
   if(t==='lam')veLam();
-  if(t==='bc')veBC(); if(t==='so')veSo(); if(t==='kh')veKH(); if(t==='gia'){veGia();vePhat()} if(t==='cb')veCB();
+  if(t==='bc')veBC(); if(t==='so')veSo(); if(t==='kh')veKH(); if(t==='gia'){veGia();vePhat();taiMayNV_()} if(t==='cb')veCB();
   if(t==='ts'){guiCatalogChoTs();guiTinhGiaChoTs();guiLuongShipperChoTs()}
   if(t==='vc'){guiViecChoVc()}
-  if(t==='ns'){veNV();veNhanSu();veMayGui()}  // guiNguoiPTChoVc() bo hang 23/09 — khong con ai ben truc.html nghe
+  if(t==='ns'){veNV();veNhanSu();taiMayNV_()}  // guiNguoiPTChoVc() bo hang 23/09 — khong con ai ben truc.html nghe
   if(t==='vh'){veNV();veMayGui();veNhatKy();veKhaiTruong();nhacSaoLuu();veNvXemLS();veNguongHuyHieu();veCPCD();veNguoiPhuTrachQL()}
 }
 /* Gửi danh mục sản phẩm đang bán (SKU/tên/giá lẻ/giá vốn) cho tool tính giá
@@ -5903,6 +5916,9 @@ function goiGia(){
 function soMayNV_(){ var ds=(NVS&&NVS.length)?NVS:(get('nvs',[])||[]), n=ds.filter(function(x){return x.trangthai==='HOAT DONG'}).length; return n||ds.length||'các' }
 function vePhat(){
   var b=goiGia().length; if($('soMayNV')) $('soMayNV').textContent=soMayNV_();
+  try{ if(MAYNV&&$('mayNVNhan')){ var dm=dsMayNV_().filter(function(o){return o.cls!=='mute'}), dn=dm.filter(function(o){return o.ok}).length;
+    $('soMayNV').innerHTML='<b style="color:var(--tx)">'+dn+'/'+dm.length+'</b>'; $('mayNVNhan').textContent=' đã nhận bản mới';
+    var ch=document.querySelector('.bgPill i'); if(ch) ch.style.background=dm.some(function(o){return o.cls==='bad'})?'var(--bad)':dn<dm.length?'var(--warn)':'var(--ok)' } }catch(e){}
   $('phatInfo').innerHTML = BGV.ver
     ? 'Máy NV đang có bản <b>'+esc(BGV.luc)+'</b> · '+BGV.so.toLocaleString('vi-VN')+' món'+
       (b!==BGV.so?' <b style="color:var(--warn)">· máy này '+b.toLocaleString('vi-VN')+' món, chưa phát</b>':'')
@@ -5976,11 +5992,7 @@ async function phatGia(im){
       'Bảng giá trên máy này vẫn nguyên vẹn.</span>','er');
   } finally { if(bPG) bPG.disabled=false; }
 }
-async function xemNhanGia(){
-  if(!QCFG.url||!QCFG.key){ bao('giaMsg','Cần link và mật khẩu quản lý.','er'); return }
-  bao('giaMsg','Muốn xem máy nào đã nhận bảng giá lúc nào, mở Google Sheet → trang <b>NHAT_KY</b> → '+
-    'tìm dòng <b>NHAN GIA</b>. Mỗi lần một máy tải bảng giá về là có một dòng ở đó, kèm mã máy và giờ.','ok');
-}
+function xemNhanGia(){ tab('ns'); setTimeout(function(){ var c=$('mayNVCard'); if(c) c.scrollIntoView({behavior:'smooth',block:'start'}) },60) }
 
 /* ══════════ NẠP BẢNG GIÁ TỪ FILE CSV ══════════ */
 function tachCSV(t){
@@ -7718,29 +7730,64 @@ async function xoaHoSoKhachGop(){
       : 'Không thấy hồ sơ nào khớp SĐT giả 9999999999 trong Danh bạ — có thể đã được dọn từ trước, hoặc cửa hàng này chưa từng gặp lỗi gộp khách lẻ.', 'ok');
   }catch(e){ bao('xkgMsg','Không xoá được: '+esc(e.message),'er') }
 }
-function veMayGui(){
-  MAYGUI=get('maygui',MAYGUI)||{};
-  /* SỬA 09/09/2026: trước đây danh sách máy bị gõ cứng 3 máy, nên máy thứ tư trở
-     đi (NV04…) không bao giờ hiện ở bảng này — chủ không thấy được máy đó còn
-     sống hay đã im. Nay lấy đúng những máy Sheet báo về (MAYGUI), hợp thêm 3 máy
-     gốc để bảng không bị trống khi chưa máy nào kịp gửi lần nào. */
-  var mays=Object.keys(MAYGUI).filter(function(m){ return !/^KiemTra|^TEST/i.test(String((MAYGUI[m]||{}).nv||'')) })
-    .filter(function(m,i,a){ return m && a.indexOf(m)===i })
-    .sort();
-  $('dsMay').innerHTML='<table><tr><th>Máy</th><th>Người gửi cuối</th><th>Lúc</th><th></th></tr>'+
-    mays.map(function(m){
-      var x=MAYGUI[m];
-      var tre=x?gioTu(x.luc):9999;
-      var thu=x && /^KiemTra|^TEST|^Thu/i.test(String(x.nv||''));   // gói thử kết nối lúc cài đặt, không phải người
-      return '<tr><td><b>'+m+'</b></td><td>'+(thu?'<span class="sm">gói thử kết nối lúc cài đặt — chưa có đơn thật nào gửi từ máy này</span>':esc(x?x.nv:'—'))+'</td>'+
-        '<td>'+esc(x?mayGuiLuc_(x.luc):'chưa gửi lần nào')+'</td>'+
-        '<td class="r">'+(!x?'<span style="color:var(--tx2)">—</span>'
-          : tre>48?'<span style="color:var(--bad)">offline '+Math.round(tre/24)+' ngày</span>'
-          : tre>24?'<span style="color:var(--bad)">offline '+Math.round(tre)+' giờ</span>'
-          : tre>4 ?'<span style="color:var(--warn)">offline '+Math.round(tre)+' giờ</span>'
-          :'<span style="color:var(--ok)">ổn</span>')+'</td></tr>'}).join('')+'</table>'+
-    '<div class="sm mt">Máy nào offline quá lâu thì hoặc đang tắt, hoặc đang kẹt không đẩy được đơn lên.</div>';
+/* 26/11/2026: khung "Máy nhân viên" (demo Dmgkh2q3ydSgct4JZ1isyC) — mỗi máy: bảng giá đang giữ đã mới nhất chưa,
+   bản app, hoạt động cuối. Máy NV báo qua tt=1 mỗi 30s khi đang mở app (máy chủ giữ 6 giờ); cũ hơn thì lấy NHAT_KY.
+   Đỏ "Kẹt" chỉ khi máy ĐANG MỞ mà quá 10 phút chưa nhận bảng giá mới. Máy đóng app thì không nhận gì là bình thường. */
+var MAYNV=get('maynv',null), NV_APP_MOI='', MAYNV_DANG=0;
+async function taiMayNV_(bam){
+  if(MAYNV_DANG||!QCFG.url||!QCFG.key) { veMayGui(); return }
+  if(!bam && MAYNV && Date.now()-(MAYNV.taiLuc||0)<30000) { veMayGui(); return }
+  MAYNV_DANG=1; if($('mayNVLuc')) $('mayNVLuc').textContent='đang xem…';
+  try{
+    var r=await fetch(QCFG.url+'?maynv=1&may=QUANLY&key='+encodeURIComponent(QCFG.key)), j=JSON.parse(await r.text());
+    if(j.ok){ j.taiLuc=Date.now(); MAYNV=j; set('maynv',j) }
+  }catch(e){}
+  try{ if(bam||!NV_APP_MOI){ var h=await (await fetch('index.html?'+Date.now(),{cache:'no-store'})).text(), m=h.match(/var APP_VER=['"]([^'"]+)['"]/); if(m) NV_APP_MOI=m[1] } }catch(e){}
+  MAYNV_DANG=0; veMayGui(); try{ vePhat() }catch(e){}
 }
+function lucMs_(v){
+  if(v==null||v==='') return 0; if(typeof v==='number') return v;
+  var x=String(v); if(/^\d{4}-\d{2}-\d{2}T/.test(x)) return Date.parse(x)||0;
+  var m=x.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  return m? Date.parse(m[3]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2)+'T'+('0'+m[4]).slice(-2)+':'+m[5]+':'+(m[6]||'00')+'+07:00')||0 : 0;
+}
+function verMs_(v){ var m=String(v||'').match(/^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})/); return m? Date.parse(m[1]+'-'+m[2]+'-'+m[3]+'T'+m[4]+':'+m[5]+':'+m[6]+'+07:00')||0 : 0 }
+function gioVN_(ms){ if(!ms) return '—'; var d=new Date(ms+7*36e5), h=('0'+d.getUTCHours()).slice(-2)+':'+('0'+d.getUTCMinutes()).slice(-2),
+  n=new Date(Date.now()+7*36e5); return d.toISOString().slice(0,10)===n.toISOString().slice(0,10)? h : ('0'+d.getUTCDate()).slice(-2)+'/'+('0'+(d.getUTCMonth()+1)).slice(-2)+' '+h }
+function truoc_(ms){ var p=(Date.now()-ms)/6e4; return p<1.5?'vừa xong':p<60?Math.round(p)+' phút trước':p<36*60?Math.round(p/60)+' giờ trước':Math.round(p/1440)+' ngày trước' }
+function ttMayNV_(m){
+  var J=MAYNV||{}, t=(J.thay||{})[m], nh=(J.nhan||{})[m], g=(J.gui||{})[m]||(MAYGUI||{})[m], bgv=J.bg||'', now=Date.now();
+  var cuoi=Math.max(t?t.luc:0, nh?lucMs_(nh.luc):0, g?lucMs_(g.luc):0);
+  var giu=t?t.bgv:(nh?nh.ver:''), ok=!!giu&&giu===bgv, nhanLuc=(nh&&nh.ver===giu)?lucMs_(nh.luc):0;
+  var mo=t&&now-t.luc<150000, ten=String((t&&t.nv)||(nh&&nh.nv)||(g&&g.nv)||'').split(' · ')[0];
+  var o={m:m,ten:ten||'—',cuoi:cuoi,ok:ok,mo:mo,
+    bg:(ok?'<b>✓ mới nhất</b>':'<b>✗ bản cũ</b>')+(nhanLuc?' · nhận '+gioVN_(nhanLuc):''),
+    app:!t?'—':!t.app?'<b>✗ bản cũ</b>':(NV_APP_MOI&&t.app!==NV_APP_MOI?'<b>✗ '+esc(t.app)+'</b>':'<b>✓ '+esc(t.app)+'</b>')};
+  if(!cuoi){ o.cls='mute'; o.tag='Chưa dùng'; o.phu='chưa thấy hoạt động' }
+  else if(mo){ o.phu='đang mở app';
+    if(ok){ o.cls='ok'; o.tag='Ổn' }
+    else if(now-verMs_(bgv)>600000){ o.cls='bad'; o.tag='Kẹt'; o.goi='Đang mở mà quá 10 phút vẫn chưa nhận bảng giá mới → bảo nhân viên tải lại trang (F5). Còn bị thì báo kỹ sư.' }
+    else { o.cls='warn'; o.tag='Đang nhận'; o.goi='Bảng giá vừa đổi, máy sẽ tự nhận trong vòng 1 phút.' } }
+  else if(now-cuoi>2*864e5){ o.cls='mute'; o.tag='Tắt'; o.phu='không dùng từ '+gioVN_(cuoi) }
+  else { o.phu='đóng app từ '+gioVN_(cuoi);
+    if(ok){ o.cls='ok'; o.tag='Đã có bản mới' }
+    else { o.cls='warn'; o.tag='Chưa mở lại'; o.goi='Mở app lên là tự nhận bảng giá mới và tự lên bản mới, không cần làm gì.' } }
+  return o;
+}
+function dsMayNV_(){ var J=MAYNV||{}; return (J.may||Object.keys(MAYGUI||{})).map(ttMayNV_).filter(function(o){ return o.cuoi })
+  .sort(function(x,y){ var r={bad:0,warn:1,ok:2,mute:3}; return (r[x.cls]-r[y.cls])||(x.m<y.m?-1:1) }) }
+function veMayGui(){
+  MAYGUI=get('maygui',MAYGUI)||{}; var el=$('dsMay'); if(!el) return;
+  if(!MAYNV){ el.innerHTML='<div class="sm">Đang xem tình trạng các máy…</div>'; if(!MAYNV_DANG&&QCFG.url&&QCFG.key) taiMayNV_(); return }
+  if($('mayNVLuc')) $('mayNVLuc').textContent='cập nhật '+gioVN_(MAYNV.taiLuc||MAYNV.luc);
+  var ds=dsMayNV_();
+  el.innerHTML=ds.length? '<div class="mnDs">'+ds.map(function(o){
+    return '<div class="mnMay mn-'+o.cls+'"><div class="mnMa">'+esc(o.m)+'</div><div class="mnAi">'+esc(o.ten)+'<small>'+esc(o.phu)+'</small></div><span class="mnTag">'+o.tag+'</span>'+
+      '<div class="mnCt"><div><i>Bảng giá</i>'+o.bg+'</div><div><i>Bản app</i>'+o.app+'</div><div><i>Hoạt động cuối</i>'+(o.cuoi?gioVN_(o.cuoi)+' · '+truoc_(o.cuoi):'—')+'</div></div>'+
+      (o.goi?'<div class="mnGoi">'+o.goi+'</div>':'')+'</div>' }).join('')+'</div>'
+    : '<div class="sm">Chưa thấy máy nhân viên nào hoạt động.</div>';
+}
+
 /* Giờ gửi có lúc về dạng ISO (Sheets tự đổi "05/09/2026 09:.." thành ngày) — đổi lại cho dễ đọc. */
 function mayGuiLuc_(luc){ var s=String(luc||''); if(/^\d{4}-\d{2}-\d{2}T/.test(s)){ var d=new Date(s); if(!isNaN(d)) return d.toLocaleString('vi-VN') } return s }
 function gioTu(luc){
@@ -8254,6 +8301,10 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261126a', ngay:'26/11/2026', ten:'Khung Máy nhân viên',
+  vaPhieu:[], vaNoi:[],
+  muc:[['moi','Tab Nhân sự: khung <b>Máy nhân viên</b> thay bảng "Máy bán hàng" cũ. Mỗi máy ghi đã nhận bảng giá mới chưa, đang chạy bản app nào, hoạt động lần cuối lúc nào. Đỏ "Kẹt" = máy đang mở mà quá 10 phút chưa nhận bảng giá mới.'],
+       ['moi','Bảng giá: dòng trạng thái ghi bao nhiêu máy NV đã nhận bản mới, bấm "Xem máy nào" để xem chi tiết.']]},
  {ban:'20261125d', ngay:'25/11/2026', ten:'Nút "+ Quy đổi"',
   vaPhieu:[], vaNoi:[],
   muc:[['sua','Nút "+ Thêm giá sỉ" ở Bảng giá đổi tên thành <b>+ Quy đổi</b> (1 Thùng/Bao = mấy đơn vị lẻ → giá).']]},
