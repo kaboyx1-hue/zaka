@@ -730,6 +730,11 @@ tr.ttTat>td{animation:ttTat 1s}
 .ksTag.lau{color:var(--bad);background:color-mix(in srgb,var(--bad) 15%,transparent)}
 .ksTag.moi{color:#2B2100;background:#F5C518}
 .msTag{display:inline-block;margin-top:3px;font-size:11.5px;font-weight:700;border-radius:999px;padding:1px 8px;color:var(--warn);background:color-mix(in srgb,var(--warn) 15%,transparent)}
+.spTag{font-family:inherit;font-size:10.5px;font-weight:700;line-height:1.35;white-space:nowrap;letter-spacing:.02em;padding:1px 7px;border-radius:999px;border:0;cursor:pointer;color:#fff;background:#EE4D2D;vertical-align:1px}
+.spTag.chung{background:var(--warn);color:#1a1200}
+.spThem{font-family:inherit;font-size:10.5px;font-weight:600;line-height:1.35;white-space:nowrap;padding:1px 6px;border-radius:999px;border:1px dashed var(--line);background:none;color:var(--tx2);cursor:pointer;opacity:0;transition:opacity .15s}
+tr:hover .spThem,.spThem:focus{opacity:.8}
+@media (hover:none){.spThem{opacity:.45}}
 .msNhom{border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:8px;padding:10px 12px;margin-top:8px}
 .msMon{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline;padding:4px 0;font-size:13.5px}
 @media (max-width:600px){.ksAn{display:none}}
@@ -2940,13 +2945,22 @@ var TRUC_DA_NAP=false, TRUC_LUU_LUC=0, KEO_BAT_DAU=0;
    CAI_DAT_QL (1 dòng/khoá, giá trị JSON). Lần đầu một máy nối vào: GỘP phần máy đó đang có với
    phần trên Sheet (không mất quyết định nào của máy nào) rồi đẩy lên. Từ đó Sheet là bản gốc.
    ponytail: ghi đè cả gói — hai máy cùng sửa trong ~20 giây thì bản ghi sau thắng. */
-var CD_KHOA=['alias','khacmon','ksxong','anviec','hanthu','nguongHuyHieu','lydogom','ks_phieu','tinhgia','cpcd','aliashs','maunhom','lsbg','dongxet','masan'];
+var CD_KHOA=['alias','khacmon','ksxong','anviec','hanthu','nguongHuyHieu','lydogom','ks_phieu','tinhgia','cpcd','aliashs','maunhom','lsbg','dongxet','masan','dsshopee'];
 /* 26/11/2026 — MÃ SHOPEE riêng từng món ({mã ZAKA: mã Shopee}). Mã ZAKA vẫn là khoá duy nhất (đơn, giá vốn bám theo);
    mã Shopee được phép TRÙNG giữa nhiều món (chủ cố ý) → món dùng chung có nhãn vàng + khối "theo dõi đặc biệt" ở Cảnh báo.
    Lưu trong cài đặt chung các máy quản lý (CAI_DAT_QL), không thêm cột Sheet. */
 var MASAN=get('masan',{})||{};
 var MASAN_MAC_DINH_={'TA-0134':'002','TN-0033':'002','TA-0437':'10','MOI-NV03-261010-151830':'10','TA-0315':'27','TA-0249':'27'};
 function maSan_(sku){ return MASAN[sku]||'' }
+/* Danh sách mã SKU đang bán trên Shopee (101 sản phẩm Đang hoạt động, lấy từ Kênh người bán 26/11/2026). Món có mã
+   nằm trong đây → chỉ hiện 1 nhãn "Shopee" gọn ở Bảng giá. Lưu cài đặt chung (CAI_DAT_QL 'dsshopee'). */
+var DS_SHOPEE_MAC_DINH_=["000001.1", "000003.", "000004.", "000005.", "000006.", "000007.", "00003", "00004", "00009", "00010", "00011", "00013", "00013.", "00015.", "00016", "00017.", "00020", "00021", "00022", "00023", "0003.2.", "0008.", "0009.1", "0009.1 2 GOI", "001", "001.10KG", "001.5KG", "0014.1.", "002", "003", "004", "0045.1", "005", "006", "007", "008", "009", "010", "0452.1", "046.", "046.3 3TUI", "047.1", "047.3 3TUI", "048.1", "049.3 3 TUI", "050.3 3TUI", "0502.", "0505", "055", "056", "058", "059", "06", "07.", "0702", "073", "075", "076.1", "077.1", "078.1", "079.3 3TUI", "08", "09.", "0905.3KG", "0906", "0906.3KG", "10", "10.1", "109", "11", "110", "111", "112", "113", "114", "115", "116", "117", "118", "118 4 GOI", "119", "12.1", "124", "125", "126", "128", "129", "13.1", "130", "134", "135", "136", "14.1", "143", "15", "150", "159", "160", "163", "164", "165", "167", "168", "170", "171", "172", "173", "175", "176", "179", "18", "21", "22", "24", "25", "26", "27", "27.", "28", "29", "2IN1H", "2IN1V", "2IN1XD", "2in1XL", "3.1", "30", "31.", "32", "34", "35", "36", "37.", "38", "4.", "5", "50", "51", "52.", "53", "54", "56", "57", "58", "59", "6", "60", "7.", "8.2", "91", "92", "93", "94", "95", "97", "AE51", "AE52", "AE53", "AE54", "AL040", "AL041", "AL043", "AL063", "AL068", "AL086", "BCMB", "BCMDC", "BCML", "BCMM", "CATSRANG-5", "CB", "CE.1", "CL", "DMR", "G6.1", "G6.10", "G8.10", "GA.B400", "GDHA.3", "JP04", "JP06", "JP13", "JP256", "JP257", "JP259", "JP260", "JP262", "JP263", "JP292", "JP293", "JP294", "JP56", "JP67", "JP68", "JP70", "JP76", "JP78", "JP79", "LITI.30", "M480", "MIKAT.C", "MIKAT.CAFE", "MIKAT.H", "MIKAT.K", "MIKAT.S", "MIKAT.T", "MYHS.15", "MYM.15", "NGRAVY70.COM", "NGRAVY70.CUA", "NGRAVY70.GA", "NGRAVY70.HOI", "NGRAVY70.NGU", "NGRAVY70.TRAP", "NGravy70.Tom", "NJELLY70.BAO", "NJELLY70.COM", "NJELLY70.CUA", "NJELLY70.NGU", "NJELLY70.R.BIEN", "NJELLY70.SASAMI", "NJELLY70.TOM", "NKG70.GA", "NKG70.NGUHOI", "NKITTEN.70 NGU", "NKITTEN70.HOI", "NKITTEN70.SUA", "NKM70.NGU", "PAW70 MOUSSE GA", "PAW70 THACH.GA CA", "PAW70.SDE. GA THO", "PAW70.SDE.GA CA", "PAW70THACH.HOI THU", "PF8M6419BQ22", "PVN786", "RC424230", "RC844", "RC868", "RPC182", "RPC410", "RPC520", "RPC551", "ReflexPlus.04", "S2PET.DIAMOND", "S2PET.V1", "S2PET.V2", "S2PET.V3", "SMH400", "TIMO.500G", "TM.01", "TM.02", "TM.03", "TM.04", "TOMMY.500", "TP-005", "TP-CITY C.1", "TP-CITY CF.1", "TP-CITY H.1", "TP-CITY L.1", "TP-CITY P.1", "TP-CTH", "TP-CTL", "TP-CTP", "TP-CTT", "TP-CTTX", "TP-LITI1", "TP-LITI5.C", "TP-LITI5.HH", "TP-LITI5.LA", "TP-LITI5.SO", "TP-SAND.1", "WheelLH", "WheelLV", "WheelLXD", "WheelLXL", "trendline.03"];
+var DSSP_={}; (get('dsshopee',null)||DS_SHOPEE_MAC_DINH_).forEach(function(c){ DSSP_[c]=1 });
+function maShopee_(sku){ return MASAN[sku] || (DSSP_[sku]?sku:'') }
+function shopeeTag_(sku,nhom){ var m=maShopee_(sku), c=m&&nhom&&nhom[m];
+  if(!m) return ' <button class="spThem" title="Đặt mã Shopee cho món này" onclick="suaMaSan_(\''+sku+'\')">+ Shopee</button>';
+  var ten=c?c.filter(function(k){return k!==sku}).map(function(k){return (GIA[k]||{}).ten||k}).join(', '):'';
+  return ' <button class="spTag'+(c?' chung':'')+'" onclick="suaMaSan_(\''+sku+'\')" title="'+esc(c?'Mã Shopee '+m+' dùng chung với: '+ten+' — theo dõi ở tab Cảnh báo':'Mã này có trên Shopee'+(m!==sku?' (mã Shopee '+m+')':''))+'">Shopee'+(m!==sku?' '+esc(m):'')+(c?' ⚠':'')+'</button>' }
 function nhomMaSan_(){   // {mã Shopee: [mã ZAKA…]} — chỉ những mã có từ 2 món đang bán trở lên
   var m={};
   Object.keys(MASAN).forEach(function(k){ var p=GIA[k]; if(!p||p.ngung||!MASAN[k]) return; (m[MASAN[k]]=m[MASAN[k]]||[]).push(k) });
@@ -2954,9 +2968,9 @@ function nhomMaSan_(){   // {mã Shopee: [mã ZAKA…]} — chỉ những mã c�
   Object.keys(m).forEach(function(c){ if(m[c].length<2) delete m[c] });
   return m }
 function suaMaSan_(sku){ var p=GIA[sku]; if(!p) return;
-  var v=prompt('Mã Shopee của "'+p.ten+'"\n(mã ZAKA: '+sku+')\n\nĐể trống = bỏ mã Shopee riêng (dùng luôn mã ZAKA).',maSan_(sku)||'');
+  var v=prompt('Mã Shopee của "'+p.ten+'"\n(mã ZAKA: '+sku+')\n\nĐể trống = bỏ mã Shopee riêng (dùng luôn mã ZAKA).',maShopee_(sku)||'');
   if(v===null) return; v=v.trim();
-  if(v) MASAN[sku]=v; else delete MASAN[sku];
+  if(v&&v!==sku) MASAN[sku]=v; else delete MASAN[sku];
   set('masan',MASAN); veGia(); veMaSanCB_();
   var n=nhomMaSan_()[v]; if(v&&n) bao('giaMsg','Mã Shopee <b>'+esc(v)+'</b> đang dùng chung cho '+n.length+' món — đã đưa vào theo dõi ở tab Cảnh báo.','ok') }
 function soDon60_(sku){ var n=0; SO.forEach(function(d){ if(d.huy||soNgay(d.iso)>60) return; if((d.dong||[]).some(function(x){return skuChinh(x.sku)===sku})) n++ }); return n }
@@ -2996,7 +3010,8 @@ function napCaiDat_(ds){
     if(v!==undefined) cdGhi_(k,v);
   });
   CD_DANG_NAP=false;
-  MASAN=get('masan',{})||{};
+  MASAN=get('masan',{})||{}; DSSP_={}; (get('dsshopee',null)||DS_SHOPEE_MAC_DINH_).forEach(function(c){ DSSP_[c]=1 });
+  if(sv.dsshopee===undefined && !get('dsshopee',null)) set('dsshopee',DS_SHOPEE_MAC_DINH_);
   if(sv.masan===undefined && !Object.keys(MASAN).length){ MASAN=JSON.parse(JSON.stringify(MASAN_MAC_DINH_)); set('masan',MASAN) }   // 26/11: 3 mã dùng chung chủ chốt
   // nạp lại biến đang chạy
   ALIAS=get('alias',{}); KHAC_MON=get('khacmon',{}); KS_XONG=get('ksxong',{})||{}; LY_DO_GOM=get('lydogom',{});
@@ -4846,7 +4861,7 @@ function veGia(){
     if(LOC_BAN && mucBan_(p.sku)!==LOC_BAN) return false;
     if(locN.length){ if(!LOC_NHOM[p.nhom||'KHÁC']) return false }
     else if(nh&&p.nhom!==nh)return false;
-    return khop_(p.ten+' '+(p.brand||'')+' '+p.sku+' '+maSan_(p.sku)+' '+maCuCua_(p.sku).join(' '),q)});
+    return khop_(p.ten+' '+(p.brand||'')+' '+p.sku+' '+maShopee_(p.sku)+(maShopee_(p.sku)?' shopee':'')+' '+maCuCua_(p.sku).join(' '),q)});
   var MS_NHOM=nhomMaSan_();
   /* Thứ tự mặc định cũ (thiếu vốn lên đầu, rồi theo SKU) làm HỆ QUY CHIẾU cho món
      chưa từng kéo tay — kéo-thả chỉ gán thuTu cho món vừa kéo, mọi món khác vẫn
@@ -4892,9 +4907,7 @@ function veGia(){
           'style="cursor:grab;color:var(--tx2);user-select:none" title="Kéo để đổi thứ tự đứng cùng nhóm">⠿</td>'+
         '<td>'+esc(p.sku)+' <button class="mini" style="padding:1px 6px" title="Đổi mã SKU" onclick="moDoiSku(\''+p.sku+'\')">✏ Đổi</button>'+
         (maCuCua_(p.sku).length?'<div class="sm" style="opacity:.7">mã cũ: '+esc(maCuCua_(p.sku).join(', '))+'</div>':'')+
-        (maSan_(p.sku)?'<div class="sm">Mã Shopee: <b>'+esc(maSan_(p.sku))+'</b></div>':'')+
-        (MS_NHOM[maSan_(p.sku)||p.sku]?'<span class="msTag" title="Theo dõi ở tab Cảnh báo">⚠ Dùng chung mã '+esc(maSan_(p.sku)||p.sku)+' với: '+esc(MS_NHOM[maSan_(p.sku)||p.sku].filter(function(k){return k!==p.sku}).map(function(k){return (GIA[k]||{}).ten||k}).join(', '))+'</span>':'')+
-        ' <button class="mini" style="padding:1px 6px" title="Mã Shopee riêng của món này (được trùng với món khác)" onclick="suaMaSan_(\''+p.sku+'\')">✏ Mã Shopee</button>'+
+        shopeeTag_(p.sku,MS_NHOM)+
         (p.moi?'<br><span class="tag w">nhân viên thêm</span>':'')+
         (p.gopVao?'<br><span class="tag w" style="color:var(--warn)" title="Chỉ gộp chung giá vốn/báo cáo — giá bán vẫn tính riêng, vẫn bán bình thường cho nhân viên">'+
           (ALIAS_HS[p.sku]&&ALIAS_HS[p.sku]!==1?'quy đổi: 1 '+esc(p.dvt||'')+' = '+ALIAS_HS[p.sku]+' × '+esc(p.gopVao):'đã gộp giá vốn → '+esc(p.gopVao))+'</span>'+
@@ -8427,11 +8440,11 @@ function ksTaiVe(){
 var CAP_NHAT=[
  {ban:'20261126c', ngay:'26/11/2026', ten:'Bỏ dòng mã cũ sau khi đổi mã',
   vaPhieu:[],
-  muc:[['sua','Sau đợt đổi sang mã Shopee, máy nào đang mở có thể thấy 1 món 2 dòng (mã cũ + mã mới, vd TA-0199 và RPC182). Nay máy tự bỏ dòng mã cũ, chỉ còn mã mới. Đơn cũ vẫn tính đúng món.']]},
+  muc:[['moi','Bảng giá gọn hơn: món có trên Shopee chỉ còn 1 nhãn cam "Shopee" cạnh mã (mã dùng chung thì nhãn vàng ⚠). Gõ "shopee" ở ô tìm để lọc ra các món đang bán trên Shopee.'],['sua','Sau đợt đổi sang mã Shopee, máy nào đang mở có thể thấy 1 món 2 dòng (mã cũ + mã mới, vd TA-0199 và RPC182). Nay máy tự bỏ dòng mã cũ, chỉ còn mã mới. Đơn cũ vẫn tính đúng món.']]},
  {ban:'20261126b', ngay:'26/11/2026', ten:'Khách theo sản phẩm · Mã Shopee dùng chung',
   vaPhieu:[],
   muc:[['moi','Tab Khách hàng có nút "Theo sản phẩm": gõ tên/mã món để xem khách nào đã mua, bao nhiêu lần, doanh thu, lãi, lần cuối mua. Đơn ghi mã cũ được tính chung vào món mới. Có chép số điện thoại và xuất Excel.'],
-       ['moi','Bảng giá: mỗi món có nút "✏ Mã Shopee". Nhiều món được dùng chung một mã Shopee (vd 002) — có nhãn vàng "⚠ Dùng chung mã" và một khối theo dõi riêng ở tab Cảnh báo, có nút Tách mã.']]},
+       ['moi','Bảng giá: món có mã trên Shopee hiện 1 nhãn cam "Shopee" ngay cạnh mã. Mã Shopee dùng chung cho nhiều món (vd 002) thì nhãn vàng có dấu ⚠, kèm một khối theo dõi riêng ở tab Cảnh báo (nút Tách mã). Bấm nhãn để sửa mã Shopee.']]},
  {ban:'20261126a', ngay:'26/11/2026', ten:'Khung Máy nhân viên',
   vaPhieu:[], vaNoi:[],
   muc:[['moi','Tab Nhân sự: khung <b>Máy nhân viên</b> thay bảng "Máy bán hàng" cũ. Mỗi máy ghi đã nhận bảng giá mới chưa, đang chạy bản app nào, hoạt động lần cuối lúc nào. Đỏ "Kẹt" = máy đang mở mà quá 10 phút chưa nhận bảng giá mới.'],
