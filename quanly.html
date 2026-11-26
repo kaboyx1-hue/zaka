@@ -718,6 +718,21 @@ tr.ttTat>td{animation:ttTat 1s}
 .mnCt b{color:var(--c)}
 .mnGoi{grid-column:1/-1;font-size:12.5px;font-weight:600;color:var(--c);background:var(--cb);border-radius:6px;padding:5px 9px}
 @media (max-width:520px){.mnCt{grid-template-columns:1fr 1fr}.mnCt>div:last-child{grid-column:1/-1}}
+/* 26/11/2026 — khách theo sản phẩm + mã Shopee dùng chung */
+.khSeg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:10px}
+.khSeg button{font:inherit;font-size:13px;font-weight:600;padding:7px 14px;border:0;background:var(--card);color:var(--tx2);cursor:pointer}
+.khSeg button.on{background:var(--tx);color:var(--bg)}
+.ksGoiY{display:flex;flex-direction:column;margin-top:8px}
+.ksGoiY button{font:inherit;text-align:left;padding:8px 10px;border:0;border-top:1px solid var(--line);background:none;color:var(--tx);cursor:pointer}
+.ksGoiY button:first-child{border-top:0}
+.ksLoc{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px}
+.ksTag{font-size:11.5px;font-weight:700;border-radius:999px;padding:1px 8px;white-space:nowrap}
+.ksTag.lau{color:var(--bad);background:color-mix(in srgb,var(--bad) 15%,transparent)}
+.ksTag.moi{color:#2B2100;background:#F5C518}
+.msTag{display:inline-block;margin-top:3px;font-size:11.5px;font-weight:700;border-radius:999px;padding:1px 8px;color:var(--warn);background:color-mix(in srgb,var(--warn) 15%,transparent)}
+.msNhom{border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:8px;padding:10px 12px;margin-top:8px}
+.msMon{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline;padding:4px 0;font-size:13.5px}
+@media (max-width:600px){.ksAn{display:none}}
 </style></head><body>
 <div id="khoa">
   <div class="logoMark">🐾</div>
@@ -870,6 +885,13 @@ tr.ttTat>td{animation:ttTat 1s}
 </section>
 
 <section id="pg-kh" class="hide">
+  <div class="khSeg"><button id="khSegKH" class="on" onclick="khChe('kh')">Theo khách</button><button id="khSegSP" onclick="khChe('sp')">Theo sản phẩm</button></div>
+  <div id="khTheoSP" class="hide">
+    <div class="card"><input id="fksp" placeholder="Gõ tên, mã ZAKA hoặc mã Shopee của món…" oninput="KSP.sku='';veKhSP()" autocomplete="off">
+      <div id="ksGoiY" class="ksGoiY"></div></div>
+    <div id="ksKQ"></div>
+  </div>
+  <div id="khTheoKH">
   <div class="card">
     <input id="khQ" placeholder="Tìm tên khách hoặc số điện thoại…" oninput="KH_LIM=60;veKH()" autocomplete="off">
     <div class="row mt" style="margin-top:8px;flex-wrap:wrap">
@@ -884,6 +906,7 @@ tr.ttTat>td{animation:ttTat 1s}
   <div id="khMsg"></div>
   <div id="khTom"></div>
   <div id="khDs"></div>
+  </div>
 </section>
 <section id="pg-gia" class="hide">
   <div id="giaMsg"></div>
@@ -957,7 +980,7 @@ tr.ttTat>td{animation:ttTat 1s}
   <div class="card mt" id="mayNVCard"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px"><h2 style="margin:0;margin-right:auto">Máy nhân viên</h2><span class="sm" id="mayNVLuc"></span><button class="btn2" onclick="taiMayNV_(1)">↻ Xem lại</button></div><div id="dsMay" style="margin-top:10px"></div></div>
 </section>
 
-<section id="pg-cb" class="hide"><div id="cb"></div></section>
+<section id="pg-cb" class="hide"><div id="cbMaSan"></div><div id="cb"></div></section>
 
 <section id="pg-vh" class="hide">
   <div id="vhMsg"></div>
@@ -1254,7 +1277,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261126a';
+var APP_VER='20261126b';
 /* 16/11/2026: mọi lần máy quản lý GỬI lên Sheet đều kèm số phiên bản (máy chủ chặn bản cũ ghi bảng giá) và tên máy
    (ghi vào NHAT_KY để biết máy nào làm gì). Gắn ở một chỗ duy nhất thay vì sửa từng lệnh gửi. */
 (function(){
@@ -2917,7 +2940,34 @@ var TRUC_DA_NAP=false, TRUC_LUU_LUC=0, KEO_BAT_DAU=0;
    CAI_DAT_QL (1 dòng/khoá, giá trị JSON). Lần đầu một máy nối vào: GỘP phần máy đó đang có với
    phần trên Sheet (không mất quyết định nào của máy nào) rồi đẩy lên. Từ đó Sheet là bản gốc.
    ponytail: ghi đè cả gói — hai máy cùng sửa trong ~20 giây thì bản ghi sau thắng. */
-var CD_KHOA=['alias','khacmon','ksxong','anviec','hanthu','nguongHuyHieu','lydogom','ks_phieu','tinhgia','cpcd','aliashs','maunhom','lsbg','dongxet'];
+var CD_KHOA=['alias','khacmon','ksxong','anviec','hanthu','nguongHuyHieu','lydogom','ks_phieu','tinhgia','cpcd','aliashs','maunhom','lsbg','dongxet','masan'];
+/* 26/11/2026 — MÃ SHOPEE riêng từng món ({mã ZAKA: mã Shopee}). Mã ZAKA vẫn là khoá duy nhất (đơn, giá vốn bám theo);
+   mã Shopee được phép TRÙNG giữa nhiều món (chủ cố ý) → món dùng chung có nhãn vàng + khối "theo dõi đặc biệt" ở Cảnh báo.
+   Lưu trong cài đặt chung các máy quản lý (CAI_DAT_QL), không thêm cột Sheet. */
+var MASAN=get('masan',{})||{};
+var MASAN_MAC_DINH_={'TA-0134':'002','TN-0033':'002','TA-0437':'10','MOI-NV03-261010-151830':'10','TA-0315':'27','TA-0249':'27'};
+function maSan_(sku){ return MASAN[sku]||'' }
+function nhomMaSan_(){   // {mã Shopee: [mã ZAKA…]} — chỉ những mã có từ 2 món đang bán trở lên
+  var m={};
+  Object.keys(MASAN).forEach(function(k){ var p=GIA[k]; if(!p||p.ngung||!MASAN[k]) return; (m[MASAN[k]]=m[MASAN[k]]||[]).push(k) });
+  Object.keys(m).forEach(function(c){ if(GIA[c]&&!GIA[c].ngung&&m[c].indexOf(c)<0&&!MASAN[c]) m[c].push(c) });   // món có mã ZAKA đúng bằng mã Shopee đó
+  Object.keys(m).forEach(function(c){ if(m[c].length<2) delete m[c] });
+  return m }
+function suaMaSan_(sku){ var p=GIA[sku]; if(!p) return;
+  var v=prompt('Mã Shopee của "'+p.ten+'"\n(mã ZAKA: '+sku+')\n\nĐể trống = bỏ mã Shopee riêng (dùng luôn mã ZAKA).',maSan_(sku)||'');
+  if(v===null) return; v=v.trim();
+  if(v) MASAN[sku]=v; else delete MASAN[sku];
+  set('masan',MASAN); veGia(); veMaSanCB_();
+  var n=nhomMaSan_()[v]; if(v&&n) bao('giaMsg','Mã Shopee <b>'+esc(v)+'</b> đang dùng chung cho '+n.length+' món — đã đưa vào theo dõi ở tab Cảnh báo.','ok') }
+function soDon60_(sku){ var n=0; SO.forEach(function(d){ if(d.huy||soNgay(d.iso)>60) return; if((d.dong||[]).some(function(x){return skuChinh(x.sku)===sku})) n++ }); return n }
+function veMaSanCB_(){ var el=$('cbMaSan'); if(!el) return; var m=nhomMaSan_(), ks=Object.keys(m);
+  if(!ks.length){ el.innerHTML=''; return }
+  el.innerHTML='<div class="card" style="border-color:var(--warn)"><h2 style="margin:0">Mã Shopee dùng chung — theo dõi đặc biệt ('+ks.length+')</h2>'+
+    '<div class="sm" style="margin-top:4px">Trên Shopee các mã này đang gắn cho nhiều hơn một món. Mỗi món vẫn có mã ZAKA riêng nên đơn và giá vốn không lẫn nhau. Khi anh tách mã trên Shopee thì bấm <b>Tách mã</b> để ghi mã mới cho món đó.</div>'+
+    ks.sort().map(function(c){ return '<div class="msNhom"><b style="font-size:15px">Mã '+esc(c)+'</b> <span class="msTag">'+m[c].length+' món dùng chung</span>'+
+      m[c].map(function(k){ var p=GIA[k]; return '<div class="msMon"><b>'+esc(p.ten)+'</b><span class="sm">mã ZAKA '+esc(k)+' · '+tien(p.gb||0)+' · '+soDon60_(k)+' đơn/60 ngày</span>'+
+        ' <button class="mini" onclick="suaMaSan_(\''+esc(k)+'\')">Tách mã…</button></div>' }).join('')+'</div>' }).join('')+'</div>';
+}
 var CD_DANG_NAP=false, CD_HEN=null, CD_DA_NAP=false, CHO_GUI_KHO=false, CD_CHO_DAY=false, CD_SO=0;
 /* 28/09/2026 — dữ liệu trang Tính giá sàn (khoá 'tinhgia' = {khoá trình duyệt: giá trị}) lưu mỗi khoá một dòng
    'tg:<khoá>' trên CAI_DAT_QL (tránh 1 ô quá dài). Chỉ gửi xuống trang con SAU khi đã kéo Sheet về — gửi sớm
@@ -2946,6 +2996,8 @@ function napCaiDat_(ds){
     if(v!==undefined) cdGhi_(k,v);
   });
   CD_DANG_NAP=false;
+  MASAN=get('masan',{})||{};
+  if(sv.masan===undefined && !Object.keys(MASAN).length){ MASAN=JSON.parse(JSON.stringify(MASAN_MAC_DINH_)); set('masan',MASAN) }   // 26/11: 3 mã dùng chung chủ chốt
   // nạp lại biến đang chạy
   ALIAS=get('alias',{}); KHAC_MON=get('khacmon',{}); KS_XONG=get('ksxong',{})||{}; LY_DO_GOM=get('lydogom',{});
   HAN_THU=get('hanthu',7); NGUONG_HH_=get('nguongHuyHieu',NGUONG_HH_MACDINH_); CPCD=get('cpcd',{}); ALIAS_HS=get('aliashs',{}); MAU_NHOM=get('maunhom',{}); LS_BG=get('lsbg',[]); DH_XET=get('dongxet',{});
@@ -4794,7 +4846,8 @@ function veGia(){
     if(LOC_BAN && mucBan_(p.sku)!==LOC_BAN) return false;
     if(locN.length){ if(!LOC_NHOM[p.nhom||'KHÁC']) return false }
     else if(nh&&p.nhom!==nh)return false;
-    return khop_(p.ten+' '+(p.brand||'')+' '+p.sku+' '+maCuCua_(p.sku).join(' '),q)});
+    return khop_(p.ten+' '+(p.brand||'')+' '+p.sku+' '+maSan_(p.sku)+' '+maCuCua_(p.sku).join(' '),q)});
+  var MS_NHOM=nhomMaSan_();
   /* Thứ tự mặc định cũ (thiếu vốn lên đầu, rồi theo SKU) làm HỆ QUY CHIẾU cho món
      chưa từng kéo tay — kéo-thả chỉ gán thuTu cho món vừa kéo, mọi món khác vẫn
      đứng nguyên vị trí cũ theo hệ quy chiếu này (dùng số cách nhau 1000 để luôn còn
@@ -4839,6 +4892,9 @@ function veGia(){
           'style="cursor:grab;color:var(--tx2);user-select:none" title="Kéo để đổi thứ tự đứng cùng nhóm">⠿</td>'+
         '<td>'+esc(p.sku)+' <button class="mini" style="padding:1px 6px" title="Đổi mã SKU" onclick="moDoiSku(\''+p.sku+'\')">✏ Đổi</button>'+
         (maCuCua_(p.sku).length?'<div class="sm" style="opacity:.7">mã cũ: '+esc(maCuCua_(p.sku).join(', '))+'</div>':'')+
+        (maSan_(p.sku)?'<div class="sm">Mã Shopee: <b>'+esc(maSan_(p.sku))+'</b></div>':'')+
+        (MS_NHOM[maSan_(p.sku)||p.sku]?'<span class="msTag" title="Theo dõi ở tab Cảnh báo">⚠ Dùng chung mã '+esc(maSan_(p.sku)||p.sku)+' với: '+esc(MS_NHOM[maSan_(p.sku)||p.sku].filter(function(k){return k!==p.sku}).map(function(k){return (GIA[k]||{}).ten||k}).join(', '))+'</span>':'')+
+        ' <button class="mini" style="padding:1px 6px" title="Mã Shopee riêng của món này (được trùng với món khác)" onclick="suaMaSan_(\''+p.sku+'\')">✏ Mã Shopee</button>'+
         (p.moi?'<br><span class="tag w">nhân viên thêm</span>':'')+
         (p.gopVao?'<br><span class="tag w" style="color:var(--warn)" title="Chỉ gộp chung giá vốn/báo cáo — giá bán vẫn tính riêng, vẫn bán bình thường cho nhân viên">'+
           (ALIAS_HS[p.sku]&&ALIAS_HS[p.sku]!==1?'quy đổi: 1 '+esc(p.dvt||'')+' = '+ALIAS_HS[p.sku]+' × '+esc(p.gopVao):'đã gộp giá vốn → '+esc(p.gopVao))+'</span>'+
@@ -6507,6 +6563,7 @@ function dsKhachQL_(){
   });
 }
 function veKH(){
+  if(KH_CHE==='sp'){ veKhSP(); return }
   var all=dsKhachQL_(), q=kd(($('khQ').value||'').trim()), qs=q.replace(/\D/g,'').replace(/^0+/,'');
   var sel=$('khKenh'), kenhCu=sel.value, dsK={}; all.forEach(function(o){dsK[o.kenh]=1});
   sel.innerHTML='<option value="">Tất cả kênh</option>'+Object.keys(dsK).sort().map(function(k){return '<option'+(k===kenhCu?' selected':'')+'>'+esc(k)+'</option>'}).join('');
@@ -6538,6 +6595,70 @@ function veKH(){
     }).join('')+
     (ds.length>KH_LIM?'<div style="text-align:center;padding:10px 0"><button class="btn2" onclick="KH_LIM+=60;veKH()">Xem thêm · còn '+(ds.length-KH_LIM)+'</button></div>':'')+'</div>';
 }
+/* ═══ 26/11/2026 Khách theo sản phẩm (quản lý) — chỉ đọc SO, gom mã cũ về món mới qua skuChinh ═══ */
+var KH_CHE='kh', KSP={sku:'',ky:0,sap:'dt'};
+function khChe(c){ KH_CHE=c;
+  $('khSegKH').classList.toggle('on',c==='kh'); $('khSegSP').classList.toggle('on',c==='sp');
+  $('khTheoKH').classList.toggle('hide',c!=='kh'); $('khTheoSP').classList.toggle('hide',c!=='sp');
+  if(c==='sp') veKhSP(); else veKH() }
+function ksGom_(sku){ var m={};
+  SO.forEach(function(d){ if(d.huy) return; var k=chuanSdt_(d.sdt); if(!k) return; var iso=String(d.iso||'');
+    (d.dong||[]).forEach(function(x){ if(skuChinh(x.sku)!==sku) return;
+      var c=m[k]||(m[k]={k:k,sdt:String(d.sdt||'').trim(),ten:d.khach,kenh:d.kenh,lan:{},sl:0,dt:0,lai:0,cuoi:'',gia:0,dv:''});
+      var hs=Number(x.hs)||1, tt=Number(x.thanhTien)||(Number(x.gia)||0)*(Number(x.sl)||0);
+      c.lan[d.ma]=1; c.sl+=(Number(x.sl)||0)*hs; c.dt+=tt; c.lai+=(typeof x.lai==='number'?x.lai:tt-vonDong_(x)*(Number(x.sl)||0));
+      if(iso>=c.cuoi){ c.cuoi=iso; c.gia=Number(x.gia)||0; c.dv=x.dv||''; c.ten=d.khach||c.ten; c.kenh=d.kenh||c.kenh } }) });
+  return Object.keys(m).map(function(k){return m[k]}) }
+function ksSoKhach_(){ var m={}; SO.forEach(function(d){ if(d.huy) return; var k=chuanSdt_(d.sdt); if(!k) return;
+  (d.dong||[]).forEach(function(x){ var s=skuChinh(x.sku); (m[s]=m[s]||{})[k]=1 }) }); return m }
+function veKhSP(){
+  var q=kd(($('fksp').value||'').trim());
+  if(!KSP.sku){
+    var dem=ksSoKhach_();
+    var ds=Object.keys(GIA).filter(function(s){ var p=GIA[s]; return p && !p.gopVao && q && khop_(p.ten+' '+(p.brand||'')+' '+s+' '+maSan_(s)+' '+maCuCua_(s).join(' '),q) })
+      .sort(function(a,b){ return Object.keys(dem[b]||{}).length-Object.keys(dem[a]||{}).length });
+    $('ksGoiY').innerHTML=!q?'<div class="sm">Gõ vài chữ tên món, mã ZAKA hoặc mã Shopee, ví dụ "pani lav", "075".</div>':
+      (ds.slice(0,12).map(function(s){ var p=GIA[s], n=Object.keys(dem[s]||{}).length;
+        return '<button onclick="KSP.sku=this.dataset.s;$(\'fksp\').value=this.dataset.t;veKhSP()" data-s="'+esc(s)+'" data-t="'+esc(p.ten)+'">'+esc(p.ten)+
+          ' <span class="sm">· '+esc(s)+(maSan_(s)?' · Shopee '+esc(maSan_(s)):'')+' · '+n+' khách'+(p.ngung?' · ngừng bán':'')+'</span></button>' }).join('')||'<div class="sm">Không có món nào khớp.</div>');
+    $('ksKQ').innerHTML=''; return }
+  $('ksGoiY').innerHTML='';
+  var p=GIA[KSP.sku]||{ten:KSP.sku,dvt:''};
+  var ds=ksGom_(KSP.sku).filter(function(c){ return !KSP.ky||soNgay(c.cuoi)<=KSP.ky });
+  ds.sort(function(a,b){ var s=KSP.sap; return s==='lai'?b.lai-a.lai : s==='cuoi'?b.cuoi.localeCompare(a.cuoi) : s==='lau'?a.cuoi.localeCompare(b.cuoi) : s==='lan'?Object.keys(b.lan).length-Object.keys(a.lan).length : b.dt-a.dt });
+  var dt=0,lai=0,sl=0,lau=0; ds.forEach(function(c){ dt+=c.dt; lai+=c.lai; sl+=c.sl; if(soNgay(c.cuoi)>45) lau++ });
+  KSP.ds=ds; var dv=String(p.dvt||'').replace(/^1\s*(?=\D)/,'')||'đv';
+  $('ksKQ').innerHTML='<div class="card">'+
+    '<div class="ksLoc"><span class="sm">Mua trong:</span>'+[[0,'Tất cả'],[30,'30 ngày'],[90,'90 ngày'],[180,'6 tháng']].map(function(k){
+      return '<button class="chip'+(KSP.ky===k[0]?' on':'')+'" onclick="KSP.ky='+k[0]+';veKhSP()">'+k[1]+'</button>'}).join('')+
+    ' <select onchange="KSP.sap=this.value;veKhSP()">'+[['dt','Doanh thu cao nhất'],['lai','Lãi cao nhất'],['lan','Mua nhiều lần nhất'],['cuoi','Mua gần nhất'],['lau','Lâu chưa mua lại']].map(function(o){
+      return '<option value="'+o[0]+'"'+(KSP.sap===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select>'+
+    ' <button class="mini" onclick="KSP.sku=\'\';$(\'fksp\').value=\'\';veKhSP();$(\'fksp\').focus()">← Chọn món khác</button></div>'+
+    '<div class="kpi" style="margin-bottom:10px"><div class="k-info"><small>Khách đã mua</small><b>'+ds.length+'</b><span class="sm" style="display:block">'+(Math.round(sl*100)/100).toLocaleString('vi-VN')+' '+esc(dv)+'</span></div>'+
+      '<div><small>Doanh thu</small><b>'+tien(dt)+'</b></div><div class="k-ok"><small>Lãi</small><b>'+tien(lai)+'</b></div>'+
+      '<div class="k-pur"><small>Quá 45 ngày chưa mua lại</small><b>'+lau+'</b></div></div>'+
+    (ds.length?'<div style="overflow-x:auto"><table><tr><th>Khách</th><th class="ksAn">Kênh</th><th class="r">Lần</th><th class="r">SL</th><th class="r">Doanh thu</th><th class="r">Lãi</th><th>Mua cuối</th></tr>'+
+    ds.map(function(c){ var n=soNgay(c.cuoi);
+      return '<tr><td><a href="#" onclick="ksMoKhach_(\''+esc(c.k)+'\');return false"><b>'+esc(c.ten||c.sdt)+'</b></a>'+
+        (n>45?' <span class="ksTag lau">'+n+' ngày chưa mua lại</span>':n<=7?' <span class="ksTag moi">vừa mua</span>':'')+'<div class="sm">'+esc(c.sdt)+'</div></td>'+
+        '<td class="ksAn">'+esc(c.kenh||'')+'</td><td class="r">'+Object.keys(c.lan).length+'</td><td class="r">'+(Math.round(c.sl*100)/100).toLocaleString('vi-VN')+'</td>'+
+        '<td class="r">'+tien(c.dt)+'</td><td class="r" style="color:var(--ok)">'+tien(c.lai)+'</td>'+
+        '<td>'+esc(c.cuoi.split('-').reverse().join('/'))+'<div class="sm">'+tien(c.gia)+'/'+esc(c.dv)+'</div></td></tr>' }).join('')+'</table></div>'+
+    '<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button class="mini" onclick="ksChepSdt_()">📋 Chép '+ds.length+' số điện thoại</button>'+
+    '<button class="mini" onclick="ksXuat_()">⬇ Xuất Excel</button><span class="sm" id="ksChep"></span></div>'
+    :'<div class="empty">Không có khách nào mua món này trong khoảng thời gian đã chọn.</div>')+
+    '<div class="sm" style="margin-top:8px">Chỉ tính đơn có số điện thoại, không tính đơn đã huỷ. Đơn ghi mã cũ của món (trước khi đổi mã / gộp) được tính chung. Lãi theo giá vốn đã lưu trong từng đơn.</div></div>';
+}
+function ksMoKhach_(k){ khChe('kh'); KH_LOC=''; KH_MO=k; var c=(KSP.ds||[]).filter(function(x){return x.k===k})[0]; $('khQ').value=c?c.sdt:''; KH_LIM=60; veKH() }
+function ksChepSdt_(){ var t=(KSP.ds||[]).map(function(c){return c.sdt}).join('\n'); if(!t) return;
+  var xong=function(){ $('ksChep').textContent='Đã chép '+KSP.ds.length+' số' };
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(xong,function(){ prompt('Chép danh sách này:',t.replace(/\n/g,', ')) });
+  else prompt('Chép danh sách này:',t.replace(/\n/g,', ')) }
+function ksXuat_(){ var p=GIA[KSP.sku]||{ten:KSP.sku}, q=function(s){ s=String(s==null?'':s); return /[",\n;]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s };
+  var dong=[['Khách','SĐT','Kênh','Số lần mua','Số lượng','Doanh thu','Lãi','Mua cuối','Giá lần cuối']].concat((KSP.ds||[]).map(function(c){
+    return [c.ten,"'"+c.sdt,c.kenh||'',Object.keys(c.lan).length,Math.round(c.sl*100)/100,Math.round(c.dt),Math.round(c.lai),c.cuoi.split('-').reverse().join('/'),Math.round(c.gia)] }));
+  var csv='\ufeff'+dong.map(function(r){return r.map(q).join(',')}).join('\r\n');
+  cnTai_(new Blob([csv],{type:'text/csv;charset=utf-8'}), 'Khach mua '+String(p.ten).replace(/[\\/:*?"<>|]/g,'')+'.csv') }
 function hoSoKH_(o){
   var mon={}; o.don.forEach(function(d){ (d.dong||[]).forEach(function(x){ var t=x.ten||x.sku; mon[t]=(mon[t]||0)+(Number(x.sl)||0) }) });
   var top=Object.keys(mon).sort(function(a,b){return mon[b]-mon[a]}).slice(0,6);
@@ -6727,7 +6848,7 @@ function cbGiao(){
   return h;
 }
 function veCB(){
-  setTimeout(capNhatCD_,0);
+  setTimeout(capNhatCD_,0); try{ veMaSanCB_() }catch(e){}
   if(tinhLaiIm_()){ setTimeout(function(){ veSo(); veBC() },0) }
   var gia=cbGiao();
   var tt=veTrungTen();
@@ -8301,6 +8422,10 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261126b', ngay:'26/11/2026', ten:'Khách theo sản phẩm · Mã Shopee dùng chung',
+  vaPhieu:[],
+  muc:[['moi','Tab Khách hàng có nút "Theo sản phẩm": gõ tên/mã món để xem khách nào đã mua, bao nhiêu lần, doanh thu, lãi, lần cuối mua. Đơn ghi mã cũ được tính chung vào món mới. Có chép số điện thoại và xuất Excel.'],
+       ['moi','Bảng giá: mỗi món có nút "✏ Mã Shopee". Nhiều món được dùng chung một mã Shopee (vd 002) — có nhãn vàng "⚠ Dùng chung mã" và một khối theo dõi riêng ở tab Cảnh báo, có nút Tách mã.']]},
  {ban:'20261126a', ngay:'26/11/2026', ten:'Khung Máy nhân viên',
   vaPhieu:[], vaNoi:[],
   muc:[['moi','Tab Nhân sự: khung <b>Máy nhân viên</b> thay bảng "Máy bán hàng" cũ. Mỗi máy ghi đã nhận bảng giá mới chưa, đang chạy bản app nào, hoạt động lần cuối lúc nào. Đỏ "Kẹt" = máy đang mở mà quá 10 phút chưa nhận bảng giá mới.'],
