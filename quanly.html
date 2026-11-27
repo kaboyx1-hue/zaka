@@ -1283,7 +1283,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261127a';
+var APP_VER='20261127b';
 /* 16/11/2026: mọi lần máy quản lý GỬI lên Sheet đều kèm số phiên bản (máy chủ chặn bản cũ ghi bảng giá) và tên máy
    (ghi vào NHAT_KY để biết máy nào làm gì). Gắn ở một chỗ duy nhất thay vì sửa từng lệnh gửi. */
 (function(){
@@ -2813,8 +2813,15 @@ function set(k,v){
      (dò món trùng tên, đếm đơn theo món). Gắn ngay tại đây để không bao giờ
      sót chỗ nào — mọi lần ghi đều đi qua hàm này. */
   if(k==='gia'||k==='alias'||k==='so') xoaDemNang_();
-  try{localStorage.setItem(K+k,JSON.stringify(v))}catch(e){}
+  /* 27/11/2026: bộ nhớ trình duyệt đầy thì lần ghi âm thầm hỏng — bảng giá trong máy đứng ở bản cũ mà số "bản" vẫn mới,
+     F5 nạp lại bảng cũ và không kéo Sheet nữa. Nay hỏng thì nhường chỗ của bản chụp 'giagoc' rồi ghi lại; trả về đã ghi được hay chưa. */
+  var ok=true, s=JSON.stringify(v);
+  try{localStorage.setItem(K+k,s)}catch(e){ ok=false;
+    if(k!=='giagoc') try{ localStorage.removeItem(K+'giagoc'); localStorage.setItem(K+k,s); ok=true }catch(e2){}
+    if(!ok) console.warn('Bộ nhớ trình duyệt đầy — chưa lưu được "'+k+'" vào máy này (dữ liệu trên Sheet không ảnh hưởng)');
+  }
   if(typeof CD_KHOA!=='undefined'&&CD_KHOA&&CD_KHOA.indexOf(k)>=0) cdHenDay_();
+  return ok;
 }
 var DEM_TRUNG=null, DEM_BAN=null;
 /* ═══ NHỚ NHỮNG CẶP CHỦ ĐÃ NÓI "HAI MÓN KHÁC NHAU" — 10/09/2026, phiếu 34 ═══
@@ -7161,7 +7168,7 @@ async function dayVon(im){
     var j=JSON.parse(await r.text());
     if(!j.ok) throw new Error(j.loi||'Sheet từ chối');
     if(hut.length>5) setTimeout(function(){ bao('giaMsg','Máy này bị thiếu <b>'+hut.length+' món</b> so với Sheet ('+hut.slice(0,5).map(esc).join(', ')+'…) — đã lấy lại từ bản Sheet trước rồi mới lưu, không mất món nào.','wa') },50);
-    VONVER=j.ver; set('vonver',VONVER); VON_CHO_DAY=false; XOA_TAY={}; set('xoatay',{});
+    VONVER=j.ver; set('vonver',VONVER); set('giaok',set('gia',GIA)?VONVER:''); VON_CHO_DAY=false; XOA_TAY={}; set('xoatay',{});
     VERQL.von=j.ver; set('verql',VERQL); chupGoc_();   // lần lưu của chính máy này không tính là "người khác vừa sửa" — tự lưu lần sau khỏi bị hỏi oan
     if(im) bao('giaMsg','Đã lưu <b>'+j.so.toLocaleString('vi-VN')+' dòng</b> lên Google Sheet '+
       '(trang BANG_GIA_QL, chỉ mở được bằng mật khẩu quản lý).<br>'+
@@ -7172,7 +7179,7 @@ async function dayVon(im){
 /* Nhận bản đầy đủ từ máy quản lý kia — giá bán, tên, đơn vị, quy đổi, giá vốn,
    hàng ngừng bán, hàng mới. Tất cả. Đây là chỗ điện thoại và máy bàn khớp nhau. */
 function napVonTuSheet(ds,ver){
-  if(!ver||ver===get('vonver','')) return;
+  if(!ver||(ver===get('vonver','')&&ver===get('giaok',''))) return;   // giaok: bảng giá của bản này đã THẬT SỰ ghi được vào máy
   if(VON_CHO_DAY) return;   // máy này còn sửa chưa gửi lên — gửi xong mới nhận, khỏi bị đè mất
   var them=0, sua=0, doi=[], coTrongSheet={};
   ds.forEach(function(x){
@@ -7197,7 +7204,7 @@ function napVonTuSheet(ds,ver){
      giới hạn xoá ở trên (đợt đổi 229 mã SKU Shopee làm máy đang mở hiện 2 dòng cho 1 món: mã cũ + mã mới). */
   thieuSheet.forEach(function(k){ if(GIA[k] && ALIAS[k] && coTrongSheet[skuChinh(k)]){ delete GIA[k]; xoa++ } });
 
-  set('gia',GIA); VONVER=ver; set('vonver',ver); chupGoc_();
+  VONVER=ver; set('vonver',ver); set('giaok',set('gia',GIA)?ver:''); chupGoc_();
   if(them||sua||xoa){
     setTimeout(function(){ bao('giaMsg','Đã đồng bộ bảng giá với máy quản lý kia: '+
       '<b>'+sua+' sửa</b> · <b>'+them+' thêm</b>'+(xoa?' · <b>'+xoa+' xoá</b>':'')+
@@ -8452,6 +8459,9 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261127b', ngay:'27/11/2026', ten:'F5 không còn quay về bảng giá cũ',
+  vaPhieu:[],
+  muc:[['sua','Bộ nhớ trình duyệt đầy làm bảng giá trong máy đứng ở bản cũ (vd 2 mã Pawtiful cũ của nhân viên) dù Sheet đã đúng. Nay máy tự kéo lại bảng giá từ Sheet nếu lần lưu vào máy bị hỏng.']]},
  {ban:'20261127a', ngay:'27/11/2026', ten:'Điền giá vốn hàng loạt',
   vaPhieu:[],
   muc:[['moi','Bảng giá → ✏ Sửa hàng loạt món đang hiện: có thêm ô <b>Giá vốn</b>. Gõ ô tìm cho ra đúng các món (vd "pawtiful"), điền 1 giá vốn là áp cho tất cả; bao/thùng quy đổi tự nhân theo. Đơn đã bán giữ giá vốn cũ, chỉ đơn đang chờ giá vốn được điền.']]},
