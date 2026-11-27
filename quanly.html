@@ -1283,7 +1283,7 @@ setTimeout(function(){
    phải bỏ qua mọi bộ nhớ đệm. Nếu bản trên server có APP_VER khác bản đang
    chạy thì tự tải lại với tham số ngẫu nhiên để chắc chắn lấy bản mới.
    Chỉ tự tải lại TỐI ĐA 1 LẦN mỗi phiên, tránh lặp vô hạn khi mất mạng. */
-var APP_VER='20261126e';
+var APP_VER='20261127a';
 /* 16/11/2026: mọi lần máy quản lý GỬI lên Sheet đều kèm số phiên bản (máy chủ chặn bản cũ ghi bảng giá) và tên máy
    (ghi vào NHAT_KY để biết máy nào làm gì). Gắn ở một chỗ duy nhất thay vì sửa từng lệnh gửi. */
 (function(){
@@ -6267,6 +6267,9 @@ function moSuaLo(){
       '<input id="slGia" placeholder="ví dụ 10 hoặc -5"></div>'+
     '<label class="row sm" style="gap:6px;margin-top:6px"><input type="checkbox" id="slQD" checked style="width:auto"> '+
       'Giá bao/thùng quy đổi nhảy theo: <b>hệ số × giá đơn vị gốc mới</b> (bỏ tích = giữ nguyên giá quy đổi; sau đó vẫn sửa tay từng món được)</label>'+
+    '<label class="mt">Giá vốn (giá nhập 1 đơn vị gốc)</label>'+
+    '<input id="slVon" inputmode="numeric" placeholder="để trống = giữ nguyên · ví dụ 11000">'+
+    '<div class="sm" style="margin-top:4px;opacity:.75">Giá vốn bao/thùng quy đổi tự = hệ số × giá vốn này. Đơn đã bán giữ nguyên giá vốn cũ — chỉ đơn đang <b>chờ giá vốn</b> được điền theo.</div>'+
     '<label class="mt">Thuế VAT (%)</label>'+
     '<input id="slVat" inputmode="decimal" placeholder="để trống = giữ nguyên · ví dụ 8, 10, hoặc 0">'+
     '<label class="mt">Đơn vị tính (đơn vị gốc)</label>'+
@@ -6290,8 +6293,10 @@ function xemTruocSuaLo(){
   var qdTheo=$('slQD').checked, dvt=($('slDvt').value||'').trim(), vatRaw=String($('slVat').value||'').trim().replace(',','.');
   var vat=vatRaw===''?null:Number(vatRaw.replace('%',''));
   if(vat!==null && (!isFinite(vat)||vat<0||vat>100)){ bao('slErr','VAT phải là số từ 0 đến 100.','wa'); return }
+  var vonRaw=String($('slVon').value||'').trim(), von=vonRaw===''?null:n2(vonRaw);
+  if(von!==null && !(von>0)){ bao('slErr','Giá vốn phải là số lớn hơn 0.','wa'); return }
   if(/^\s*-/.test(raw)) so=-Math.abs(so);
-  if(!nhom && !brand && !kieu && ngung==='' && vat===null && !dvt){ bao('slErr','Chưa chọn đổi gì cả.','wa'); return }
+  if(!nhom && !brand && !kieu && ngung==='' && vat===null && !dvt && von===null){ bao('slErr','Chưa chọn đổi gì cả.','wa'); return }
   if(kieu && !so){ bao('slErr','Chọn đổi giá thì phải điền số.','wa'); return }
   var ra=[];
   ds.forEach(function(p){
@@ -6309,14 +6314,17 @@ function xemTruocSuaLo(){
     var coVat=!(p.vat===null||p.vat===undefined||p.vat==='');
     if(vat!==null && (!coVat||Number(p.vat)!==vat)) doi.push({nhan:'VAT',cu:coVat?p.vat+'%':'chưa gán',moi:vat+'%'});
     if(dvt && (p.dvt||'')!==dvt) doi.push({nhan:'Đơn vị tính',cu:p.dvt||'—',moi:dvt});
+    var vonMoi=von===null?p.von:von, qdVonMoi=p.qd_von||0;
+    if(von!==null && von!==(p.von||0)) doi.push({nhan:'Giá vốn',cu:p.von||0,moi:von,so:1});
+    if(von!==null && p.qd_dv && p.qd_sl){ qdVonMoi=Math.round(p.qd_sl*von); if(qdVonMoi!==(p.qd_von||0)) doi.push({nhan:'Giá vốn '+p.qd_dv,cu:p.qd_von||0,moi:qdVonMoi,so:1}) }
     var ngMoi = ngung==='' ? p.ngung : (ngung==='1');
     if(ngung!=='' && !!p.ngung!==!!ngMoi) doi.push({nhan:'Ngừng bán',cu:p.ngung?'có':'không',moi:ngMoi?'có':'không'});
     if(!doi.length) return;
     var canh=[];
-    if(p.von && gbMoi && p.von>gbMoi) canh.push('giá bán mới THẤP HƠN giá vốn '+tien(p.von));
+    if(vonMoi && gbMoi && vonMoi>gbMoi) canh.push('giá bán THẤP HƠN giá vốn '+tien(vonMoi));
     ra.push({sku:p.sku,ten:p.ten,doi:doi,canh:canh,
              ap:{nhom:nhom||p.nhom, brand:brand||p.brand, gb:gbMoi, ngung:!!ngMoi, qd_gb:qdMoi,
-                 vat:vat===null?p.vat:vat, dvt:dvt||p.dvt}});
+                 vat:vat===null?p.vat:vat, dvt:dvt||p.dvt, von:von, qd_von:qdVonMoi}});
   });
   if(!ra.length){ bao('slErr','Không có món nào thay đổi với lựa chọn này.','wa'); return }
   SUA_LO_CHO=ra;
@@ -6347,8 +6355,10 @@ function apDungSuaLo(){
     p.nhom=x.ap.nhom||p.nhom; p.brand=x.ap.brand||p.brand;
     p.gb=Number(x.ap.gb)||p.gb; p.ngung=!!x.ap.ngung;
     p.qd_gb=Number(x.ap.qd_gb)||p.qd_gb; p.vat=x.ap.vat; p.dvt=x.ap.dvt;
+    if(x.ap.von!==null && x.ap.von!==undefined){ p.von=x.ap.von; if(p.qd_dv&&p.qd_sl) p.qd_von=x.ap.qd_von; p.moi=false; p.suaTay=true; p.vonLuc=nowStr() }
   });
-  set('gia',GIA); tinhLaiToanBoSO(); henDayVon_();
+  /* 27/11/2026: tinhLaiIm_ thay tinhLaiToanBoSO — chỉ điền vốn cho đơn đang chờ vốn, đơn đã có vốn giữ nguyên (P0 #2) */
+  set('gia',GIA); if(tinhLaiIm_()) set('so',SO); henDayVon_();
   veGia(); vePhat(); veCB(); veSo(); veBC();
   $('dlgSuaLo').close(); SUA_LO_CHO=null;
   bao('giaMsg','Đã đổi <b>'+ra.length+' món</b>. Máy tự lưu lên Sheet và phát cho nhân viên trong giây lát.<br>'+
@@ -8442,6 +8452,9 @@ function ksTaiVe(){
    bên trong máy. Mỗi dòng bắt đầu bằng động từ. Ngắn.
    ═══════════════════════════════════════════════════════════════════════ */
 var CAP_NHAT=[
+ {ban:'20261127a', ngay:'27/11/2026', ten:'Điền giá vốn hàng loạt',
+  vaPhieu:[],
+  muc:[['moi','Bảng giá → ✏ Sửa hàng loạt món đang hiện: có thêm ô <b>Giá vốn</b>. Gõ ô tìm cho ra đúng các món (vd "pawtiful"), điền 1 giá vốn là áp cho tất cả; bao/thùng quy đổi tự nhân theo. Đơn đã bán giữ giá vốn cũ, chỉ đơn đang chờ giá vốn được điền.']]},
  {ban:'20261126e', ngay:'26/11/2026', ten:'Khách theo sản phẩm dễ đọc hơn',
   vaPhieu:[],
   muc:[['sua','Tên khách trong danh sách Theo sản phẩm hiện cùng màu chữ thường (trước là xanh gạch chân, khó đọc trên nền tối). Rê chuột vào tên mới gạch chân.']]},
